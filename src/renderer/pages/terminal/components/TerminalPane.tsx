@@ -70,8 +70,7 @@ export function TerminalPane({ sessionId, buffer, onInput, onResize }: TerminalP
     const terminal = terminalRef.current
     if (!terminal) return
 
-    const pendingBuffer =
-      buffer.length > lastBufferRef.current.length ? buffer.slice(lastBufferRef.current.length) : buffer.slice(-1)
+    const pendingBuffer = getPendingBufferChunks(lastBufferRef.current, buffer)
     if (pendingBuffer.length === 0) return
 
     terminal.write(pendingBuffer.join(''))
@@ -79,4 +78,17 @@ export function TerminalPane({ sessionId, buffer, onInput, onResize }: TerminalP
   }, [buffer])
 
   return <div className="min-h-0 flex-1 overflow-hidden p-2" data-terminal-session-id={sessionId} ref={containerRef} />
+}
+
+function getPendingBufferChunks(previous: readonly string[], next: readonly string[]): readonly string[] {
+  if (next.length > previous.length) return next.slice(previous.length)
+
+  const maxOverlap = Math.min(previous.length, next.length)
+  for (let overlap = maxOverlap; overlap > 0; overlap -= 1) {
+    if (previous.slice(-overlap).every((chunk, index) => chunk === next[index])) {
+      return next.slice(overlap)
+    }
+  }
+
+  return next
 }
