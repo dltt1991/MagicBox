@@ -55,4 +55,22 @@ describe('TerminalPane', () => {
 
     expect(mocks.terminal.write).toHaveBeenLastCalledWith('200')
   })
+
+  it('writes every new output chunk after the session buffer cap advances by more than one chunk', () => {
+    const initialBuffer = Array.from({ length: 200 }, (_, index) => String(index))
+    const { rerender } = render(
+      <TerminalPane buffer={initialBuffer} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />
+    )
+
+    rerender(
+      <TerminalPane
+        buffer={[...initialBuffer.slice(2), '200', '201']}
+        onInput={vi.fn()}
+        onResize={vi.fn()}
+        sessionId="session-1"
+      />
+    )
+
+    expect(mocks.terminal.write).toHaveBeenLastCalledWith('200201')
+  })
 })

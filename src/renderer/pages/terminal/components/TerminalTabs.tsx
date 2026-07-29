@@ -19,7 +19,7 @@ export function TerminalTabs({ sessions, activeSessionId, onCreate, onSelect, on
       <div
         aria-label={t('terminal.title')}
         className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto"
-        role="tablist">
+        role="toolbar">
         {sessions.map((session, index) => {
           const label = t('terminal.session', { index: index + 1 })
           const isActive = session.id === activeSessionId
@@ -27,14 +27,12 @@ export function TerminalTabs({ sessions, activeSessionId, onCreate, onSelect, on
           return (
             <div className="flex shrink-0 items-center" key={session.id}>
               <Button
-                aria-selected={isActive}
                 className={
                   isActive
                     ? 'h-7 gap-1.5 rounded-r-none px-2 text-xs shadow-none'
                     : 'h-7 gap-1.5 rounded-r-none px-2 text-muted-foreground text-xs shadow-none'
                 }
                 onClick={() => onSelect(session.id)}
-                role="tab"
                 size="sm"
                 type="button"
                 variant={isActive ? 'secondary' : 'ghost'}>

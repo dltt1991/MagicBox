@@ -37,7 +37,7 @@ const sessions: TerminalSessionMetadata[] = [
 afterEach(cleanup)
 
 describe('TerminalTabs', () => {
-  it('renders accessible terminal tabs', () => {
+  it('renders accessible terminal session controls', () => {
     render(
       <TerminalTabs
         activeSessionId="session-1"
@@ -48,7 +48,8 @@ describe('TerminalTabs', () => {
       />
     )
 
-    expect(screen.getAllByRole('tab', { name: /terminal/i })).toHaveLength(2)
+    expect(screen.getByRole('toolbar', { name: 'terminal.title' })).toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /terminal.session/i })).toHaveLength(2)
   })
 
   it('creates, selects, and closes terminal sessions', async () => {
@@ -67,7 +68,7 @@ describe('TerminalTabs', () => {
     )
 
     await user.click(screen.getByRole('button', { name: 'terminal.new_session' }))
-    await user.click(screen.getByRole('tab', { name: 'terminal.session 2' }))
+    await user.click(screen.getByRole('button', { name: 'terminal.session 2' }))
     await user.click(screen.getByRole('button', { name: 'terminal.close_session 1' }))
 
     expect(onCreate).toHaveBeenCalledOnce()
