@@ -8,13 +8,16 @@ const cache = vi.hoisted(() => ({
   mode: 'right',
   setMode: vi.fn(),
   setBottomSizes: vi.fn(),
-  setRightSizes: vi.fn()
+  setRightSizes: vi.fn(),
+  terminalVisible: true,
+  setTerminalVisible: vi.fn()
 }))
 
 vi.mock('@data/hooks/useCache', () => ({
   usePersistCache: (key: string) => {
     if (key === 'terminal.layout.mode') return [cache.mode, cache.setMode]
     if (key === 'terminal.layout.right_sizes') return [[60, 40], cache.setRightSizes]
+    if (key === 'terminal.workspace.terminal_visible') return [cache.terminalVisible, cache.setTerminalVisible]
     return [[60, 40], cache.setBottomSizes]
   }
 }))
@@ -53,7 +56,18 @@ import { TerminalWorkspaceLayout } from '../TerminalWorkspaceLayout'
 
 function renderLayout(mode: 'right' | 'bottom' | 'terminal-maximized' | 'files-maximized' | 'preview-maximized') {
   cache.mode = mode
-  return render(<TerminalWorkspaceLayout fileManager={<div>files</div>} terminal={<div>terminal</div>} />)
+  cache.terminalVisible = true
+  return render(
+    <TerminalWorkspaceLayout
+      fileManager={(actions) => (
+        <div>
+          <div data-testid="file-manager-directory-actions">{actions}</div>
+          <div>files</div>
+        </div>
+      )}
+      terminal={<div>terminal</div>}
+    />
+  )
 }
 
 describe('TerminalWorkspaceLayout', () => {
@@ -68,8 +82,17 @@ describe('TerminalWorkspaceLayout', () => {
     expect(screen.getByTestId('terminal-pane-layout-actions')).toContainElement(
       screen.getByRole('button', { name: 'terminal.workspace.layout.terminal_maximize' })
     )
-    expect(screen.getByTestId('file-manager-layout-actions')).toContainElement(
+    expect(screen.getByTestId('file-manager-directory-actions')).toContainElement(
+      screen.getByRole('button', { name: 'terminal.workspace.layout.right' })
+    )
+    expect(screen.getByTestId('file-manager-directory-actions')).toContainElement(
+      screen.getByRole('button', { name: 'terminal.workspace.layout.bottom' })
+    )
+    expect(screen.getByTestId('file-manager-directory-actions')).toContainElement(
       screen.getByRole('button', { name: 'terminal.workspace.layout.files_maximize' })
+    )
+    expect(screen.getByTestId('file-manager-directory-actions')).toContainElement(
+      screen.getByRole('button', { name: 'terminal.workspace.layout.hide_terminal' })
     )
   })
 
@@ -96,7 +119,7 @@ describe('TerminalWorkspaceLayout', () => {
 
     expect(screen.queryByTestId('terminal-workspace-terminal')).not.toBeInTheDocument()
     expect(screen.getByTestId('terminal-workspace-file-manager')).toBeInTheDocument()
-    expect(screen.getByTestId('file-manager-layout-actions')).toContainElement(
+    expect(screen.getByTestId('file-manager-directory-actions')).toContainElement(
       screen.getByRole('button', { name: 'terminal.workspace.layout.restore' })
     )
   })
@@ -106,5 +129,29 @@ describe('TerminalWorkspaceLayout', () => {
 
     expect(screen.getByTestId('terminal-workspace-layout')).toHaveAttribute('data-layout-mode', 'files-maximized')
     expect(screen.getByTestId('terminal-workspace-file-manager')).toBeInTheDocument()
+  })
+
+  it('persists hidden terminal pane state and keeps the file manager visible', () => {
+    cache.mode = 'right'
+    cache.terminalVisible = false
+
+    render(
+      <TerminalWorkspaceLayout
+        fileManager={(actions) => (
+          <div>
+            <div data-testid="file-manager-directory-actions">{actions}</div>
+            <div>files</div>
+          </div>
+        )}
+        terminal={<div>terminal</div>}
+      />
+    )
+
+    expect(screen.getByTestId('terminal-workspace-layout')).toHaveAttribute('data-terminal-visible', 'false')
+    expect(screen.getByTestId('terminal-workspace-file-manager')).toBeInTheDocument()
+    expect(screen.queryByTestId('terminal-workspace-terminal')).not.toBeInTheDocument()
+    expect(screen.getByTestId('file-manager-directory-actions')).toContainElement(
+      screen.getByRole('button', { name: 'terminal.workspace.layout.show_terminal' })
+    )
   })
 })

@@ -46,7 +46,7 @@ export function TerminalPane({
       allowProposedApi: true,
       cursorBlink: true,
       fontFamily: 'var(--font-family-mono)',
-      fontSize: 15,
+      fontSize: 16,
       scrollback: 5000
     })
     const fitAddon = new FitAddon()
@@ -129,7 +129,7 @@ export function TerminalPane({
 
   return (
     <div
-      className="min-h-0 flex-1 overflow-hidden p-2"
+      className="min-h-0 flex-1 overflow-hidden bg-black"
       data-terminal-session-id={sessionId}
       onDragOver={(event) => event.preventDefault()}
       onDrop={(event) => {
@@ -141,7 +141,11 @@ export function TerminalPane({
           // Ignore drops that do not use the terminal path payload.
         }
       }}>
-      <div className="h-full min-h-0 w-full overflow-hidden" data-testid="terminal-xterm-mount" ref={mountRef} />
+      <div
+        className="h-full min-h-0 w-full overflow-hidden bg-black"
+        data-testid="terminal-xterm-mount"
+        ref={mountRef}
+      />
     </div>
   )
 }

@@ -21,6 +21,7 @@ import { normalizeFilePreviewPath } from '@renderer/utils/filePreview'
 import { isWin } from '@renderer/utils/platform'
 import { createFilePathHandle } from '@shared/utils/file'
 import { ArrowDownAZ, ArrowUpAZ, FolderOpen, Grid2X2, List } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -186,9 +187,9 @@ export default function TerminalPage() {
     sortDirection === 'asc' ? t('terminal.workspace.sort.asc') : t('terminal.workspace.sort.desc')
   const workspacePathSegments = workspaceRoot ? buildWorkspacePathSegments(workspaceRoot) : []
 
-  const fileManager = (
+  const fileManager = (layoutActions: ReactNode) => (
     <section className="flex h-full min-h-0 flex-col border-border border-r" data-testid="terminal-workspace-tree">
-      <div className="flex h-10 min-h-10 items-center gap-1 border-border border-b px-2 pr-28">
+      <div className="flex h-10 shrink-0 items-center gap-1 border-border border-b px-2">
         <NormalTooltip content={t('terminal.workspace.choose')}>
           <Button
             aria-label={t('terminal.workspace.choose')}
@@ -239,6 +240,9 @@ export default function TerminalPage() {
             )}
           </div>
         )}
+        <div className="ml-auto flex shrink-0 items-center gap-1" data-testid="terminal-workspace-path-actions">
+          {layoutActions}
+        </div>
       </div>
       <div className="flex h-9 shrink-0 items-center gap-1 border-border border-b px-2">
         <div className="flex shrink-0 items-center gap-0.5">

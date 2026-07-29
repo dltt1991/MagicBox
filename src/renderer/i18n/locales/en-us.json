@@ -8146,9 +8146,11 @@
       "layout": {
         "bottom": "Stack panes",
         "files_maximize": "Maximize file manager",
+        "hide_terminal": "Hide terminal pane",
         "preview_maximize": "Maximize file manager",
         "restore": "Restore split layout",
         "right": "Side-by-side panes",
+        "show_terminal": "Show terminal pane",
         "terminal_maximize": "Maximize terminal"
       },
       "no_root": "No workspace selected",

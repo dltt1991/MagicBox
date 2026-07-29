@@ -86,6 +86,25 @@ describe('WorkspaceFileTree', () => {
     expect(mocks.mount).toHaveBeenCalledTimes(2)
   })
 
+  it('does not apply gitignore filtering when hidden files are visible', () => {
+    render(
+      <WorkspaceFileTree
+        includeHidden={true}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
+    )
+
+    expect(mocks.useDirectoryTree).toHaveBeenCalledWith(
+      '/workspace',
+      expect.objectContaining({ includeHidden: true, respectGitignore: false })
+    )
+  })
+
   it('selects directory rows without opening a preview', () => {
     const onSelectPath = vi.fn()
     render(

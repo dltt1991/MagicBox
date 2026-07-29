@@ -87,7 +87,7 @@ function WorkspaceFileTreeContent({
   const { error, isLoading, root, version } = useDirectoryTree(rootPath ?? undefined, {
     includeHidden,
     maxDepth: 1,
-    respectGitignore: true,
+    respectGitignore: !includeHidden,
     withStats: true
   })
   const items = useMemo(
@@ -157,7 +157,10 @@ function WorkspaceFileTreeContent({
     <div className="h-full min-h-0 overflow-auto p-2" data-view-mode={viewMode}>
       {viewMode === 'list' && (
         <div
-          className={cn('grid h-7 items-center gap-2 px-2 text-muted-foreground text-xs', LIST_COLUMN_CLASS)}
+          className={cn(
+            'sticky top-0 z-10 grid h-7 items-center gap-2 bg-background px-2 text-muted-foreground text-xs',
+            LIST_COLUMN_CLASS
+          )}
           data-list-columns="workspace-file-list"
           data-testid="workspace-list-header">
           <span>{t('terminal.workspace.sort.name')}</span>

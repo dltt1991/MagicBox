@@ -80,9 +80,15 @@ vi.mock('../components/TerminalPane', () => ({
 }))
 
 vi.mock('../components/TerminalWorkspaceLayout', () => ({
-  TerminalWorkspaceLayout: ({ fileManager, terminal }: { fileManager: React.ReactNode; terminal: React.ReactNode }) => (
+  TerminalWorkspaceLayout: ({
+    fileManager,
+    terminal
+  }: {
+    fileManager: React.ReactNode | ((actions: React.ReactNode) => React.ReactNode)
+    terminal: React.ReactNode
+  }) => (
     <div>
-      {fileManager}
+      {typeof fileManager === 'function' ? fileManager(<div data-testid="mock-layout-actions" />) : fileManager}
       {terminal}
     </div>
   )
@@ -210,6 +216,9 @@ describe('TerminalPage', () => {
     expect(screen.getByTestId('terminal-tabs')).toBeInTheDocument()
     expect(screen.getByTestId('terminal-pane')).toBeInTheDocument()
     expect(screen.getByTestId('workspace-file-tree')).toBeInTheDocument()
+    expect(screen.getByTestId('terminal-workspace-path-actions')).toContainElement(
+      screen.getByTestId('mock-layout-actions')
+    )
     expect(mocks.createSession).toHaveBeenCalledOnce()
   })
 
