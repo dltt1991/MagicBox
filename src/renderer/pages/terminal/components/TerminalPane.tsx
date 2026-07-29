@@ -142,7 +142,7 @@ export function TerminalPane({
         }
       }}>
       <div
-        className="h-full min-h-0 w-full overflow-hidden bg-black"
+        className="[&_.xterm-viewport]:!h-full h-full min-h-0 w-full overflow-hidden bg-black text-base [&_.xterm-screen]:h-full [&_.xterm-viewport]:bg-black [&_.xterm]:h-full [&_.xterm]:bg-black"
         data-testid="terminal-xterm-mount"
         ref={mountRef}
       />
