@@ -1,7 +1,9 @@
 import { Button, NormalTooltip, Switch } from '@cherrystudio/ui'
 import { usePersistCache } from '@data/hooks/useCache'
 import { useOpenFilePreviewTab } from '@renderer/components/FilePreview'
+import { ipcApi } from '@renderer/ipc'
 import { normalizeFilePreviewPath } from '@renderer/utils/filePreview'
+import { createFilePathHandle } from '@shared/utils/file'
 import { FolderOpen } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -16,6 +18,7 @@ export default function TerminalPage() {
   const { t } = useTranslation()
   const [workspaceRoot, setWorkspaceRoot] = usePersistCache('terminal.workspace.root')
   const [includeHidden, setIncludeHidden] = usePersistCache('terminal.workspace.include_hidden')
+  const [selectedWorkspacePath, setSelectedWorkspacePath] = useState<string | null>(null)
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null)
   const openFilePreviewTab = useOpenFilePreviewTab()
   const {
@@ -37,6 +40,7 @@ export default function TerminalPage() {
     const rootPath = await window.api.file.selectFolder()
     if (!rootPath) return
     setWorkspaceRoot(rootPath)
+    setSelectedWorkspacePath(null)
     setActiveFilePath(null)
   }, [setWorkspaceRoot])
 
@@ -66,9 +70,12 @@ export default function TerminalPage() {
           <div className="min-h-0 flex-1 overflow-hidden" data-testid="workspace-file-tree">
             <WorkspaceFileTree
               includeHidden={includeHidden}
-              onSelectPath={setActiveFilePath}
+              onSelectPath={(path, kind) => {
+                setSelectedWorkspacePath(path)
+                if (kind === 'file') setActiveFilePath(path)
+              }}
               rootPath={workspaceRoot}
-              selectedPath={activeFilePath}
+              selectedPath={selectedWorkspacePath}
             />
           </div>
         </aside>
@@ -97,8 +104,12 @@ export default function TerminalPage() {
             filePath={activeFilePath}
             onCopyPath={(filePath) => void navigator.clipboard.writeText(filePath)}
             onOpenInNewTab={(filePath) => openFilePreviewTab(normalizeFilePreviewPath(filePath))}
-            onOpenSystem={(filePath) => void window.api.file.openPath(filePath)}
-            onShowInFolder={(filePath) => void window.api.file.showInFolder(filePath)}
+            onOpenSystem={(filePath) =>
+              void ipcApi.request('file.open', createFilePathHandle(normalizeFilePreviewPath(filePath)))
+            }
+            onShowInFolder={(filePath) =>
+              void ipcApi.request('file.show_in_folder', createFilePathHandle(normalizeFilePreviewPath(filePath)))
+            }
           />
         </aside>
       </div>

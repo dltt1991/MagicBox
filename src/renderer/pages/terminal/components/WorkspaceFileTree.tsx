@@ -10,7 +10,7 @@ export interface WorkspaceFileTreeProps {
   rootPath: string | null
   selectedPath: string | null
   includeHidden: boolean
-  onSelectPath: (path: string) => void
+  onSelectPath: (path: string, kind: WorkspaceTreeItem['kind']) => void
 }
 
 function toFileTreeNodes(items: WorkspaceTreeItem[]): FileTreeNode[] {
@@ -33,6 +33,18 @@ function findWorkspaceTreeItem(items: WorkspaceTreeItem[], path: string): Worksp
 }
 
 export function WorkspaceFileTree({ rootPath, selectedPath, includeHidden, onSelectPath }: WorkspaceFileTreeProps) {
+  return (
+    <WorkspaceFileTreeContent
+      key={`${rootPath ?? 'empty'}:${includeHidden}`}
+      includeHidden={includeHidden}
+      onSelectPath={onSelectPath}
+      rootPath={rootPath}
+      selectedPath={selectedPath}
+    />
+  )
+}
+
+function WorkspaceFileTreeContent({ rootPath, selectedPath, includeHidden, onSelectPath }: WorkspaceFileTreeProps) {
   const { t } = useTranslation()
   const { error, isLoading, root, version } = useDirectoryTree(rootPath ?? undefined, {
     includeHidden,
@@ -66,7 +78,7 @@ export function WorkspaceFileTree({ rootPath, selectedPath, includeHidden, onSel
       onSelectedChange={(path) => {
         if (!path) return
         const item = findWorkspaceTreeItem(items, path)
-        if (item?.kind === 'file') onSelectPath(path)
+        if (item) onSelectPath(path, item.kind)
       }}
       selectedId={selectedPath}
     />
