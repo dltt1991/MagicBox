@@ -8659,6 +8659,9 @@
     "unpin": "Unpin Tab"
   },
   "terminal": {
+    "close_session": "Close terminal {{index}}",
+    "new_session": "New terminal",
+    "session": "Terminal {{index}}",
     "title": "Terminal"
   },
   "title": {
