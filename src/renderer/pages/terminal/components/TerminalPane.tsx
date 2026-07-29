@@ -43,6 +43,7 @@ export function TerminalPane({
     if (!container || !sessionId) return
 
     const terminal = new Terminal({
+      allowProposedApi: true,
       cursorBlink: true,
       fontFamily: 'var(--font-family-mono)',
       fontSize: 13,
