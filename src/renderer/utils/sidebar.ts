@@ -300,6 +300,15 @@ export function getOrderedVisibleSidebarFavorites(
   )
 }
 
+export function migrateTerminalFavoriteDefault(
+  favorites: readonly SidebarFavoriteItem[] | undefined
+): SidebarFavoriteItem[] | undefined {
+  const items = getSidebarFavoriteItems(favorites)
+  if (items.some((item) => item.type === 'app' && item.id === 'terminal')) return undefined
+
+  return preserveForwardCompatibleSidebarFavoriteItems(favorites, [...items, createSidebarAppFavorite('terminal')])
+}
+
 // --- Favorites mutations -----------------------------------------------------
 //
 // The favorites preference stores apps and mini apps interleaved in one ordered
