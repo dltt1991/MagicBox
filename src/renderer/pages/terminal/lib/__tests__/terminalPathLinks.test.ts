@@ -16,4 +16,8 @@ describe('extractTerminalPathCandidates', () => {
       'C:\\Users\\me\\a.txt'
     ])
   })
+
+  it('does not treat URL hosts as local absolute paths', () => {
+    expect(extractTerminalPathCandidates('see https://example.com/docs/file.txt', '/repo')).toEqual([])
+  })
 })

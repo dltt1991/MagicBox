@@ -79,9 +79,10 @@ export function FileTreeRow(props: FileTreeRowProps) {
       {...effectiveDragHandleProps}
       data-node-id={node.id}
       data-kind={node.kind}
-      draggable={onDragStart ? true : effectiveDragHandleProps.draggable}
+      draggable={isRenaming ? false : onDragStart ? true : effectiveDragHandleProps.draggable}
       onClick={handleRowClick}
       onDragStart={(event) => {
+        if (isRenaming) return
         effectiveDragHandleProps.onDragStart?.(event)
         onDragStart?.(node, event)
       }}

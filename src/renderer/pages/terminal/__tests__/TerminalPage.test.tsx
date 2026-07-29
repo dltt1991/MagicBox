@@ -13,8 +13,24 @@ const mocks = vi.hoisted(() => ({
   setActiveSessionId: vi.fn(),
   ipcRequest: vi.fn(),
   safeOpen: vi.fn(),
-  toastError: vi.fn()
+  toastError: vi.fn(),
+  isDirectory: vi.fn(),
+  persistValues: {
+    'terminal.workspace.root': null as string | null,
+    'terminal.workspace.include_hidden': false
+  }
 }))
+
+vi.mock('@data/hooks/useCache', async () => {
+  const React = await import('react')
+
+  return {
+    usePersistCache: (key: 'terminal.workspace.root' | 'terminal.workspace.include_hidden') => {
+      const [value, setValue] = React.useState(mocks.persistValues[key])
+      return [value, setValue]
+    }
+  }
+})
 
 vi.mock('../hooks/useTerminalSessions', () => ({
   useTerminalSessions: () => ({
@@ -34,7 +50,16 @@ vi.mock('../components/TerminalTabs', () => ({
 }))
 
 vi.mock('../components/TerminalPane', () => ({
-  TerminalPane: () => <div data-testid="terminal-pane" />
+  TerminalPane: ({ cwd, onPathActivated }: { cwd?: string | null; onPathActivated?: (path: string) => void }) => (
+    <div data-cwd={cwd ?? ''} data-testid="terminal-pane">
+      <button onClick={() => onPathActivated?.('/workspace/from-terminal.txt')} type="button">
+        activate terminal file
+      </button>
+      <button onClick={() => onPathActivated?.('/workspace/from-terminal-dir')} type="button">
+        activate terminal directory
+      </button>
+    </div>
+  )
 }))
 
 vi.mock('../components/TerminalWorkspaceLayout', () => ({
@@ -103,7 +128,11 @@ vi.mock('@renderer/services/toast', () => ({
 import TerminalPage from '../TerminalPage'
 
 beforeEach(() => {
+  mocks.persistValues['terminal.workspace.root'] = null
+  mocks.persistValues['terminal.workspace.include_hidden'] = false
   mocks.safeOpen.mockResolvedValue(undefined)
+  mocks.isDirectory.mockResolvedValue(false)
+  window.api.file.isDirectory = mocks.isDirectory
 })
 
 afterEach(() => {
@@ -120,6 +149,14 @@ describe('TerminalPage', () => {
     expect(screen.getByTestId('workspace-file-tree')).toBeInTheDocument()
     expect(screen.getByTestId('workspace-preview-pane')).toBeInTheDocument()
     expect(mocks.createSession).toHaveBeenCalledOnce()
+  })
+
+  it('passes the persisted workspace root as the terminal link cwd', () => {
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+
+    render(<TerminalPage />)
+
+    expect(screen.getByTestId('terminal-pane')).toHaveAttribute('data-cwd', '/workspace')
   })
 
   it('opens workspace files through the shared safe-open helper', async () => {
@@ -155,5 +192,34 @@ describe('TerminalPage', () => {
     await user.click(screen.getByRole('button', { name: 'open system' }))
 
     await waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith('无法打开此文件'))
+  })
+
+  it('previews file paths activated from terminal output', async () => {
+    const user = userEvent.setup()
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: 'activate terminal file' }))
+
+    await waitFor(() =>
+      expect(screen.getByTestId('mock-workspace-preview-pane')).toHaveAttribute(
+        'data-file-path',
+        '/workspace/from-terminal.txt'
+      )
+    )
+  })
+
+  it('selects directory paths activated from terminal output without replacing the active preview', async () => {
+    const user = userEvent.setup()
+    mocks.isDirectory.mockImplementation((path: string) => Promise.resolve(path.endsWith('-dir')))
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: 'select file' }))
+    await user.click(screen.getByRole('button', { name: 'activate terminal directory' }))
+
+    await waitFor(() =>
+      expect(screen.getByTestId('mock-workspace-preview-pane')).toHaveAttribute('data-file-path', '/workspace/run.sh')
+    )
   })
 })

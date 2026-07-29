@@ -1,8 +1,14 @@
 import { fireEvent, render } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { ILinkProvider } from '@xterm/xterm'
+import { afterEach, describe, expect, it, type Mock, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
   const terminal = {
+    buffer: {
+      active: {
+        getLine: vi.fn()
+      }
+    },
     cols: 80,
     rows: 24,
     dispose: vi.fn(),
@@ -10,6 +16,7 @@ const mocks = vi.hoisted(() => {
     loadAddon: vi.fn(),
     onData: vi.fn(() => ({ dispose: vi.fn() })),
     open: vi.fn(),
+    registerLinkProvider: vi.fn(() => ({ dispose: vi.fn() })),
     unicode: { activeVersion: '' },
     write: vi.fn()
   }
@@ -34,6 +41,8 @@ import { TerminalPane } from '../TerminalPane'
 
 afterEach(() => {
   mocks.fit.mockReset()
+  mocks.terminal.buffer.active.getLine.mockReset()
+  mocks.terminal.registerLinkProvider.mockClear()
   mocks.terminal.write.mockReset()
 })
 
@@ -85,5 +94,45 @@ describe('TerminalPane', () => {
     })
 
     expect(onInput).toHaveBeenCalledWith("'/workspace/My App'")
+  })
+
+  it('inserts a Windows-quoted path when the active shell is Windows', () => {
+    const onInput = vi.fn()
+    const { container } = render(
+      <TerminalPane buffer={[]} onInput={onInput} onResize={vi.fn()} sessionId="session-1" shellKind="windows" />
+    )
+
+    fireEvent.drop(container.firstElementChild!, {
+      dataTransfer: { getData: () => '{"path":"C:\\\\Program Files\\\\a.txt"}' }
+    })
+
+    expect(onInput).toHaveBeenCalledWith('"C:\\Program Files\\a.txt"')
+  })
+
+  it('registers terminal path links and activates parsed paths', () => {
+    const onPathActivated = vi.fn()
+    mocks.terminal.buffer.active.getLine.mockReturnValue({
+      translateToString: () => 'see src/index.ts:12'
+    })
+
+    render(
+      <TerminalPane
+        buffer={[]}
+        cwd="/repo"
+        onInput={vi.fn()}
+        onPathActivated={onPathActivated}
+        onResize={vi.fn()}
+        sessionId="session-1"
+      />
+    )
+
+    const registerLinkProvider = mocks.terminal.registerLinkProvider as Mock<(provider: ILinkProvider) => unknown>
+    const [provider] = registerLinkProvider.mock.calls[0] ?? []
+    const callback = vi.fn()
+    provider.provideLinks(1, callback)
+    const link = callback.mock.calls[0]?.[0]?.[0]
+    link.activate(new MouseEvent('click'), link.text)
+
+    expect(onPathActivated).toHaveBeenCalledWith('/repo/src/index.ts')
   })
 })

@@ -3,11 +3,12 @@ import '@xterm/xterm/css/xterm.css'
 import { FitAddon } from '@xterm/addon-fit'
 import { Unicode11Addon } from '@xterm/addon-unicode11'
 import { WebglAddon } from '@xterm/addon-webgl'
-import { Terminal } from '@xterm/xterm'
+import { type ILink, Terminal } from '@xterm/xterm'
 import { useEffect, useEffectEvent, useRef } from 'react'
 
 import type { TerminalBufferChunk } from '../hooks/useTerminalSessions'
-import { quotePathForShell } from '../lib/terminalPathQuoting'
+import { extractTerminalPathLinks } from '../lib/terminalPathLinks'
+import { quotePathForShell, type TerminalShellKind } from '../lib/terminalPathQuoting'
 
 const TERMINAL_PATH_DRAG_MIME_TYPE = 'application/x-cherry-terminal-path'
 
@@ -18,14 +19,24 @@ interface TerminalPaneProps {
   onResize: (size: { cols: number; rows: number }) => void
   cwd?: string | null
   onPathActivated?: (path: string) => void
+  shellKind?: TerminalShellKind
 }
 
-export function TerminalPane({ sessionId, buffer, onInput, onResize }: TerminalPaneProps) {
+export function TerminalPane({
+  sessionId,
+  buffer,
+  onInput,
+  onResize,
+  cwd,
+  onPathActivated,
+  shellKind = 'posix'
+}: TerminalPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
   const lastWrittenSequenceRef = useRef(-1)
   const onInputEvent = useEffectEvent(onInput)
   const onResizeEvent = useEffectEvent(onResize)
+  const onPathActivatedEvent = useEffectEvent((path: string) => onPathActivated?.(path))
 
   useEffect(() => {
     const container = containerRef.current
@@ -58,6 +69,25 @@ export function TerminalPane({ sessionId, buffer, onInput, onResize }: TerminalP
       onResizeEvent({ cols: terminal.cols, rows: terminal.rows })
     }
     const inputDisposable = terminal.onData((data) => onInputEvent(data))
+    const linkDisposable = terminal.registerLinkProvider({
+      provideLinks: (bufferLineNumber, callback) => {
+        const line = terminal.buffer.active.getLine(bufferLineNumber - 1)
+        if (!line) {
+          callback(undefined)
+          return
+        }
+
+        const links = extractTerminalPathLinks(line.translateToString(true), cwd ?? '/').map<ILink>((candidate) => ({
+          range: {
+            start: { x: candidate.startIndex + 1, y: bufferLineNumber },
+            end: { x: candidate.endIndex + 1, y: bufferLineNumber }
+          },
+          text: candidate.text,
+          activate: () => onPathActivatedEvent(candidate.path)
+        }))
+        callback(links.length > 0 ? links : undefined)
+      }
+    })
     const resizeObserver = new ResizeObserver(fit)
     resizeObserver.observe(container)
     fit()
@@ -66,12 +96,13 @@ export function TerminalPane({ sessionId, buffer, onInput, onResize }: TerminalP
     return () => {
       resizeObserver.disconnect()
       inputDisposable.dispose()
+      linkDisposable.dispose()
       terminal.dispose()
       terminalRef.current = null
     }
     // Effect Events always read the latest callbacks without recreating xterm.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId])
+  }, [cwd, sessionId])
 
   useEffect(() => {
     const terminal = terminalRef.current
@@ -93,7 +124,7 @@ export function TerminalPane({ sessionId, buffer, onInput, onResize }: TerminalP
         const payload = event.dataTransfer.getData(TERMINAL_PATH_DRAG_MIME_TYPE)
         try {
           const { path } = JSON.parse(payload) as { path?: unknown }
-          if (typeof path === 'string') onInputEvent(quotePathForShell(path))
+          if (typeof path === 'string') onInputEvent(quotePathForShell(path, shellKind))
         } catch {
           // Ignore drops that do not use the terminal path payload.
         }
