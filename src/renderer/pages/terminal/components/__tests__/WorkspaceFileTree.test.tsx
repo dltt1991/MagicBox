@@ -21,10 +21,15 @@ vi.mock('@renderer/hooks/useDirectoryTree', () => ({
 }))
 
 vi.mock('@renderer/components/FileTree', () => ({
-  FileTree: ({ nodes, onSelectedChange, selectedId }: FileTreeProps) => (
+  FileTree: ({ nodes, onDragStart, onSelectedChange, selectedId }: FileTreeProps) => (
     <div data-selected-id={selectedId ?? ''} data-testid="file-tree">
       {nodes.map((node) => (
-        <button key={node.id} onClick={() => onSelectedChange?.(node.id)} type="button">
+        <button
+          draggable={Boolean(onDragStart)}
+          key={node.id}
+          onClick={() => onSelectedChange?.(node.id)}
+          onDragStart={(event) => onDragStart?.(node, event)}
+          type="button">
           {node.name}
         </button>
       ))}
@@ -91,5 +96,16 @@ describe('WorkspaceFileTree', () => {
     fireEvent.click(screen.getByRole('button', { name: 'src' }))
 
     expect(onSelectPath).toHaveBeenCalledWith('/workspace/src', 'directory')
+  })
+
+  it('sets a terminal path drag payload for workspace rows', () => {
+    render(<WorkspaceFileTree includeHidden={false} onSelectPath={vi.fn()} rootPath="/workspace" selectedPath={null} />)
+    const setData = vi.fn()
+
+    fireEvent.dragStart(screen.getByRole('button', { name: 'src' }), {
+      dataTransfer: { setData }
+    })
+
+    expect(setData).toHaveBeenCalledWith('application/x-cherry-terminal-path', '{"path":"/workspace/src"}')
   })
 })

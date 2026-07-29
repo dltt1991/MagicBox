@@ -8666,6 +8666,13 @@
     "workspace": {
       "choose": "Choose workspace",
       "include_hidden": "Show hidden files",
+      "layout": {
+        "bottom": "Dock preview below terminal",
+        "preview_maximize": "Maximize preview",
+        "restore": "Restore split layout",
+        "right": "Dock preview right of terminal",
+        "terminal_maximize": "Maximize terminal"
+      },
       "no_root": "No workspace selected",
       "preview": {
         "copy_path": "Copy path",

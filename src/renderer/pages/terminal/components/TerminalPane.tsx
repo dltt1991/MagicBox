@@ -7,12 +7,17 @@ import { Terminal } from '@xterm/xterm'
 import { useEffect, useEffectEvent, useRef } from 'react'
 
 import type { TerminalBufferChunk } from '../hooks/useTerminalSessions'
+import { quotePathForShell } from '../lib/terminalPathQuoting'
+
+const TERMINAL_PATH_DRAG_MIME_TYPE = 'application/x-cherry-terminal-path'
 
 interface TerminalPaneProps {
   sessionId: string | null
   buffer: readonly TerminalBufferChunk[]
   onInput: (data: string) => void
   onResize: (size: { cols: number; rows: number }) => void
+  cwd?: string | null
+  onPathActivated?: (path: string) => void
 }
 
 export function TerminalPane({ sessionId, buffer, onInput, onResize }: TerminalPaneProps) {
@@ -79,5 +84,21 @@ export function TerminalPane({ sessionId, buffer, onInput, onResize }: TerminalP
     lastWrittenSequenceRef.current = pendingBuffer.at(-1)?.sequence ?? lastWrittenSequenceRef.current
   }, [buffer])
 
-  return <div className="min-h-0 flex-1 overflow-hidden p-2" data-terminal-session-id={sessionId} ref={containerRef} />
+  return (
+    <div
+      className="min-h-0 flex-1 overflow-hidden p-2"
+      data-terminal-session-id={sessionId}
+      onDragOver={(event) => event.preventDefault()}
+      onDrop={(event) => {
+        const payload = event.dataTransfer.getData(TERMINAL_PATH_DRAG_MIME_TYPE)
+        try {
+          const { path } = JSON.parse(payload) as { path?: unknown }
+          if (typeof path === 'string') onInputEvent(quotePathForShell(path))
+        } catch {
+          // Ignore drops that do not use the terminal path payload.
+        }
+      }}
+      ref={containerRef}
+    />
+  )
 }

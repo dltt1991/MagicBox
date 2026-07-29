@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next'
 
 import { projectWorkspaceTree, type WorkspaceTreeItem } from '../lib/workspaceTree'
 
+const TERMINAL_PATH_DRAG_MIME_TYPE = 'application/x-cherry-terminal-path'
+
 export interface WorkspaceFileTreeProps {
   rootPath: string | null
   selectedPath: string | null
@@ -75,6 +77,9 @@ function WorkspaceFileTreeContent({ rootPath, selectedPath, includeHidden, onSel
     <FileTree
       emptyState={<EmptyState className="h-full" title={t('terminal.workspace.tree.no_files')} />}
       nodes={nodes}
+      onDragStart={(node, event) => {
+        event.dataTransfer.setData(TERMINAL_PATH_DRAG_MIME_TYPE, JSON.stringify({ path: node.path }))
+      }}
       onSelectedChange={(path) => {
         if (!path) return
         const item = findWorkspaceTreeItem(items, path)

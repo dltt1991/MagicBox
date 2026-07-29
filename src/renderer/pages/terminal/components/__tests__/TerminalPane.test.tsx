@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react'
+import { fireEvent, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
@@ -72,5 +72,18 @@ describe('TerminalPane', () => {
     )
 
     expect(mocks.terminal.write).toHaveBeenLastCalledWith('xx')
+  })
+
+  it('inserts a quoted workspace path dropped from the file tree', () => {
+    const onInput = vi.fn()
+    const { container } = render(
+      <TerminalPane buffer={[]} onInput={onInput} onResize={vi.fn()} sessionId="session-1" />
+    )
+
+    fireEvent.drop(container.firstElementChild!, {
+      dataTransfer: { getData: () => '{"path":"/workspace/My App"}' }
+    })
+
+    expect(onInput).toHaveBeenCalledWith("'/workspace/My App'")
   })
 })

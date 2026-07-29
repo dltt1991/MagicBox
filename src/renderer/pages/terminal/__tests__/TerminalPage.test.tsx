@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest'
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import type React from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
@@ -34,6 +35,24 @@ vi.mock('../components/TerminalTabs', () => ({
 
 vi.mock('../components/TerminalPane', () => ({
   TerminalPane: () => <div data-testid="terminal-pane" />
+}))
+
+vi.mock('../components/TerminalWorkspaceLayout', () => ({
+  TerminalWorkspaceLayout: ({
+    fileTree,
+    preview,
+    terminal
+  }: {
+    fileTree: React.ReactNode
+    preview: React.ReactNode
+    terminal: React.ReactNode
+  }) => (
+    <div>
+      {fileTree}
+      {terminal}
+      {preview}
+    </div>
+  )
 }))
 
 vi.mock('../components/WorkspaceFileTree', () => ({
