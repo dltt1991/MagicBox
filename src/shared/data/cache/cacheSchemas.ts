@@ -314,6 +314,8 @@ export type RendererPersistCacheSchema = {
   'ui.sidebar.width': number
   'ui.chat.sidebar.width': number
   'ui.chat.artifact_pane.width': number
+  'terminal.workspace.root': string | null
+  'terminal.workspace.include_hidden': boolean
   // Recent composer inputs shared by chat and agent surfaces (MRU order, capped by the consumer)
   'ui.composer.input_history': string[]
   'ui.chat.last_used_assistant_id': string | null
@@ -352,6 +354,8 @@ export const DefaultRendererPersistCache: RendererPersistCacheSchema = {
   'ui.sidebar.width': 50, // keep in sync with SIDEBAR_ICON_WIDTH (renderer Sidebar/constants.ts)
   'ui.chat.sidebar.width': 275,
   'ui.chat.artifact_pane.width': 460,
+  'terminal.workspace.root': null,
+  'terminal.workspace.include_hidden': false,
   'ui.composer.input_history': [],
   'ui.chat.last_used_assistant_id': null,
   'ui.chat.last_used_topic_id': null,

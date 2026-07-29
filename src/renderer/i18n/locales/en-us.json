@@ -8139,7 +8139,25 @@
     "close_session": "Close terminal {{index}}",
     "new_session": "New terminal",
     "session": "Terminal {{index}}",
-    "title": "Terminal"
+    "title": "Terminal",
+    "workspace": {
+      "choose": "Choose workspace",
+      "include_hidden": "Show hidden files",
+      "no_root": "No workspace selected",
+      "preview": {
+        "copy_path": "Copy path",
+        "empty": "Select a file to preview",
+        "open_in_new_tab": "Open in new tab",
+        "open_system": "Open in system app",
+        "show_in_folder": "Show in folder"
+      },
+      "tree": {
+        "empty": "Choose a workspace to browse files",
+        "error": "Unable to load workspace files",
+        "loading": "Loading workspace files",
+        "no_files": "No files found"
+      }
+    }
   },
   "title": {
     "apps": "Apps",
