@@ -39,14 +39,14 @@ afterEach(() => {
 
 describe('TerminalPane', () => {
   it('writes new output after the session buffer reaches its cap', () => {
-    const initialBuffer = Array.from({ length: 200 }, (_, index) => String(index))
+    const initialBuffer = Array.from({ length: 200 }, (_, index) => ({ sequence: index, data: String(index) }))
     const { rerender } = render(
       <TerminalPane buffer={initialBuffer} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />
     )
 
     rerender(
       <TerminalPane
-        buffer={[...initialBuffer.slice(1), '200']}
+        buffer={[...initialBuffer.slice(1), { sequence: 200, data: '200' }]}
         onInput={vi.fn()}
         onResize={vi.fn()}
         sessionId="session-1"
@@ -57,20 +57,20 @@ describe('TerminalPane', () => {
   })
 
   it('writes every new output chunk after the session buffer cap advances by more than one chunk', () => {
-    const initialBuffer = Array.from({ length: 200 }, (_, index) => String(index))
+    const initialBuffer = Array.from({ length: 200 }, (_, index) => ({ sequence: index, data: 'x' }))
     const { rerender } = render(
       <TerminalPane buffer={initialBuffer} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />
     )
 
     rerender(
       <TerminalPane
-        buffer={[...initialBuffer.slice(2), '200', '201']}
+        buffer={[...initialBuffer.slice(2), { sequence: 200, data: 'x' }, { sequence: 201, data: 'x' }]}
         onInput={vi.fn()}
         onResize={vi.fn()}
         sessionId="session-1"
       />
     )
 
-    expect(mocks.terminal.write).toHaveBeenLastCalledWith('200201')
+    expect(mocks.terminal.write).toHaveBeenLastCalledWith('xx')
   })
 })

@@ -5,8 +5,14 @@ import { useCallback, useRef, useState } from 'react'
 const DEFAULT_TERMINAL_SIZE = { cols: 80, rows: 24 }
 const MAX_BUFFER_CHUNKS = 200
 
+export interface TerminalBufferChunk {
+  sequence: number
+  data: string
+}
+
 export interface TerminalSession extends TerminalSessionMetadata {
-  buffer: string[]
+  buffer: TerminalBufferChunk[]
+  nextBufferSequence: number
 }
 
 interface UseTerminalSessionsOptions {
@@ -20,7 +26,7 @@ export function useTerminalSessions({ cwd }: UseTerminalSessionsOptions) {
 
   const createSession = useCallback(async () => {
     const session = await ipcApi.request('terminal.session.create', { cwd, ...DEFAULT_TERMINAL_SIZE })
-    const nextSession = { ...session, buffer: [] }
+    const nextSession = { ...session, buffer: [], nextBufferSequence: 0 }
     const nextSessions = [...sessionsRef.current.filter(({ id }) => id !== session.id), nextSession]
     sessionsRef.current = nextSessions
     setSessions(nextSessions)
@@ -54,7 +60,13 @@ export function useTerminalSessions({ cwd }: UseTerminalSessionsOptions) {
 
   useIpcOn('terminal.session.data', ({ id, data }) => {
     const nextSessions = sessionsRef.current.map((session) =>
-      session.id === id ? { ...session, buffer: [...session.buffer, data].slice(-MAX_BUFFER_CHUNKS) } : session
+      session.id === id
+        ? {
+            ...session,
+            buffer: [...session.buffer, { sequence: session.nextBufferSequence, data }].slice(-MAX_BUFFER_CHUNKS),
+            nextBufferSequence: session.nextBufferSequence + 1
+          }
+        : session
     )
     sessionsRef.current = nextSessions
     setSessions(nextSessions)
