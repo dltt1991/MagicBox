@@ -2,7 +2,9 @@ import * as z from 'zod'
 
 import { defineRoute } from '../define'
 
-const sessionIdSchema = z.string().min(1)
+const sessionIdSchema = z.string().min(1).max(128)
+const cwdSchema = z.string().min(1).max(4096)
+const inputDataSchema = z.string().max(16_384)
 const sizeSchema = z.strictObject({
   cols: z.int().min(1).max(1000),
   rows: z.int().min(1).max(1000)
@@ -23,7 +25,7 @@ export type TerminalSessionMetadata = z.infer<typeof TerminalSessionMetadataSche
 export const terminalRequestSchemas = {
   'terminal.session.create': defineRoute({
     input: z.strictObject({
-      cwd: z.string().min(1).optional(),
+      cwd: cwdSchema.optional(),
       ...sizeSchema.shape
     }),
     output: TerminalSessionMetadataSchema
@@ -33,7 +35,7 @@ export const terminalRequestSchemas = {
     output: z.array(TerminalSessionMetadataSchema)
   }),
   'terminal.session.input': defineRoute({
-    input: z.strictObject({ id: sessionIdSchema, data: z.string() }),
+    input: z.strictObject({ id: sessionIdSchema, data: inputDataSchema }),
     output: z.void()
   }),
   'terminal.session.resize': defineRoute({
