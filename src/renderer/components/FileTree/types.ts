@@ -42,6 +42,8 @@ export interface FileTreeProps {
 
   /** When omitted, drag-and-drop is fully disabled (read-only tree). */
   onMove?: (sourceId: string, targetId: string, position: DragPosition) => void
+  /** Optional native drag payload hook for read-only tree consumers. */
+  onDragStart?: (node: FileTreeNode, event: React.DragEvent<HTMLElement>) => void
 
   /** When omitted, inline rename is disabled. */
   renameSlot?: FileTreeRenameSlot

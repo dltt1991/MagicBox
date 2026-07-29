@@ -8143,6 +8143,13 @@
     "workspace": {
       "choose": "选择工作区",
       "include_hidden": "显示隐藏文件",
+      "layout": {
+        "bottom": "将预览停靠在终端下方",
+        "preview_maximize": "最大化预览",
+        "restore": "恢复分栏布局",
+        "right": "将预览停靠在终端右侧",
+        "terminal_maximize": "最大化终端"
+      },
       "no_root": "未选择工作区",
       "preview": {
         "copy_path": "复制路径",

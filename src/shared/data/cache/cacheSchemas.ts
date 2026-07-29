@@ -316,6 +316,9 @@ export type RendererPersistCacheSchema = {
   'ui.chat.artifact_pane.width': number
   'terminal.workspace.root': string | null
   'terminal.workspace.include_hidden': boolean
+  'terminal.layout.mode': 'right' | 'bottom' | 'terminal-maximized' | 'preview-maximized'
+  'terminal.layout.right_sizes': [number, number]
+  'terminal.layout.bottom_sizes': [number, number]
   // Recent composer inputs shared by chat and agent surfaces (MRU order, capped by the consumer)
   'ui.composer.input_history': string[]
   'ui.chat.last_used_assistant_id': string | null
@@ -356,6 +359,9 @@ export const DefaultRendererPersistCache: RendererPersistCacheSchema = {
   'ui.chat.artifact_pane.width': 460,
   'terminal.workspace.root': null,
   'terminal.workspace.include_hidden': false,
+  'terminal.layout.mode': 'right',
+  'terminal.layout.right_sizes': [60, 40],
+  'terminal.layout.bottom_sizes': [60, 40],
   'ui.composer.input_history': [],
   'ui.chat.last_used_assistant_id': null,
   'ui.chat.last_used_topic_id': null,
