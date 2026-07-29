@@ -31,7 +31,21 @@ vi.mock('@cherrystudio/ui', () => ({
   ),
   NormalTooltip: ({ children }: { children: React.ReactNode }) => children,
   ResizableHandle: () => <div data-testid="resize-handle" />,
-  ResizablePanel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ResizablePanel: ({
+    children,
+    defaultSize,
+    id,
+    minSize
+  }: {
+    children: React.ReactNode
+    defaultSize?: number | string
+    id?: string
+    minSize?: number | string
+  }) => (
+    <div data-default-size={String(defaultSize ?? '')} data-min-size={String(minSize ?? '')} data-testid={id}>
+      {children}
+    </div>
+  ),
   ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
 }))
 
@@ -52,6 +66,8 @@ describe('TerminalWorkspaceLayout', () => {
     expect(screen.getByTestId('terminal-workspace-tree')).toBeInTheDocument()
     expect(screen.getByTestId('terminal-workspace-terminal')).toBeInTheDocument()
     expect(screen.getByTestId('terminal-workspace-preview')).toBeInTheDocument()
+    expect(screen.getByTestId('primary')).toHaveAttribute('data-default-size', '60%')
+    expect(screen.getByTestId('secondary')).toHaveAttribute('data-min-size', '20%')
   })
 
   it('shows the terminal above the preview in bottom mode', () => {

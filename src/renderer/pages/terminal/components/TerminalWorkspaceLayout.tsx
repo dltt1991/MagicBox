@@ -32,6 +32,10 @@ function isLayoutMode(value: unknown): value is TerminalWorkspaceLayoutMode {
   return value === 'right' || value === 'bottom' || value === 'terminal-maximized' || value === 'preview-maximized'
 }
 
+function toPercentSize(size: number): string {
+  return `${size}%`
+}
+
 export function TerminalWorkspaceLayout({ fileTree, terminal, preview }: TerminalWorkspaceLayoutProps) {
   const { t } = useTranslation()
   const [storedMode, setStoredMode] = usePersistCache('terminal.layout.mode')
@@ -64,11 +68,17 @@ export function TerminalWorkspaceLayout({ fileTree, terminal, preview }: Termina
           if (mode === 'right') setRightSizes(nextSizes)
           else setBottomSizes(nextSizes)
         }}>
-        <ResizablePanel defaultSize={(mode === 'right' ? rightSizes : bottomSizes)[0]} id="primary" minSize={25}>
+        <ResizablePanel
+          defaultSize={toPercentSize((mode === 'right' ? rightSizes : bottomSizes)[0])}
+          id="primary"
+          minSize="25%">
           {terminalPane}
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={(mode === 'right' ? rightSizes : bottomSizes)[1]} id="secondary" minSize={20}>
+        <ResizablePanel
+          defaultSize={toPercentSize((mode === 'right' ? rightSizes : bottomSizes)[1])}
+          id="secondary"
+          minSize="20%">
           {previewPane}
         </ResizablePanel>
       </ResizablePanelGroup>
