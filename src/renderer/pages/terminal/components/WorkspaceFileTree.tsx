@@ -1,7 +1,8 @@
 import { EmptyState } from '@cherrystudio/ui'
 import { cn } from '@cherrystudio/ui/lib/utils'
+import { Icon } from '@iconify/react'
 import { useDirectoryTree } from '@renderer/hooks/useDirectoryTree'
-import { File, Folder } from 'lucide-react'
+import { getFileIconName } from '@renderer/utils/fileIconName'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -15,6 +16,8 @@ import {
 
 const TERMINAL_PATH_DRAG_MIME_TYPE = 'application/x-cherry-terminal-path'
 const LIST_COLUMN_CLASS = 'grid-cols-[minmax(10rem,1fr)_8.5rem_5.5rem]'
+const MATERIAL_ICON_PREFIX = 'material-icon-theme:'
+const ICON_SIZE_PX = 16
 
 export interface WorkspaceFileTreeProps {
   rootPath: string | null
@@ -43,11 +46,20 @@ function formatTime(mtime: number): string {
   return new Date(mtime).toLocaleString()
 }
 
-function WorkspaceItemIcon({ kind }: { kind: WorkspaceTreeItem['kind'] }) {
-  return kind === 'directory' ? (
-    <Folder className="size-4 shrink-0 text-amber-500" />
-  ) : (
-    <File className="size-4 shrink-0 text-muted-foreground" />
+function isHiddenWorkspaceItem(item: WorkspaceTreeItem): boolean {
+  return item.name.startsWith('.')
+}
+
+function WorkspaceItemIcon({ item }: { item: WorkspaceTreeItem }) {
+  const iconName = item.kind === 'directory' ? 'folder-base' : getFileIconName(item.path)
+
+  return (
+    <Icon
+      className="size-4 shrink-0"
+      height={ICON_SIZE_PX}
+      icon={`${MATERIAL_ICON_PREFIX}${iconName}`}
+      width={ICON_SIZE_PX}
+    />
   )
 }
 
@@ -113,45 +125,51 @@ function WorkspaceFileTreeContent({
     return <EmptyState className="h-full" title={t('terminal.workspace.tree.no_files')} />
   }
 
-  const renderItem = (item: WorkspaceTreeItem, className?: string) => (
-    <button
-      aria-label={item.name}
-      className={cn(
-        'min-w-0 rounded-md text-left text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
-        viewMode === 'list' && 'w-full',
-        selectedPath === item.path && 'bg-accent text-accent-foreground',
-        className
-      )}
-      data-list-columns={viewMode === 'list' ? 'workspace-file-list' : undefined}
-      data-kind={item.kind}
-      data-testid="workspace-item"
-      draggable
-      key={item.id}
-      onClick={() => onSelectPath(item.path, item.kind)}
-      onDragStart={(event) => {
-        event.dataTransfer.setData(TERMINAL_PATH_DRAG_MIME_TYPE, JSON.stringify({ path: item.path }))
-      }}
-      title={item.path}
-      type="button">
-      {viewMode === 'icons' ? (
-        <span className="flex min-h-24 flex-col items-center justify-center gap-2 p-3">
-          <WorkspaceItemIcon kind={item.kind} />
-          <span className="line-clamp-2 w-full break-words text-center text-xs">{item.name}</span>
-        </span>
-      ) : (
-        <span className={cn('grid min-h-8 items-center gap-2 px-2', LIST_COLUMN_CLASS)}>
-          <span className="flex min-w-0 items-center gap-2">
-            <WorkspaceItemIcon kind={item.kind} />
-            <span className="truncate">{item.name}</span>
+  const renderItem = (item: WorkspaceTreeItem, className?: string) => {
+    const isHidden = isHiddenWorkspaceItem(item)
+
+    return (
+      <button
+        aria-label={item.name}
+        className={cn(
+          'min-w-0 rounded-md text-left text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
+          viewMode === 'list' && 'w-full',
+          selectedPath === item.path && 'bg-accent text-accent-foreground',
+          isHidden && 'opacity-60',
+          className
+        )}
+        data-hidden={isHidden ? 'true' : undefined}
+        data-kind={item.kind}
+        data-list-columns={viewMode === 'list' ? 'workspace-file-list' : undefined}
+        data-testid="workspace-item"
+        draggable
+        key={item.id}
+        onClick={() => onSelectPath(item.path, item.kind)}
+        onDragStart={(event) => {
+          event.dataTransfer.setData(TERMINAL_PATH_DRAG_MIME_TYPE, JSON.stringify({ path: item.path }))
+        }}
+        title={item.path}
+        type="button">
+        {viewMode === 'icons' ? (
+          <span className="flex min-h-24 flex-col items-center justify-center gap-2 p-3">
+            <WorkspaceItemIcon item={item} />
+            <span className="line-clamp-2 w-full break-words text-center text-xs">{item.name}</span>
           </span>
-          <span className="truncate text-muted-foreground text-xs">{formatTime(item.mtime)}</span>
-          <span className="truncate text-right text-muted-foreground text-xs">
-            {item.kind === 'directory' ? '-' : formatSize(item.size)}
+        ) : (
+          <span className={cn('grid min-h-8 items-center gap-2 px-2', LIST_COLUMN_CLASS)}>
+            <span className="flex min-w-0 items-center gap-2">
+              <WorkspaceItemIcon item={item} />
+              <span className="truncate">{item.name}</span>
+            </span>
+            <span className="truncate text-muted-foreground text-xs">{formatTime(item.mtime)}</span>
+            <span className="truncate text-right text-muted-foreground text-xs">
+              {item.kind === 'directory' ? '-' : formatSize(item.size)}
+            </span>
           </span>
-        </span>
-      )}
-    </button>
-  )
+        )}
+      </button>
+    )
+  }
 
   return (
     <div className="h-full min-h-0 overflow-auto p-2" data-view-mode={viewMode}>

@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => {
     loadAddon: vi.fn(),
     onData: vi.fn(() => ({ dispose: vi.fn() })),
     open: vi.fn(),
+    options: {},
     registerLinkProvider: vi.fn(() => ({ dispose: vi.fn() })),
     unicode: { activeVersion: '' },
     write: vi.fn()
@@ -44,6 +45,7 @@ afterEach(() => {
   mocks.Terminal.mockClear()
   mocks.terminal.cols = 80
   mocks.terminal.rows = 24
+  mocks.terminal.options = {}
   mocks.terminal.buffer.active.getLine.mockReset()
   mocks.terminal.registerLinkProvider.mockClear()
   mocks.terminal.write.mockReset()
@@ -86,7 +88,7 @@ describe('TerminalPane', () => {
       fireEvent.wheel(screen.getByTestId('terminal-xterm-mount').parentElement!, { ctrlKey: true, deltaY: -100 })
       expect(screen.getByTestId('terminal-xterm-mount')).toHaveStyle({ fontSize: '19px' })
     })
-    expect(mocks.Terminal).toHaveBeenLastCalledWith(expect.objectContaining({ fontSize: 19 }))
+    expect(mocks.terminal.options).toMatchObject({ fontSize: 19 })
   })
 
   it('reports controlled Control plus wheel font changes to the parent', async () => {
@@ -106,6 +108,17 @@ describe('TerminalPane', () => {
     fireEvent.wheel(screen.getByTestId('terminal-xterm-mount').parentElement!, { ctrlKey: true, deltaY: 100 })
 
     expect(onFontSizeChange).toHaveBeenCalledWith(27)
+  })
+
+  it('updates the existing terminal instance when Control plus wheel changes the font size', async () => {
+    render(<TerminalPane buffer={[]} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />)
+
+    fireEvent.wheel(screen.getByTestId('terminal-xterm-mount'), { ctrlKey: true, deltaY: -100 })
+    fireEvent.wheel(screen.getByTestId('terminal-xterm-mount'), { ctrlKey: true, deltaY: -100 })
+
+    await waitFor(() => expect(screen.getByTestId('terminal-xterm-mount')).toHaveStyle({ fontSize: '19px' }))
+    expect(mocks.Terminal).toHaveBeenCalledTimes(1)
+    expect(mocks.terminal.options).toMatchObject({ fontSize: 19 })
   })
 
   it('keeps ordinary wheel events for terminal scrolling', () => {

@@ -8143,6 +8143,7 @@
     "workspace": {
       "choose": "Choose workspace",
       "include_hidden": "Show hidden files",
+      "keep_directory": "Keep directory",
       "layout": {
         "bottom": "Stack panes",
         "files_maximize": "Maximize file manager",

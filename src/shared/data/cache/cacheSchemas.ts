@@ -323,8 +323,10 @@ export type RendererPersistCacheSchema = {
   'terminal.workspace.preview_open': boolean
   'terminal.workspace.preview_sizes': [number, number]
   'terminal.workspace.terminal_visible': boolean
+  'terminal.workspace.keep_directory': boolean
   'terminal.font_size': number
   'terminal.layout.mode': 'right' | 'bottom' | 'terminal-maximized' | 'files-maximized' | 'preview-maximized'
+  'terminal.layout.last_split_mode': 'right' | 'bottom'
   'terminal.layout.right_sizes': [number, number]
   'terminal.layout.bottom_sizes': [number, number]
   // Recent composer inputs shared by chat and agent surfaces (MRU order, capped by the consumer)
@@ -374,8 +376,10 @@ export const DefaultRendererPersistCache: RendererPersistCacheSchema = {
   'terminal.workspace.preview_open': true,
   'terminal.workspace.preview_sizes': [55, 45],
   'terminal.workspace.terminal_visible': true,
+  'terminal.workspace.keep_directory': false,
   'terminal.font_size': 18,
   'terminal.layout.mode': 'right',
+  'terminal.layout.last_split_mode': 'right',
   'terminal.layout.right_sizes': [35, 65],
   'terminal.layout.bottom_sizes': [55, 45],
   'ui.composer.input_history': [],

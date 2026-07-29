@@ -24,8 +24,16 @@ const mocks = vi.hoisted(() => ({
     'terminal.workspace.sort_direction': 'asc' as 'asc' | 'desc',
     'terminal.workspace.preview_open': true,
     'terminal.workspace.preview_sizes': [55, 45] as [number, number],
+    'terminal.workspace.terminal_visible': true,
+    'terminal.workspace.keep_directory': false,
+    'terminal.layout.mode': 'right' as 'right' | 'bottom' | 'terminal-maximized' | 'files-maximized',
     'terminal.font_size': 18
   },
+  sessions: [] as Array<{
+    id: string
+    cwd: string
+    buffer: []
+  }>,
   activeSession: null as {
     id: string
     cwd: string
@@ -52,7 +60,7 @@ vi.mock('@data/hooks/useCache', async () => {
 
 vi.mock('../hooks/useTerminalSessions', () => ({
   useTerminalSessions: () => ({
-    sessions: [],
+    sessions: mocks.sessions,
     activeSessionId: mocks.activeSession?.id ?? null,
     activeSession: mocks.activeSession,
     createSession: mocks.createSession,
@@ -64,7 +72,22 @@ vi.mock('../hooks/useTerminalSessions', () => ({
 }))
 
 vi.mock('../components/TerminalTabs', () => ({
-  TerminalTabs: () => <div data-testid="terminal-tabs" />
+  TerminalTabs: ({
+    actions,
+    onCreate,
+    onHeaderDoubleClick
+  }: {
+    actions?: React.ReactNode
+    onCreate: () => void
+    onHeaderDoubleClick?: () => void
+  }) => (
+    <div data-testid="terminal-tabs" onDoubleClick={onHeaderDoubleClick}>
+      <button onClick={onCreate} type="button">
+        create terminal session
+      </button>
+      {actions}
+    </div>
+  )
 }))
 
 vi.mock('../components/TerminalPane', () => ({
@@ -96,14 +119,21 @@ vi.mock('../components/TerminalPane', () => ({
 vi.mock('../components/TerminalWorkspaceLayout', () => ({
   TerminalWorkspaceLayout: ({
     fileManager,
+    onShowTerminal,
     terminal
   }: {
     fileManager: React.ReactNode | ((actions: React.ReactNode) => React.ReactNode)
-    terminal: React.ReactNode
+    onShowTerminal?: () => void
+    terminal: React.ReactNode | ((actions: React.ReactNode, onHeaderDoubleClick: () => void) => React.ReactNode)
   }) => (
     <div>
       {typeof fileManager === 'function' ? fileManager(<div data-testid="mock-layout-actions" />) : fileManager}
-      {terminal}
+      <button onClick={onShowTerminal} type="button">
+        show terminal
+      </button>
+      {typeof terminal === 'function'
+        ? terminal(<div data-testid="mock-terminal-layout-actions" />, vi.fn())
+        : terminal}
     </div>
   )
 }))
@@ -187,7 +217,11 @@ vi.mock('@cherrystudio/ui', () => ({
   ResizablePanel: ({ children, id }: { children: React.ReactNode; id?: string }) => (
     <div data-testid={id}>{children}</div>
   ),
-  ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ResizablePanelGroup: ({ children, direction }: { children: React.ReactNode; direction?: string }) => (
+    <div data-direction={direction} data-testid="mock-resizable-panel-group">
+      {children}
+    </div>
+  ),
   Select: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   SelectContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   SelectItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -210,7 +244,11 @@ beforeEach(() => {
   mocks.persistValues['terminal.workspace.sort_direction'] = 'asc'
   mocks.persistValues['terminal.workspace.preview_open'] = true
   mocks.persistValues['terminal.workspace.preview_sizes'] = [55, 45]
+  mocks.persistValues['terminal.workspace.terminal_visible'] = true
+  mocks.persistValues['terminal.workspace.keep_directory'] = false
+  mocks.persistValues['terminal.layout.mode'] = 'right'
   mocks.persistValues['terminal.font_size'] = 18
+  mocks.sessions = []
   mocks.activeSession = null
   mocks.safeOpen.mockResolvedValue(undefined)
   mocks.isDirectory.mockResolvedValue(false)
@@ -225,7 +263,7 @@ afterEach(() => {
 })
 
 describe('TerminalPage', () => {
-  it('renders the terminal workspace composition and starts an initial session', () => {
+  it('renders the terminal workspace composition and starts an initial session', async () => {
     render(<TerminalPage />)
 
     expect(screen.getByTestId('terminal-tabs')).toBeInTheDocument()
@@ -235,6 +273,9 @@ describe('TerminalPage', () => {
       screen.getByTestId('mock-layout-actions')
     )
     expect(mocks.createSession).toHaveBeenCalledOnce()
+    await waitFor(() =>
+      expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/Users/alice')
+    )
   })
 
   it('defaults the workspace root to the current user home directory', async () => {
@@ -300,6 +341,74 @@ describe('TerminalPage', () => {
     expect(screen.getByTestId('terminal-pane')).toHaveAttribute('data-cwd', '/home/me')
   })
 
+  it('follows the active terminal session cwd in the file manager when directory keeping is off', () => {
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.activeSession = { id: 'session-1', cwd: '/workspace/app', buffer: [] }
+
+    render(<TerminalPage />)
+
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace/app')
+  })
+
+  it('keeps a user-selected folder when directory keeping is off until the terminal cwd changes', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.activeSession = { id: 'session-1', cwd: '/workspace/app', buffer: [] }
+
+    render(<TerminalPage />)
+
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace/app')
+
+    await user.click(screen.getByRole('button', { name: 'select directory' }))
+
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace/src')
+  })
+
+  it('keeps a chosen workspace when directory keeping is off until the terminal cwd changes', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.activeSession = { id: 'session-1', cwd: '/workspace/app', buffer: [] }
+    window.api.file.selectFolder = vi.fn().mockResolvedValue('/picked/workspace')
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: '选择工作区' }))
+
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/picked/workspace')
+  })
+
+  it('keeps the file manager directory when directory keeping is on', () => {
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.persistValues['terminal.workspace.keep_directory'] = true
+    mocks.activeSession = { id: 'session-1', cwd: '/workspace/app', buffer: [] }
+
+    render(<TerminalPage />)
+
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace')
+  })
+
+  it('toggles directory keeping from the file manager toolbar', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: '目录保持' }))
+
+    expect(mocks.persistValues['terminal.workspace.keep_directory']).toBe(true)
+  })
+
+  it('toggles hidden file display from an icon toolbar button', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: '显示隐藏文件' }))
+
+    expect(mocks.persistValues['terminal.workspace.include_hidden']).toBe(true)
+  })
+
   it('keeps the terminal font size in persisted page state', async () => {
     const user = userEvent.setup()
     mocks.persistValues['terminal.font_size'] = 28
@@ -347,6 +456,18 @@ describe('TerminalPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'close preview' }))
     expect(screen.queryByTestId('mock-workspace-preview-pane')).not.toBeInTheDocument()
+  })
+
+  it('places the file preview to the right of the file tree in bottom split mode', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.persistValues['terminal.layout.mode'] = 'bottom'
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: 'select file' }))
+
+    expect(screen.getByTestId('mock-resizable-panel-group')).toHaveAttribute('data-direction', 'horizontal')
   })
 
   it('shows an error toast when external workspace file opening fails', async () => {
@@ -404,5 +525,52 @@ describe('TerminalPage', () => {
         '/workspace/from-terminal-dir'
       )
     )
+  })
+
+  it('keeps the terminal visible while the initial session is being created', async () => {
+    render(<TerminalPage />)
+
+    expect(mocks.persistValues['terminal.workspace.terminal_visible']).toBe(true)
+    await waitFor(() =>
+      expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/Users/alice')
+    )
+  })
+
+  it('hides the terminal pane after the last terminal session is closed', async () => {
+    const activeSession = { id: 'session-1', cwd: '/workspace', buffer: [] as [] }
+    mocks.sessions = [activeSession]
+    mocks.activeSession = activeSession
+    const { rerender } = render(<TerminalPage />)
+
+    mocks.sessions = []
+    mocks.activeSession = null
+    rerender(<TerminalPage />)
+
+    expect(mocks.persistValues['terminal.workspace.terminal_visible']).toBe(false)
+    await waitFor(() =>
+      expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/Users/alice')
+    )
+  })
+
+  it('creates a terminal session in the current workspace when the terminal pane is shown', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace/project'
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: 'show terminal' }))
+
+    expect(mocks.createSession).toHaveBeenLastCalledWith({ cwd: '/workspace/project' })
+  })
+
+  it('creates new terminal tabs in the current workspace', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace/project'
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: 'create terminal session' }))
+
+    expect(mocks.createSession).toHaveBeenLastCalledWith({ cwd: '/workspace/project' })
   })
 })

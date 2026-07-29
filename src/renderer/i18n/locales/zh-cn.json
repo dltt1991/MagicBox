@@ -8143,6 +8143,7 @@
     "workspace": {
       "choose": "选择工作区",
       "include_hidden": "显示隐藏文件",
+      "keep_directory": "目录保持",
       "layout": {
         "bottom": "上下分栏",
         "files_maximize": "最大化文件管理",

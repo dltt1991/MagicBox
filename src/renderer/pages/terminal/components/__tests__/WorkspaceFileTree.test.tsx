@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom/vitest'
 
+import materialIconThemeIcons from '@iconify-json/material-icon-theme/icons.json'
 import { TreeDir, TreeDirRoot, TreeFile } from '@shared/utils/file'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useEffect } from 'react'
@@ -15,6 +16,10 @@ vi.mock('@cherrystudio/ui', () => ({
   EmptyState: ({ title }: { title?: string }) => <div data-testid="empty-state">{title}</div>
 }))
 
+vi.mock('@iconify/react', () => ({
+  Icon: ({ className, icon }: { className?: string; icon: string }) => <span className={className} data-icon={icon} />
+}))
+
 vi.mock('@renderer/hooks/useDirectoryTree', () => ({
   useDirectoryTree: mocks.useDirectoryTree
 }))
@@ -28,16 +33,21 @@ import { WorkspaceFileTree } from '../WorkspaceFileTree'
 function useMockDirectoryTree(rootPath: string | undefined, options: unknown) {
   mocks.mount(rootPath, options)
   useEffect(() => () => mocks.unmount(rootPath), [rootPath])
-  return { root: createRoot(), version: 0, isLoading: false, error: null }
+  const includeHidden = Boolean((options as { includeHidden?: boolean } | undefined)?.includeHidden)
+  return { root: createRoot(includeHidden), version: 0, isLoading: false, error: null }
 }
 
 vi.mocked(mocks.useDirectoryTree).mockImplementation(useMockDirectoryTree)
 
-function createRoot() {
+function createRoot(includeHidden = false) {
   const root = new TreeDirRoot('/workspace')
   root.attachChild(new TreeDir({ path: '/workspace/src', stats: { birthtime: 10, mtime: 10, size: 64 } }))
   root.attachChild(new TreeFile({ path: '/workspace/README.md', stats: { birthtime: 30, mtime: 30, size: 10 } }))
   root.attachChild(new TreeFile({ path: '/workspace/app.log', stats: { birthtime: 20, mtime: 20, size: 99 } }))
+  if (includeHidden) {
+    root.attachChild(new TreeDir({ path: '/workspace/.config', stats: { birthtime: 40, mtime: 40, size: 64 } }))
+    root.attachChild(new TreeFile({ path: '/workspace/.env', stats: { birthtime: 50, mtime: 50, size: 12 } }))
+  }
   return root
 }
 
@@ -185,5 +195,50 @@ describe('WorkspaceFileTree', () => {
     expect(header).toHaveAttribute('data-list-columns', 'workspace-file-list')
     expect(row).toHaveAttribute('data-list-columns', 'workspace-file-list')
     expect(row).toHaveClass('w-full')
+  })
+
+  it('dims hidden workspace files and folders', () => {
+    render(
+      <WorkspaceFileTree
+        includeHidden={true}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
+    )
+
+    expect(screen.getByRole('button', { name: '.config' })).toHaveAttribute('data-hidden', 'true')
+    expect(screen.getByRole('button', { name: '.config' })).toHaveClass('opacity-60')
+    expect(screen.getByRole('button', { name: '.env' })).toHaveAttribute('data-hidden', 'true')
+    expect(screen.getByRole('button', { name: '.env' })).toHaveClass('opacity-60')
+    expect(screen.getByRole('button', { name: 'src' })).not.toHaveAttribute('data-hidden')
+  })
+
+  it('uses material icons for folders and file types', () => {
+    render(
+      <WorkspaceFileTree
+        includeHidden={true}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
+    )
+
+    expect(materialIconThemeIcons.icons['folder-base']).toBeTruthy()
+    expect(
+      screen.getByRole('button', { name: 'src' }).querySelector('[data-icon="material-icon-theme:folder-base"]')
+    ).toBeTruthy()
+    expect(
+      screen.getByRole('button', { name: 'README.md' }).querySelector('[data-icon="material-icon-theme:readme"]')
+    ).toBeTruthy()
+    expect(
+      screen.getByRole('button', { name: '.env' }).querySelector('[data-icon="material-icon-theme:tune"]')
+    ).toBeTruthy()
   })
 })
