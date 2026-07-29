@@ -32,16 +32,22 @@ vi.mock('../components/TerminalPane', () => ({
   TerminalPane: () => <div data-testid="terminal-pane" />
 }))
 
+vi.mock('@renderer/components/FilePreview', () => ({
+  useOpenFilePreviewTab: () => vi.fn()
+}))
+
 import TerminalPage from '../TerminalPage'
 
 afterEach(cleanup)
 
 describe('TerminalPage', () => {
-  it('renders the terminal host and starts an initial session', () => {
+  it('renders the terminal workspace composition and starts an initial session', () => {
     render(<TerminalPage />)
 
     expect(screen.getByTestId('terminal-tabs')).toBeInTheDocument()
     expect(screen.getByTestId('terminal-pane')).toBeInTheDocument()
+    expect(screen.getByTestId('workspace-file-tree')).toBeInTheDocument()
+    expect(screen.getByTestId('workspace-preview-pane')).toBeInTheDocument()
     expect(mocks.createSession).toHaveBeenCalledOnce()
   })
 })
