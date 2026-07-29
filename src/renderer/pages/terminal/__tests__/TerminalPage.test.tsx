@@ -1,8 +1,8 @@
 import '@testing-library/jest-dom/vitest'
 
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   createSession: vi.fn(),
@@ -11,7 +11,8 @@ const mocks = vi.hoisted(() => ({
   sendInput: vi.fn(),
   setActiveSessionId: vi.fn(),
   ipcRequest: vi.fn(),
-  safeOpen: vi.fn()
+  safeOpen: vi.fn(),
+  toastError: vi.fn()
 }))
 
 vi.mock('../hooks/useTerminalSessions', () => ({
@@ -76,7 +77,15 @@ vi.mock('@renderer/utils/file/safeOpen', () => ({
   safeOpen: mocks.safeOpen
 }))
 
+vi.mock('@renderer/services/toast', () => ({
+  toast: { error: mocks.toastError }
+}))
+
 import TerminalPage from '../TerminalPage'
+
+beforeEach(() => {
+  mocks.safeOpen.mockResolvedValue(undefined)
+})
 
 afterEach(() => {
   cleanup()
@@ -115,5 +124,17 @@ describe('TerminalPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'select directory' }))
     expect(screen.getByTestId('mock-workspace-preview-pane')).toHaveAttribute('data-file-path', '/workspace/run.sh')
+  })
+
+  it('shows an error toast when external workspace file opening fails', async () => {
+    const user = userEvent.setup()
+    mocks.safeOpen.mockRejectedValueOnce(new Error('open failed'))
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: 'select file' }))
+    await user.click(screen.getByRole('button', { name: 'open system' }))
+
+    await waitFor(() => expect(mocks.toastError).toHaveBeenCalledWith('无法打开此文件'))
   })
 })
