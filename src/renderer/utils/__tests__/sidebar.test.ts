@@ -9,6 +9,7 @@ import {
   getSidebarFavoriteItems,
   getSidebarMenuPath,
   getSidebarMiniAppFavoriteIds,
+  migrateTerminalFavoriteDefault,
   removeSidebarMiniApp,
   reorderLaunchpadApps,
   reorderSidebarFavorites,
@@ -67,6 +68,18 @@ describe('sidebar config helpers', () => {
       miniAppFavorite('calculator'),
       appFavorite('agents')
     ])
+  })
+
+  it('migrates existing sidebar favorites by appending terminal once', () => {
+    expect(migrateTerminalFavoriteDefault([appFavorite('assistants'), appFavorite('files')])).toEqual([
+      appFavorite('assistants'),
+      appFavorite('files'),
+      appFavorite('terminal')
+    ])
+  })
+
+  it('does not migrate sidebar favorites that already include terminal', () => {
+    expect(migrateTerminalFavoriteDefault([appFavorite('assistants'), appFavorite('terminal')])).toBeUndefined()
   })
 
   it('does not prepend a required app that is already present at any position', () => {

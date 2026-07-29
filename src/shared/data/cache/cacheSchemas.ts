@@ -311,6 +311,7 @@ export type RendererPersistCacheSchema = {
   'ui.tab.active_tab_id': string
   'ui.global_search.recent_items': CacheValueTypes.GlobalSearchRecentEntry[]
   'ui.sidebar.docked_tabs': CacheValueTypes.Tab[]
+  'ui.sidebar.terminal_favorite_migrated': boolean
   'ui.sidebar.width': number
   'ui.chat.sidebar.width': number
   'ui.chat.artifact_pane.width': number
@@ -354,6 +355,7 @@ export const DefaultRendererPersistCache: RendererPersistCacheSchema = {
   'ui.tab.active_tab_id': '',
   'ui.global_search.recent_items': [],
   'ui.sidebar.docked_tabs': [],
+  'ui.sidebar.terminal_favorite_migrated': false,
   'ui.sidebar.width': 50, // keep in sync with SIDEBAR_ICON_WIDTH (renderer Sidebar/constants.ts)
   'ui.chat.sidebar.width': 275,
   'ui.chat.artifact_pane.width': 460,
