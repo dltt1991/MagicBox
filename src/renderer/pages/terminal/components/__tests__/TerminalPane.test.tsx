@@ -41,6 +41,7 @@ import { TerminalPane } from '../TerminalPane'
 
 afterEach(() => {
   mocks.fit.mockReset()
+  mocks.Terminal.mockClear()
   mocks.terminal.cols = 80
   mocks.terminal.rows = 24
   mocks.terminal.buffer.active.getLine.mockReset()
@@ -58,7 +59,62 @@ describe('TerminalPane', () => {
   it('uses a readable terminal font size by default', () => {
     render(<TerminalPane buffer={[]} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />)
 
-    expect(mocks.Terminal).toHaveBeenCalledWith(expect.objectContaining({ fontSize: 18, lineHeight: 1.2 }))
+    expect(mocks.Terminal).toHaveBeenCalledWith(expect.objectContaining({ fontSize: 18, lineHeight: 1.25 }))
+  })
+
+  it('uses a concrete canvas-safe terminal font family', () => {
+    render(<TerminalPane buffer={[]} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />)
+
+    expect(mocks.Terminal).toHaveBeenCalledWith(
+      expect.objectContaining({ fontFamily: 'Menlo, Monaco, "Courier New", monospace' })
+    )
+  })
+
+  it('applies the readable font size to the xterm mount DOM', () => {
+    render(<TerminalPane buffer={[]} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />)
+
+    expect(screen.getByTestId('terminal-xterm-mount')).toHaveStyle({ fontSize: '18px' })
+  })
+
+  it('zooms the terminal font smoothly with accumulated Control plus wheel deltas', async () => {
+    render(<TerminalPane buffer={[]} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />)
+
+    fireEvent.wheel(screen.getByTestId('terminal-xterm-mount').parentElement!, { ctrlKey: true, deltaY: -100 })
+    expect(screen.getByTestId('terminal-xterm-mount')).toHaveStyle({ fontSize: '18px' })
+
+    await waitFor(() => {
+      fireEvent.wheel(screen.getByTestId('terminal-xterm-mount').parentElement!, { ctrlKey: true, deltaY: -100 })
+      expect(screen.getByTestId('terminal-xterm-mount')).toHaveStyle({ fontSize: '19px' })
+    })
+    expect(mocks.Terminal).toHaveBeenLastCalledWith(expect.objectContaining({ fontSize: 19 }))
+  })
+
+  it('reports controlled Control plus wheel font changes to the parent', async () => {
+    const onFontSizeChange = vi.fn()
+    render(
+      <TerminalPane
+        buffer={[]}
+        fontSize={28}
+        onFontSizeChange={onFontSizeChange}
+        onInput={vi.fn()}
+        onResize={vi.fn()}
+        sessionId="session-1"
+      />
+    )
+
+    fireEvent.wheel(screen.getByTestId('terminal-xterm-mount').parentElement!, { ctrlKey: true, deltaY: 100 })
+    fireEvent.wheel(screen.getByTestId('terminal-xterm-mount').parentElement!, { ctrlKey: true, deltaY: 100 })
+
+    expect(onFontSizeChange).toHaveBeenCalledWith(27)
+  })
+
+  it('keeps ordinary wheel events for terminal scrolling', () => {
+    render(<TerminalPane buffer={[]} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />)
+
+    fireEvent.wheel(screen.getByTestId('terminal-xterm-mount').parentElement!, { ctrlKey: false, deltaY: -100 })
+
+    expect(screen.getByTestId('terminal-xterm-mount')).toHaveStyle({ fontSize: '18px' })
+    expect(mocks.Terminal).toHaveBeenCalledTimes(1)
   })
 
   it('fills the terminal pane with xterm background color', () => {

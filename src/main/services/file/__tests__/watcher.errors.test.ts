@@ -71,6 +71,15 @@ describe('DirectoryWatcher error recovery', () => {
     await watcher.close()
   })
 
+  it('asks chokidar to suppress unreadable child path permission errors', async () => {
+    const createDirectoryWatcher = await loadCreateDirectoryWatcher(false)
+    const watcher = createDirectoryWatcher('/notes' as AbsoluteFilePath)
+
+    expect(mocks.watch.mock.calls[0][1]).toMatchObject({ ignorePermissionErrors: true })
+
+    await watcher.close()
+  })
+
   it('reports EPERM as fatal on non-Windows platforms', async () => {
     const createDirectoryWatcher = await loadCreateDirectoryWatcher(false)
     const watcher = createDirectoryWatcher('/notes' as AbsoluteFilePath)

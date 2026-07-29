@@ -23,7 +23,8 @@ const mocks = vi.hoisted(() => ({
     'terminal.workspace.sort_key': 'name' as 'name' | 'mtime' | 'size',
     'terminal.workspace.sort_direction': 'asc' as 'asc' | 'desc',
     'terminal.workspace.preview_open': true,
-    'terminal.workspace.preview_sizes': [55, 45] as [number, number]
+    'terminal.workspace.preview_sizes': [55, 45] as [number, number],
+    'terminal.font_size': 18
   },
   activeSession: null as {
     id: string
@@ -67,8 +68,21 @@ vi.mock('../components/TerminalTabs', () => ({
 }))
 
 vi.mock('../components/TerminalPane', () => ({
-  TerminalPane: ({ cwd, onPathActivated }: { cwd?: string | null; onPathActivated?: (path: string) => void }) => (
-    <div data-cwd={cwd ?? ''} data-testid="terminal-pane">
+  TerminalPane: ({
+    cwd,
+    fontSize,
+    onFontSizeChange,
+    onPathActivated
+  }: {
+    cwd?: string | null
+    fontSize?: number
+    onFontSizeChange?: (fontSize: number) => void
+    onPathActivated?: (path: string) => void
+  }) => (
+    <div data-cwd={cwd ?? ''} data-font-size={fontSize ?? ''} data-testid="terminal-pane">
+      <button onClick={() => onFontSizeChange?.(30)} type="button">
+        change terminal font
+      </button>
       <button onClick={() => onPathActivated?.('/workspace/from-terminal.txt')} type="button">
         activate terminal file
       </button>
@@ -196,6 +210,7 @@ beforeEach(() => {
   mocks.persistValues['terminal.workspace.sort_direction'] = 'asc'
   mocks.persistValues['terminal.workspace.preview_open'] = true
   mocks.persistValues['terminal.workspace.preview_sizes'] = [55, 45]
+  mocks.persistValues['terminal.font_size'] = 18
   mocks.activeSession = null
   mocks.safeOpen.mockResolvedValue(undefined)
   mocks.isDirectory.mockResolvedValue(false)
@@ -283,6 +298,20 @@ describe('TerminalPage', () => {
     render(<TerminalPage />)
 
     expect(screen.getByTestId('terminal-pane')).toHaveAttribute('data-cwd', '/home/me')
+  })
+
+  it('keeps the terminal font size in persisted page state', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.font_size'] = 28
+
+    render(<TerminalPage />)
+
+    expect(screen.getByTestId('terminal-pane')).toHaveAttribute('data-font-size', '28')
+
+    await user.click(screen.getByRole('button', { name: 'change terminal font' }))
+
+    expect(mocks.persistValues['terminal.font_size']).toBe(30)
+    expect(screen.getByTestId('terminal-pane')).toHaveAttribute('data-font-size', '30')
   })
 
   it('opens workspace files through the shared safe-open helper', async () => {
