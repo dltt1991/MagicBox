@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react'
+import { fireEvent, render, waitFor } from '@testing-library/react'
 import type { ILinkProvider } from '@xterm/xterm'
 import { afterEach, describe, expect, it, type Mock, vi } from 'vitest'
 
@@ -41,6 +41,8 @@ import { TerminalPane } from '../TerminalPane'
 
 afterEach(() => {
   mocks.fit.mockReset()
+  mocks.terminal.cols = 80
+  mocks.terminal.rows = 24
   mocks.terminal.buffer.active.getLine.mockReset()
   mocks.terminal.registerLinkProvider.mockClear()
   mocks.terminal.write.mockReset()
@@ -51,6 +53,27 @@ describe('TerminalPane', () => {
     render(<TerminalPane buffer={[]} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />)
 
     expect(mocks.Terminal).toHaveBeenCalledWith(expect.objectContaining({ allowProposedApi: true }))
+  })
+
+  it('opens xterm inside a stable inner mount element', () => {
+    const { container } = render(
+      <TerminalPane buffer={[]} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />
+    )
+    const mount = container.querySelector('[data-testid="terminal-xterm-mount"]')
+
+    expect(mount).not.toBeNull()
+    expect(mocks.terminal.open).toHaveBeenCalledWith(mount)
+  })
+
+  it('does not report zero-sized terminal measurements to the session', async () => {
+    const onResize = vi.fn()
+    mocks.terminal.cols = 0
+    mocks.terminal.rows = 0
+
+    render(<TerminalPane buffer={[]} onInput={vi.fn()} onResize={onResize} sessionId="session-1" />)
+
+    await waitFor(() => expect(mocks.fit).toHaveBeenCalled())
+    expect(onResize).not.toHaveBeenCalled()
   })
 
   it('writes new output after the session buffer reaches its cap', () => {

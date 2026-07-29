@@ -317,7 +317,12 @@ export type RendererPersistCacheSchema = {
   'ui.chat.artifact_pane.width': number
   'terminal.workspace.root': string | null
   'terminal.workspace.include_hidden': boolean
-  'terminal.layout.mode': 'right' | 'bottom' | 'terminal-maximized' | 'preview-maximized'
+  'terminal.workspace.view_mode': 'list' | 'icons'
+  'terminal.workspace.sort_key': 'name' | 'mtime' | 'size'
+  'terminal.workspace.sort_direction': 'asc' | 'desc'
+  'terminal.workspace.preview_open': boolean
+  'terminal.workspace.preview_sizes': [number, number]
+  'terminal.layout.mode': 'right' | 'bottom' | 'terminal-maximized' | 'files-maximized' | 'preview-maximized'
   'terminal.layout.right_sizes': [number, number]
   'terminal.layout.bottom_sizes': [number, number]
   // Recent composer inputs shared by chat and agent surfaces (MRU order, capped by the consumer)
@@ -361,9 +366,14 @@ export const DefaultRendererPersistCache: RendererPersistCacheSchema = {
   'ui.chat.artifact_pane.width': 460,
   'terminal.workspace.root': null,
   'terminal.workspace.include_hidden': false,
+  'terminal.workspace.view_mode': 'list',
+  'terminal.workspace.sort_key': 'name',
+  'terminal.workspace.sort_direction': 'asc',
+  'terminal.workspace.preview_open': true,
+  'terminal.workspace.preview_sizes': [55, 45],
   'terminal.layout.mode': 'right',
-  'terminal.layout.right_sizes': [60, 40],
-  'terminal.layout.bottom_sizes': [60, 40],
+  'terminal.layout.right_sizes': [35, 65],
+  'terminal.layout.bottom_sizes': [55, 45],
   'ui.composer.input_history': [],
   'ui.chat.last_used_assistant_id': null,
   'ui.chat.last_used_topic_id': null,

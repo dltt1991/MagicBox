@@ -1,15 +1,15 @@
 import { Button, NormalTooltip, ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@cherrystudio/ui'
 import { usePersistCache } from '@data/hooks/useCache'
-import { Maximize2, Minimize2, PanelBottom, PanelRight } from 'lucide-react'
+import { Files, Maximize2, Minimize2, PanelBottom, PanelRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
-export type TerminalWorkspaceLayoutMode = 'right' | 'bottom' | 'terminal-maximized' | 'preview-maximized'
+export type TerminalWorkspaceLayoutMode = 'right' | 'bottom' | 'terminal-maximized' | 'files-maximized'
+type StoredTerminalWorkspaceLayoutMode = TerminalWorkspaceLayoutMode | 'preview-maximized'
 
 interface TerminalWorkspaceLayoutProps {
-  fileTree: ReactNode
+  fileManager: ReactNode
   terminal: ReactNode
-  preview: ReactNode
 }
 
 interface LayoutActionProps {
@@ -28,58 +28,63 @@ function LayoutAction({ label, onClick, children }: LayoutActionProps) {
   )
 }
 
-function isLayoutMode(value: unknown): value is TerminalWorkspaceLayoutMode {
-  return value === 'right' || value === 'bottom' || value === 'terminal-maximized' || value === 'preview-maximized'
+function normalizeLayoutMode(value: unknown): TerminalWorkspaceLayoutMode {
+  if (value === 'preview-maximized') return 'files-maximized'
+  if (value === 'right' || value === 'bottom' || value === 'terminal-maximized' || value === 'files-maximized') {
+    return value
+  }
+  return 'right'
 }
 
 function toPercentSize(size: number): string {
   return `${size}%`
 }
 
-export function TerminalWorkspaceLayout({ fileTree, terminal, preview }: TerminalWorkspaceLayoutProps) {
+export function TerminalWorkspaceLayout({ fileManager, terminal }: TerminalWorkspaceLayoutProps) {
   const { t } = useTranslation()
   const [storedMode, setStoredMode] = usePersistCache('terminal.layout.mode')
   const [rightSizes, setRightSizes] = usePersistCache('terminal.layout.right_sizes')
   const [bottomSizes, setBottomSizes] = usePersistCache('terminal.layout.bottom_sizes')
-  const mode = isLayoutMode(storedMode) ? storedMode : 'right'
-  const setMode = (nextMode: TerminalWorkspaceLayoutMode) => setStoredMode(nextMode)
+  const mode = normalizeLayoutMode(storedMode)
+  const setMode = (nextMode: TerminalWorkspaceLayoutMode) =>
+    setStoredMode(nextMode as StoredTerminalWorkspaceLayoutMode)
 
   const terminalPane = (
     <section className="flex min-w-0 flex-1 flex-col" data-testid="terminal-workspace-terminal">
       {terminal}
     </section>
   )
-  const previewPane = (
-    <aside className="min-h-0 min-w-0" data-testid="terminal-workspace-preview">
-      {preview}
+  const fileManagerPane = (
+    <aside className="flex min-h-0 min-w-0 flex-col" data-testid="terminal-workspace-file-manager">
+      {fileManager}
     </aside>
   )
 
   const layout =
     mode === 'terminal-maximized' ? (
       terminalPane
-    ) : mode === 'preview-maximized' ? (
-      previewPane
+    ) : mode === 'files-maximized' ? (
+      fileManagerPane
     ) : (
       <ResizablePanelGroup
         direction={mode === 'right' ? 'horizontal' : 'vertical'}
         onLayoutChanged={(sizes) => {
-          const nextSizes: [number, number] = [sizes.primary ?? 60, sizes.secondary ?? 40]
+          const nextSizes: [number, number] = [sizes.primary ?? 35, sizes.secondary ?? 65]
           if (mode === 'right') setRightSizes(nextSizes)
           else setBottomSizes(nextSizes)
         }}>
         <ResizablePanel
           defaultSize={toPercentSize((mode === 'right' ? rightSizes : bottomSizes)[0])}
           id="primary"
-          minSize="25%">
-          {terminalPane}
+          minSize="20%">
+          {fileManagerPane}
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel
           defaultSize={toPercentSize((mode === 'right' ? rightSizes : bottomSizes)[1])}
           id="secondary"
-          minSize="20%">
-          {previewPane}
+          minSize="30%">
+          {terminalPane}
         </ResizablePanel>
       </ResizablePanelGroup>
     )
@@ -101,21 +106,16 @@ export function TerminalWorkspaceLayout({ fileTree, terminal, preview }: Termina
           onClick={() => setMode('terminal-maximized')}>
           <Maximize2 />
         </LayoutAction>
-        <LayoutAction
-          label={t('terminal.workspace.layout.preview_maximize')}
-          onClick={() => setMode('preview-maximized')}>
-          <Maximize2 />
+        <LayoutAction label={t('terminal.workspace.layout.files_maximize')} onClick={() => setMode('files-maximized')}>
+          <Files />
         </LayoutAction>
-        {(mode === 'terminal-maximized' || mode === 'preview-maximized') && (
+        {(mode === 'terminal-maximized' || mode === 'files-maximized') && (
           <LayoutAction label={t('terminal.workspace.layout.restore')} onClick={() => setMode('right')}>
             <Minimize2 />
           </LayoutAction>
         )}
       </div>
       <div className="flex min-h-0 flex-1">
-        <aside className="flex w-64 min-w-56 flex-col border-border border-r" data-testid="terminal-workspace-tree">
-          {fileTree}
-        </aside>
         <div className="flex min-w-0 flex-1">{layout}</div>
       </div>
     </div>

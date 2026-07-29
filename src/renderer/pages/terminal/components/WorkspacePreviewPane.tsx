@@ -1,7 +1,7 @@
 import { Button, EmptyState, NormalTooltip } from '@cherrystudio/ui'
 import { FilePreview } from '@renderer/components/FilePreview'
 import { getFilePreviewFileName, normalizeFilePreviewPath } from '@renderer/utils/filePreview'
-import { Copy, FolderOpen, MonitorUp, SquareArrowOutUpRight } from 'lucide-react'
+import { Copy, FolderOpen, MonitorUp, SquareArrowOutUpRight, X } from 'lucide-react'
 import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -11,6 +11,7 @@ export interface WorkspacePreviewPaneProps {
   onShowInFolder: (filePath: string) => void
   onOpenSystem: (filePath: string) => void
   onCopyPath: (filePath: string) => void
+  onClose: () => void
 }
 
 interface PreviewActionProps {
@@ -32,6 +33,7 @@ function PreviewAction({ label, onClick, children }: PreviewActionProps) {
 export function WorkspacePreviewPane({
   filePath,
   onCopyPath,
+  onClose,
   onOpenInNewTab,
   onOpenSystem,
   onShowInFolder
@@ -76,6 +78,9 @@ export function WorkspacePreviewPane({
             </PreviewAction>
             <PreviewAction label={t('terminal.workspace.preview.copy_path')} onClick={() => onCopyPath(normalizedPath)}>
               <Copy />
+            </PreviewAction>
+            <PreviewAction label={t('terminal.workspace.preview.close')} onClick={onClose}>
+              <X />
             </PreviewAction>
           </div>
         </>

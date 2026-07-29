@@ -8144,25 +8144,39 @@
       "choose": "Choose workspace",
       "include_hidden": "Show hidden files",
       "layout": {
-        "bottom": "Dock preview below terminal",
-        "preview_maximize": "Maximize preview",
+        "bottom": "Stack panes",
+        "files_maximize": "Maximize file manager",
+        "preview_maximize": "Maximize file manager",
         "restore": "Restore split layout",
-        "right": "Dock preview right of terminal",
+        "right": "Side-by-side panes",
         "terminal_maximize": "Maximize terminal"
       },
       "no_root": "No workspace selected",
       "preview": {
+        "close": "Close preview",
         "copy_path": "Copy path",
         "empty": "Select a file to preview",
         "open_in_new_tab": "Open in new tab",
         "open_system": "Open in system app",
         "show_in_folder": "Show in folder"
       },
+      "sort": {
+        "asc": "Ascending",
+        "desc": "Descending",
+        "label": "Sort by",
+        "mtime": "Time",
+        "name": "Name",
+        "size": "Size"
+      },
       "tree": {
         "empty": "Choose a workspace to browse files",
         "error": "Unable to load workspace files",
         "loading": "Loading workspace files",
         "no_files": "No files found"
+      },
+      "view": {
+        "icons": "Icon view",
+        "list": "List view"
       }
     }
   },
