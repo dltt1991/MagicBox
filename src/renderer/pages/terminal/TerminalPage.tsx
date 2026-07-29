@@ -18,6 +18,10 @@ import { WorkspaceFileTree } from './components/WorkspaceFileTree'
 import { WorkspacePreviewPane } from './components/WorkspacePreviewPane'
 import { useTerminalSessions } from './hooks/useTerminalSessions'
 
+function isPathInsideRoot(path: string, root: string): boolean {
+  return path === root || path.startsWith(`${root}/`) || path.startsWith(`${root}\\`)
+}
+
 export default function TerminalPage() {
   const { t } = useTranslation()
   const [workspaceRoot, setWorkspaceRoot] = usePersistCache('terminal.workspace.root')
@@ -48,17 +52,26 @@ export default function TerminalPage() {
     setActiveFilePath(null)
   }, [setWorkspaceRoot])
 
-  const activateTerminalPath = useCallback(async (path: string) => {
-    setSelectedWorkspacePath(path)
+  const activateTerminalPath = useCallback(
+    async (path: string) => {
+      setSelectedWorkspacePath(path)
 
-    try {
-      if (await window.api.file.isDirectory(path)) return
-    } catch {
-      // Let FilePreview render its invalid-path state when a parsed terminal path no longer exists.
-    }
+      try {
+        if (await window.api.file.isDirectory(path)) {
+          if (!workspaceRoot || !isPathInsideRoot(path, workspaceRoot)) {
+            setWorkspaceRoot(path)
+            setSelectedWorkspacePath(null)
+          }
+          return
+        }
+      } catch {
+        // Let FilePreview render its invalid-path state when a parsed terminal path no longer exists.
+      }
 
-    setActiveFilePath(path)
-  }, [])
+      setActiveFilePath(path)
+    },
+    [setWorkspaceRoot, workspaceRoot]
+  )
 
   return (
     <main className="flex h-full min-h-0 flex-1 flex-col bg-background">
@@ -110,7 +123,7 @@ export default function TerminalPage() {
             />
             <TerminalPane
               buffer={activeSession?.buffer ?? []}
-              cwd={workspaceRoot}
+              cwd={activeSession?.cwd ?? workspaceRoot}
               key={activeSessionId ?? 'empty'}
               onInput={(data) => {
                 if (activeSessionId) void sendInput(activeSessionId, data)

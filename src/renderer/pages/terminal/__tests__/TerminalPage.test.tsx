@@ -18,7 +18,12 @@ const mocks = vi.hoisted(() => ({
   persistValues: {
     'terminal.workspace.root': null as string | null,
     'terminal.workspace.include_hidden': false
-  }
+  },
+  activeSession: null as {
+    id: string
+    cwd: string
+    buffer: []
+  } | null
 }))
 
 vi.mock('@data/hooks/useCache', async () => {
@@ -35,8 +40,8 @@ vi.mock('@data/hooks/useCache', async () => {
 vi.mock('../hooks/useTerminalSessions', () => ({
   useTerminalSessions: () => ({
     sessions: [],
-    activeSessionId: null,
-    activeSession: null,
+    activeSessionId: mocks.activeSession?.id ?? null,
+    activeSession: mocks.activeSession,
     createSession: mocks.createSession,
     closeSession: mocks.closeSession,
     resizeSession: mocks.resizeSession,
@@ -130,6 +135,7 @@ import TerminalPage from '../TerminalPage'
 beforeEach(() => {
   mocks.persistValues['terminal.workspace.root'] = null
   mocks.persistValues['terminal.workspace.include_hidden'] = false
+  mocks.activeSession = null
   mocks.safeOpen.mockResolvedValue(undefined)
   mocks.isDirectory.mockResolvedValue(false)
   window.api.file.isDirectory = mocks.isDirectory
@@ -157,6 +163,15 @@ describe('TerminalPage', () => {
     render(<TerminalPage />)
 
     expect(screen.getByTestId('terminal-pane')).toHaveAttribute('data-cwd', '/workspace')
+  })
+
+  it('uses the active terminal session cwd for terminal path links', () => {
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.activeSession = { id: 'session-1', cwd: '/home/me', buffer: [] }
+
+    render(<TerminalPage />)
+
+    expect(screen.getByTestId('terminal-pane')).toHaveAttribute('data-cwd', '/home/me')
   })
 
   it('opens workspace files through the shared safe-open helper', async () => {
@@ -221,5 +236,16 @@ describe('TerminalPage', () => {
     await waitFor(() =>
       expect(screen.getByTestId('mock-workspace-preview-pane')).toHaveAttribute('data-file-path', '/workspace/run.sh')
     )
+  })
+
+  it('sets an activated directory outside the current workspace as the workspace root', async () => {
+    const user = userEvent.setup()
+    mocks.isDirectory.mockResolvedValue(true)
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: 'activate terminal directory' }))
+
+    await waitFor(() => expect(screen.getByText('/workspace/from-terminal-dir')).toBeInTheDocument())
   })
 })
