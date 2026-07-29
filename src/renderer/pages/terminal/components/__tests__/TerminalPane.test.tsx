@@ -47,6 +47,12 @@ afterEach(() => {
 })
 
 describe('TerminalPane', () => {
+  it('allows xterm proposed APIs required by loaded terminal addons', () => {
+    render(<TerminalPane buffer={[]} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />)
+
+    expect(mocks.Terminal).toHaveBeenCalledWith(expect.objectContaining({ allowProposedApi: true }))
+  })
+
   it('writes new output after the session buffer reaches its cap', () => {
     const initialBuffer = Array.from({ length: 200 }, (_, index) => ({ sequence: index, data: String(index) }))
     const { rerender } = render(
