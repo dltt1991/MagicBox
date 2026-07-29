@@ -1,6 +1,7 @@
 import { Button } from '@cherrystudio/ui'
 import type { TerminalSessionMetadata } from '@shared/ipc/schemas/terminal'
 import { Plus, Terminal, X } from 'lucide-react'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 interface TerminalTabsProps {
@@ -9,19 +10,45 @@ interface TerminalTabsProps {
   onCreate: () => void
   onSelect: (id: string) => void
   onClose: (id: string) => void
+  actions?: ReactNode
+  onHeaderDoubleClick?: () => void
 }
 
-export function TerminalTabs({ sessions, activeSessionId, onCreate, onSelect, onClose }: TerminalTabsProps) {
+function getTerminalSessionLabel(session: TerminalSessionMetadata, fallback: string): string {
+  if (session.processName) return session.processName
+
+  const { cwd } = session
+  const normalized = cwd.replace(/[\\/]+$/, '')
+  const basename = normalized.split(/[\\/]/).filter(Boolean).at(-1)
+  return basename || fallback
+}
+
+export function TerminalTabs({
+  sessions,
+  activeSessionId,
+  onCreate,
+  onSelect,
+  onClose,
+  actions,
+  onHeaderDoubleClick
+}: TerminalTabsProps) {
   const { t } = useTranslation()
 
   return (
-    <div className="flex h-9 shrink-0 items-center border-border border-b bg-muted/30 px-1 pr-28">
+    <div
+      className="flex h-9 shrink-0 items-center border-border border-b bg-muted/30 px-1"
+      data-testid="terminal-tabs-bar"
+      onDoubleClick={(event) => {
+        if ((event.target as HTMLElement).closest('button')) return
+        onHeaderDoubleClick?.()
+      }}>
       <div
         aria-label={t('terminal.title')}
         className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto"
         role="toolbar">
         {sessions.map((session, index) => {
-          const label = t('terminal.session', { index: index + 1 })
+          const fallbackLabel = t('terminal.session', { index: index + 1 })
+          const label = getTerminalSessionLabel(session, fallbackLabel)
           const isActive = session.id === activeSessionId
 
           return (
@@ -57,16 +84,19 @@ export function TerminalTabs({ sessions, activeSessionId, onCreate, onSelect, on
           )
         })}
       </div>
-      <Button
-        aria-label={t('terminal.new_session')}
-        className="size-7 shrink-0 shadow-none"
-        onClick={onCreate}
-        size="icon-sm"
-        title={t('terminal.new_session')}
-        type="button"
-        variant="ghost">
-        <Plus className="size-4" />
-      </Button>
+      <div className="flex shrink-0 items-center gap-1" data-testid="terminal-tabs-actions">
+        <Button
+          aria-label={t('terminal.new_session')}
+          className="size-7 shrink-0 shadow-none"
+          onClick={onCreate}
+          size="icon-sm"
+          title={t('terminal.new_session')}
+          type="button"
+          variant="ghost">
+          <Plus className="size-4" />
+        </Button>
+        {actions}
+      </div>
     </div>
   )
 }

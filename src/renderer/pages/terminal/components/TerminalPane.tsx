@@ -4,7 +4,7 @@ import { FitAddon } from '@xterm/addon-fit'
 import { Unicode11Addon } from '@xterm/addon-unicode11'
 import { WebglAddon } from '@xterm/addon-webgl'
 import { type ILink, Terminal } from '@xterm/xterm'
-import { useCallback, useEffect, useEffectEvent, useRef, useState, type WheelEvent } from 'react'
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 
 import type { TerminalBufferChunk } from '../hooks/useTerminalSessions'
 import { extractTerminalPathLinks } from '../lib/terminalPathLinks'
@@ -46,8 +46,11 @@ export function TerminalPane({
   fontSize: controlledFontSize,
   onFontSizeChange
 }: TerminalPaneProps) {
+  const containerRef = useRef<HTMLDivElement>(null)
   const mountRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
+  const cwdRef = useRef(cwd)
+  const scheduleFitRef = useRef<(() => void) | null>(null)
   const [uncontrolledFontSize, setUncontrolledFontSize] = useState(TERMINAL_FONT_SIZE)
   const lastWrittenSequenceRef = useRef(-1)
   const wheelDeltaRef = useRef(0)
@@ -57,6 +60,7 @@ export function TerminalPane({
   const terminalFontSize = controlledFontSize ?? uncontrolledFontSize
   const terminalLineHeight = TERMINAL_LINE_HEIGHT
   const terminalFontFamily = TERMINAL_FONT_FAMILY
+  cwdRef.current = cwd
   const updateTerminalFontSize = useCallback(
     (nextFontSize: number) => {
       const clamped = clampTerminalFontSize(nextFontSize)
@@ -66,22 +70,31 @@ export function TerminalPane({
     },
     [controlledFontSize, onFontSizeChange, terminalFontSize]
   )
-  const handleWheel = useCallback(
-    (event: WheelEvent<HTMLDivElement>) => {
+  const handleWheelEvent = useEffectEvent((event: globalThis.WheelEvent) => {
+    if (!event.ctrlKey) return
+    event.preventDefault()
+
+    wheelDeltaRef.current += event.deltaY
+    const steps = Math.trunc(Math.abs(wheelDeltaRef.current) / TERMINAL_FONT_WHEEL_DELTA)
+    if (steps === 0) return
+
+    const direction = wheelDeltaRef.current < 0 ? 1 : -1
+    const consumed = Math.sign(wheelDeltaRef.current) * steps * TERMINAL_FONT_WHEEL_DELTA
+    wheelDeltaRef.current -= consumed
+    updateTerminalFontSize(terminalFontSize + direction * steps * TERMINAL_FONT_SIZE_STEP)
+  })
+
+  useEffect(() => {
+    const container = containerRef.current
+    if (!container) return
+
+    const handleWheel = (event: globalThis.WheelEvent) => {
       if (!event.ctrlKey) return
-      event.preventDefault()
-
-      wheelDeltaRef.current += event.deltaY
-      const steps = Math.trunc(Math.abs(wheelDeltaRef.current) / TERMINAL_FONT_WHEEL_DELTA)
-      if (steps === 0) return
-
-      const direction = wheelDeltaRef.current < 0 ? 1 : -1
-      const consumed = Math.sign(wheelDeltaRef.current) * steps * TERMINAL_FONT_WHEEL_DELTA
-      wheelDeltaRef.current -= consumed
-      updateTerminalFontSize(terminalFontSize + direction * steps * TERMINAL_FONT_SIZE_STEP)
-    },
-    [terminalFontSize, updateTerminalFontSize]
-  )
+      handleWheelEvent(event)
+    }
+    container.addEventListener('wheel', handleWheel, { passive: false, capture: true })
+    return () => container.removeEventListener('wheel', handleWheel, { capture: true })
+  }, [handleWheelEvent])
 
   useEffect(() => {
     const mount = mountRef.current
@@ -126,6 +139,7 @@ export function TerminalPane({
         terminal.focus()
       })
     }
+    scheduleFitRef.current = scheduleFit
     const inputDisposable = terminal.onData((data) => onInputEvent(data))
     const linkDisposable = terminal.registerLinkProvider({
       provideLinks: (bufferLineNumber, callback) => {
@@ -135,14 +149,16 @@ export function TerminalPane({
           return
         }
 
-        const links = extractTerminalPathLinks(line.translateToString(true), cwd ?? '/').map<ILink>((candidate) => ({
-          range: {
-            start: { x: candidate.startIndex + 1, y: bufferLineNumber },
-            end: { x: candidate.endIndex + 1, y: bufferLineNumber }
-          },
-          text: candidate.text,
-          activate: () => onPathActivatedEvent(candidate.path)
-        }))
+        const links = extractTerminalPathLinks(line.translateToString(true), cwdRef.current ?? '/').map<ILink>(
+          (candidate) => ({
+            range: {
+              start: { x: candidate.startIndex + 1, y: bufferLineNumber },
+              end: { x: candidate.endIndex + 1, y: bufferLineNumber }
+            },
+            text: candidate.text,
+            activate: () => onPathActivatedEvent(candidate.path)
+          })
+        )
         callback(links.length > 0 ? links : undefined)
       }
     })
@@ -157,10 +173,19 @@ export function TerminalPane({
       linkDisposable.dispose()
       terminal.dispose()
       terminalRef.current = null
+      scheduleFitRef.current = null
     }
     // Effect Events always read the latest callbacks without recreating xterm.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cwd, sessionId, terminalFontFamily, terminalFontSize, terminalLineHeight])
+  }, [sessionId])
+
+  useEffect(() => {
+    const terminal = terminalRef.current
+    if (!terminal) return
+
+    terminal.options.fontSize = terminalFontSize
+    scheduleFitRef.current?.()
+  }, [terminalFontSize])
 
   useEffect(() => {
     const terminal = terminalRef.current
@@ -187,7 +212,7 @@ export function TerminalPane({
           // Ignore drops that do not use the terminal path payload.
         }
       }}
-      onWheel={handleWheel}>
+      ref={containerRef}>
       <div
         className="[&_.xterm-viewport]:!h-full h-full min-h-0 w-full overflow-hidden bg-black text-base [&_.xterm-screen]:h-full [&_.xterm-viewport]:bg-black [&_.xterm]:h-full [&_.xterm]:bg-black"
         data-testid="terminal-xterm-mount"

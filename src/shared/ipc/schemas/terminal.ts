@@ -14,6 +14,7 @@ export const TerminalSessionMetadataSchema = z.strictObject({
   id: sessionIdSchema,
   cwd: z.string().min(1),
   shell: z.string().min(1),
+  processName: z.string().min(1).optional(),
   pid: z.number().int().nullable(),
   status: z.enum(['running', 'exited']),
   createdAt: z.number(),

@@ -9,8 +9,7 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
-  Switch
+  SelectValue
 } from '@cherrystudio/ui'
 import { usePersistCache } from '@data/hooks/useCache'
 import { useOpenFilePreviewTab } from '@renderer/components/FilePreview'
@@ -20,9 +19,9 @@ import { safeOpen } from '@renderer/utils/file/safeOpen'
 import { normalizeFilePreviewPath } from '@renderer/utils/filePreview'
 import { isWin } from '@renderer/utils/platform'
 import { createFilePathHandle } from '@shared/utils/file'
-import { ArrowDownAZ, ArrowUpAZ, FolderOpen, Grid2X2, List } from 'lucide-react'
+import { ArrowDownAZ, ArrowUpAZ, Eye, EyeOff, FolderOpen, Grid2X2, List, Pin, PinOff } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { TerminalPane } from './components/TerminalPane'
@@ -81,12 +80,17 @@ export default function TerminalPage() {
   const [sortDirection, setSortDirection] = usePersistCache('terminal.workspace.sort_direction')
   const [previewOpen, setPreviewOpen] = usePersistCache('terminal.workspace.preview_open')
   const [previewSizes, setPreviewSizes] = usePersistCache('terminal.workspace.preview_sizes')
+  const [, setTerminalVisible] = usePersistCache('terminal.workspace.terminal_visible')
+  const [keepDirectory, setKeepDirectory] = usePersistCache('terminal.workspace.keep_directory')
+  const [workspaceLayoutMode] = usePersistCache('terminal.layout.mode')
   const [terminalFontSize, setTerminalFontSize] = usePersistCache('terminal.font_size')
   const [selectedWorkspacePath, setSelectedWorkspacePath] = useState<string | null>(null)
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null)
   const [defaultRootResolved, setDefaultRootResolved] = useState(false)
   const [isEditingWorkspaceRoot, setIsEditingWorkspaceRoot] = useState(false)
   const [workspaceRootDraft, setWorkspaceRootDraft] = useState(workspaceRoot ?? '')
+  const hasSeenTerminalSessionRef = useRef(false)
+  const lastAutoFollowCwdRef = useRef<string | null>(null)
   const openFilePreviewTab = useOpenFilePreviewTab()
   const {
     activeSession,
@@ -104,6 +108,14 @@ export default function TerminalPage() {
   }, [createSession])
 
   useEffect(() => {
+    if (sessions.length > 0) {
+      hasSeenTerminalSessionRef.current = true
+      return
+    }
+    if (hasSeenTerminalSessionRef.current) setTerminalVisible(false)
+  }, [sessions.length, setTerminalVisible])
+
+  useEffect(() => {
     if (workspaceRoot || defaultRootResolved) return
     setDefaultRootResolved(true)
     void window.api
@@ -119,6 +131,18 @@ export default function TerminalPage() {
   useEffect(() => {
     if (!isEditingWorkspaceRoot) setWorkspaceRootDraft(workspaceRoot ?? '')
   }, [isEditingWorkspaceRoot, workspaceRoot])
+
+  useEffect(() => {
+    if (keepDirectory || !activeSession?.cwd) return
+    if (activeSession.cwd === lastAutoFollowCwdRef.current) return
+
+    lastAutoFollowCwdRef.current = activeSession.cwd
+    if (activeSession.cwd === workspaceRoot) return
+    setWorkspaceRoot(activeSession.cwd)
+    setSelectedWorkspacePath(null)
+    setActiveFilePath(null)
+    setPreviewOpen(false)
+  }, [activeSession?.cwd, keepDirectory, setPreviewOpen, setWorkspaceRoot, workspaceRoot])
 
   const changeWorkspaceRoot = useCallback(
     (path: string) => {
@@ -166,8 +190,15 @@ export default function TerminalPage() {
     [setPreviewOpen, setWorkspaceRoot, workspaceRoot]
   )
 
+  const previewDirection = workspaceLayoutMode === 'bottom' ? 'horizontal' : 'vertical'
   const previewPane = previewOpen && activeFilePath && (
-    <aside className="h-full min-h-0 overflow-hidden border-border border-t" data-testid="workspace-preview-pane">
+    <aside
+      className={
+        previewDirection === 'horizontal'
+          ? 'h-full min-h-0 overflow-hidden border-border border-l'
+          : 'h-full min-h-0 overflow-hidden border-border border-t'
+      }
+      data-testid="workspace-preview-pane">
       <WorkspacePreviewPane
         filePath={activeFilePath}
         onClose={() => setPreviewOpen(false)}
@@ -290,15 +321,32 @@ export default function TerminalPage() {
             {sortDirection === 'asc' ? <ArrowDownAZ /> : <ArrowUpAZ />}
           </Button>
         </NormalTooltip>
-        <label className="ml-auto flex shrink-0 items-center gap-2 text-muted-foreground text-xs">
-          <span>{t('terminal.workspace.include_hidden')}</span>
-          <Switch checked={includeHidden} onCheckedChange={setIncludeHidden} size="sm" />
-        </label>
+        <NormalTooltip content={t('terminal.workspace.include_hidden')}>
+          <Button
+            aria-label={t('terminal.workspace.include_hidden')}
+            className="ml-auto"
+            onClick={() => setIncludeHidden(!includeHidden)}
+            size="icon-sm"
+            title={t('terminal.workspace.include_hidden')}
+            variant={includeHidden ? 'secondary' : 'ghost'}>
+            {includeHidden ? <Eye /> : <EyeOff />}
+          </Button>
+        </NormalTooltip>
+        <NormalTooltip content={t('terminal.workspace.keep_directory')}>
+          <Button
+            aria-label={t('terminal.workspace.keep_directory')}
+            onClick={() => setKeepDirectory(!keepDirectory)}
+            size="icon-sm"
+            title={t('terminal.workspace.keep_directory')}
+            variant={keepDirectory ? 'secondary' : 'ghost'}>
+            {keepDirectory ? <Pin /> : <PinOff />}
+          </Button>
+        </NormalTooltip>
       </div>
       {previewPane ? (
         <ResizablePanelGroup
           className="min-h-0 flex-1 overflow-hidden"
-          direction="vertical"
+          direction={previewDirection}
           onLayoutChanged={(sizes) => setPreviewSizes([sizes.primary ?? 55, sizes.secondary ?? 45])}>
           <ResizablePanel defaultSize={`${previewSizes[0]}%`} id="workspace-files" minSize="25%">
             <div className="h-full min-h-0 overflow-hidden" data-testid="workspace-file-tree">
@@ -356,12 +404,17 @@ export default function TerminalPage() {
     <main className="flex h-full min-h-0 flex-1 flex-col bg-background">
       <TerminalWorkspaceLayout
         fileManager={fileManager}
-        terminal={
+        onShowTerminal={() => {
+          if (sessions.length === 0) void createSession({ cwd: workspaceRoot })
+        }}
+        terminal={(terminalActions, onTerminalHeaderDoubleClick) => (
           <>
             <TerminalTabs
+              actions={terminalActions}
               activeSessionId={activeSessionId}
               onClose={(id) => void closeSession(id)}
-              onCreate={() => void createSession()}
+              onCreate={() => void createSession({ cwd: workspaceRoot })}
+              onHeaderDoubleClick={onTerminalHeaderDoubleClick}
               onSelect={setActiveSessionId}
               sessions={sessions}
             />
@@ -382,7 +435,7 @@ export default function TerminalPage() {
               shellKind={isWin ? 'windows' : 'posix'}
             />
           </>
-        }
+        )}
       />
     </main>
   )

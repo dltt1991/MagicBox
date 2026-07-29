@@ -19,23 +19,37 @@ interface UseTerminalSessionsOptions {
   cwd?: string
 }
 
+interface CreateTerminalSessionOptions {
+  cwd?: string | null
+}
+
 export function useTerminalSessions({ cwd }: UseTerminalSessionsOptions) {
   const [sessions, setSessions] = useState<TerminalSession[]>([])
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const sessionsRef = useRef<TerminalSession[]>([])
+  const sessionSizesRef = useRef(new Map<string, { cols: number; rows: number }>())
 
-  const createSession = useCallback(async () => {
-    const session = await ipcApi.request('terminal.session.create', { cwd, ...DEFAULT_TERMINAL_SIZE })
-    const nextSession = { ...session, buffer: [], nextBufferSequence: 0 }
-    const nextSessions = [...sessionsRef.current.filter(({ id }) => id !== session.id), nextSession]
-    sessionsRef.current = nextSessions
-    setSessions(nextSessions)
-    setActiveSessionId(session.id)
-  }, [cwd])
+  const createSession = useCallback(
+    async (options: CreateTerminalSessionOptions = {}) => {
+      const sessionCwd = options.cwd ?? cwd
+      const session = await ipcApi.request('terminal.session.create', {
+        ...(sessionCwd ? { cwd: sessionCwd } : {}),
+        ...DEFAULT_TERMINAL_SIZE
+      })
+      const nextSession = { ...session, buffer: [], nextBufferSequence: 0 }
+      const nextSessions = [...sessionsRef.current.filter(({ id }) => id !== session.id), nextSession]
+      sessionsRef.current = nextSessions
+      sessionSizesRef.current.set(session.id, DEFAULT_TERMINAL_SIZE)
+      setSessions(nextSessions)
+      setActiveSessionId(session.id)
+    },
+    [cwd]
+  )
 
   const removeSession = useCallback((id: string) => {
     const nextSessions = sessionsRef.current.filter((session) => session.id !== id)
     sessionsRef.current = nextSessions
+    sessionSizesRef.current.delete(id)
     setSessions(nextSessions)
     setActiveSessionId((activeId) => (activeId === id ? (nextSessions.at(-1)?.id ?? null) : activeId))
   }, [])
@@ -53,10 +67,13 @@ export function useTerminalSessions({ cwd }: UseTerminalSessionsOptions) {
     []
   )
 
-  const resizeSession = useCallback(
-    (id: string, size: { cols: number; rows: number }) => ipcApi.request('terminal.session.resize', { id, ...size }),
-    []
-  )
+  const resizeSession = useCallback((id: string, size: { cols: number; rows: number }) => {
+    const previousSize = sessionSizesRef.current.get(id)
+    if (previousSize?.cols === size.cols && previousSize.rows === size.rows) return
+
+    sessionSizesRef.current.set(id, size)
+    return ipcApi.request('terminal.session.resize', { id, ...size })
+  }, [])
 
   useIpcOn('terminal.session.data', ({ id, data }) => {
     const nextSessions = sessionsRef.current.map((session) =>
@@ -74,6 +91,14 @@ export function useTerminalSessions({ cwd }: UseTerminalSessionsOptions) {
 
   useIpcOn('terminal.session.exit', ({ id }) => {
     removeSession(id)
+  })
+
+  useIpcOn('terminal.session.updated', (metadata) => {
+    const nextSessions = sessionsRef.current.map((session) =>
+      session.id === metadata.id ? { ...session, ...metadata } : session
+    )
+    sessionsRef.current = nextSessions
+    setSessions(nextSessions)
   })
 
   return {

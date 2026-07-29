@@ -189,6 +189,7 @@ export function buildPathRegistry() {
     'feature.file_processing.temp': path.join(appTemp, 'file-processing'),
     'feature.preprocess.temp': path.join(appTemp, 'preprocess'),
     'feature.lan_transfer.temp': path.join(appTemp, 'lan-transfer'),
+    'feature.terminal.temp': path.join(appTemp, 'terminal'),
     // FileManager's `withTempCopy` escape hatch parent dir; each call mkdtemps a
     // unique sub-directory under here.
     'feature.files.tempcopy.temp': path.join(appTemp, 'files-tempcopy'),
