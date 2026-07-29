@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type { ILinkProvider } from '@xterm/xterm'
 import { afterEach, describe, expect, it, type Mock, vi } from 'vitest'
 
@@ -58,7 +58,16 @@ describe('TerminalPane', () => {
   it('uses a readable terminal font size by default', () => {
     render(<TerminalPane buffer={[]} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />)
 
-    expect(mocks.Terminal).toHaveBeenCalledWith(expect.objectContaining({ fontSize: 15 }))
+    expect(mocks.Terminal).toHaveBeenCalledWith(expect.objectContaining({ fontSize: 16 }))
+  })
+
+  it('fills the terminal pane with xterm background color', () => {
+    const { container } = render(
+      <TerminalPane buffer={[]} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />
+    )
+
+    expect(container.firstElementChild).toHaveClass('bg-black')
+    expect(screen.getByTestId('terminal-xterm-mount')).toHaveClass('bg-black')
   })
 
   it('opens xterm inside a stable inner mount element', () => {

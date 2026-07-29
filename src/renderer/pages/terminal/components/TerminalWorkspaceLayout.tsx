@@ -1,6 +1,6 @@
 import { Button, NormalTooltip, ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@cherrystudio/ui'
 import { usePersistCache } from '@data/hooks/useCache'
-import { Files, Maximize2, Minimize2, PanelBottom, PanelRight } from 'lucide-react'
+import { Eye, EyeOff, Maximize2, Minimize2, PanelBottom, PanelRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -8,7 +8,7 @@ export type TerminalWorkspaceLayoutMode = 'right' | 'bottom' | 'terminal-maximiz
 type StoredTerminalWorkspaceLayoutMode = TerminalWorkspaceLayoutMode | 'preview-maximized'
 
 interface TerminalWorkspaceLayoutProps {
-  fileManager: ReactNode
+  fileManager: ReactNode | ((actions: ReactNode) => ReactNode)
   terminal: ReactNode
 }
 
@@ -45,18 +45,14 @@ export function TerminalWorkspaceLayout({ fileManager, terminal }: TerminalWorks
   const [storedMode, setStoredMode] = usePersistCache('terminal.layout.mode')
   const [rightSizes, setRightSizes] = usePersistCache('terminal.layout.right_sizes')
   const [bottomSizes, setBottomSizes] = usePersistCache('terminal.layout.bottom_sizes')
+  const [terminalVisible, setTerminalVisible] = usePersistCache('terminal.workspace.terminal_visible')
   const mode = normalizeLayoutMode(storedMode)
+  const isTerminalVisible = terminalVisible !== false
   const setMode = (nextMode: TerminalWorkspaceLayoutMode) =>
     setStoredMode(nextMode as StoredTerminalWorkspaceLayoutMode)
 
   const terminalLayoutActions = (
     <div className="absolute top-1 right-2 z-10 flex h-8 items-center gap-1" data-testid="terminal-pane-layout-actions">
-      <LayoutAction label={t('terminal.workspace.layout.right')} onClick={() => setMode('right')}>
-        <PanelRight />
-      </LayoutAction>
-      <LayoutAction label={t('terminal.workspace.layout.bottom')} onClick={() => setMode('bottom')}>
-        <PanelBottom />
-      </LayoutAction>
       {mode === 'terminal-maximized' ? (
         <LayoutAction label={t('terminal.workspace.layout.restore')} onClick={() => setMode('right')}>
           <Minimize2 />
@@ -71,18 +67,42 @@ export function TerminalWorkspaceLayout({ fileManager, terminal }: TerminalWorks
     </div>
   )
   const fileManagerLayoutActions = (
-    <div className="absolute top-1 right-2 z-10 flex h-8 items-center gap-1" data-testid="file-manager-layout-actions">
+    <div className="flex h-8 shrink-0 items-center gap-1" data-testid="file-manager-layout-actions">
+      <LayoutAction
+        label={t('terminal.workspace.layout.right')}
+        onClick={() => {
+          setTerminalVisible(true)
+          setMode('right')
+        }}>
+        <PanelRight />
+      </LayoutAction>
+      <LayoutAction
+        label={t('terminal.workspace.layout.bottom')}
+        onClick={() => {
+          setTerminalVisible(true)
+          setMode('bottom')
+        }}>
+        <PanelBottom />
+      </LayoutAction>
       {mode === 'files-maximized' ? (
         <LayoutAction label={t('terminal.workspace.layout.restore')} onClick={() => setMode('right')}>
           <Minimize2 />
         </LayoutAction>
       ) : (
         <LayoutAction label={t('terminal.workspace.layout.files_maximize')} onClick={() => setMode('files-maximized')}>
-          <Files />
+          <Maximize2 />
         </LayoutAction>
       )}
+      <LayoutAction
+        label={t(
+          isTerminalVisible ? 'terminal.workspace.layout.hide_terminal' : 'terminal.workspace.layout.show_terminal'
+        )}
+        onClick={() => setTerminalVisible(!isTerminalVisible)}>
+        {isTerminalVisible ? <EyeOff /> : <Eye />}
+      </LayoutAction>
     </div>
   )
+  const fileManagerContent = typeof fileManager === 'function' ? fileManager(fileManagerLayoutActions) : fileManager
   const terminalPane = (
     <section className="relative flex min-w-0 flex-1 flex-col" data-testid="terminal-workspace-terminal">
       {terminalLayoutActions}
@@ -91,44 +111,45 @@ export function TerminalWorkspaceLayout({ fileManager, terminal }: TerminalWorks
   )
   const fileManagerPane = (
     <aside className="relative flex min-h-0 min-w-0 flex-col" data-testid="terminal-workspace-file-manager">
-      {fileManagerLayoutActions}
-      {fileManager}
+      {fileManagerContent}
     </aside>
   )
 
-  const layout =
-    mode === 'terminal-maximized' ? (
-      terminalPane
-    ) : mode === 'files-maximized' ? (
-      fileManagerPane
-    ) : (
-      <ResizablePanelGroup
-        direction={mode === 'right' ? 'horizontal' : 'vertical'}
-        onLayoutChanged={(sizes) => {
-          const nextSizes: [number, number] = [sizes.primary ?? 35, sizes.secondary ?? 65]
-          if (mode === 'right') setRightSizes(nextSizes)
-          else setBottomSizes(nextSizes)
-        }}>
-        <ResizablePanel
-          defaultSize={toPercentSize((mode === 'right' ? rightSizes : bottomSizes)[0])}
-          id="primary"
-          minSize="20%">
-          {fileManagerPane}
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel
-          defaultSize={toPercentSize((mode === 'right' ? rightSizes : bottomSizes)[1])}
-          id="secondary"
-          minSize="30%">
-          {terminalPane}
-        </ResizablePanel>
-      </ResizablePanelGroup>
-    )
+  const layout = !isTerminalVisible ? (
+    fileManagerPane
+  ) : mode === 'terminal-maximized' ? (
+    terminalPane
+  ) : mode === 'files-maximized' ? (
+    fileManagerPane
+  ) : (
+    <ResizablePanelGroup
+      direction={mode === 'right' ? 'horizontal' : 'vertical'}
+      onLayoutChanged={(sizes) => {
+        const nextSizes: [number, number] = [sizes.primary ?? 35, sizes.secondary ?? 65]
+        if (mode === 'right') setRightSizes(nextSizes)
+        else setBottomSizes(nextSizes)
+      }}>
+      <ResizablePanel
+        defaultSize={toPercentSize((mode === 'right' ? rightSizes : bottomSizes)[0])}
+        id="primary"
+        minSize="20%">
+        {fileManagerPane}
+      </ResizablePanel>
+      <ResizableHandle withHandle />
+      <ResizablePanel
+        defaultSize={toPercentSize((mode === 'right' ? rightSizes : bottomSizes)[1])}
+        id="secondary"
+        minSize="30%">
+        {terminalPane}
+      </ResizablePanel>
+    </ResizablePanelGroup>
+  )
 
   return (
     <div
       className="flex h-full min-h-0 flex-1 flex-col"
       data-layout-mode={mode}
+      data-terminal-visible={String(isTerminalVisible)}
       data-testid="terminal-workspace-layout">
       <div className="flex min-h-0 flex-1">
         <div className="flex min-w-0 flex-1">{layout}</div>
