@@ -2,6 +2,7 @@ import { Button, NormalTooltip, Switch } from '@cherrystudio/ui'
 import { usePersistCache } from '@data/hooks/useCache'
 import { useOpenFilePreviewTab } from '@renderer/components/FilePreview'
 import { ipcApi } from '@renderer/ipc'
+import { safeOpen } from '@renderer/utils/file/safeOpen'
 import { normalizeFilePreviewPath } from '@renderer/utils/filePreview'
 import { createFilePathHandle } from '@shared/utils/file'
 import { FolderOpen } from 'lucide-react'
@@ -104,9 +105,7 @@ export default function TerminalPage() {
             filePath={activeFilePath}
             onCopyPath={(filePath) => void navigator.clipboard.writeText(filePath)}
             onOpenInNewTab={(filePath) => openFilePreviewTab(normalizeFilePreviewPath(filePath))}
-            onOpenSystem={(filePath) =>
-              void ipcApi.request('file.open', createFilePathHandle(normalizeFilePreviewPath(filePath)))
-            }
+            onOpenSystem={(filePath) => void safeOpen(createFilePathHandle(normalizeFilePreviewPath(filePath)))}
             onShowInFolder={(filePath) =>
               void ipcApi.request('file.show_in_folder', createFilePathHandle(normalizeFilePreviewPath(filePath)))
             }

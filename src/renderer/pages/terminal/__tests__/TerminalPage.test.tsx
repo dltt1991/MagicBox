@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   sendInput: vi.fn(),
   setActiveSessionId: vi.fn(),
   ipcRequest: vi.fn(),
-  legacyOpenPath: vi.fn()
+  safeOpen: vi.fn()
 }))
 
 vi.mock('../hooks/useTerminalSessions', () => ({
@@ -37,9 +37,14 @@ vi.mock('../components/TerminalPane', () => ({
 
 vi.mock('../components/WorkspaceFileTree', () => ({
   WorkspaceFileTree: ({ onSelectPath }: { onSelectPath: (path: string, kind: 'directory' | 'file') => void }) => (
-    <button onClick={() => onSelectPath('/workspace/run.sh', 'file')} type="button">
-      select file
-    </button>
+    <div>
+      <button onClick={() => onSelectPath('/workspace/run.sh', 'file')} type="button">
+        select file
+      </button>
+      <button onClick={() => onSelectPath('/workspace/src', 'directory')} type="button">
+        select directory
+      </button>
+    </div>
   )
 }))
 
@@ -51,7 +56,7 @@ vi.mock('../components/WorkspacePreviewPane', () => ({
     filePath: string | null
     onOpenSystem: (filePath: string) => void
   }) => (
-    <div data-testid="mock-workspace-preview-pane">
+    <div data-file-path={filePath ?? ''} data-testid="mock-workspace-preview-pane">
       <button disabled={!filePath} onClick={() => filePath && onOpenSystem(filePath)} type="button">
         open system
       </button>
@@ -65,6 +70,10 @@ vi.mock('@renderer/components/FilePreview', () => ({
 
 vi.mock('@renderer/ipc', () => ({
   ipcApi: { request: mocks.ipcRequest }
+}))
+
+vi.mock('@renderer/utils/file/safeOpen', () => ({
+  safeOpen: mocks.safeOpen
 }))
 
 import TerminalPage from '../TerminalPage'
@@ -85,16 +94,26 @@ describe('TerminalPage', () => {
     expect(mocks.createSession).toHaveBeenCalledOnce()
   })
 
-  it('opens workspace files through the guarded file IPC route', async () => {
+  it('opens workspace files through the shared safe-open helper', async () => {
     const user = userEvent.setup()
-    window.api.file.openPath = mocks.legacyOpenPath
 
     render(<TerminalPage />)
 
     await user.click(screen.getByRole('button', { name: 'select file' }))
     await user.click(screen.getByRole('button', { name: 'open system' }))
 
-    expect(mocks.ipcRequest).toHaveBeenCalledWith('file.open', { kind: 'path', path: '/workspace/run.sh' })
-    expect(mocks.legacyOpenPath).not.toHaveBeenCalled()
+    expect(mocks.safeOpen).toHaveBeenCalledWith({ kind: 'path', path: '/workspace/run.sh' })
+  })
+
+  it('keeps the active file preview when a directory row is selected', async () => {
+    const user = userEvent.setup()
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: 'select file' }))
+    expect(screen.getByTestId('mock-workspace-preview-pane')).toHaveAttribute('data-file-path', '/workspace/run.sh')
+
+    await user.click(screen.getByRole('button', { name: 'select directory' }))
+    expect(screen.getByTestId('mock-workspace-preview-pane')).toHaveAttribute('data-file-path', '/workspace/run.sh')
   })
 })
