@@ -6,9 +6,11 @@ import { WebglAddon } from '@xterm/addon-webgl'
 import { Terminal } from '@xterm/xterm'
 import { useEffect, useEffectEvent, useRef } from 'react'
 
+import type { TerminalBufferChunk } from '../hooks/useTerminalSessions'
+
 interface TerminalPaneProps {
   sessionId: string | null
-  buffer: readonly string[]
+  buffer: readonly TerminalBufferChunk[]
   onInput: (data: string) => void
   onResize: (size: { cols: number; rows: number }) => void
 }
@@ -16,7 +18,7 @@ interface TerminalPaneProps {
 export function TerminalPane({ sessionId, buffer, onInput, onResize }: TerminalPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
-  const lastBufferRef = useRef<readonly string[]>([])
+  const lastWrittenSequenceRef = useRef(-1)
   const onInputEvent = useEffectEvent(onInput)
   const onResizeEvent = useEffectEvent(onResize)
 
@@ -44,7 +46,7 @@ export function TerminalPane({ sessionId, buffer, onInput, onResize }: TerminalP
 
     terminal.open(container)
     terminalRef.current = terminal
-    lastBufferRef.current = []
+    lastWrittenSequenceRef.current = -1
 
     const fit = () => {
       fitAddon.fit()
@@ -70,25 +72,12 @@ export function TerminalPane({ sessionId, buffer, onInput, onResize }: TerminalP
     const terminal = terminalRef.current
     if (!terminal) return
 
-    const pendingBuffer = getPendingBufferChunks(lastBufferRef.current, buffer)
+    const pendingBuffer = buffer.filter((chunk) => chunk.sequence > lastWrittenSequenceRef.current)
     if (pendingBuffer.length === 0) return
 
-    terminal.write(pendingBuffer.join(''))
-    lastBufferRef.current = buffer
+    terminal.write(pendingBuffer.map((chunk) => chunk.data).join(''))
+    lastWrittenSequenceRef.current = pendingBuffer.at(-1)?.sequence ?? lastWrittenSequenceRef.current
   }, [buffer])
 
   return <div className="min-h-0 flex-1 overflow-hidden p-2" data-terminal-session-id={sessionId} ref={containerRef} />
-}
-
-function getPendingBufferChunks(previous: readonly string[], next: readonly string[]): readonly string[] {
-  if (next.length > previous.length) return next.slice(previous.length)
-
-  const maxOverlap = Math.min(previous.length, next.length)
-  for (let overlap = maxOverlap; overlap > 0; overlap -= 1) {
-    if (previous.slice(-overlap).every((chunk, index) => chunk === next[index])) {
-      return next.slice(overlap)
-    }
-  }
-
-  return next
 }

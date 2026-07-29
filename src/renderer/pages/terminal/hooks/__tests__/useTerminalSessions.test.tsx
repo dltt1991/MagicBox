@@ -43,9 +43,9 @@ describe('useTerminalSessions', () => {
       cols: 80,
       rows: 24
     })
-    expect(result.current.sessions).toEqual([{ ...session, buffer: [] }])
+    expect(result.current.sessions).toEqual([{ ...session, buffer: [], nextBufferSequence: 0 }])
     expect(result.current.activeSessionId).toBe(session.id)
-    expect(result.current.activeSession).toEqual({ ...session, buffer: [] })
+    expect(result.current.activeSession).toEqual({ ...session, buffer: [], nextBufferSequence: 0 })
   })
 
   it('appends terminal data to the matching session buffer', async () => {
@@ -54,7 +54,12 @@ describe('useTerminalSessions', () => {
 
     act(() => mocks.listeners.get('terminal.session.data')?.({ id: session.id, data: 'hello' }))
 
-    expect(result.current.sessions[0]?.buffer).toEqual(['hello'])
+    act(() => mocks.listeners.get('terminal.session.data')?.({ id: session.id, data: 'hello again' }))
+
+    expect(result.current.sessions[0]?.buffer).toEqual([
+      { sequence: 0, data: 'hello' },
+      { sequence: 1, data: 'hello again' }
+    ])
   })
 
   it('removes a session when its process exits', async () => {
