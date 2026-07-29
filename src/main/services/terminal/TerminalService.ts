@@ -27,6 +27,14 @@ type TerminalSession = {
 export class TerminalService extends BaseService {
   private readonly sessions = new Map<string, TerminalSession>()
 
+  protected override onInit(): void {
+    this.registerDisposable(
+      application.get('WindowManager').onWindowDestroyed((managedWindow) => {
+        this.closeSessionsForWindow(managedWindow.id)
+      })
+    )
+  }
+
   public async createSession(input: CreateTerminalSessionInput): Promise<TerminalSessionMetadata> {
     const cwd = input.cwd ?? application.getPath('sys.home')
     const shell = this.getShell()
@@ -120,5 +128,13 @@ export class TerminalService extends BaseService {
       throw new Error('Terminal session not found')
     }
     return session
+  }
+
+  private closeSessionsForWindow(ownerWindowId: WindowId): void {
+    for (const [id, session] of this.sessions.entries()) {
+      if (session.ownerWindowId !== ownerWindowId) continue
+      if (session.metadata.status === 'running') session.pty.kill()
+      this.sessions.delete(id)
+    }
   }
 }
