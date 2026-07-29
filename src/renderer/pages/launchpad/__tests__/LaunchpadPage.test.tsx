@@ -116,6 +116,7 @@ vi.mock('@renderer/i18n/label', () => ({
       files: 'Files',
       code_tools: 'Code',
       notes: 'Notes',
+      terminal: 'Terminal',
       openclaw: 'OpenClaw'
     })[key]
 }))
@@ -144,6 +145,7 @@ vi.mock('react-i18next', () => ({
           'notes.title': 'Notes',
           'openclaw.title': 'OpenClaw',
           'paintings.title': 'Paintings',
+          'terminal.title': 'Terminal',
           'title.launchpad': 'Launchpad',
           'translate.title': 'Translate'
         }[key] ??

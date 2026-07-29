@@ -821,7 +821,8 @@ export const DefaultPreferences: PreferenceSchemas = {
       { id: 'agents', type: 'app' },
       { id: 'translate', type: 'app' },
       { id: 'paintings', type: 'app' },
-      { id: 'knowledge', type: 'app' }
+      { id: 'knowledge', type: 'app' },
+      { id: 'terminal', type: 'app' }
     ],
     'ui.theme_mode': PreferenceTypes.ThemeMode.system,
     'ui.theme_user.code_font_family': '',

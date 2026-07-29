@@ -40,13 +40,14 @@ describe('DefaultPreferences', () => {
     expect(DefaultPreferences.default['agent.session.display_mode']).toBe(agentSessionDisplayDefault)
   })
 
-  it('defaults sidebar favorites to the canonical five app tabs for new users', () => {
+  it('defaults sidebar favorites to the canonical app tabs for new users', () => {
     const sidebarFavoritesDefault: PreferenceSchemas['default']['ui.sidebar.favorites'] = [
       { id: 'assistants', type: 'app' },
       { id: 'agents', type: 'app' },
       { id: 'translate', type: 'app' },
       { id: 'paintings', type: 'app' },
-      { id: 'knowledge', type: 'app' }
+      { id: 'knowledge', type: 'app' },
+      { id: 'terminal', type: 'app' }
     ]
 
     expect(DefaultPreferences.default['ui.sidebar.favorites']).toEqual(sidebarFavoritesDefault)

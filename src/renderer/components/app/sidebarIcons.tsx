@@ -9,7 +9,8 @@ import {
   MessageSquare,
   MousePointerClick,
   NotepadText,
-  Palette
+  Palette,
+  SquareTerminal
 } from 'lucide-react'
 
 /**
@@ -27,5 +28,6 @@ export const SIDEBAR_ICON_COMPONENTS: Record<SidebarAppId, LucideIcon> = {
   knowledge: FileSearch,
   files: Folder,
   code_tools: Code,
-  notes: NotepadText
+  notes: NotepadText,
+  terminal: SquareTerminal
 }
