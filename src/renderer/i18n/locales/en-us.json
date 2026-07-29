@@ -8135,6 +8135,9 @@
     "pin": "Pin Tab",
     "unpin": "Unpin Tab"
   },
+  "terminal": {
+    "title": "Terminal"
+  },
   "title": {
     "apps": "Apps",
     "chat": "Chat",
@@ -8148,6 +8151,7 @@
     "openclaw": "OpenClaw",
     "paintings": "Paintings",
     "settings": "Settings",
+    "terminal": "Terminal",
     "translate": "Translate",
     "work": "Work"
   },

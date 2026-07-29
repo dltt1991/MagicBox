@@ -1,6 +1,7 @@
 import type { SidebarFavorite, SidebarFavoriteItem } from '@shared/data/preference/preferenceTypes'
 import { describe, expect, it } from 'vitest'
 
+import { getRouteTitleKey } from '../routeTitle'
 import {
   getOrderedLaunchpadApps,
   getOrderedVisibleSidebarFavoriteItems,
@@ -123,6 +124,13 @@ describe('sidebar config helpers', () => {
   it('resolves menu paths and active items with the paintings provider route', () => {
     expect(getSidebarMenuPath('paintings', 'zhipu')).toBe('/app/paintings/zhipu')
     expect(resolveSidebarActiveItem('/app/paintings/zhipu')).toBe('paintings')
+  })
+
+  it('registers the terminal route as a sidebar app', () => {
+    expect(getSidebarMenuPath('terminal', 'mock-provider')).toBe('/app/terminal')
+    expect(resolveSidebarActiveItem('/app/terminal')).toBe('terminal')
+    expect(SIDEBAR_FAVORITE_ORDER).toContain('terminal')
+    expect(getRouteTitleKey('/app/terminal')).toBe('title.terminal')
   })
 
   it('resolves the active item for query-keyed conversation routes', () => {

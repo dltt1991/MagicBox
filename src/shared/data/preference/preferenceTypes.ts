@@ -100,6 +100,7 @@ export const SIDEBAR_FAVORITES = [
   'files',
   'code_tools',
   'notes',
+  'terminal',
   'openclaw'
 ] as const
 
