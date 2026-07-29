@@ -51,46 +51,50 @@ vi.mock('@cherrystudio/ui', () => ({
 
 import { TerminalWorkspaceLayout } from '../TerminalWorkspaceLayout'
 
-function renderLayout(mode: 'right' | 'bottom' | 'terminal-maximized' | 'preview-maximized') {
+function renderLayout(mode: 'right' | 'bottom' | 'terminal-maximized' | 'files-maximized' | 'preview-maximized') {
   cache.mode = mode
-  return render(
-    <TerminalWorkspaceLayout fileTree={<div>tree</div>} preview={<div>preview</div>} terminal={<div>terminal</div>} />
-  )
+  return render(<TerminalWorkspaceLayout fileManager={<div>files</div>} terminal={<div>terminal</div>} />)
 }
 
 describe('TerminalWorkspaceLayout', () => {
-  it('shows the terminal beside the preview in right mode', () => {
+  it('shows the file manager beside the terminal in right mode', () => {
     renderLayout('right')
 
     expect(screen.getByTestId('terminal-workspace-layout')).toHaveAttribute('data-layout-mode', 'right')
-    expect(screen.getByTestId('terminal-workspace-tree')).toBeInTheDocument()
+    expect(screen.getByTestId('terminal-workspace-file-manager')).toBeInTheDocument()
     expect(screen.getByTestId('terminal-workspace-terminal')).toBeInTheDocument()
-    expect(screen.getByTestId('terminal-workspace-preview')).toBeInTheDocument()
     expect(screen.getByTestId('primary')).toHaveAttribute('data-default-size', '60%')
-    expect(screen.getByTestId('secondary')).toHaveAttribute('data-min-size', '20%')
+    expect(screen.getByTestId('secondary')).toHaveAttribute('data-min-size', '30%')
   })
 
-  it('shows the terminal above the preview in bottom mode', () => {
+  it('stacks the file manager and terminal in bottom mode', () => {
     renderLayout('bottom')
 
     expect(screen.getByTestId('terminal-workspace-layout')).toHaveAttribute('data-layout-mode', 'bottom')
+    expect(screen.getByTestId('terminal-workspace-file-manager')).toBeInTheDocument()
     expect(screen.getByTestId('terminal-workspace-terminal')).toBeInTheDocument()
-    expect(screen.getByTestId('terminal-workspace-preview')).toBeInTheDocument()
   })
 
-  it('hides the preview in terminal maximized mode and shows restore', () => {
+  it('hides the file manager in terminal maximized mode and shows restore', () => {
     renderLayout('terminal-maximized')
 
     expect(screen.getByTestId('terminal-workspace-terminal')).toBeInTheDocument()
-    expect(screen.queryByTestId('terminal-workspace-preview')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('terminal-workspace-file-manager')).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'terminal.workspace.layout.restore' })).toBeInTheDocument()
   })
 
-  it('hides the terminal in preview maximized mode and shows restore', () => {
-    renderLayout('preview-maximized')
+  it('hides the terminal in files maximized mode and shows restore', () => {
+    renderLayout('files-maximized')
 
     expect(screen.queryByTestId('terminal-workspace-terminal')).not.toBeInTheDocument()
-    expect(screen.getByTestId('terminal-workspace-preview')).toBeInTheDocument()
+    expect(screen.getByTestId('terminal-workspace-file-manager')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'terminal.workspace.layout.restore' })).toBeInTheDocument()
+  })
+
+  it('maps the legacy preview maximized cache value to files maximized mode', () => {
+    renderLayout('preview-maximized')
+
+    expect(screen.getByTestId('terminal-workspace-layout')).toHaveAttribute('data-layout-mode', 'files-maximized')
+    expect(screen.getByTestId('terminal-workspace-file-manager')).toBeInTheDocument()
   })
 })

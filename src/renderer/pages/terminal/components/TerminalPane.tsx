@@ -31,7 +31,7 @@ export function TerminalPane({
   onPathActivated,
   shellKind = 'posix'
 }: TerminalPaneProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
+  const mountRef = useRef<HTMLDivElement>(null)
   const terminalRef = useRef<Terminal | null>(null)
   const lastWrittenSequenceRef = useRef(-1)
   const onInputEvent = useEffectEvent(onInput)
@@ -39,8 +39,8 @@ export function TerminalPane({
   const onPathActivatedEvent = useEffectEvent((path: string) => onPathActivated?.(path))
 
   useEffect(() => {
-    const container = containerRef.current
-    if (!container || !sessionId) return
+    const mount = mountRef.current
+    if (!mount || !sessionId) return
 
     const terminal = new Terminal({
       allowProposedApi: true,
@@ -61,13 +61,24 @@ export function TerminalPane({
       // Keep xterm's DOM renderer when WebGL is unavailable for this window.
     }
 
-    terminal.open(container)
+    terminal.open(mount)
     terminalRef.current = terminal
     lastWrittenSequenceRef.current = -1
+    let rafId: number | null = null
 
     const fit = () => {
       fitAddon.fit()
-      onResizeEvent({ cols: terminal.cols, rows: terminal.rows })
+      if (terminal.cols > 0 && terminal.rows > 0) {
+        onResizeEvent({ cols: terminal.cols, rows: terminal.rows })
+      }
+    }
+    const scheduleFit = () => {
+      if (rafId !== null) cancelAnimationFrame(rafId)
+      rafId = requestAnimationFrame(() => {
+        rafId = null
+        fit()
+        terminal.focus()
+      })
     }
     const inputDisposable = terminal.onData((data) => onInputEvent(data))
     const linkDisposable = terminal.registerLinkProvider({
@@ -89,12 +100,12 @@ export function TerminalPane({
         callback(links.length > 0 ? links : undefined)
       }
     })
-    const resizeObserver = new ResizeObserver(fit)
-    resizeObserver.observe(container)
-    fit()
-    terminal.focus()
+    const resizeObserver = new ResizeObserver(scheduleFit)
+    resizeObserver.observe(mount)
+    scheduleFit()
 
     return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId)
       resizeObserver.disconnect()
       inputDisposable.dispose()
       linkDisposable.dispose()
@@ -129,8 +140,8 @@ export function TerminalPane({
         } catch {
           // Ignore drops that do not use the terminal path payload.
         }
-      }}
-      ref={containerRef}
-    />
+      }}>
+      <div className="h-full min-h-0 w-full overflow-hidden" data-testid="terminal-xterm-mount" ref={mountRef} />
+    </div>
   )
 }

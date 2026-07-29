@@ -21,34 +21,44 @@ describe('projectWorkspaceTree', () => {
       {
         id: '/workspace/docs',
         kind: 'directory',
+        mtime: 0,
         name: 'docs',
-        path: '/workspace/docs'
+        path: '/workspace/docs',
+        size: 0
       },
       {
         children: [
           {
             id: '/workspace/src/index.ts',
             kind: 'file',
+            mtime: 0,
             name: 'index.ts',
-            path: '/workspace/src/index.ts'
+            path: '/workspace/src/index.ts',
+            size: 0
           }
         ],
         id: '/workspace/src',
         kind: 'directory',
+        mtime: 0,
         name: 'src',
-        path: '/workspace/src'
+        path: '/workspace/src',
+        size: 0
       },
       {
         id: '/workspace/package.json',
         kind: 'file',
+        mtime: 0,
         name: 'package.json',
-        path: '/workspace/package.json'
+        path: '/workspace/package.json',
+        size: 0
       },
       {
         id: '/workspace/README.md',
         kind: 'file',
+        mtime: 0,
         name: 'README.md',
-        path: '/workspace/README.md'
+        path: '/workspace/README.md',
+        size: 0
       }
     ])
   })

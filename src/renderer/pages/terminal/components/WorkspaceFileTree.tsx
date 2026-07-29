@@ -1,10 +1,17 @@
 import { EmptyState } from '@cherrystudio/ui'
-import { FileTree, type FileTreeNode } from '@renderer/components/FileTree'
+import { cn } from '@cherrystudio/ui/lib/utils'
 import { useDirectoryTree } from '@renderer/hooks/useDirectoryTree'
+import { File, Folder } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { projectWorkspaceTree, type WorkspaceTreeItem } from '../lib/workspaceTree'
+import {
+  projectWorkspaceTree,
+  type WorkspaceSortDirection,
+  type WorkspaceSortKey,
+  type WorkspaceTreeItem,
+  type WorkspaceViewMode
+} from '../lib/workspaceTree'
 
 const TERMINAL_PATH_DRAG_MIME_TYPE = 'application/x-cherry-terminal-path'
 
@@ -12,54 +19,82 @@ export interface WorkspaceFileTreeProps {
   rootPath: string | null
   selectedPath: string | null
   includeHidden: boolean
+  viewMode: WorkspaceViewMode
+  sortKey: WorkspaceSortKey
+  sortDirection: WorkspaceSortDirection
   onSelectPath: (path: string, kind: WorkspaceTreeItem['kind']) => void
 }
 
-function toFileTreeNodes(items: WorkspaceTreeItem[]): FileTreeNode[] {
-  return items.map((item) => ({
-    id: item.id,
-    name: item.name,
-    path: item.path,
-    kind: item.kind === 'directory' ? 'folder' : 'file',
-    ...(item.children ? { children: toFileTreeNodes(item.children) } : {})
-  }))
-}
-
-function findWorkspaceTreeItem(items: WorkspaceTreeItem[], path: string): WorkspaceTreeItem | null {
-  for (const item of items) {
-    if (item.path === path) return item
-    const child = item.children ? findWorkspaceTreeItem(item.children, path) : null
-    if (child) return child
+function formatSize(size: number): string {
+  if (size < 1024) return `${size} B`
+  const units = ['KB', 'MB', 'GB', 'TB']
+  let value = size / 1024
+  let index = 0
+  while (value >= 1024 && index < units.length - 1) {
+    value /= 1024
+    index += 1
   }
-  return null
+  return `${value >= 10 ? value.toFixed(0) : value.toFixed(1)} ${units[index]}`
 }
 
-export function WorkspaceFileTree({ rootPath, selectedPath, includeHidden, onSelectPath }: WorkspaceFileTreeProps) {
+function formatTime(mtime: number): string {
+  if (!mtime) return '-'
+  return new Date(mtime).toLocaleString()
+}
+
+function WorkspaceItemIcon({ kind }: { kind: WorkspaceTreeItem['kind'] }) {
+  return kind === 'directory' ? (
+    <Folder className="size-4 shrink-0 text-amber-500" />
+  ) : (
+    <File className="size-4 shrink-0 text-muted-foreground" />
+  )
+}
+
+export function WorkspaceFileTree({
+  rootPath,
+  selectedPath,
+  includeHidden,
+  viewMode,
+  sortKey,
+  sortDirection,
+  onSelectPath
+}: WorkspaceFileTreeProps) {
   return (
     <WorkspaceFileTreeContent
       key={`${rootPath ?? 'empty'}:${includeHidden}`}
       includeHidden={includeHidden}
       onSelectPath={onSelectPath}
       rootPath={rootPath}
+      sortDirection={sortDirection}
+      sortKey={sortKey}
       selectedPath={selectedPath}
+      viewMode={viewMode}
     />
   )
 }
 
-function WorkspaceFileTreeContent({ rootPath, selectedPath, includeHidden, onSelectPath }: WorkspaceFileTreeProps) {
+function WorkspaceFileTreeContent({
+  rootPath,
+  selectedPath,
+  includeHidden,
+  viewMode,
+  sortKey,
+  sortDirection,
+  onSelectPath
+}: WorkspaceFileTreeProps) {
   const { t } = useTranslation()
   const { error, isLoading, root, version } = useDirectoryTree(rootPath ?? undefined, {
     includeHidden,
+    maxDepth: 1,
     respectGitignore: true,
     withStats: true
   })
   const items = useMemo(
-    () => (root ? projectWorkspaceTree(root) : []),
+    () => (root ? projectWorkspaceTree(root, sortKey, sortDirection) : []),
     // useDirectoryTree preserves root identity while applying mutations, so version must invalidate this projection.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [root, version]
+    [root, version, sortKey, sortDirection]
   )
-  const nodes = useMemo(() => toFileTreeNodes(items), [items])
 
   if (!rootPath) {
     return <EmptyState className="h-full" title={t('terminal.workspace.tree.empty')} />
@@ -73,19 +108,61 @@ function WorkspaceFileTreeContent({ rootPath, selectedPath, includeHidden, onSel
     return <EmptyState className="h-full" title={t('terminal.workspace.tree.error')} />
   }
 
+  if (items.length === 0) {
+    return <EmptyState className="h-full" title={t('terminal.workspace.tree.no_files')} />
+  }
+
+  const renderItem = (item: WorkspaceTreeItem, className?: string) => (
+    <button
+      aria-label={item.name}
+      className={cn(
+        'min-w-0 rounded-md text-left text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
+        selectedPath === item.path && 'bg-accent text-accent-foreground',
+        className
+      )}
+      data-kind={item.kind}
+      data-testid="workspace-item"
+      draggable
+      key={item.id}
+      onClick={() => onSelectPath(item.path, item.kind)}
+      onDragStart={(event) => {
+        event.dataTransfer.setData(TERMINAL_PATH_DRAG_MIME_TYPE, JSON.stringify({ path: item.path }))
+      }}
+      title={item.path}
+      type="button">
+      {viewMode === 'icons' ? (
+        <span className="flex min-h-24 flex-col items-center justify-center gap-2 p-3">
+          <WorkspaceItemIcon kind={item.kind} />
+          <span className="line-clamp-2 w-full break-words text-center text-xs">{item.name}</span>
+        </span>
+      ) : (
+        <span className="grid min-h-8 grid-cols-[minmax(0,1fr)_7.5rem_5rem] items-center gap-2 px-2">
+          <span className="flex min-w-0 items-center gap-2">
+            <WorkspaceItemIcon kind={item.kind} />
+            <span className="truncate">{item.name}</span>
+          </span>
+          <span className="truncate text-muted-foreground text-xs">{formatTime(item.mtime)}</span>
+          <span className="truncate text-right text-muted-foreground text-xs">
+            {item.kind === 'directory' ? '-' : formatSize(item.size)}
+          </span>
+        </span>
+      )}
+    </button>
+  )
+
   return (
-    <FileTree
-      emptyState={<EmptyState className="h-full" title={t('terminal.workspace.tree.no_files')} />}
-      nodes={nodes}
-      onDragStart={(node, event) => {
-        event.dataTransfer.setData(TERMINAL_PATH_DRAG_MIME_TYPE, JSON.stringify({ path: node.path }))
-      }}
-      onSelectedChange={(path) => {
-        if (!path) return
-        const item = findWorkspaceTreeItem(items, path)
-        if (item) onSelectPath(path, item.kind)
-      }}
-      selectedId={selectedPath}
-    />
+    <div className="h-full min-h-0 overflow-auto p-2" data-view-mode={viewMode}>
+      {viewMode === 'list' && (
+        <div className="grid h-7 grid-cols-[minmax(0,1fr)_7.5rem_5rem] items-center gap-2 px-2 text-muted-foreground text-xs">
+          <span>{t('terminal.workspace.sort.name')}</span>
+          <span>{t('terminal.workspace.sort.mtime')}</span>
+          <span className="text-right">{t('terminal.workspace.sort.size')}</span>
+        </div>
+      )}
+      <div
+        className={viewMode === 'icons' ? 'grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2' : 'space-y-1'}>
+        {items.map((item) => renderItem(item))}
+      </div>
+    </div>
   )
 }

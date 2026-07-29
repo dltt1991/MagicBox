@@ -43,6 +43,7 @@ describe('WorkspacePreviewPane', () => {
     render(
       <WorkspacePreviewPane
         filePath="/workspace/notes/../README.md"
+        onClose={vi.fn()}
         onCopyPath={vi.fn()}
         onOpenInNewTab={vi.fn()}
         onOpenSystem={vi.fn()}
@@ -58,6 +59,7 @@ describe('WorkspacePreviewPane', () => {
     render(
       <WorkspacePreviewPane
         filePath={null}
+        onClose={vi.fn()}
         onCopyPath={vi.fn()}
         onOpenInNewTab={vi.fn()}
         onOpenSystem={vi.fn()}
@@ -74,10 +76,12 @@ describe('WorkspacePreviewPane', () => {
     const onOpenInNewTab = vi.fn()
     const onOpenSystem = vi.fn()
     const onShowInFolder = vi.fn()
+    const onClose = vi.fn()
 
     render(
       <WorkspacePreviewPane
         filePath="/workspace/notes/../README.md"
+        onClose={onClose}
         onCopyPath={onCopyPath}
         onOpenInNewTab={onOpenInNewTab}
         onOpenSystem={onOpenSystem}
@@ -89,9 +93,11 @@ describe('WorkspacePreviewPane', () => {
     fireEvent.click(screen.getByRole('button', { name: 'terminal.workspace.preview.open_system' }))
     fireEvent.click(screen.getByRole('button', { name: 'terminal.workspace.preview.show_in_folder' }))
     fireEvent.click(screen.getByRole('button', { name: 'terminal.workspace.preview.copy_path' }))
+    fireEvent.click(screen.getByRole('button', { name: 'terminal.workspace.preview.close' }))
 
     for (const callback of [onOpenInNewTab, onOpenSystem, onShowInFolder, onCopyPath]) {
       expect(callback).toHaveBeenCalledWith('/workspace/README.md')
     }
+    expect(onClose).toHaveBeenCalledOnce()
   })
 })

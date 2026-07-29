@@ -1,6 +1,5 @@
 import '@testing-library/jest-dom/vitest'
 
-import type { FileTreeProps } from '@renderer/components/FileTree'
 import { TreeDir, TreeDirRoot, TreeFile } from '@shared/utils/file'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { useEffect } from 'react'
@@ -20,23 +19,6 @@ vi.mock('@renderer/hooks/useDirectoryTree', () => ({
   useDirectoryTree: mocks.useDirectoryTree
 }))
 
-vi.mock('@renderer/components/FileTree', () => ({
-  FileTree: ({ nodes, onDragStart, onSelectedChange, selectedId }: FileTreeProps) => (
-    <div data-selected-id={selectedId ?? ''} data-testid="file-tree">
-      {nodes.map((node) => (
-        <button
-          draggable={Boolean(onDragStart)}
-          key={node.id}
-          onClick={() => onSelectedChange?.(node.id)}
-          onDragStart={(event) => onDragStart?.(node, event)}
-          type="button">
-          {node.name}
-        </button>
-      ))}
-    </div>
-  )
-}))
-
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (key: string) => key })
 }))
@@ -53,8 +35,9 @@ vi.mocked(mocks.useDirectoryTree).mockImplementation(useMockDirectoryTree)
 
 function createRoot() {
   const root = new TreeDirRoot('/workspace')
-  root.attachChild(new TreeDir({ path: '/workspace/src' }))
-  root.attachChild(new TreeFile({ path: '/workspace/README.md' }))
+  root.attachChild(new TreeDir({ path: '/workspace/src', stats: { birthtime: 10, mtime: 10, size: 64 } }))
+  root.attachChild(new TreeFile({ path: '/workspace/README.md', stats: { birthtime: 30, mtime: 30, size: 10 } }))
+  root.attachChild(new TreeFile({ path: '/workspace/app.log', stats: { birthtime: 20, mtime: 20, size: 99 } }))
   return root
 }
 
@@ -66,11 +49,27 @@ afterEach(() => {
 describe('WorkspaceFileTree', () => {
   it('recreates the directory tree when hidden-file visibility changes', () => {
     const { rerender } = render(
-      <WorkspaceFileTree includeHidden={false} onSelectPath={vi.fn()} rootPath="/workspace" selectedPath={null} />
+      <WorkspaceFileTree
+        includeHidden={false}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
     )
 
     rerender(
-      <WorkspaceFileTree includeHidden={true} onSelectPath={vi.fn()} rootPath="/workspace" selectedPath={null} />
+      <WorkspaceFileTree
+        includeHidden={true}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
     )
 
     expect(mocks.useDirectoryTree).toHaveBeenNthCalledWith(
@@ -90,7 +89,15 @@ describe('WorkspaceFileTree', () => {
   it('selects directory rows without opening a preview', () => {
     const onSelectPath = vi.fn()
     render(
-      <WorkspaceFileTree includeHidden={false} onSelectPath={onSelectPath} rootPath="/workspace" selectedPath={null} />
+      <WorkspaceFileTree
+        includeHidden={false}
+        onSelectPath={onSelectPath}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
     )
 
     fireEvent.click(screen.getByRole('button', { name: 'src' }))
@@ -99,7 +106,17 @@ describe('WorkspaceFileTree', () => {
   })
 
   it('sets a terminal path drag payload for workspace rows', () => {
-    render(<WorkspaceFileTree includeHidden={false} onSelectPath={vi.fn()} rootPath="/workspace" selectedPath={null} />)
+    render(
+      <WorkspaceFileTree
+        includeHidden={false}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
+    )
     const setData = vi.fn()
 
     fireEvent.dragStart(screen.getByRole('button', { name: 'src' }), {
@@ -107,5 +124,26 @@ describe('WorkspaceFileTree', () => {
     })
 
     expect(setData).toHaveBeenCalledWith('application/x-cherry-terminal-path', '{"path":"/workspace/src"}')
+  })
+
+  it('renders icon mode and sorts files by size while keeping directories first', () => {
+    render(
+      <WorkspaceFileTree
+        includeHidden={false}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="desc"
+        sortKey="size"
+        viewMode="icons"
+      />
+    )
+
+    expect(screen.getByText('src').closest('[data-view-mode]')).toHaveAttribute('data-view-mode', 'icons')
+    expect(screen.getAllByTestId('workspace-item').map((item) => item.textContent)).toEqual([
+      'src',
+      'app.log',
+      'README.md'
+    ])
   })
 })

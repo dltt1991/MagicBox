@@ -15,9 +15,15 @@ const mocks = vi.hoisted(() => ({
   safeOpen: vi.fn(),
   toastError: vi.fn(),
   isDirectory: vi.fn(),
+  resolvePath: vi.fn(),
   persistValues: {
     'terminal.workspace.root': null as string | null,
-    'terminal.workspace.include_hidden': false
+    'terminal.workspace.include_hidden': false,
+    'terminal.workspace.view_mode': 'list' as 'list' | 'icons',
+    'terminal.workspace.sort_key': 'name' as 'name' | 'mtime' | 'size',
+    'terminal.workspace.sort_direction': 'asc' as 'asc' | 'desc',
+    'terminal.workspace.preview_open': true,
+    'terminal.workspace.preview_sizes': [55, 45] as [number, number]
   },
   activeSession: null as {
     id: string
@@ -30,9 +36,15 @@ vi.mock('@data/hooks/useCache', async () => {
   const React = await import('react')
 
   return {
-    usePersistCache: (key: 'terminal.workspace.root' | 'terminal.workspace.include_hidden') => {
+    usePersistCache: (key: keyof typeof mocks.persistValues) => {
       const [value, setValue] = React.useState(mocks.persistValues[key])
-      return [value, setValue]
+      return [
+        value,
+        (nextValue: (typeof mocks.persistValues)[typeof key]) => {
+          ;(mocks.persistValues as Record<string, unknown>)[key] = nextValue
+          setValue(nextValue)
+        }
+      ]
     }
   }
 })
@@ -68,26 +80,34 @@ vi.mock('../components/TerminalPane', () => ({
 }))
 
 vi.mock('../components/TerminalWorkspaceLayout', () => ({
-  TerminalWorkspaceLayout: ({
-    fileTree,
-    preview,
-    terminal
-  }: {
-    fileTree: React.ReactNode
-    preview: React.ReactNode
-    terminal: React.ReactNode
-  }) => (
+  TerminalWorkspaceLayout: ({ fileManager, terminal }: { fileManager: React.ReactNode; terminal: React.ReactNode }) => (
     <div>
-      {fileTree}
+      {fileManager}
       {terminal}
-      {preview}
     </div>
   )
 }))
 
 vi.mock('../components/WorkspaceFileTree', () => ({
-  WorkspaceFileTree: ({ onSelectPath }: { onSelectPath: (path: string, kind: 'directory' | 'file') => void }) => (
-    <div>
+  WorkspaceFileTree: ({
+    onSelectPath,
+    rootPath,
+    sortDirection,
+    sortKey,
+    viewMode
+  }: {
+    onSelectPath: (path: string, kind: 'directory' | 'file') => void
+    rootPath: string | null
+    sortDirection: string
+    sortKey: string
+    viewMode: string
+  }) => (
+    <div
+      data-root-path={rootPath ?? ''}
+      data-sort-direction={sortDirection}
+      data-sort-key={sortKey}
+      data-testid="mock-workspace-file-tree"
+      data-view-mode={viewMode}>
       <button onClick={() => onSelectPath('/workspace/run.sh', 'file')} type="button">
         select file
       </button>
@@ -101,14 +121,19 @@ vi.mock('../components/WorkspaceFileTree', () => ({
 vi.mock('../components/WorkspacePreviewPane', () => ({
   WorkspacePreviewPane: ({
     filePath,
+    onClose,
     onOpenSystem
   }: {
     filePath: string | null
+    onClose: () => void
     onOpenSystem: (filePath: string) => void
   }) => (
     <div data-file-path={filePath ?? ''} data-testid="mock-workspace-preview-pane">
       <button disabled={!filePath} onClick={() => filePath && onOpenSystem(filePath)} type="button">
         open system
+      </button>
+      <button onClick={onClose} type="button">
+        close preview
       </button>
     </div>
   )
@@ -130,15 +155,46 @@ vi.mock('@renderer/services/toast', () => ({
   toast: { error: mocks.toastError }
 }))
 
+vi.mock('@cherrystudio/ui', () => ({
+  Button: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button {...props} type="button">
+      {children}
+    </button>
+  ),
+  NormalTooltip: ({ children }: { children: React.ReactNode }) => children,
+  ResizableHandle: () => <div data-testid="resize-handle" />,
+  ResizablePanel: ({ children, id }: { children: React.ReactNode; id?: string }) => (
+    <div data-testid={id}>{children}</div>
+  ),
+  ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  Select: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  SelectContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  SelectItem: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  SelectTrigger: ({ children, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button {...props} type="button">
+      {children}
+    </button>
+  ),
+  SelectValue: () => <span />,
+  Switch: ({ checked }: { checked: boolean }) => <input checked={checked} readOnly type="checkbox" />
+}))
+
 import TerminalPage from '../TerminalPage'
 
 beforeEach(() => {
   mocks.persistValues['terminal.workspace.root'] = null
   mocks.persistValues['terminal.workspace.include_hidden'] = false
+  mocks.persistValues['terminal.workspace.view_mode'] = 'list'
+  mocks.persistValues['terminal.workspace.sort_key'] = 'name'
+  mocks.persistValues['terminal.workspace.sort_direction'] = 'asc'
+  mocks.persistValues['terminal.workspace.preview_open'] = true
+  mocks.persistValues['terminal.workspace.preview_sizes'] = [55, 45]
   mocks.activeSession = null
   mocks.safeOpen.mockResolvedValue(undefined)
   mocks.isDirectory.mockResolvedValue(false)
+  mocks.resolvePath.mockResolvedValue('/Users/alice')
   window.api.file.isDirectory = mocks.isDirectory
+  window.api.resolvePath = mocks.resolvePath
 })
 
 afterEach(() => {
@@ -153,8 +209,16 @@ describe('TerminalPage', () => {
     expect(screen.getByTestId('terminal-tabs')).toBeInTheDocument()
     expect(screen.getByTestId('terminal-pane')).toBeInTheDocument()
     expect(screen.getByTestId('workspace-file-tree')).toBeInTheDocument()
-    expect(screen.getByTestId('workspace-preview-pane')).toBeInTheDocument()
     expect(mocks.createSession).toHaveBeenCalledOnce()
+  })
+
+  it('defaults the workspace root to the current user home directory', async () => {
+    render(<TerminalPage />)
+
+    await waitFor(() =>
+      expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/Users/alice')
+    )
+    expect(mocks.resolvePath).toHaveBeenCalledWith('~')
   })
 
   it('passes the persisted workspace root as the terminal link cwd', () => {
@@ -163,6 +227,19 @@ describe('TerminalPage', () => {
     render(<TerminalPage />)
 
     expect(screen.getByTestId('terminal-pane')).toHaveAttribute('data-cwd', '/workspace')
+  })
+
+  it('passes persisted file view and sorting options to the workspace file manager', () => {
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.persistValues['terminal.workspace.view_mode'] = 'icons'
+    mocks.persistValues['terminal.workspace.sort_key'] = 'mtime'
+    mocks.persistValues['terminal.workspace.sort_direction'] = 'desc'
+
+    render(<TerminalPage />)
+
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-view-mode', 'icons')
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-sort-key', 'mtime')
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-sort-direction', 'desc')
   })
 
   it('uses the active terminal session cwd for terminal path links', () => {
@@ -195,6 +272,18 @@ describe('TerminalPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'select directory' }))
     expect(screen.getByTestId('mock-workspace-preview-pane')).toHaveAttribute('data-file-path', '/workspace/run.sh')
+  })
+
+  it('closes the embedded preview pane without clearing the file selection', async () => {
+    const user = userEvent.setup()
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: 'select file' }))
+    expect(screen.getByTestId('mock-workspace-preview-pane')).toHaveAttribute('data-file-path', '/workspace/run.sh')
+
+    await user.click(screen.getByRole('button', { name: 'close preview' }))
+    expect(screen.queryByTestId('mock-workspace-preview-pane')).not.toBeInTheDocument()
   })
 
   it('shows an error toast when external workspace file opening fails', async () => {
