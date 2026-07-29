@@ -2,13 +2,16 @@ import { application } from '@application'
 import { BaseService } from '@main/core/lifecycle'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { spawn, write, resize, kill, onData, onExit } = vi.hoisted(() => ({
+const { spawn, write, resize, kill, onData, onExit, onWindowDestroyed, broadcast, send } = vi.hoisted(() => ({
   spawn: vi.fn(),
   write: vi.fn(),
   resize: vi.fn(),
   kill: vi.fn(),
   onData: vi.fn(),
-  onExit: vi.fn()
+  onExit: vi.fn(),
+  onWindowDestroyed: vi.fn(),
+  broadcast: vi.fn(),
+  send: vi.fn()
 }))
 
 vi.mock('node-pty', () => ({ spawn }))
@@ -21,6 +24,14 @@ describe('TerminalService', () => {
     BaseService.resetInstances()
     spawn.mockReturnValue({ pid: 123, write, resize, kill, onData, onExit })
     vi.mocked(application.getPath).mockReturnValue('/mock/home')
+    const applicationGet = vi.mocked(application.get) as unknown as {
+      mockImplementation(fn: (serviceName: string) => unknown): void
+    }
+    applicationGet.mockImplementation((serviceName: string) => {
+      if (serviceName === 'WindowManager') return { onWindowDestroyed }
+      return { broadcast, send }
+    })
+    onWindowDestroyed.mockReturnValue({ dispose: vi.fn() })
   })
 
   it('spawns a terminal session with the requested cwd and dimensions', async () => {
@@ -100,5 +111,19 @@ describe('TerminalService', () => {
     await (service as unknown as { onStop(): Promise<void> }).onStop()
 
     expect(kill).toHaveBeenCalledTimes(2)
+  })
+
+  it('kills sessions owned by a destroyed window', async () => {
+    const service = new TerminalService()
+    ;(service as unknown as { onInit(): void }).onInit()
+    const owned = await service.createSession({ ownerWindowId: 'window-1', cols: 80, rows: 24 })
+    const other = await service.createSession({ ownerWindowId: 'window-2', cols: 80, rows: 24 })
+
+    onWindowDestroyed.mock.calls[0][0]({ id: 'window-1' })
+
+    expect(kill).toHaveBeenCalledOnce()
+    expect(service.listSessions('window-1')).toEqual([])
+    expect(service.listSessions('window-2')).toEqual([other])
+    expect(() => service.writeInput('window-1', owned.id, 'echo nope\n')).toThrow('Terminal session not found')
   })
 })
