@@ -4,17 +4,20 @@ import { application } from '@application'
 import { loggerService } from '@logger'
 import { BaseService, Injectable, Phase, ServicePhase } from '@main/core/lifecycle'
 import type { TerminalSessionMetadata } from '@shared/ipc/schemas/terminal'
+import type { WindowId } from '@shared/ipc/types'
 import { type IPty, spawn } from 'node-pty'
 
 const logger = loggerService.withContext('TerminalService')
 
 type CreateTerminalSessionInput = {
+  ownerWindowId: WindowId
   cwd?: string
   cols: number
   rows: number
 }
 
 type TerminalSession = {
+  ownerWindowId: WindowId
   metadata: TerminalSessionMetadata
   pty: IPty
 }
@@ -52,9 +55,9 @@ export class TerminalService extends BaseService {
       })
 
       metadata.pid = pty.pid
-      this.sessions.set(metadata.id, { metadata, pty })
+      this.sessions.set(metadata.id, { ownerWindowId: input.ownerWindowId, metadata, pty })
       pty.onData((data) => {
-        application.get('IpcApiService').broadcast('terminal.session.data', { id: metadata.id, data })
+        application.get('IpcApiService').send(input.ownerWindowId, 'terminal.session.data', { id: metadata.id, data })
       })
       pty.onExit(({ exitCode, signal }) => {
         const session = this.sessions.get(metadata.id)
@@ -62,8 +65,12 @@ export class TerminalService extends BaseService {
 
         session.metadata.status = 'exited'
         session.metadata.updatedAt = Date.now()
-        application.get('IpcApiService').broadcast('terminal.session.updated', session.metadata)
-        application.get('IpcApiService').broadcast('terminal.session.exit', { id: metadata.id, exitCode, signal })
+        application.get('IpcApiService').send(session.ownerWindowId, 'terminal.session.updated', session.metadata)
+        application.get('IpcApiService').send(session.ownerWindowId, 'terminal.session.exit', {
+          id: metadata.id,
+          exitCode,
+          signal
+        })
       })
 
       return metadata
@@ -73,20 +80,22 @@ export class TerminalService extends BaseService {
     }
   }
 
-  public listSessions(): TerminalSessionMetadata[] {
-    return Array.from(this.sessions.values(), ({ metadata }) => metadata)
+  public listSessions(ownerWindowId: WindowId): TerminalSessionMetadata[] {
+    return Array.from(this.sessions.values())
+      .filter((session) => session.ownerWindowId === ownerWindowId)
+      .map(({ metadata }) => metadata)
   }
 
-  public writeInput(id: string, data: string): void {
-    this.sessions.get(id)?.pty.write(data)
+  public writeInput(ownerWindowId: WindowId, id: string, data: string): void {
+    this.getOwnedSession(ownerWindowId, id).pty.write(data)
   }
 
-  public resizeSession(id: string, size: { cols: number; rows: number }): void {
-    this.sessions.get(id)?.pty.resize(size.cols, size.rows)
+  public resizeSession(ownerWindowId: WindowId, id: string, size: { cols: number; rows: number }): void {
+    this.getOwnedSession(ownerWindowId, id).pty.resize(size.cols, size.rows)
   }
 
-  public killSession(id: string): void {
-    this.sessions.get(id)?.pty.kill()
+  public killSession(ownerWindowId: WindowId, id: string): void {
+    this.getOwnedSession(ownerWindowId, id).pty.kill()
   }
 
   protected override async onStop(): Promise<void> {
@@ -103,5 +112,13 @@ export class TerminalService extends BaseService {
 
   private getShellArgs(): string[] {
     return process.platform === 'win32' ? [] : ['-l']
+  }
+
+  private getOwnedSession(ownerWindowId: WindowId, id: string): TerminalSession {
+    const session = this.sessions.get(id)
+    if (!session || session.ownerWindowId !== ownerWindowId) {
+      throw new Error('Terminal session not found')
+    }
+    return session
   }
 }

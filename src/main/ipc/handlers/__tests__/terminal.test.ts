@@ -37,6 +37,16 @@ describe('terminal IPC schemas', () => {
       terminalRequestSchemas['terminal.session.resize'].input.parse({ id: 's1', cols: 0, rows: 24 })
     ).toThrow()
   })
+
+  it('rejects unbounded terminal payload fields', () => {
+    expect(() =>
+      terminalRequestSchemas['terminal.session.input'].input.parse({ id: 's1', data: 'x'.repeat(16_385) })
+    ).toThrow()
+    expect(() =>
+      terminalRequestSchemas['terminal.session.create'].input.parse({ cwd: 'x'.repeat(4097), cols: 80, rows: 24 })
+    ).toThrow()
+    expect(() => terminalRequestSchemas['terminal.session.kill'].input.parse({ id: 'x'.repeat(129) })).toThrow()
+  })
 })
 
 describe('terminal handlers', () => {
@@ -52,10 +62,21 @@ describe('terminal handlers', () => {
     await terminalHandlers['terminal.session.resize']({ id: 's1', cols: 100, rows: 30 }, ctx)
     await terminalHandlers['terminal.session.kill']({ id: 's1' }, ctx)
 
-    expect(terminalService.createSession).toHaveBeenCalledWith({ cwd: '/workspace', cols: 80, rows: 24 })
-    expect(terminalService.listSessions).toHaveBeenCalledOnce()
-    expect(terminalService.writeInput).toHaveBeenCalledWith('s1', 'ls\n')
-    expect(terminalService.resizeSession).toHaveBeenCalledWith('s1', { cols: 100, rows: 30 })
-    expect(terminalService.killSession).toHaveBeenCalledWith('s1')
+    expect(terminalService.createSession).toHaveBeenCalledWith({
+      ownerWindowId: 'window-1',
+      cwd: '/workspace',
+      cols: 80,
+      rows: 24
+    })
+    expect(terminalService.listSessions).toHaveBeenCalledWith('window-1')
+    expect(terminalService.writeInput).toHaveBeenCalledWith('window-1', 's1', 'ls\n')
+    expect(terminalService.resizeSession).toHaveBeenCalledWith('window-1', 's1', { cols: 100, rows: 30 })
+    expect(terminalService.killSession).toHaveBeenCalledWith('window-1', 's1')
+  })
+
+  it('rejects terminal commands from unmanaged senders', async () => {
+    await expect(
+      terminalHandlers['terminal.session.create']({ cols: 80, rows: 24 }, { senderId: null })
+    ).rejects.toThrow('managed window')
   })
 })
