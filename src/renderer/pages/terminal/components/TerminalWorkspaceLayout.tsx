@@ -104,13 +104,17 @@ export function TerminalWorkspaceLayout({ fileManager, terminal }: TerminalWorks
   )
   const fileManagerContent = typeof fileManager === 'function' ? fileManager(fileManagerLayoutActions) : fileManager
   const terminalPane = (
-    <section className="relative flex min-w-0 flex-1 flex-col" data-testid="terminal-workspace-terminal">
+    <section
+      className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+      data-testid="terminal-workspace-terminal">
       {terminalLayoutActions}
       {terminal}
     </section>
   )
   const fileManagerPane = (
-    <aside className="relative flex min-h-0 min-w-0 flex-col" data-testid="terminal-workspace-file-manager">
+    <aside
+      className="relative flex h-full min-h-0 min-w-0 flex-col overflow-hidden"
+      data-testid="terminal-workspace-file-manager">
       {fileManagerContent}
     </aside>
   )
@@ -123,6 +127,7 @@ export function TerminalWorkspaceLayout({ fileManager, terminal }: TerminalWorks
     fileManagerPane
   ) : (
     <ResizablePanelGroup
+      className="h-full min-h-0 overflow-hidden"
       direction={mode === 'right' ? 'horizontal' : 'vertical'}
       onLayoutChanged={(sizes) => {
         const nextSizes: [number, number] = [sizes.primary ?? 35, sizes.secondary ?? 65]
@@ -132,14 +137,16 @@ export function TerminalWorkspaceLayout({ fileManager, terminal }: TerminalWorks
       <ResizablePanel
         defaultSize={toPercentSize((mode === 'right' ? rightSizes : bottomSizes)[0])}
         id="primary"
-        minSize="20%">
+        minSize="20%"
+        className="min-h-0 overflow-hidden">
         {fileManagerPane}
       </ResizablePanel>
       <ResizableHandle withHandle />
       <ResizablePanel
         defaultSize={toPercentSize((mode === 'right' ? rightSizes : bottomSizes)[1])}
         id="secondary"
-        minSize="30%">
+        minSize="30%"
+        className="min-h-0 overflow-hidden">
         {terminalPane}
       </ResizablePanel>
     </ResizablePanelGroup>
@@ -151,8 +158,8 @@ export function TerminalWorkspaceLayout({ fileManager, terminal }: TerminalWorks
       data-layout-mode={mode}
       data-terminal-visible={String(isTerminalVisible)}
       data-testid="terminal-workspace-layout">
-      <div className="flex min-h-0 flex-1">
-        <div className="flex min-w-0 flex-1">{layout}</div>
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">{layout}</div>
       </div>
     </div>
   )

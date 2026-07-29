@@ -87,7 +87,7 @@ function WorkspaceFileTreeContent({
   const { error, isLoading, root, version } = useDirectoryTree(rootPath ?? undefined, {
     includeHidden,
     maxDepth: 1,
-    respectGitignore: !includeHidden,
+    respectGitignore: true,
     withStats: true
   })
   const items = useMemo(

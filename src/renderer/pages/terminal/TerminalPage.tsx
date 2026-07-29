@@ -188,7 +188,9 @@ export default function TerminalPage() {
   const workspacePathSegments = workspaceRoot ? buildWorkspacePathSegments(workspaceRoot) : []
 
   const fileManager = (layoutActions: ReactNode) => (
-    <section className="flex h-full min-h-0 flex-col border-border border-r" data-testid="terminal-workspace-tree">
+    <section
+      className="flex h-full min-h-0 flex-col overflow-hidden border-border border-r"
+      data-testid="terminal-workspace-tree">
       <div className="flex h-10 shrink-0 items-center gap-1 border-border border-b px-2">
         <NormalTooltip content={t('terminal.workspace.choose')}>
           <Button
@@ -294,7 +296,7 @@ export default function TerminalPage() {
       </div>
       {previewPane ? (
         <ResizablePanelGroup
-          className="min-h-0 flex-1"
+          className="min-h-0 flex-1 overflow-hidden"
           direction="vertical"
           onLayoutChanged={(sizes) => setPreviewSizes([sizes.primary ?? 55, sizes.secondary ?? 45])}>
           <ResizablePanel defaultSize={`${previewSizes[0]}%`} id="workspace-files" minSize="25%">

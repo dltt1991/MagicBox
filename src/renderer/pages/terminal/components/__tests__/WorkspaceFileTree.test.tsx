@@ -86,7 +86,7 @@ describe('WorkspaceFileTree', () => {
     expect(mocks.mount).toHaveBeenCalledTimes(2)
   })
 
-  it('does not apply gitignore filtering when hidden files are visible', () => {
+  it('keeps gitignore filtering when hidden files are visible', () => {
     render(
       <WorkspaceFileTree
         includeHidden={true}
@@ -101,7 +101,7 @@ describe('WorkspaceFileTree', () => {
 
     expect(mocks.useDirectoryTree).toHaveBeenCalledWith(
       '/workspace',
-      expect.objectContaining({ includeHidden: true, respectGitignore: false })
+      expect.objectContaining({ includeHidden: true, respectGitignore: true })
     )
   })
 
