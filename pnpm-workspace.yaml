@@ -95,6 +95,7 @@ allowBuilds:
   '@scarf/scarf': true
   '@swc/core': true
   better-sqlite3: true
+  node-pty: true
   canvas: false
   core-js: true
   electron: true

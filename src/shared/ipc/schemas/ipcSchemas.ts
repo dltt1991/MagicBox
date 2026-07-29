@@ -30,6 +30,7 @@ import { type SelectionEventSchemas, selectionRequestSchemas } from './selection
 import { skillRequestSchemas } from './skill'
 import { type SystemEventSchemas, systemRequestSchemas } from './system'
 import { type TabEventSchemas, tabRequestSchemas } from './tab'
+import { type TerminalEventSchemas, terminalRequestSchemas } from './terminal'
 import { translateRequestSchemas } from './translate'
 import { webSearchRequestSchemas } from './webSearch'
 import { type WebviewEventSchemas, webviewRequestSchemas } from './webview'
@@ -74,6 +75,7 @@ export const ipcRequestSchemas = {
   ...skillRequestSchemas,
   ...systemRequestSchemas,
   ...tabRequestSchemas,
+  ...terminalRequestSchemas,
   ...translateRequestSchemas,
   ...webSearchRequestSchemas,
   ...webviewRequestSchemas,
@@ -104,6 +106,7 @@ export type IpcEventSchemas = AiEventSchemas &
   SelectionEventSchemas &
   SystemEventSchemas &
   TabEventSchemas &
+  TerminalEventSchemas &
   WebviewEventSchemas &
   WindowEventSchemas
 /** Union of all declared event names (`never` until a domain is migrated). */
