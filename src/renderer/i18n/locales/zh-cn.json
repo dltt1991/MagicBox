@@ -8152,6 +8152,7 @@
         "terminal_maximize": "最大化终端"
       },
       "no_root": "未选择工作区",
+      "path_input": "输入工作区路径",
       "preview": {
         "close": "关闭预览",
         "copy_path": "复制路径",

@@ -161,6 +161,7 @@ vi.mock('@cherrystudio/ui', () => ({
       {children}
     </button>
   ),
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
   NormalTooltip: ({ children }: { children: React.ReactNode }) => children,
   ResizableHandle: () => <div data-testid="resize-handle" />,
   ResizablePanel: ({ children, id }: { children: React.ReactNode; id?: string }) => (
@@ -240,6 +241,30 @@ describe('TerminalPage', () => {
     expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-view-mode', 'icons')
     expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-sort-key', 'mtime')
     expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-sort-direction', 'desc')
+  })
+
+  it('changes the workspace root from the path breadcrumb', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace/project'
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: '/workspace' }))
+
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace')
+  })
+
+  it('edits the workspace root when the path bar is double-clicked', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace/project'
+
+    render(<TerminalPage />)
+
+    await user.dblClick(screen.getByTestId('terminal-workspace-path-bar'))
+    await user.clear(screen.getByDisplayValue('/workspace/project'))
+    await user.keyboard('/tmp/new-root{Enter}')
+
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/tmp/new-root')
   })
 
   it('uses the active terminal session cwd for terminal path links', () => {
@@ -335,6 +360,11 @@ describe('TerminalPage', () => {
 
     await user.click(screen.getByRole('button', { name: 'activate terminal directory' }))
 
-    await waitFor(() => expect(screen.getByText('/workspace/from-terminal-dir')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute(
+        'data-root-path',
+        '/workspace/from-terminal-dir'
+      )
+    )
   })
 })
