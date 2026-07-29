@@ -133,6 +133,10 @@ async function executeRipgrep(args: string[]): Promise<{ exitCode: number; outpu
   })
 }
 
+function hasRipgrepResults(output: string): boolean {
+  return output.split('\n').some((line) => line.trim())
+}
+
 function buildRipgrepBaseArgs(options: ResolvedOptions, resolvedPath: string): string[] {
   const args: string[] = ['--files']
 
@@ -226,8 +230,10 @@ async function searchByFilename(resolvedPath: string, options: ResolvedOptions):
 
     const { exitCode, output } = await executeRipgrep(args)
 
-    // Exit 0 = matches; 1 = no matches (still success); >=2 = error
-    if (exitCode >= 2) {
+    // Exit 0 = matches; 1 = no matches. With --hidden, macOS privacy
+    // protected subdirectories can make ripgrep return 2 while still
+    // emitting usable stdout for accessible entries; keep that partial list.
+    if (exitCode >= 2 && !hasRipgrepResults(output)) {
       throw new Error(`Ripgrep failed with exit code ${exitCode}: ${output}`)
     }
 
@@ -437,7 +443,7 @@ async function listDirectoryWithRipgrep(resolvedPath: string, options: ResolvedO
 
     const { exitCode, output } = await executeRipgrep(args)
 
-    if (exitCode >= 2) {
+    if (exitCode >= 2 && !hasRipgrepResults(output)) {
       throw new Error(`Ripgrep failed with exit code ${exitCode}: ${output}`)
     }
 
