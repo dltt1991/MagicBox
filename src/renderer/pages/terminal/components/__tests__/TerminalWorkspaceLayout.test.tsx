@@ -65,6 +65,12 @@ describe('TerminalWorkspaceLayout', () => {
     expect(screen.getByTestId('terminal-workspace-terminal')).toBeInTheDocument()
     expect(screen.getByTestId('primary')).toHaveAttribute('data-default-size', '60%')
     expect(screen.getByTestId('secondary')).toHaveAttribute('data-min-size', '30%')
+    expect(screen.getByTestId('terminal-pane-layout-actions')).toContainElement(
+      screen.getByRole('button', { name: 'terminal.workspace.layout.terminal_maximize' })
+    )
+    expect(screen.getByTestId('file-manager-layout-actions')).toContainElement(
+      screen.getByRole('button', { name: 'terminal.workspace.layout.files_maximize' })
+    )
   })
 
   it('stacks the file manager and terminal in bottom mode', () => {
@@ -80,7 +86,9 @@ describe('TerminalWorkspaceLayout', () => {
 
     expect(screen.getByTestId('terminal-workspace-terminal')).toBeInTheDocument()
     expect(screen.queryByTestId('terminal-workspace-file-manager')).not.toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'terminal.workspace.layout.restore' })).toBeInTheDocument()
+    expect(screen.getByTestId('terminal-pane-layout-actions')).toContainElement(
+      screen.getByRole('button', { name: 'terminal.workspace.layout.restore' })
+    )
   })
 
   it('hides the terminal in files maximized mode and shows restore', () => {
@@ -88,7 +96,9 @@ describe('TerminalWorkspaceLayout', () => {
 
     expect(screen.queryByTestId('terminal-workspace-terminal')).not.toBeInTheDocument()
     expect(screen.getByTestId('terminal-workspace-file-manager')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'terminal.workspace.layout.restore' })).toBeInTheDocument()
+    expect(screen.getByTestId('file-manager-layout-actions')).toContainElement(
+      screen.getByRole('button', { name: 'terminal.workspace.layout.restore' })
+    )
   })
 
   it('maps the legacy preview maximized cache value to files maximized mode', () => {

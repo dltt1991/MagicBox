@@ -146,4 +146,25 @@ describe('WorkspaceFileTree', () => {
       'README.md'
     ])
   })
+
+  it('uses one full-width column grid for list headers and rows', () => {
+    render(
+      <WorkspaceFileTree
+        includeHidden={false}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
+    )
+
+    const header = screen.getByTestId('workspace-list-header')
+    const row = screen.getByRole('button', { name: 'src' })
+
+    expect(header).toHaveAttribute('data-list-columns', 'workspace-file-list')
+    expect(row).toHaveAttribute('data-list-columns', 'workspace-file-list')
+    expect(row).toHaveClass('w-full')
+  })
 })

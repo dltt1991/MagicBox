@@ -14,6 +14,7 @@ import {
 } from '../lib/workspaceTree'
 
 const TERMINAL_PATH_DRAG_MIME_TYPE = 'application/x-cherry-terminal-path'
+const LIST_COLUMN_CLASS = 'grid-cols-[minmax(10rem,1fr)_8.5rem_5.5rem]'
 
 export interface WorkspaceFileTreeProps {
   rootPath: string | null
@@ -117,9 +118,11 @@ function WorkspaceFileTreeContent({
       aria-label={item.name}
       className={cn(
         'min-w-0 rounded-md text-left text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
+        viewMode === 'list' && 'w-full',
         selectedPath === item.path && 'bg-accent text-accent-foreground',
         className
       )}
+      data-list-columns={viewMode === 'list' ? 'workspace-file-list' : undefined}
       data-kind={item.kind}
       data-testid="workspace-item"
       draggable
@@ -136,7 +139,7 @@ function WorkspaceFileTreeContent({
           <span className="line-clamp-2 w-full break-words text-center text-xs">{item.name}</span>
         </span>
       ) : (
-        <span className="grid min-h-8 grid-cols-[minmax(0,1fr)_7.5rem_5rem] items-center gap-2 px-2">
+        <span className={cn('grid min-h-8 items-center gap-2 px-2', LIST_COLUMN_CLASS)}>
           <span className="flex min-w-0 items-center gap-2">
             <WorkspaceItemIcon kind={item.kind} />
             <span className="truncate">{item.name}</span>
@@ -153,7 +156,10 @@ function WorkspaceFileTreeContent({
   return (
     <div className="h-full min-h-0 overflow-auto p-2" data-view-mode={viewMode}>
       {viewMode === 'list' && (
-        <div className="grid h-7 grid-cols-[minmax(0,1fr)_7.5rem_5rem] items-center gap-2 px-2 text-muted-foreground text-xs">
+        <div
+          className={cn('grid h-7 items-center gap-2 px-2 text-muted-foreground text-xs', LIST_COLUMN_CLASS)}
+          data-list-columns="workspace-file-list"
+          data-testid="workspace-list-header">
           <span>{t('terminal.workspace.sort.name')}</span>
           <span>{t('terminal.workspace.sort.mtime')}</span>
           <span className="text-right">{t('terminal.workspace.sort.size')}</span>

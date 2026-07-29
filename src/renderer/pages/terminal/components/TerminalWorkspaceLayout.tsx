@@ -49,13 +49,49 @@ export function TerminalWorkspaceLayout({ fileManager, terminal }: TerminalWorks
   const setMode = (nextMode: TerminalWorkspaceLayoutMode) =>
     setStoredMode(nextMode as StoredTerminalWorkspaceLayoutMode)
 
+  const terminalLayoutActions = (
+    <div className="absolute top-1 right-2 z-10 flex h-8 items-center gap-1" data-testid="terminal-pane-layout-actions">
+      <LayoutAction label={t('terminal.workspace.layout.right')} onClick={() => setMode('right')}>
+        <PanelRight />
+      </LayoutAction>
+      <LayoutAction label={t('terminal.workspace.layout.bottom')} onClick={() => setMode('bottom')}>
+        <PanelBottom />
+      </LayoutAction>
+      {mode === 'terminal-maximized' ? (
+        <LayoutAction label={t('terminal.workspace.layout.restore')} onClick={() => setMode('right')}>
+          <Minimize2 />
+        </LayoutAction>
+      ) : (
+        <LayoutAction
+          label={t('terminal.workspace.layout.terminal_maximize')}
+          onClick={() => setMode('terminal-maximized')}>
+          <Maximize2 />
+        </LayoutAction>
+      )}
+    </div>
+  )
+  const fileManagerLayoutActions = (
+    <div className="absolute top-1 right-2 z-10 flex h-8 items-center gap-1" data-testid="file-manager-layout-actions">
+      {mode === 'files-maximized' ? (
+        <LayoutAction label={t('terminal.workspace.layout.restore')} onClick={() => setMode('right')}>
+          <Minimize2 />
+        </LayoutAction>
+      ) : (
+        <LayoutAction label={t('terminal.workspace.layout.files_maximize')} onClick={() => setMode('files-maximized')}>
+          <Files />
+        </LayoutAction>
+      )}
+    </div>
+  )
   const terminalPane = (
-    <section className="flex min-w-0 flex-1 flex-col" data-testid="terminal-workspace-terminal">
+    <section className="relative flex min-w-0 flex-1 flex-col" data-testid="terminal-workspace-terminal">
+      {terminalLayoutActions}
       {terminal}
     </section>
   )
   const fileManagerPane = (
-    <aside className="flex min-h-0 min-w-0 flex-col" data-testid="terminal-workspace-file-manager">
+    <aside className="relative flex min-h-0 min-w-0 flex-col" data-testid="terminal-workspace-file-manager">
+      {fileManagerLayoutActions}
       {fileManager}
     </aside>
   )
@@ -94,27 +130,6 @@ export function TerminalWorkspaceLayout({ fileManager, terminal }: TerminalWorks
       className="flex h-full min-h-0 flex-1 flex-col"
       data-layout-mode={mode}
       data-testid="terminal-workspace-layout">
-      <div className="flex h-10 shrink-0 items-center justify-end gap-1 border-border border-b px-2">
-        <LayoutAction label={t('terminal.workspace.layout.right')} onClick={() => setMode('right')}>
-          <PanelRight />
-        </LayoutAction>
-        <LayoutAction label={t('terminal.workspace.layout.bottom')} onClick={() => setMode('bottom')}>
-          <PanelBottom />
-        </LayoutAction>
-        <LayoutAction
-          label={t('terminal.workspace.layout.terminal_maximize')}
-          onClick={() => setMode('terminal-maximized')}>
-          <Maximize2 />
-        </LayoutAction>
-        <LayoutAction label={t('terminal.workspace.layout.files_maximize')} onClick={() => setMode('files-maximized')}>
-          <Files />
-        </LayoutAction>
-        {(mode === 'terminal-maximized' || mode === 'files-maximized') && (
-          <LayoutAction label={t('terminal.workspace.layout.restore')} onClick={() => setMode('right')}>
-            <Minimize2 />
-          </LayoutAction>
-        )}
-      </div>
       <div className="flex min-h-0 flex-1">
         <div className="flex min-w-0 flex-1">{layout}</div>
       </div>

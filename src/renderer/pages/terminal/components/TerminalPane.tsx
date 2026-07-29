@@ -46,7 +46,7 @@ export function TerminalPane({
       allowProposedApi: true,
       cursorBlink: true,
       fontFamily: 'var(--font-family-mono)',
-      fontSize: 13,
+      fontSize: 15,
       scrollback: 5000
     })
     const fitAddon = new FitAddon()

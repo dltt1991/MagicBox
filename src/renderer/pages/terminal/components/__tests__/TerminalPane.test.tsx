@@ -55,6 +55,12 @@ describe('TerminalPane', () => {
     expect(mocks.Terminal).toHaveBeenCalledWith(expect.objectContaining({ allowProposedApi: true }))
   })
 
+  it('uses a readable terminal font size by default', () => {
+    render(<TerminalPane buffer={[]} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />)
+
+    expect(mocks.Terminal).toHaveBeenCalledWith(expect.objectContaining({ fontSize: 15 }))
+  })
+
   it('opens xterm inside a stable inner mount element', () => {
     const { container } = render(
       <TerminalPane buffer={[]} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />

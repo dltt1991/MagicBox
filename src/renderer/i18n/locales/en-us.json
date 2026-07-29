@@ -8675,6 +8675,7 @@
         "terminal_maximize": "Maximize terminal"
       },
       "no_root": "No workspace selected",
+      "path_input": "Enter workspace path",
       "preview": {
         "close": "Close preview",
         "copy_path": "Copy path",

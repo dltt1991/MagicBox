@@ -15,7 +15,7 @@ export function TerminalTabs({ sessions, activeSessionId, onCreate, onSelect, on
   const { t } = useTranslation()
 
   return (
-    <div className="flex h-9 shrink-0 items-center border-border border-b bg-muted/30 px-1">
+    <div className="flex h-9 shrink-0 items-center border-border border-b bg-muted/30 px-1 pr-28">
       <div
         aria-label={t('terminal.title')}
         className="flex min-w-0 flex-1 items-center gap-0.5 overflow-x-auto"
