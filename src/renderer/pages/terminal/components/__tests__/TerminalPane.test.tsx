@@ -58,7 +58,7 @@ describe('TerminalPane', () => {
   it('uses a readable terminal font size by default', () => {
     render(<TerminalPane buffer={[]} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />)
 
-    expect(mocks.Terminal).toHaveBeenCalledWith(expect.objectContaining({ fontSize: 16 }))
+    expect(mocks.Terminal).toHaveBeenCalledWith(expect.objectContaining({ fontSize: 18, lineHeight: 1.2 }))
   })
 
   it('fills the terminal pane with xterm background color', () => {

@@ -1,7 +1,7 @@
 import type * as NodeChildProcess from 'node:child_process'
 import { EventEmitter } from 'node:events'
 import type * as NodeFs from 'node:fs'
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { PassThrough } from 'node:stream'
@@ -138,10 +138,13 @@ const writeMany = async (root: string, count: number, prefix = 'file', ext = '.t
 
 describe.skipIf(!ripgrepAvailable)('listDirectory (list mode, no searchPattern)', () => {
   let tmp: string
+  let lockedDir: string | null = null
   beforeEach(async () => {
     tmp = await mkdtemp(path.join(tmpdir(), 'cherry-search-list-'))
+    lockedDir = null
   })
   afterEach(async () => {
+    if (lockedDir) await chmod(lockedDir, 0o700).catch(() => {})
     await rm(tmp, { recursive: true, force: true })
   })
 
@@ -194,6 +197,19 @@ describe.skipIf(!ripgrepAvailable)('listDirectory (list mode, no searchPattern)'
     const basenames = results.map((p) => path.basename(p))
     expect(basenames).toContain('top.md')
     expect(basenames).not.toContain('nested.md')
+  })
+
+  it('keeps accessible hidden entries when another hidden directory is unreadable', async () => {
+    await writeFile(path.join(tmp, 'visible.txt'), '1')
+    await writeFile(path.join(tmp, '.hidden'), '2')
+    lockedDir = path.join(tmp, '.locked')
+    await mkdir(lockedDir)
+    await chmod(lockedDir, 0o000)
+
+    const results = await listDirectory(tmp as AbsoluteFilePath, { includeHidden: true, maxDepth: 1 })
+
+    expect(results.some((p) => p.endsWith('/visible.txt'))).toBe(true)
+    expect(results.some((p) => p.endsWith('/.hidden'))).toBe(true)
   })
 })
 
