@@ -1,4 +1,5 @@
-import { mkdir, mkdtemp, rename, rm, utimes, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, mkdtemp, rename, rm, utimes, writeFile } from 'node:fs/promises'
+import { createServer, type Server } from 'node:net'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
@@ -47,10 +48,16 @@ const waitForEvent = (
 
 describe.skipIf(!ripgrepAvailable)('createDirectoryTree — initial scan', () => {
   let tmp: string
+  let lockedDir: string | null = null
+  let socketServer: Server | null = null
   beforeEach(async () => {
     tmp = await mkdtemp(path.join(tmpdir(), 'cherry-tree-scan-'))
+    lockedDir = null
+    socketServer = null
   })
   afterEach(async () => {
+    if (socketServer) await new Promise<void>((resolve) => socketServer?.close(() => resolve()))
+    if (lockedDir) await chmod(lockedDir, 0o700).catch(() => {})
     await rm(tmp, { recursive: true, force: true })
   })
 
@@ -171,6 +178,40 @@ describe.skipIf(!ripgrepAvailable)('createDirectoryTree — initial scan', () =>
     try {
       expect(builder.root.hasChild('visible.md')).toBe(true)
       expect(builder.root.hasChild('secret.md')).toBe(true)
+    } finally {
+      await builder.disposeAsync()
+    }
+  })
+
+  it('builds a hidden workspace tree when another hidden directory is unreadable', async () => {
+    await writeFile(path.join(tmp, 'visible.txt'), '1')
+    await writeFile(path.join(tmp, '.hidden'), '2')
+    lockedDir = path.join(tmp, '.locked')
+    await mkdir(lockedDir)
+    await chmod(lockedDir, 0o000)
+
+    const builder = await createDirectoryTree(tmp, { includeHidden: true, maxDepth: 1, withStats: true })
+    try {
+      expect(builder.root.hasChild('visible.txt')).toBe(true)
+      expect(builder.root.hasChild('.hidden')).toBe(true)
+    } finally {
+      await builder.disposeAsync()
+    }
+  })
+
+  it('builds a hidden workspace tree when a hidden socket is present', async () => {
+    await writeFile(path.join(tmp, 'visible.txt'), '1')
+    const socketPath = path.join(tmp, '.tool.sock')
+    socketServer = createServer()
+    await new Promise<void>((resolve, reject) => {
+      socketServer?.once('error', reject)
+      socketServer?.listen(socketPath, () => resolve())
+    })
+
+    const builder = await createDirectoryTree(tmp, { includeHidden: true, maxDepth: 1, withStats: true })
+    try {
+      expect(builder.root.hasChild('visible.txt')).toBe(true)
+      expect(builder.root.hasChild('.tool.sock')).toBe(false)
     } finally {
       await builder.disposeAsync()
     }

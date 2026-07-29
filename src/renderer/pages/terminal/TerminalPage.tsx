@@ -81,6 +81,7 @@ export default function TerminalPage() {
   const [sortDirection, setSortDirection] = usePersistCache('terminal.workspace.sort_direction')
   const [previewOpen, setPreviewOpen] = usePersistCache('terminal.workspace.preview_open')
   const [previewSizes, setPreviewSizes] = usePersistCache('terminal.workspace.preview_sizes')
+  const [terminalFontSize, setTerminalFontSize] = usePersistCache('terminal.font_size')
   const [selectedWorkspacePath, setSelectedWorkspacePath] = useState<string | null>(null)
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null)
   const [defaultRootResolved, setDefaultRootResolved] = useState(false)
@@ -367,7 +368,9 @@ export default function TerminalPage() {
             <TerminalPane
               buffer={activeSession?.buffer ?? []}
               cwd={activeSession?.cwd ?? workspaceRoot}
+              fontSize={typeof terminalFontSize === 'number' ? terminalFontSize : undefined}
               key={activeSessionId ?? 'empty'}
+              onFontSizeChange={setTerminalFontSize}
               onInput={(data) => {
                 if (activeSessionId) void sendInput(activeSessionId, data)
               }}

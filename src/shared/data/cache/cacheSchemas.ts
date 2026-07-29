@@ -323,6 +323,7 @@ export type RendererPersistCacheSchema = {
   'terminal.workspace.preview_open': boolean
   'terminal.workspace.preview_sizes': [number, number]
   'terminal.workspace.terminal_visible': boolean
+  'terminal.font_size': number
   'terminal.layout.mode': 'right' | 'bottom' | 'terminal-maximized' | 'files-maximized' | 'preview-maximized'
   'terminal.layout.right_sizes': [number, number]
   'terminal.layout.bottom_sizes': [number, number]
@@ -373,6 +374,7 @@ export const DefaultRendererPersistCache: RendererPersistCacheSchema = {
   'terminal.workspace.preview_open': true,
   'terminal.workspace.preview_sizes': [55, 45],
   'terminal.workspace.terminal_visible': true,
+  'terminal.font_size': 18,
   'terminal.layout.mode': 'right',
   'terminal.layout.right_sizes': [35, 65],
   'terminal.layout.bottom_sizes': [55, 45],

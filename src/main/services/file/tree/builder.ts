@@ -251,6 +251,7 @@ class DirectoryTreeBuilderImpl implements DirectoryTreeBuilder {
       normalized.map(async (p) => {
         try {
           const s = await nodeStat(p)
+          if (!s.isDirectory() && !s.isFile()) return null
           return { path: p, isDir: s.isDirectory(), stats: statsToFields(s) }
         } catch {
           return null
