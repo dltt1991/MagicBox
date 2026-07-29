@@ -5,6 +5,7 @@ import { ipcApi } from '@renderer/ipc'
 import { toast } from '@renderer/services/toast'
 import { safeOpen } from '@renderer/utils/file/safeOpen'
 import { normalizeFilePreviewPath } from '@renderer/utils/filePreview'
+import { isWin } from '@renderer/utils/platform'
 import { createFilePathHandle } from '@shared/utils/file'
 import { FolderOpen } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
@@ -46,6 +47,18 @@ export default function TerminalPage() {
     setSelectedWorkspacePath(null)
     setActiveFilePath(null)
   }, [setWorkspaceRoot])
+
+  const activateTerminalPath = useCallback(async (path: string) => {
+    setSelectedWorkspacePath(path)
+
+    try {
+      if (await window.api.file.isDirectory(path)) return
+    } catch {
+      // Let FilePreview render its invalid-path state when a parsed terminal path no longer exists.
+    }
+
+    setActiveFilePath(path)
+  }, [])
 
   return (
     <main className="flex h-full min-h-0 flex-1 flex-col bg-background">
@@ -97,14 +110,17 @@ export default function TerminalPage() {
             />
             <TerminalPane
               buffer={activeSession?.buffer ?? []}
+              cwd={workspaceRoot}
               key={activeSessionId ?? 'empty'}
               onInput={(data) => {
                 if (activeSessionId) void sendInput(activeSessionId, data)
               }}
+              onPathActivated={(path) => void activateTerminalPath(path)}
               onResize={(size) => {
                 if (activeSessionId) void resizeSession(activeSessionId, size)
               }}
               sessionId={activeSessionId}
+              shellKind={isWin ? 'windows' : 'posix'}
             />
           </>
         }
