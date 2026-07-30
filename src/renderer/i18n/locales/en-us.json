@@ -8665,6 +8665,49 @@
     "title": "Terminal",
     "workspace": {
       "choose": "Choose workspace",
+      "context": {
+        "copy": "Copy",
+        "copy_path": "Copy path",
+        "cut": "Cut",
+        "folder_properties": "Folder properties",
+        "new_file": "New file",
+        "new_folder": "New folder",
+        "open_file": "Open file",
+        "open_folder": "Open folder",
+        "open_terminal_here": "Open terminal here",
+        "paste": "Paste",
+        "properties": "Properties",
+        "rename": "Rename",
+        "trash": "Delete"
+      },
+      "dialog": {
+        "kind": {
+          "directory": "Folder",
+          "file": "File",
+          "other": "Other"
+        },
+        "new_file": "Enter a new file name",
+        "new_file_default": "New File.txt",
+        "new_folder": "Enter a new folder name",
+        "new_folder_default": "New Folder",
+        "operation_failed": "File operation failed",
+        "paste_conflict_description": "The target directory already contains an item with the same name.",
+        "paste_conflict_rename": "Rename",
+        "paste_conflict_rename_label": "New name",
+        "paste_conflict_replace": "Replace",
+        "paste_conflict_title": "Paste conflict",
+        "properties": {
+          "created_at": "Created",
+          "kind": "Type",
+          "modified_at": "Modified",
+          "name": "Name",
+          "path": "Path",
+          "size": "Size"
+        },
+        "rename": "Enter a new name",
+        "trash_confirm": "Delete \"{{name}}\"?",
+        "trash_confirm_many": "Delete the selected {{count}} items?"
+      },
       "include_hidden": "Show hidden files",
       "keep_directory": "Keep directory",
       "layout": {

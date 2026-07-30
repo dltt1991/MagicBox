@@ -3,7 +3,8 @@ import { cn } from '@cherrystudio/ui/lib/utils'
 import { Icon } from '@iconify/react'
 import { useDirectoryTree } from '@renderer/hooks/useDirectoryTree'
 import { getFileIconName } from '@renderer/utils/fileIconName'
-import { useMemo } from 'react'
+import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -13,11 +14,33 @@ import {
   type WorkspaceTreeItem,
   type WorkspaceViewMode
 } from '../lib/workspaceTree'
+import { WorkspaceContextMenu, type WorkspaceContextMenuActions } from './WorkspaceContextMenu'
 
 const TERMINAL_PATH_DRAG_MIME_TYPE = 'application/x-cherry-terminal-path'
 const LIST_COLUMN_CLASS = 'grid-cols-[minmax(10rem,1fr)_8.5rem_5.5rem]'
 const MATERIAL_ICON_PREFIX = 'material-icon-theme:'
 const ICON_SIZE_PX = 16
+
+type MarqueePoint = {
+  x: number
+  y: number
+}
+
+type MarqueeSelection = {
+  start: MarqueePoint
+  current: MarqueePoint
+}
+
+type WorkspaceKeyboardEvent = {
+  key: string
+  metaKey: boolean
+  ctrlKey: boolean
+  altKey: boolean
+  shiftKey: boolean
+  target: EventTarget | null
+  preventDefault: () => void
+  stopPropagation: () => void
+}
 
 export interface WorkspaceFileTreeProps {
   rootPath: string | null
@@ -27,6 +50,12 @@ export interface WorkspaceFileTreeProps {
   sortKey: WorkspaceSortKey
   sortDirection: WorkspaceSortDirection
   onSelectPath: (path: string, kind: WorkspaceTreeItem['kind']) => void
+  onHighlightPath?: (path: string) => void
+  onOpenChildHistoryPath?: () => void
+  onOpenParentPath?: (path: string) => void
+  contextMenuActions?: WorkspaceContextMenuActions
+  refreshKey?: number
+  restoreFocusKey?: number
 }
 
 function formatSize(size: number): string {
@@ -50,6 +79,48 @@ function isHiddenWorkspaceItem(item: WorkspaceTreeItem): boolean {
   return item.name.startsWith('.')
 }
 
+function isEditableShortcutTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+
+  return Boolean(target.closest('input, textarea, select, [contenteditable="true"]'))
+}
+
+function containsEventTarget(element: HTMLElement | null, target: EventTarget | null): boolean {
+  return Boolean(element && target instanceof Node && element.contains(target))
+}
+
+function getParentPath(path: string): string | null {
+  const normalizedPath = path.replace(/\\/g, '/').replace(/\/+$/, '')
+  if (!normalizedPath || normalizedPath === '/') return null
+  if (/^[A-Za-z]:$/.test(normalizedPath)) return null
+
+  const parentPath = normalizedPath.slice(0, normalizedPath.lastIndexOf('/')) || '/'
+  if (/^[A-Za-z]:$/.test(parentPath)) return `${parentPath}/`
+  if (parentPath === normalizedPath) return null
+
+  return parentPath
+}
+
+function getMarqueeRect(selection: MarqueeSelection) {
+  const left = Math.min(selection.start.x, selection.current.x)
+  const top = Math.min(selection.start.y, selection.current.y)
+  const right = Math.max(selection.start.x, selection.current.x)
+  const bottom = Math.max(selection.start.y, selection.current.y)
+
+  return {
+    left,
+    top,
+    width: right - left,
+    height: bottom - top,
+    right,
+    bottom
+  }
+}
+
+function rectsIntersect(a: { left: number; right: number; top: number; bottom: number }, b: DOMRect) {
+  return a.left <= b.right && a.right >= b.left && a.top <= b.bottom && a.bottom >= b.top
+}
+
 function WorkspaceItemIcon({ item }: { item: WorkspaceTreeItem }) {
   const iconName = item.kind === 'directory' ? 'folder-base' : getFileIconName(item.path)
 
@@ -70,14 +141,25 @@ export function WorkspaceFileTree({
   viewMode,
   sortKey,
   sortDirection,
-  onSelectPath
+  onSelectPath,
+  onHighlightPath,
+  onOpenChildHistoryPath,
+  onOpenParentPath,
+  contextMenuActions,
+  refreshKey,
+  restoreFocusKey
 }: WorkspaceFileTreeProps) {
   return (
     <WorkspaceFileTreeContent
-      key={`${rootPath ?? 'empty'}:${includeHidden}`}
+      key={`${includeHidden}:${refreshKey ?? 0}`}
       includeHidden={includeHidden}
+      contextMenuActions={contextMenuActions}
+      onHighlightPath={onHighlightPath}
+      onOpenChildHistoryPath={onOpenChildHistoryPath}
+      onOpenParentPath={onOpenParentPath}
       onSelectPath={onSelectPath}
       rootPath={rootPath}
+      restoreFocusKey={restoreFocusKey}
       sortDirection={sortDirection}
       sortKey={sortKey}
       selectedPath={selectedPath}
@@ -93,9 +175,15 @@ function WorkspaceFileTreeContent({
   viewMode,
   sortKey,
   sortDirection,
-  onSelectPath
+  onSelectPath,
+  onHighlightPath,
+  onOpenChildHistoryPath,
+  onOpenParentPath,
+  contextMenuActions,
+  restoreFocusKey
 }: WorkspaceFileTreeProps) {
   const { t } = useTranslation()
+  const contentRef = useRef<HTMLDivElement>(null)
   const { error, isLoading, root, version } = useDirectoryTree(rootPath ?? undefined, {
     includeHidden,
     maxDepth: 1,
@@ -108,43 +196,407 @@ function WorkspaceFileTreeContent({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [root, version, sortKey, sortDirection]
   )
+  const selectedItem = useMemo(() => items.find((item) => item.path === selectedPath) ?? null, [items, selectedPath])
+  const selectedIndex = useMemo(() => items.findIndex((item) => item.path === selectedPath), [items, selectedPath])
+  const [marqueeSelection, setMarqueeSelection] = useState<MarqueeSelection | null>(null)
+  const [marqueeSelectedPaths, setMarqueeSelectedPaths] = useState<ReadonlySet<string>>(() => new Set())
+  const [selectedPaths, setSelectedPaths] = useState<ReadonlySet<string>>(() => new Set())
+  const [contextMenuItem, setContextMenuItem] = useState<WorkspaceTreeItem | null>(null)
+  const isWorkspaceShortcutActiveRef = useRef(false)
+  const marqueeSelectedPathsRef = useRef<ReadonlySet<string>>(new Set())
+  const previousRootPathRef = useRef(rootPath)
+  const selectedPathsRef = useRef<ReadonlySet<string>>(new Set())
+  const [selectionAnchorPath, setSelectionAnchorPath] = useState<string | null>(null)
+  const applyMarqueeSelectedPaths = useCallback((paths: ReadonlySet<string>) => {
+    marqueeSelectedPathsRef.current = paths
+    setMarqueeSelectedPaths(paths)
+  }, [])
+  const applySelectedPaths = useCallback((paths: ReadonlySet<string>) => {
+    selectedPathsRef.current = paths
+    setSelectedPaths(paths)
+  }, [])
+  const canUseWorkspaceShortcuts = Boolean(contextMenuActions)
 
-  if (!rootPath) {
-    return <EmptyState className="h-full" title={t('terminal.workspace.tree.empty')} />
+  const restoreWorkspaceTreeFocus = useCallback(() => {
+    isWorkspaceShortcutActiveRef.current = true
+    contentRef.current?.focus({ preventScroll: true })
+  }, [])
+
+  const getContentPoint = useCallback((event: MouseEvent | ReactMouseEvent<HTMLDivElement>) => {
+    const content = contentRef.current
+    if (!content) return null
+
+    const rect = content.getBoundingClientRect()
+    return {
+      x: event.clientX - rect.left + content.scrollLeft,
+      y: event.clientY - rect.top + content.scrollTop
+    }
+  }, [])
+
+  const updateMarqueeSelection = useCallback(
+    (selection: MarqueeSelection) => {
+      const content = contentRef.current
+      if (!content) return
+
+      const marqueeRect = getMarqueeRect(selection)
+      const contentRect = content.getBoundingClientRect()
+      const nextPaths = new Set<string>()
+
+      content.querySelectorAll<HTMLElement>('[data-workspace-item-path]').forEach((element) => {
+        const path = element.dataset.workspaceItemPath
+        if (!path) return
+
+        const itemRect = element.getBoundingClientRect()
+        const relativeItemRect = new DOMRect(
+          itemRect.left - contentRect.left + content.scrollLeft,
+          itemRect.top - contentRect.top + content.scrollTop,
+          itemRect.width,
+          itemRect.height
+        )
+
+        if (rectsIntersect(marqueeRect, relativeItemRect)) nextPaths.add(path)
+      })
+
+      applyMarqueeSelectedPaths(nextPaths)
+    },
+    [applyMarqueeSelectedPaths]
+  )
+
+  const getCurrentSelectedItems = useCallback(() => {
+    const currentPaths = new Set([...selectedPathsRef.current, ...marqueeSelectedPathsRef.current])
+    return items.filter((item) => currentPaths.has(item.path))
+  }, [items])
+
+  const getShortcutTargetItems = useCallback(() => {
+    const currentSelectedItems = getCurrentSelectedItems()
+    return currentSelectedItems.length > 0 ? currentSelectedItems : selectedItem ? [selectedItem] : []
+  }, [getCurrentSelectedItems, selectedItem])
+
+  const activateWorkspaceShortcuts = useCallback(() => {
+    isWorkspaceShortcutActiveRef.current = true
+  }, [])
+
+  useEffect(() => {
+    const rootPathChanged = previousRootPathRef.current !== rootPath
+    previousRootPathRef.current = rootPath
+
+    if (marqueeSelectedPathsRef.current.size > 0) applyMarqueeSelectedPaths(new Set())
+    setMarqueeSelection((currentSelection) => (currentSelection ? null : currentSelection))
+    if (selectedPathsRef.current.size > 0) applySelectedPaths(new Set())
+    setSelectionAnchorPath(null)
+
+    if (rootPathChanged && canUseWorkspaceShortcuts && document.activeElement === document.body) {
+      contentRef.current?.focus()
+    }
+  }, [applyMarqueeSelectedPaths, applySelectedPaths, canUseWorkspaceShortcuts, rootPath, version, viewMode])
+
+  useEffect(() => {
+    if (!canUseWorkspaceShortcuts || !restoreFocusKey) return
+
+    restoreWorkspaceTreeFocus()
+  }, [canUseWorkspaceShortcuts, restoreFocusKey, restoreWorkspaceTreeFocus])
+
+  useEffect(() => {
+    if (!marqueeSelection) return
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const current = getContentPoint(event)
+      if (!current) return
+
+      const nextSelection = { ...marqueeSelection, current }
+      setMarqueeSelection(nextSelection)
+      updateMarqueeSelection(nextSelection)
+    }
+
+    const handleMouseUp = () => {
+      const nextPaths = marqueeSelectedPathsRef.current
+      applySelectedPaths(nextPaths)
+      setSelectionAnchorPath(nextPaths.values().next().value ?? null)
+      setMarqueeSelection(null)
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp, { once: true })
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [applySelectedPaths, getContentPoint, marqueeSelection, updateMarqueeSelection])
+
+  const handleMarqueeMouseDown = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || isEditableShortcutTarget(event.target)) return
+    if ((event.target as HTMLElement).closest('[data-workspace-item-path]')) return
+
+    const start = getContentPoint(event)
+    if (!start) return
+
+    event.preventDefault()
+    const nextSelection = { start, current: start }
+    setMarqueeSelection(nextSelection)
+    applyMarqueeSelectedPaths(new Set())
   }
 
-  if (isLoading) {
-    return <EmptyState className="h-full" title={t('terminal.workspace.tree.loading')} />
+  const selectSingleItem = (item: WorkspaceTreeItem) => {
+    applySelectedPaths(new Set([item.path]))
+    applyMarqueeSelectedPaths(new Set())
+    setSelectionAnchorPath(item.path)
+    onSelectPath(item.path, item.kind)
   }
 
-  if (error) {
-    return <EmptyState className="h-full" title={t('terminal.workspace.tree.error')} />
+  const toggleItemSelection = (item: WorkspaceTreeItem) => {
+    applyMarqueeSelectedPaths(new Set())
+    const nextPaths = new Set(selectedPathsRef.current)
+    if (nextPaths.has(item.path)) {
+      nextPaths.delete(item.path)
+    } else {
+      nextPaths.add(item.path)
+    }
+    applySelectedPaths(nextPaths)
+    setSelectionAnchorPath(item.path)
   }
 
-  if (items.length === 0) {
-    return <EmptyState className="h-full" title={t('terminal.workspace.tree.no_files')} />
+  const selectRangeToItem = (item: WorkspaceTreeItem) => {
+    applyMarqueeSelectedPaths(new Set())
+    const anchorPath = selectionAnchorPath ?? selectedPath ?? item.path
+    const anchorIndex = items.findIndex((candidate) => candidate.path === anchorPath)
+    const itemIndex = items.findIndex((candidate) => candidate.path === item.path)
+
+    if (anchorIndex < 0 || itemIndex < 0) {
+      applySelectedPaths(new Set([item.path]))
+      setSelectionAnchorPath(item.path)
+      return
+    }
+
+    const startIndex = Math.min(anchorIndex, itemIndex)
+    const endIndex = Math.max(anchorIndex, itemIndex)
+    applySelectedPaths(new Set(items.slice(startIndex, endIndex + 1).map((candidate) => candidate.path)))
   }
+
+  const ensureContextMenuTarget = (item: WorkspaceTreeItem) => {
+    if (selectedPathsRef.current.has(item.path) || marqueeSelectedPathsRef.current.has(item.path)) return
+
+    applySelectedPaths(new Set([item.path]))
+    applyMarqueeSelectedPaths(new Set())
+    setSelectionAnchorPath(item.path)
+  }
+
+  const getSelectedItemsForContextItem = useCallback(
+    (item: WorkspaceTreeItem) => {
+      const currentSelectedItems = getCurrentSelectedItems()
+      return currentSelectedItems.some((selectedItem) => selectedItem.path === item.path)
+        ? currentSelectedItems
+        : [item]
+    },
+    [getCurrentSelectedItems]
+  )
+
+  const handleContextMenuCapture = (event: ReactMouseEvent<HTMLDivElement>) => {
+    if (!rootPath || !contextMenuActions) return
+
+    const itemElement = (event.target as HTMLElement).closest<HTMLElement>('[data-workspace-item-path]')
+    const item = itemElement?.dataset.workspaceItemPath
+      ? (items.find((candidate) => candidate.path === itemElement.dataset.workspaceItemPath) ?? null)
+      : null
+
+    setContextMenuItem(item)
+    if (item) ensureContextMenuTarget(item)
+  }
+
+  const runShortcut = (event: WorkspaceKeyboardEvent, action: () => void) => {
+    event.preventDefault()
+    event.stopPropagation()
+    action()
+  }
+
+  const handleKeyDown = useCallback(
+    (event: WorkspaceKeyboardEvent) => {
+      if (!rootPath || isEditableShortcutTarget(event.target)) return
+
+      const key = event.key.toLowerCase()
+      const hasModifier = event.metaKey || event.ctrlKey
+
+      if ((event.metaKey || event.altKey) && !event.ctrlKey && !event.shiftKey && key === 'arrowup') {
+        const parentPath = getParentPath(rootPath)
+        if (parentPath) runShortcut(event, () => onOpenParentPath?.(parentPath))
+        return
+      }
+
+      if ((event.metaKey || event.altKey) && !event.ctrlKey && !event.shiftKey && key === 'arrowdown') {
+        runShortcut(event, () => onOpenChildHistoryPath?.())
+        return
+      }
+
+      if (!hasModifier && !event.altKey && !event.shiftKey) {
+        const direction =
+          key === 'arrowdown' || key === 'arrowright' ? 1 : key === 'arrowup' || key === 'arrowleft' ? -1 : 0
+
+        if (direction !== 0 && items.length > 0) {
+          const fallbackIndex = direction > 0 ? 0 : items.length - 1
+          const nextIndex =
+            selectedIndex < 0 ? fallbackIndex : Math.min(items.length - 1, Math.max(0, selectedIndex + direction))
+
+          runShortcut(event, () => onHighlightPath?.(items[nextIndex].path))
+          return
+        }
+      }
+
+      if (!contextMenuActions) return
+
+      const showProperties = () => contextMenuActions.onShowProperties(selectedItem ? selectedItem.path : rootPath)
+
+      if (hasModifier && !event.shiftKey && !event.altKey && key === 'a') {
+        runShortcut(event, () => {
+          applyMarqueeSelectedPaths(new Set())
+          applySelectedPaths(new Set(items.map((item) => item.path)))
+          setSelectionAnchorPath(items[0]?.path ?? null)
+        })
+        return
+      }
+
+      if (hasModifier && event.shiftKey && key === 'n') {
+        runShortcut(event, contextMenuActions.onNewFolder)
+        return
+      }
+
+      if (hasModifier && !event.shiftKey && key === 'n') {
+        runShortcut(event, contextMenuActions.onNewFile)
+        return
+      }
+
+      if (hasModifier && event.shiftKey && key === 't') {
+        runShortcut(event, contextMenuActions.onOpenTerminalHere)
+        return
+      }
+
+      if (hasModifier && key === 'v') {
+        runShortcut(event, contextMenuActions.onPaste)
+        return
+      }
+
+      if ((event.metaKey && key === 'i') || (event.altKey && event.key === 'Enter')) {
+        runShortcut(event, showProperties)
+        return
+      }
+
+      const currentShortcutTargetItems = getShortcutTargetItems()
+      if (currentShortcutTargetItems.length === 0) return
+
+      const primaryItem = currentShortcutTargetItems[0]
+
+      if ((event.key === 'Enter' && !event.altKey && !hasModifier && !event.shiftKey) || (hasModifier && key === 'o')) {
+        runShortcut(event, () => contextMenuActions.onOpenItem(primaryItem))
+        return
+      }
+
+      if (event.key === 'F2') {
+        runShortcut(event, () => contextMenuActions.onRenameItem(primaryItem))
+        return
+      }
+
+      if ((hasModifier && event.shiftKey && key === 'c') || (event.metaKey && event.altKey && key === 'c')) {
+        runShortcut(event, () => contextMenuActions.onCopyPaths(currentShortcutTargetItems.map((item) => item.path)))
+        return
+      }
+
+      if (hasModifier && key === 'c') {
+        runShortcut(event, () => contextMenuActions.onCopyItems(currentShortcutTargetItems))
+        return
+      }
+
+      if (hasModifier && key === 'x') {
+        runShortcut(event, () => contextMenuActions.onCutItems(currentShortcutTargetItems))
+        return
+      }
+
+      if ((event.key === 'Backspace' && event.metaKey) || (event.key === 'Delete' && !hasModifier && !event.altKey)) {
+        runShortcut(event, () => contextMenuActions.onTrashItems(currentShortcutTargetItems))
+      }
+    },
+    [
+      contextMenuActions,
+      applyMarqueeSelectedPaths,
+      applySelectedPaths,
+      getShortcutTargetItems,
+      items,
+      onHighlightPath,
+      onOpenChildHistoryPath,
+      onOpenParentPath,
+      rootPath,
+      selectedIndex,
+      selectedItem
+    ]
+  )
+
+  useEffect(() => {
+    if (!canUseWorkspaceShortcuts) return
+
+    const handleDocumentMouseDown = (event: MouseEvent) => {
+      isWorkspaceShortcutActiveRef.current = containsEventTarget(contentRef.current, event.target)
+    }
+
+    const handleDocumentFocusIn = (event: FocusEvent) => {
+      isWorkspaceShortcutActiveRef.current = containsEventTarget(contentRef.current, event.target)
+    }
+
+    const handleDocumentKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (!isWorkspaceShortcutActiveRef.current) return
+      if (containsEventTarget(contentRef.current, event.target)) return
+      handleKeyDown(event)
+    }
+
+    document.addEventListener('mousedown', handleDocumentMouseDown, true)
+    document.addEventListener('focusin', handleDocumentFocusIn, true)
+    document.addEventListener('keydown', handleDocumentKeyDown)
+
+    return () => {
+      document.removeEventListener('mousedown', handleDocumentMouseDown, true)
+      document.removeEventListener('focusin', handleDocumentFocusIn, true)
+      document.removeEventListener('keydown', handleDocumentKeyDown)
+    }
+  }, [canUseWorkspaceShortcuts, handleKeyDown])
 
   const renderItem = (item: WorkspaceTreeItem, className?: string) => {
     const isHidden = isHiddenWorkspaceItem(item)
+    const isSelected = selectedPath === item.path || selectedPaths.has(item.path) || marqueeSelectedPaths.has(item.path)
 
-    return (
+    const button = (
       <button
         aria-label={item.name}
         className={cn(
           'min-w-0 rounded-md text-left text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
           viewMode === 'list' && 'w-full',
-          selectedPath === item.path && 'bg-accent text-accent-foreground',
+          isSelected && 'bg-accent text-accent-foreground',
           isHidden && 'opacity-60',
           className
         )}
         data-hidden={isHidden ? 'true' : undefined}
         data-kind={item.kind}
         data-list-columns={viewMode === 'list' ? 'workspace-file-list' : undefined}
+        data-selected={isSelected ? 'true' : undefined}
         data-testid="workspace-item"
+        data-workspace-item-path={item.path}
         draggable
         key={item.id}
-        onClick={() => onSelectPath(item.path, item.kind)}
+        onClick={(event) => {
+          if (event.shiftKey) {
+            selectRangeToItem(item)
+            return
+          }
+
+          if (event.metaKey || event.ctrlKey) {
+            toggleItemSelection(item)
+            return
+          }
+
+          selectSingleItem(item)
+        }}
+        onContextMenu={() => {
+          ensureContextMenuTarget(item)
+        }}
+        onMouseDown={() => {
+          if (contextMenuActions) restoreWorkspaceTreeFocus()
+        }}
         onDragStart={(event) => {
           event.dataTransfer.setData(TERMINAL_PATH_DRAG_MIME_TYPE, JSON.stringify({ path: item.path }))
         }}
@@ -169,10 +621,20 @@ function WorkspaceFileTreeContent({
         )}
       </button>
     )
+
+    return button
   }
 
-  return (
-    <div className="h-full min-h-0 overflow-auto p-2" data-view-mode={viewMode}>
+  const body = !rootPath ? (
+    <EmptyState className="h-full" title={t('terminal.workspace.tree.empty')} />
+  ) : isLoading ? (
+    <EmptyState className="h-full" title={t('terminal.workspace.tree.loading')} />
+  ) : error ? (
+    <EmptyState className="h-full" title={t('terminal.workspace.tree.error')} />
+  ) : items.length === 0 ? (
+    <EmptyState className="h-full" title={t('terminal.workspace.tree.no_files')} />
+  ) : (
+    <>
       {viewMode === 'list' && (
         <div
           className={cn(
@@ -190,6 +652,44 @@ function WorkspaceFileTreeContent({
         className={viewMode === 'icons' ? 'grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2' : 'space-y-1'}>
         {items.map((item) => renderItem(item))}
       </div>
+    </>
+  )
+
+  const content = (
+    <div
+      className="relative h-full min-h-0 overflow-auto p-2 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      ref={contentRef}
+      data-testid="workspace-file-tree-content"
+      data-view-mode={viewMode}
+      onContextMenuCapture={handleContextMenuCapture}
+      onFocusCapture={activateWorkspaceShortcuts}
+      onKeyDownCapture={(event: ReactKeyboardEvent<HTMLDivElement>) => handleKeyDown(event)}
+      onMouseDown={(event) => {
+        activateWorkspaceShortcuts()
+        handleMarqueeMouseDown(event)
+      }}
+      tabIndex={contextMenuActions ? 0 : undefined}>
+      {body}
+      {marqueeSelection && (
+        <div
+          className="pointer-events-none absolute z-20 border border-primary bg-primary/10"
+          data-testid="workspace-marquee-selection"
+          style={getMarqueeRect(marqueeSelection)}
+        />
+      )}
     </div>
+  )
+
+  return contextMenuActions && rootPath ? (
+    <WorkspaceContextMenu
+      actions={contextMenuActions}
+      getSelectedItemsForItem={getSelectedItemsForContextItem}
+      item={contextMenuItem ?? undefined}
+      onActionComplete={restoreWorkspaceTreeFocus}
+      rootPath={rootPath}>
+      {content}
+    </WorkspaceContextMenu>
+  ) : (
+    content
   )
 }

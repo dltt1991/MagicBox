@@ -70,6 +70,60 @@ const writeIfUnchangedInputSchema = z.strictObject({
   expectedContentHash: ContentHashSchema.optional()
 })
 
+const pathSegmentSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(255)
+  .refine((value) => !value.includes('\0'), 'must not contain null bytes')
+  .refine((value) => !/[/\\]/.test(value), 'must not contain path separators')
+
+const pathInputSchema = z.strictObject({
+  path: AbsoluteFilePathSchema
+})
+
+const pathCreateInputSchema = z.strictObject({
+  parentPath: AbsoluteFilePathSchema,
+  name: pathSegmentSchema
+})
+
+const pathRenameInputSchema = z.strictObject({
+  path: AbsoluteFilePathSchema,
+  newName: pathSegmentSchema
+})
+
+const pathPasteInputSchema = z.strictObject({
+  sourcePath: AbsoluteFilePathSchema,
+  targetDirectory: AbsoluteFilePathSchema,
+  operation: z.enum(['copy', 'move']),
+  conflict: z.enum(['prompt', 'rename', 'replace', 'cancel']),
+  newName: pathSegmentSchema.optional()
+})
+
+const pathInfoSchema = z.strictObject({
+  path: AbsoluteFilePathSchema,
+  name: z.string(),
+  kind: z.enum(['file', 'directory', 'other']),
+  size: z.number().nonnegative(),
+  createdAt: z.number().nonnegative(),
+  modifiedAt: z.number().nonnegative()
+})
+
+const pathPasteResultSchema = z.discriminatedUnion('status', [
+  z.strictObject({
+    status: z.literal('completed'),
+    path: AbsoluteFilePathSchema
+  }),
+  z.strictObject({
+    status: z.literal('conflict'),
+    existingPath: AbsoluteFilePathSchema,
+    suggestedName: pathSegmentSchema
+  }),
+  z.strictObject({
+    status: z.literal('canceled')
+  })
+])
+
 // Fields common to every create-entry source. `cleanupPolicy` is required at
 // all creation surfaces (file-entry-cleanup.md §4.1) — written once here, not
 // per union branch. `.extend()` keeps the branches strict.
@@ -143,6 +197,12 @@ export const fileRequestSchemas = {
   }),
   'file.open': defineRoute({ input: FileHandleSchema, output: z.void() }),
   'file.show_in_folder': defineRoute({ input: FileHandleSchema, output: z.void() }),
+  'file.path_stat': defineRoute({ input: pathInputSchema, output: pathInfoSchema }),
+  'file.path_create_directory': defineRoute({ input: pathCreateInputSchema, output: pathInfoSchema }),
+  'file.path_create_file': defineRoute({ input: pathCreateInputSchema, output: pathInfoSchema }),
+  'file.path_rename': defineRoute({ input: pathRenameInputSchema, output: pathInfoSchema }),
+  'file.path_trash': defineRoute({ input: pathInputSchema, output: z.void() }),
+  'file.path_paste': defineRoute({ input: pathPasteInputSchema, output: pathPasteResultSchema }),
 
   // DirectoryTreeBuilder primitive. `create` returns the snapshot with its revision;
   // `activate` releases the buffered mutations once the renderer mirror is listening.

@@ -6,23 +6,46 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const {
   appGetMock,
   assertOutsideManagedStorageMutationMock,
+  copyMock,
   getMetadataByPathMock,
+  mkdirMock,
+  openMock,
   readByPathMock,
   readChunkByPathMock,
+  renamePathMock,
+  rmMock,
   safeOpenMock,
   showPathInFolderMock,
+  statMock,
+  trashItemMock,
   writeIfUnchangedByPathMock
 } = vi.hoisted(() => ({
   appGetMock: vi.fn(),
   assertOutsideManagedStorageMutationMock: vi.fn(),
+  copyMock: vi.fn(),
   getMetadataByPathMock: vi.fn(),
+  mkdirMock: vi.fn(),
+  openMock: vi.fn(),
   readByPathMock: vi.fn(),
   readChunkByPathMock: vi.fn(),
+  renamePathMock: vi.fn(),
+  rmMock: vi.fn(),
   safeOpenMock: vi.fn(),
   showPathInFolderMock: vi.fn(),
+  statMock: vi.fn(),
+  trashItemMock: vi.fn(),
   writeIfUnchangedByPathMock: vi.fn()
 }))
 vi.mock('@application', () => ({ application: { get: appGetMock } }))
+vi.mock('electron', () => ({ shell: { trashItem: trashItemMock } }))
+vi.mock('node:fs/promises', () => ({
+  cp: copyMock,
+  mkdir: mkdirMock,
+  open: openMock,
+  rename: renamePathMock,
+  rm: rmMock,
+  stat: statMock
+}))
 vi.mock('@main/services/file', async () => {
   // dispatchHandle is exercised for real so these tests cover handle routing.
   const { dispatchHandle } = await vi.importActual<typeof FileDispatchModule>('@main/services/file/internal/dispatch')
@@ -109,6 +132,7 @@ const windowManager = { getWindow: vi.fn() }
 
 beforeEach(() => {
   vi.clearAllMocks()
+  openMock.mockResolvedValue({ close: vi.fn() })
   windowManager.getWindow.mockImplementation((id: string) =>
     id === 'win-1' ? { webContents: senderWebContents } : undefined
   )
@@ -122,6 +146,7 @@ beforeEach(() => {
 
 const ctx = { senderId: null }
 const windowCtx = { senderId: 'win-1' }
+const missingPathError = () => Object.assign(new Error('missing'), { code: 'ENOENT' })
 
 describe('fileHandlers', () => {
   it('does not expose the pure-SQL content-hash lookup through IpcApi', () => {
@@ -390,6 +415,292 @@ describe('fileHandlers', () => {
 
     await expect(fileHandlers['file.batch_create_internal_entries']({ items }, ctx)).resolves.toBe(result)
     expect(fileManager.batchCreateInternalEntries).toHaveBeenCalledWith(items)
+  })
+
+  it('stats physical paths for workspace properties', async () => {
+    statMock.mockResolvedValueOnce({
+      birthtimeMs: 11,
+      isDirectory: () => true,
+      isFile: () => false,
+      mtimeMs: 22,
+      size: 4096
+    })
+
+    await expect(fileHandlers['file.path_stat']({ path: '/workspace/src' as AbsoluteFilePath }, ctx)).resolves.toEqual({
+      path: '/workspace/src',
+      name: 'src',
+      kind: 'directory',
+      size: 4096,
+      createdAt: 11,
+      modifiedAt: 22
+    })
+  })
+
+  it('creates workspace folders and files under the requested parent', async () => {
+    statMock
+      .mockRejectedValueOnce(missingPathError())
+      .mockResolvedValueOnce({
+        birthtimeMs: 1,
+        isDirectory: () => true,
+        isFile: () => false,
+        mtimeMs: 2,
+        size: 64
+      })
+      .mockRejectedValueOnce(missingPathError())
+      .mockResolvedValueOnce({
+        birthtimeMs: 3,
+        isDirectory: () => false,
+        isFile: () => true,
+        mtimeMs: 4,
+        size: 0
+      })
+
+    await expect(
+      fileHandlers['file.path_create_directory'](
+        { parentPath: '/workspace' as AbsoluteFilePath, name: 'New Folder' },
+        ctx
+      )
+    ).resolves.toMatchObject({ path: '/workspace/New Folder', kind: 'directory' })
+    await expect(
+      fileHandlers['file.path_create_file']({ parentPath: '/workspace' as AbsoluteFilePath, name: 'notes.md' }, ctx)
+    ).resolves.toMatchObject({ path: '/workspace/notes.md', kind: 'file' })
+
+    expect(mkdirMock).toHaveBeenCalledWith('/workspace/New Folder')
+    expect(openMock).toHaveBeenCalledWith('/workspace/notes.md', 'wx')
+  })
+
+  it('creates workspace folders and files with an available name when the requested name exists', async () => {
+    statMock
+      .mockResolvedValueOnce({
+        birthtimeMs: 1,
+        isDirectory: () => false,
+        isFile: () => true,
+        mtimeMs: 2,
+        size: 10
+      })
+      .mockRejectedValueOnce(missingPathError())
+      .mockResolvedValueOnce({
+        birthtimeMs: 3,
+        isDirectory: () => false,
+        isFile: () => true,
+        mtimeMs: 4,
+        size: 11
+      })
+      .mockResolvedValueOnce({
+        birthtimeMs: 5,
+        isDirectory: () => true,
+        isFile: () => false,
+        mtimeMs: 6,
+        size: 64
+      })
+      .mockRejectedValueOnce(missingPathError())
+      .mockResolvedValueOnce({
+        birthtimeMs: 7,
+        isDirectory: () => true,
+        isFile: () => false,
+        mtimeMs: 8,
+        size: 64
+      })
+
+    await expect(
+      fileHandlers['file.path_create_file']({ parentPath: '/workspace' as AbsoluteFilePath, name: 'notes.md' }, ctx)
+    ).resolves.toMatchObject({ path: '/workspace/notes 2.md', kind: 'file' })
+    await expect(
+      fileHandlers['file.path_create_directory']({ parentPath: '/workspace' as AbsoluteFilePath, name: 'Drafts' }, ctx)
+    ).resolves.toMatchObject({ path: '/workspace/Drafts 2', kind: 'directory' })
+
+    expect(openMock).toHaveBeenCalledWith('/workspace/notes 2.md', 'wx')
+    expect(mkdirMock).toHaveBeenCalledWith('/workspace/Drafts 2')
+  })
+
+  it('renames and trashes physical workspace items', async () => {
+    statMock.mockResolvedValueOnce({
+      birthtimeMs: 5,
+      isDirectory: () => false,
+      isFile: () => true,
+      mtimeMs: 6,
+      size: 10
+    })
+
+    await expect(
+      fileHandlers['file.path_rename']({ path: '/workspace/old.md' as AbsoluteFilePath, newName: 'new.md' }, ctx)
+    ).resolves.toMatchObject({ path: '/workspace/new.md', name: 'new.md' })
+    await fileHandlers['file.path_trash']({ path: '/workspace/new.md' as AbsoluteFilePath }, ctx)
+
+    expect(renamePathMock).toHaveBeenCalledWith('/workspace/old.md', '/workspace/new.md')
+    expect(trashItemMock).toHaveBeenCalledWith('/workspace/new.md')
+  })
+
+  it('returns a paste conflict before copying or moving over an existing target', async () => {
+    statMock
+      .mockResolvedValueOnce({
+        birthtimeMs: 1,
+        isDirectory: () => false,
+        isFile: () => true,
+        mtimeMs: 2,
+        size: 10
+      })
+      .mockRejectedValueOnce(missingPathError())
+
+    await expect(
+      fileHandlers['file.path_paste'](
+        {
+          sourcePath: '/workspace/a.md' as AbsoluteFilePath,
+          targetDirectory: '/workspace/dest' as AbsoluteFilePath,
+          operation: 'copy',
+          conflict: 'prompt'
+        },
+        ctx
+      )
+    ).resolves.toEqual({
+      status: 'conflict',
+      existingPath: '/workspace/dest/a.md',
+      suggestedName: 'a copy.md'
+    })
+    expect(copyMock).not.toHaveBeenCalled()
+    expect(renamePathMock).not.toHaveBeenCalled()
+  })
+
+  it('suggests the next available paste name when the first copy name already exists', async () => {
+    statMock
+      .mockResolvedValueOnce({
+        birthtimeMs: 1,
+        isDirectory: () => false,
+        isFile: () => true,
+        mtimeMs: 2,
+        size: 10
+      })
+      .mockResolvedValueOnce({
+        birthtimeMs: 3,
+        isDirectory: () => false,
+        isFile: () => true,
+        mtimeMs: 4,
+        size: 10
+      })
+      .mockRejectedValueOnce(missingPathError())
+
+    await expect(
+      fileHandlers['file.path_paste'](
+        {
+          sourcePath: '/workspace/a.md' as AbsoluteFilePath,
+          targetDirectory: '/workspace/dest' as AbsoluteFilePath,
+          operation: 'copy',
+          conflict: 'prompt'
+        },
+        ctx
+      )
+    ).resolves.toEqual({
+      status: 'conflict',
+      existingPath: '/workspace/dest/a.md',
+      suggestedName: 'a copy 2.md'
+    })
+  })
+
+  it('returns a new paste conflict when the requested renamed target also exists', async () => {
+    statMock
+      .mockResolvedValueOnce({
+        birthtimeMs: 1,
+        isDirectory: () => false,
+        isFile: () => true,
+        mtimeMs: 2,
+        size: 10
+      })
+      .mockRejectedValueOnce(missingPathError())
+
+    await expect(
+      fileHandlers['file.path_paste'](
+        {
+          sourcePath: '/workspace/a.md' as AbsoluteFilePath,
+          targetDirectory: '/workspace/dest' as AbsoluteFilePath,
+          operation: 'copy',
+          conflict: 'rename',
+          newName: 'a copy.md'
+        },
+        ctx
+      )
+    ).resolves.toEqual({
+      status: 'conflict',
+      existingPath: '/workspace/dest/a copy.md',
+      suggestedName: 'a copy 2.md'
+    })
+    expect(copyMock).not.toHaveBeenCalled()
+  })
+
+  it('pastes workspace items with rename and replace conflict policies', async () => {
+    statMock
+      .mockRejectedValueOnce(missingPathError())
+      .mockResolvedValueOnce({
+        birthtimeMs: 3,
+        isDirectory: () => true,
+        isFile: () => false,
+        mtimeMs: 4,
+        size: 64
+      })
+      .mockResolvedValueOnce({
+        birthtimeMs: 5,
+        isDirectory: () => true,
+        isFile: () => false,
+        mtimeMs: 6,
+        size: 64
+      })
+
+    await expect(
+      fileHandlers['file.path_paste'](
+        {
+          sourcePath: '/workspace/a.md' as AbsoluteFilePath,
+          targetDirectory: '/workspace/dest' as AbsoluteFilePath,
+          operation: 'copy',
+          conflict: 'rename',
+          newName: 'a copy.md'
+        },
+        ctx
+      )
+    ).resolves.toEqual({ status: 'completed', path: '/workspace/dest/a copy.md' })
+    await expect(
+      fileHandlers['file.path_paste'](
+        {
+          sourcePath: '/workspace/src' as AbsoluteFilePath,
+          targetDirectory: '/workspace/dest' as AbsoluteFilePath,
+          operation: 'move',
+          conflict: 'replace'
+        },
+        ctx
+      )
+    ).resolves.toEqual({ status: 'completed', path: '/workspace/dest/src' })
+
+    expect(copyMock).toHaveBeenCalledWith('/workspace/a.md', '/workspace/dest/a copy.md', {
+      force: false,
+      recursive: true,
+      errorOnExist: true
+    })
+    expect(rmMock).toHaveBeenCalledWith('/workspace/dest/src', { recursive: true, force: true })
+    expect(renamePathMock).toHaveBeenCalledWith('/workspace/src', '/workspace/dest/src')
+  })
+
+  it('does not delete the source when replacing the same physical path', async () => {
+    statMock.mockResolvedValueOnce({
+      birthtimeMs: 1,
+      isDirectory: () => false,
+      isFile: () => true,
+      mtimeMs: 2,
+      size: 10
+    })
+
+    await expect(
+      fileHandlers['file.path_paste'](
+        {
+          sourcePath: '/workspace/a.md' as AbsoluteFilePath,
+          targetDirectory: '/workspace' as AbsoluteFilePath,
+          operation: 'move',
+          conflict: 'replace'
+        },
+        ctx
+      )
+    ).resolves.toEqual({ status: 'completed', path: '/workspace/a.md' })
+
+    expect(rmMock).not.toHaveBeenCalled()
+    expect(copyMock).not.toHaveBeenCalled()
+    expect(renamePathMock).not.toHaveBeenCalled()
   })
 
   it('creates a directory tree addressed to the caller window WebContents', async () => {

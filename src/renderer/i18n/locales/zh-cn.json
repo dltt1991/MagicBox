@@ -8665,6 +8665,49 @@
     "title": "终端",
     "workspace": {
       "choose": "选择工作区",
+      "context": {
+        "copy": "复制",
+        "copy_path": "复制路径",
+        "cut": "剪切",
+        "folder_properties": "查看文件夹属性",
+        "new_file": "新建文件",
+        "new_folder": "新建文件夹",
+        "open_file": "打开文件",
+        "open_folder": "打开文件夹",
+        "open_terminal_here": "在当前目录打开终端页",
+        "paste": "粘贴",
+        "properties": "查看属性",
+        "rename": "重命名",
+        "trash": "删除"
+      },
+      "dialog": {
+        "kind": {
+          "directory": "文件夹",
+          "file": "文件",
+          "other": "其他"
+        },
+        "new_file": "输入新文件名称",
+        "new_file_default": "新建文件.txt",
+        "new_folder": "输入新文件夹名称",
+        "new_folder_default": "新建文件夹",
+        "operation_failed": "文件操作失败",
+        "paste_conflict_description": "目标目录存在同名文件",
+        "paste_conflict_rename": "改名",
+        "paste_conflict_rename_label": "新名称",
+        "paste_conflict_replace": "替换",
+        "paste_conflict_title": "粘贴冲突",
+        "properties": {
+          "created_at": "创建时间",
+          "kind": "类型",
+          "modified_at": "修改时间",
+          "name": "名称",
+          "path": "路径",
+          "size": "大小"
+        },
+        "rename": "输入新名称",
+        "trash_confirm": "确定要删除“{{name}}”吗？",
+        "trash_confirm_many": "确定要删除选中的 {{count}} 个项目吗？"
+      },
       "include_hidden": "显示隐藏文件",
       "keep_directory": "目录保持",
       "layout": {

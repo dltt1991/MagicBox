@@ -144,4 +144,19 @@ describe('TerminalTabs', () => {
     expect(screen.getByRole('button', { name: 'pnpm' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'project' })).not.toBeInTheDocument()
   })
+
+  it('falls back to the cwd basename when the process name is cleared', () => {
+    render(
+      <TerminalTabs
+        activeSessionId="session-1"
+        onClose={vi.fn()}
+        onCreate={vi.fn()}
+        onSelect={vi.fn()}
+        sessions={[{ ...sessions[0], cwd: '/workspace/project' }]}
+      />
+    )
+
+    expect(screen.getByRole('button', { name: 'project' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'pnpm' })).not.toBeInTheDocument()
+  })
 })
