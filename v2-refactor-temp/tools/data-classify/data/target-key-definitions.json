@@ -569,6 +569,214 @@
       "description": "Command shortcut: topic.sidebar.toggle (unified command system)"
     },
     {
+      "targetKey": "shortcut.terminal.switch_previous",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "Left"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: terminal.switch_previous (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.terminal.switch_next",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "Right"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: terminal.switch_next (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.file_manager.open",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "Enter"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: file_manager.open (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.file_manager.copy",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "C"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: file_manager.copy (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.file_manager.copy_path",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "Shift",
+          "C"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: file_manager.copy_path (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.file_manager.cut",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "X"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: file_manager.cut (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.file_manager.paste",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "V"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: file_manager.paste (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.file_manager.delete",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "Delete"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: file_manager.delete (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.file_manager.rename",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "F2"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: file_manager.rename (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.file_manager.properties",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "I"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: file_manager.properties (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.file_manager.new_file",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "N"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: file_manager.new_file (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.file_manager.new_folder",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "Shift",
+          "N"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: file_manager.new_folder (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.file_manager.open_terminal_here",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "Shift",
+          "T"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: file_manager.open_terminal_here (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.file_manager.select_all",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "A"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: file_manager.select_all (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.file_manager.open_parent",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "Up"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: file_manager.open_parent (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.file_manager.open_child_history",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "Down"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: file_manager.open_child_history (unified command system)"
+    },
+    {
       "targetKey": "menu.presentation_mode",
       "type": "PreferenceTypes.MenuPresentationMode",
       "defaultValue": "cherry",

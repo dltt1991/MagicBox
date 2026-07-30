@@ -1,8 +1,13 @@
 import { EmptyState } from '@cherrystudio/ui'
 import { cn } from '@cherrystudio/ui/lib/utils'
 import { Icon } from '@iconify/react'
+import { useCommandShortcutPreferences } from '@renderer/hooks/command'
 import { useDirectoryTree } from '@renderer/hooks/useDirectoryTree'
+import { getShortcutBindingFromKeyboardEvent } from '@renderer/utils/command'
 import { getFileIconName } from '@renderer/utils/fileIconName'
+import { platform } from '@renderer/utils/platform'
+import type { SupportedPlatform } from '@shared/types/command'
+import { resolveCommandByKeybinding } from '@shared/utils/command'
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -33,6 +38,7 @@ type MarqueeSelection = {
 
 type WorkspaceKeyboardEvent = {
   key: string
+  code?: string
   metaKey: boolean
   ctrlKey: boolean
   altKey: boolean
@@ -41,6 +47,9 @@ type WorkspaceKeyboardEvent = {
   preventDefault: () => void
   stopPropagation: () => void
 }
+
+const FILE_MANAGER_COMMAND_CONTEXT = { 'file_manager.focused': true } as const
+const FILE_MANAGER_COMMAND_PREFIX = 'file_manager.'
 
 export interface WorkspaceFileTreeProps {
   rootPath: string | null
@@ -207,6 +216,7 @@ function WorkspaceFileTreeContent({
   const previousRootPathRef = useRef(rootPath)
   const selectedPathsRef = useRef<ReadonlySet<string>>(new Set())
   const [selectionAnchorPath, setSelectionAnchorPath] = useState<string | null>(null)
+  const shortcutPreferences = useCommandShortcutPreferences()
   const applyMarqueeSelectedPaths = useCallback((paths: ReadonlySet<string>) => {
     marqueeSelectedPathsRef.current = paths
     setMarqueeSelectedPaths(paths)
@@ -409,20 +419,34 @@ function WorkspaceFileTreeContent({
     action()
   }
 
+  const resolveFileManagerCommand = useCallback(
+    (event: WorkspaceKeyboardEvent) =>
+      resolveCommandByKeybinding({
+        binding: getShortcutBindingFromKeyboardEvent(event),
+        preferences: shortcutPreferences,
+        context: FILE_MANAGER_COMMAND_CONTEXT,
+        platform: platform as SupportedPlatform,
+        scope: 'renderer',
+        canExecuteCommand: (command) => command.startsWith(FILE_MANAGER_COMMAND_PREFIX)
+      }),
+    [shortcutPreferences]
+  )
+
   const handleKeyDown = useCallback(
     (event: WorkspaceKeyboardEvent) => {
       if (!rootPath || isEditableShortcutTarget(event.target)) return
 
       const key = event.key.toLowerCase()
       const hasModifier = event.metaKey || event.ctrlKey
+      const command = resolveFileManagerCommand(event)
 
-      if ((event.metaKey || event.altKey) && !event.ctrlKey && !event.shiftKey && key === 'arrowup') {
+      if (command === 'file_manager.open_parent') {
         const parentPath = getParentPath(rootPath)
         if (parentPath) runShortcut(event, () => onOpenParentPath?.(parentPath))
         return
       }
 
-      if ((event.metaKey || event.altKey) && !event.ctrlKey && !event.shiftKey && key === 'arrowdown') {
+      if (command === 'file_manager.open_child_history') {
         runShortcut(event, () => onOpenChildHistoryPath?.())
         return
       }
@@ -445,7 +469,7 @@ function WorkspaceFileTreeContent({
 
       const showProperties = () => contextMenuActions.onShowProperties(selectedItem ? selectedItem.path : rootPath)
 
-      if (hasModifier && !event.shiftKey && !event.altKey && key === 'a') {
+      if (command === 'file_manager.select_all') {
         runShortcut(event, () => {
           applyMarqueeSelectedPaths(new Set())
           applySelectedPaths(new Set(items.map((item) => item.path)))
@@ -454,62 +478,65 @@ function WorkspaceFileTreeContent({
         return
       }
 
-      if (hasModifier && event.shiftKey && key === 'n') {
+      if (command === 'file_manager.new_folder') {
         runShortcut(event, contextMenuActions.onNewFolder)
         return
       }
 
-      if (hasModifier && !event.shiftKey && key === 'n') {
+      if (command === 'file_manager.new_file') {
         runShortcut(event, contextMenuActions.onNewFile)
         return
       }
 
-      if (hasModifier && event.shiftKey && key === 't') {
+      if (command === 'file_manager.open_terminal_here') {
         runShortcut(event, contextMenuActions.onOpenTerminalHere)
         return
       }
 
-      if (hasModifier && key === 'v') {
+      if (command === 'file_manager.paste') {
         runShortcut(event, contextMenuActions.onPaste)
         return
       }
 
-      if ((event.metaKey && key === 'i') || (event.altKey && event.key === 'Enter')) {
+      if (command === 'file_manager.properties') {
         runShortcut(event, showProperties)
         return
       }
 
       const currentShortcutTargetItems = getShortcutTargetItems()
-      if (currentShortcutTargetItems.length === 0) return
+      if (command === 'file_manager.copy_path') {
+        runShortcut(event, () =>
+          contextMenuActions.onCopyPaths(
+            currentShortcutTargetItems.length > 0 ? currentShortcutTargetItems.map((item) => item.path) : [rootPath]
+          )
+        )
+        return
+      }
 
+      if (currentShortcutTargetItems.length === 0) return
       const primaryItem = currentShortcutTargetItems[0]
 
-      if ((event.key === 'Enter' && !event.altKey && !hasModifier && !event.shiftKey) || (hasModifier && key === 'o')) {
+      if (command === 'file_manager.open') {
         runShortcut(event, () => contextMenuActions.onOpenItem(primaryItem))
         return
       }
 
-      if (event.key === 'F2') {
+      if (command === 'file_manager.rename') {
         runShortcut(event, () => contextMenuActions.onRenameItem(primaryItem))
         return
       }
 
-      if ((hasModifier && event.shiftKey && key === 'c') || (event.metaKey && event.altKey && key === 'c')) {
-        runShortcut(event, () => contextMenuActions.onCopyPaths(currentShortcutTargetItems.map((item) => item.path)))
-        return
-      }
-
-      if (hasModifier && key === 'c') {
+      if (command === 'file_manager.copy') {
         runShortcut(event, () => contextMenuActions.onCopyItems(currentShortcutTargetItems))
         return
       }
 
-      if (hasModifier && key === 'x') {
+      if (command === 'file_manager.cut') {
         runShortcut(event, () => contextMenuActions.onCutItems(currentShortcutTargetItems))
         return
       }
 
-      if ((event.key === 'Backspace' && event.metaKey) || (event.key === 'Delete' && !hasModifier && !event.altKey)) {
+      if (command === 'file_manager.delete') {
         runShortcut(event, () => contextMenuActions.onTrashItems(currentShortcutTargetItems))
       }
     },
@@ -522,6 +549,7 @@ function WorkspaceFileTreeContent({
       onHighlightPath,
       onOpenChildHistoryPath,
       onOpenParentPath,
+      resolveFileManagerCommand,
       rootPath,
       selectedIndex,
       selectedItem

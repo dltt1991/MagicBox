@@ -19,6 +19,7 @@ import {
 } from '@cherrystudio/ui'
 import { usePersistCache } from '@data/hooks/useCache'
 import { useOpenFilePreviewTab } from '@renderer/components/FilePreview'
+import { useCommandHandler } from '@renderer/hooks/command'
 import { ipcApi } from '@renderer/ipc'
 import { toast } from '@renderer/services/toast'
 import { safeOpen } from '@renderer/utils/file/safeOpen'
@@ -178,6 +179,23 @@ export default function TerminalPage() {
   const restoreWorkspaceFocus = useCallback(() => {
     setWorkspaceFocusRestoreKey((currentKey) => currentKey + 1)
   }, [])
+
+  const switchTerminalSession = useCallback(
+    (direction: -1 | 1) => {
+      if (sessions.length < 2 || !activeSessionId) return
+
+      const activeIndex = sessions.findIndex((session) => session.id === activeSessionId)
+      if (activeIndex < 0) return
+
+      const nextIndex = (activeIndex + direction + sessions.length) % sessions.length
+      const nextSession = sessions[nextIndex]
+      if (nextSession) setActiveSessionId(nextSession.id)
+    },
+    [activeSessionId, sessions, setActiveSessionId]
+  )
+
+  useCommandHandler('terminal.switch_previous', () => switchTerminalSession(-1), { enabled: sessions.length > 1 })
+  useCommandHandler('terminal.switch_next', () => switchTerminalSession(1), { enabled: sessions.length > 1 })
 
   useEffect(() => {
     void createSession()
