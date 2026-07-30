@@ -26,6 +26,7 @@ export type NativeMenuItem =
       label?: string
       enabled?: boolean
       accelerator?: string
+      registerAccelerator?: boolean
     }
   | {
       type: 'custom'
@@ -65,6 +66,7 @@ export const toElectronMenuTemplate = (
         role: item.role,
         label: item.label,
         accelerator: item.accelerator,
+        ...(item.registerAccelerator === undefined ? {} : registerAcceleratorOption(item.registerAccelerator)),
         ...enabledOption(item.enabled)
       }
     }

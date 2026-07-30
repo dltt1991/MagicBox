@@ -106,6 +106,27 @@ describe('useTerminalSessions', () => {
     })
   })
 
+  it('clears the previous process name when metadata update omits it', async () => {
+    const { result } = renderHook(() => useTerminalSessions({ cwd: '/workspace' }))
+    mocks.request.mockResolvedValueOnce({ ...session, processName: 'pnpm' })
+    await act(() => result.current.createSession())
+
+    act(() =>
+      mocks.listeners.get('terminal.session.updated')?.({
+        ...session,
+        cwd: '/workspace/src',
+        updatedAt: 2
+      })
+    )
+
+    expect(result.current.sessions[0]).toMatchObject({
+      cwd: '/workspace/src',
+      buffer: [],
+      nextBufferSequence: 0
+    })
+    expect(result.current.sessions[0]).not.toHaveProperty('processName')
+  })
+
   it('skips duplicate terminal resize requests for the same session size', async () => {
     const { result } = renderHook(() => useTerminalSessions({ cwd: '/workspace' }))
     await act(() => result.current.createSession())

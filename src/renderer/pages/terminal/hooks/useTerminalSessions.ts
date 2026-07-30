@@ -95,7 +95,13 @@ export function useTerminalSessions({ cwd }: UseTerminalSessionsOptions) {
 
   useIpcOn('terminal.session.updated', (metadata) => {
     const nextSessions = sessionsRef.current.map((session) =>
-      session.id === metadata.id ? { ...session, ...metadata } : session
+      session.id === metadata.id
+        ? {
+            ...metadata,
+            buffer: session.buffer,
+            nextBufferSequence: session.nextBufferSequence
+          }
+        : session
     )
     sessionsRef.current = nextSessions
     setSessions(nextSessions)
