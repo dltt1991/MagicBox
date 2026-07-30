@@ -192,7 +192,8 @@ export const COMMAND_DEFINITIONS = [
     categoryKey: 'settings.shortcuts.topic',
     scope: 'renderer',
     keybinding: {
-      defaultBinding: ['CommandOrControl', 'N']
+      defaultBinding: ['CommandOrControl', 'N'],
+      when: '!file_manager.focused'
     }
   }),
   defineCommand({
@@ -230,6 +231,170 @@ export const COMMAND_DEFINITIONS = [
     scope: 'renderer',
     keybinding: {
       defaultBinding: { default: ['CommandOrControl', 'Shift', 'Tab'], darwin: ['Ctrl', 'Shift', 'Tab'] }
+    }
+  }),
+  defineCommand({
+    id: 'terminal.switch_previous',
+    titleKey: 'settings.shortcuts.terminal_switch_previous',
+    categoryKey: 'settings.shortcuts.terminal',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'Left']
+    }
+  }),
+  defineCommand({
+    id: 'terminal.switch_next',
+    titleKey: 'settings.shortcuts.terminal_switch_next',
+    categoryKey: 'settings.shortcuts.terminal',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'Right']
+    }
+  }),
+  defineCommand({
+    id: 'file_manager.open',
+    titleKey: 'settings.shortcuts.file_manager_open',
+    categoryKey: 'settings.shortcuts.file_manager',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['Enter'],
+      additionalBindings: [['CommandOrControl', 'O']],
+      when: 'file_manager.focused'
+    }
+  }),
+  defineCommand({
+    id: 'file_manager.copy',
+    titleKey: 'settings.shortcuts.file_manager_copy',
+    categoryKey: 'settings.shortcuts.file_manager',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'C'],
+      when: 'file_manager.focused'
+    }
+  }),
+  defineCommand({
+    id: 'file_manager.copy_path',
+    titleKey: 'settings.shortcuts.file_manager_copy_path',
+    categoryKey: 'settings.shortcuts.file_manager',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'Shift', 'C'],
+      additionalBindings: [['CommandOrControl', 'Alt', 'C']],
+      when: 'file_manager.focused'
+    }
+  }),
+  defineCommand({
+    id: 'file_manager.cut',
+    titleKey: 'settings.shortcuts.file_manager_cut',
+    categoryKey: 'settings.shortcuts.file_manager',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'X'],
+      when: 'file_manager.focused'
+    }
+  }),
+  defineCommand({
+    id: 'file_manager.paste',
+    titleKey: 'settings.shortcuts.file_manager_paste',
+    categoryKey: 'settings.shortcuts.file_manager',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'V'],
+      when: 'file_manager.focused'
+    }
+  }),
+  defineCommand({
+    id: 'file_manager.delete',
+    titleKey: 'settings.shortcuts.file_manager_delete',
+    categoryKey: 'settings.shortcuts.file_manager',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['Delete'],
+      additionalBindings: [['CommandOrControl', 'Backspace']],
+      when: 'file_manager.focused'
+    }
+  }),
+  defineCommand({
+    id: 'file_manager.rename',
+    titleKey: 'settings.shortcuts.file_manager_rename',
+    categoryKey: 'settings.shortcuts.file_manager',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['F2'],
+      when: 'file_manager.focused'
+    }
+  }),
+  defineCommand({
+    id: 'file_manager.properties',
+    titleKey: 'settings.shortcuts.file_manager_properties',
+    categoryKey: 'settings.shortcuts.file_manager',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'I'],
+      additionalBindings: [['Alt', 'Enter']],
+      when: 'file_manager.focused'
+    }
+  }),
+  defineCommand({
+    id: 'file_manager.new_file',
+    titleKey: 'settings.shortcuts.file_manager_new_file',
+    categoryKey: 'settings.shortcuts.file_manager',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'N'],
+      when: 'file_manager.focused'
+    }
+  }),
+  defineCommand({
+    id: 'file_manager.new_folder',
+    titleKey: 'settings.shortcuts.file_manager_new_folder',
+    categoryKey: 'settings.shortcuts.file_manager',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'Shift', 'N'],
+      when: 'file_manager.focused'
+    }
+  }),
+  defineCommand({
+    id: 'file_manager.open_terminal_here',
+    titleKey: 'settings.shortcuts.file_manager_open_terminal_here',
+    categoryKey: 'settings.shortcuts.file_manager',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'Shift', 'T'],
+      when: 'file_manager.focused'
+    }
+  }),
+  defineCommand({
+    id: 'file_manager.select_all',
+    titleKey: 'settings.shortcuts.file_manager_select_all',
+    categoryKey: 'settings.shortcuts.file_manager',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'A'],
+      when: 'file_manager.focused'
+    }
+  }),
+  defineCommand({
+    id: 'file_manager.open_parent',
+    titleKey: 'settings.shortcuts.file_manager_open_parent',
+    categoryKey: 'settings.shortcuts.file_manager',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'Up'],
+      additionalBindings: [['Alt', 'Up']],
+      when: 'file_manager.focused'
+    }
+  }),
+  defineCommand({
+    id: 'file_manager.open_child_history',
+    titleKey: 'settings.shortcuts.file_manager_open_child_history',
+    categoryKey: 'settings.shortcuts.file_manager',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'Down'],
+      additionalBindings: [['Alt', 'Down']],
+      when: 'file_manager.focused'
     }
   })
 ] as const satisfies readonly CommandDefinition[]

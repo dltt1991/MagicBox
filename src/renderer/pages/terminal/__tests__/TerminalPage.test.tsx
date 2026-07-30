@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   resizeSession: vi.fn(),
   sendInput: vi.fn(),
   setActiveSessionId: vi.fn(),
+  commandHandlers: {} as Record<string, () => void | Promise<void>>,
   ipcRequest: vi.fn(),
   safeOpen: vi.fn(),
   toastError: vi.fn(),
@@ -73,6 +74,16 @@ vi.mock('../hooks/useTerminalSessions', () => ({
     sendInput: mocks.sendInput,
     setActiveSessionId: mocks.setActiveSessionId
   })
+}))
+
+vi.mock('@renderer/hooks/command', () => ({
+  useCommandHandler: (command: string, handler: () => void | Promise<void>, options?: { enabled?: boolean }) => {
+    if (options?.enabled === false) {
+      delete mocks.commandHandlers[command]
+      return
+    }
+    mocks.commandHandlers[command] = handler
+  }
 }))
 
 vi.mock('../components/TerminalTabs', () => ({
@@ -376,6 +387,7 @@ beforeEach(() => {
   mocks.persistValues['terminal.font_size'] = 18
   mocks.sessions = []
   mocks.activeSession = null
+  mocks.commandHandlers = {}
   mocks.ipcRequest.mockReset()
   mocks.safeOpen.mockResolvedValue(undefined)
   mocks.isDirectory.mockResolvedValue(false)
@@ -745,6 +757,25 @@ describe('TerminalPage', () => {
     await user.click(screen.getByRole('button', { name: 'create terminal session' }))
 
     expect(mocks.createSession).toHaveBeenLastCalledWith({ cwd: '/workspace/project' })
+  })
+
+  it('switches terminal tabs with terminal shortcut commands', async () => {
+    const sessions = [
+      { id: 'session-1', cwd: '/workspace/one', buffer: [] as [] },
+      { id: 'session-2', cwd: '/workspace/two', buffer: [] as [] },
+      { id: 'session-3', cwd: '/workspace/three', buffer: [] as [] }
+    ]
+    mocks.sessions = sessions
+    mocks.activeSession = sessions[1]
+
+    render(<TerminalPage />)
+
+    await waitFor(() => expect(mocks.commandHandlers['terminal.switch_next']).toBeDefined())
+    await mocks.commandHandlers['terminal.switch_next']()
+    expect(mocks.setActiveSessionId).toHaveBeenCalledWith('session-3')
+
+    await mocks.commandHandlers['terminal.switch_previous']()
+    expect(mocks.setActiveSessionId).toHaveBeenCalledWith('session-1')
   })
 
   it('renames workspace files from the context menu prompt', async () => {

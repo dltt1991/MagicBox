@@ -1,6 +1,8 @@
 import '@testing-library/jest-dom/vitest'
 
 import materialIconThemeIcons from '@iconify-json/material-icon-theme/icons.json'
+import type { PreferenceShortcutType } from '@shared/data/preference/preferenceTypes'
+import type { CommandId } from '@shared/utils/command'
 import { TreeDir, TreeDirRoot, TreeFile } from '@shared/utils/file'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import type React from 'react'
@@ -10,7 +12,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   useDirectoryTree: vi.fn(),
   mount: vi.fn(),
-  unmount: vi.fn()
+  unmount: vi.fn(),
+  shortcutPreferences: {} as Partial<Record<CommandId, PreferenceShortcutType>>
 }))
 
 vi.mock('@cherrystudio/ui', () => ({
@@ -43,6 +46,14 @@ vi.mock('@iconify/react', () => ({
 
 vi.mock('@renderer/hooks/useDirectoryTree', () => ({
   useDirectoryTree: mocks.useDirectoryTree
+}))
+
+vi.mock('@renderer/hooks/command', () => ({
+  useCommandShortcutPreferences: () => mocks.shortcutPreferences
+}))
+
+vi.mock('@renderer/utils/platform', () => ({
+  platform: 'darwin'
 }))
 
 vi.mock('react-i18next', () => ({
@@ -92,6 +103,7 @@ function createRoot(includeHidden = false, rootPath = '/workspace') {
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+  mocks.shortcutPreferences = {}
 })
 
 describe('WorkspaceFileTree', () => {
@@ -410,6 +422,34 @@ describe('WorkspaceFileTree', () => {
     expect(actions.onPaste).toHaveBeenCalledOnce()
     expect(actions.onShowProperties).toHaveBeenCalledTimes(2)
     expect(actions.onShowProperties).toHaveBeenCalledWith('/workspace/README.md')
+  })
+
+  it('uses customized file manager shortcut preferences', () => {
+    mocks.shortcutPreferences = {
+      'file_manager.copy': { binding: ['Alt', 'Y'], enabled: true }
+    }
+    const actions = createActions()
+    render(
+      <WorkspaceFileTree
+        contextMenuActions={actions}
+        includeHidden={false}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath="/workspace/README.md"
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
+    )
+    const tree = screen.getByTestId('workspace-file-tree-content')
+
+    fireEvent.keyDown(tree, { key: 'c', metaKey: true })
+    expect(actions.onCopyItems).not.toHaveBeenCalled()
+
+    fireEvent.keyDown(tree, { key: 'y', altKey: true })
+
+    expect(actions.onCopyItems).toHaveBeenCalledOnce()
+    expect(actions.onCopyItems).toHaveBeenCalledWith([expect.objectContaining({ path: '/workspace/README.md' })])
   })
 
   it('runs workspace shortcuts from document keydown after the file manager is activated', () => {

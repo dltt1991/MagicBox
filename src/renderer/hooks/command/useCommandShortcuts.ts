@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next'
 
 import { useCommandContextReader } from './useCommandContext'
 
-export type ShortcutSettingsGroup = 'general' | 'chat' | 'topic' | 'assistant'
+export type ShortcutSettingsGroup = 'general' | 'chat' | 'topic' | 'assistant' | 'terminal' | 'fileManager'
 type CommandShortcutKey = CommandShortcutPreferenceKey<CommandId>
 
 const currentPlatform = platform as SupportedPlatform | undefined
@@ -39,6 +39,12 @@ const commandCategoryToSettingsGroup = (categoryKey: string): ShortcutSettingsGr
   }
   if (categoryKey === 'settings.shortcuts.topic') {
     return 'topic'
+  }
+  if (categoryKey === 'settings.shortcuts.terminal') {
+    return 'terminal'
+  }
+  if (categoryKey === 'settings.shortcuts.file_manager') {
+    return 'fileManager'
   }
   return 'assistant'
 }
@@ -123,7 +129,7 @@ export const useCommandShortcuts = () => {
           return []
         }
 
-        if (!evaluateContextExpr(command.enablement, context) || !evaluateContextExpr(rule.when, context)) {
+        if (!evaluateContextExpr(command.enablement, context)) {
           return []
         }
 

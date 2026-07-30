@@ -45,7 +45,19 @@ import {
   type ShortcutToken
 } from '@shared/utils/shortcut'
 import { isEmpty } from 'es-toolkit/compat'
-import { Check, ChevronDown, Filter, Keyboard, MessageSquareText, Search, Sparkles, Tags, Undo2 } from 'lucide-react'
+import {
+  Check,
+  ChevronDown,
+  Files,
+  Filter,
+  Keyboard,
+  MessageSquareText,
+  Search,
+  Sparkles,
+  SquareTerminal,
+  Tags,
+  Undo2
+} from 'lucide-react'
 import type { FC, KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -82,7 +94,9 @@ const groupIconMap: Record<ShortcutSettingsGroup, ReactNode> = {
   general: <Keyboard size={16} />,
   chat: <MessageSquareText size={16} />,
   topic: <Tags size={16} />,
-  assistant: <Sparkles size={16} />
+  assistant: <Sparkles size={16} />,
+  terminal: <SquareTerminal size={16} />,
+  fileManager: <Files size={16} />
 }
 
 type ShortcutSettingsFilterGroup = 'all' | ShortcutSettingsGroup
@@ -161,7 +175,9 @@ const ShortcutSettings: FC = () => {
       { key: 'general' as const, label: t('settings.shortcuts.categories.general') },
       { key: 'chat' as const, label: t('settings.shortcuts.categories.chat') },
       { key: 'topic' as const, label: t('settings.shortcuts.categories.topic') },
-      { key: 'assistant' as const, label: t('settings.shortcuts.categories.assistant') }
+      { key: 'assistant' as const, label: t('settings.shortcuts.categories.assistant') },
+      { key: 'terminal' as const, label: t('settings.shortcuts.categories.terminal') },
+      { key: 'fileManager' as const, label: t('settings.shortcuts.categories.file_manager') }
     ],
     [t]
   )
@@ -172,7 +188,7 @@ const ShortcutSettings: FC = () => {
         acc[shortcut.group].push(shortcut)
         return acc
       },
-      { general: [], chat: [], topic: [], assistant: [] }
+      { general: [], chat: [], topic: [], assistant: [], terminal: [], fileManager: [] }
     )
   }, [shortcuts])
 

@@ -132,20 +132,24 @@ const makeShortcut = ({
   command = 'app.search',
   binding = [],
   enabled = binding.length > 0,
-  defaultPreference = { binding: [], enabled: false }
+  defaultPreference = { binding: [], enabled: false },
+  group = 'general',
+  label = 'Search everywhere'
 }: {
   command?: CommandId
   binding?: ShortcutBinding
   enabled?: boolean
   defaultPreference?: PreferenceShortcutType
+  group?: ShortcutListItem['group']
+  label?: string
 } = {}): ShortcutListItem => {
   const key = commandShortcutPreferenceKey(command)
 
   return {
     command,
     key,
-    label: 'Search everywhere',
-    group: 'general',
+    label,
+    group,
     keybinding: {
       command,
       scope: 'renderer',
@@ -266,5 +270,45 @@ describe('ShortcutSettings shortcut recorder', () => {
         'shortcut.tab.next': { binding: ['Ctrl', 'Tab'], enabled: false }
       })
     })
+  })
+
+  it('shows the file manager shortcut group', () => {
+    shortcutsMock.shortcuts = [
+      makeShortcut(),
+      makeShortcut({
+        command: 'file_manager.open',
+        binding: ['Enter'],
+        group: 'fileManager',
+        label: 'Open file manager item'
+      })
+    ]
+
+    renderShortcutSettings()
+
+    fireEvent.click(screen.getByRole('button', { name: 'settings.shortcuts.filter' }))
+
+    expect(
+      screen.getByRole('button', { name: /settings\.shortcuts\.categories\.file_manager\s+1/ })
+    ).toBeInTheDocument()
+    expect(screen.getByText('Open file manager item')).toBeInTheDocument()
+  })
+
+  it('shows the terminal shortcut group', () => {
+    shortcutsMock.shortcuts = [
+      makeShortcut(),
+      makeShortcut({
+        command: 'terminal.switch_next',
+        binding: ['CommandOrControl', 'Right'],
+        group: 'terminal',
+        label: 'Switch terminal tab'
+      })
+    ]
+
+    renderShortcutSettings()
+
+    fireEvent.click(screen.getByRole('button', { name: 'settings.shortcuts.filter' }))
+
+    expect(screen.getByRole('button', { name: /settings\.shortcuts\.categories\.terminal\s+1/ })).toBeInTheDocument()
+    expect(screen.getByText('Switch terminal tab')).toBeInTheDocument()
   })
 })
