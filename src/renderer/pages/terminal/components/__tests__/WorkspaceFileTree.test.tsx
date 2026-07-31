@@ -4,13 +4,14 @@ import materialIconThemeIcons from '@iconify-json/material-icon-theme/icons.json
 import type { PreferenceShortcutType } from '@shared/data/preference/preferenceTypes'
 import type { CommandId } from '@shared/utils/command'
 import { TreeDir, TreeDirRoot, TreeFile } from '@shared/utils/file'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type React from 'react'
 import { useEffect, useState } from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
   useDirectoryTree: vi.fn(),
+  listDirectoryEntries: vi.fn(),
   mount: vi.fn(),
   unmount: vi.fn(),
   shortcutPreferences: {} as Partial<Record<CommandId, PreferenceShortcutType>>
@@ -66,7 +67,8 @@ function useMockDirectoryTree(rootPath: string | undefined, options: unknown) {
   mocks.mount(rootPath, options)
   useEffect(() => () => mocks.unmount(rootPath), [rootPath])
   const includeHidden = Boolean((options as { includeHidden?: boolean } | undefined)?.includeHidden)
-  return { root: createRoot(includeHidden, rootPath), version: 0, isLoading: false, error: null }
+  const maxDepth = (options as { maxDepth?: number } | undefined)?.maxDepth
+  return { root: createRoot(includeHidden, rootPath, maxDepth), version: 0, isLoading: false, error: null }
 }
 
 vi.mocked(mocks.useDirectoryTree).mockImplementation(useMockDirectoryTree)
@@ -88,9 +90,13 @@ function createActions() {
   }
 }
 
-function createRoot(includeHidden = false, rootPath = '/workspace') {
+function createRoot(includeHidden = false, rootPath = '/workspace', maxDepth = 1) {
   const root = new TreeDirRoot(rootPath)
-  root.attachChild(new TreeDir({ path: `${rootPath}/src`, stats: { birthtime: 10, mtime: 10, size: 64 } }))
+  const src = new TreeDir({ path: `${rootPath}/src`, stats: { birthtime: 10, mtime: 10, size: 64 } })
+  if (maxDepth > 1) {
+    src.attachChild(new TreeFile({ path: `${rootPath}/src/index.ts`, stats: { birthtime: 60, mtime: 60, size: 42 } }))
+  }
+  root.attachChild(src)
   root.attachChild(new TreeFile({ path: `${rootPath}/README.md`, stats: { birthtime: 30, mtime: 30, size: 10 } }))
   root.attachChild(new TreeFile({ path: `${rootPath}/app.log`, stats: { birthtime: 20, mtime: 20, size: 99 } }))
   if (includeHidden) {
@@ -104,6 +110,20 @@ afterEach(() => {
   cleanup()
   vi.clearAllMocks()
   mocks.shortcutPreferences = {}
+})
+
+beforeEach(() => {
+  Object.assign(window, {
+    api: {
+      file: {
+        listDirectoryEntries: mocks.listDirectoryEntries
+      }
+    }
+  })
+  mocks.listDirectoryEntries.mockResolvedValue([
+    { path: '/workspace/src/components', isDirectory: true },
+    { path: '/workspace/src/index.ts', isDirectory: false }
+  ])
 })
 
 describe('WorkspaceFileTree', () => {
@@ -250,6 +270,135 @@ describe('WorkspaceFileTree', () => {
       'app.log',
       'README.md'
     ])
+  })
+
+  it('renders tree mode with collapsed directories', () => {
+    render(
+      <WorkspaceFileTree
+        includeHidden={false}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="tree"
+      />
+    )
+
+    expect(screen.getByTestId('workspace-tree-container')).toBeInTheDocument()
+    expect(mocks.useDirectoryTree).toHaveBeenCalledWith('/workspace', expect.objectContaining({ maxDepth: 1 }))
+    expect(screen.getByRole('button', { name: 'src' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('button', { name: 'index.ts' })).not.toBeInTheDocument()
+  })
+
+  it('lazily loads directory children when expanding in tree mode', async () => {
+    const onHighlightPath = vi.fn()
+    const onSelectPath = vi.fn()
+    render(
+      <WorkspaceFileTree
+        includeHidden={false}
+        onHighlightPath={onHighlightPath}
+        onSelectPath={onSelectPath}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="tree"
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'src' }))
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'index.ts' })).toBeInTheDocument())
+    expect(mocks.listDirectoryEntries).toHaveBeenCalledWith('/workspace/src', {
+      includeDirectories: true,
+      includeFiles: true,
+      includeHidden: false,
+      recursive: false
+    })
+    expect(onSelectPath).not.toHaveBeenCalled()
+    expect(onHighlightPath).toHaveBeenCalledWith('/workspace/src')
+
+    fireEvent.click(screen.getByRole('button', { name: 'src' }))
+    expect(screen.getByRole('button', { name: 'src' })).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('button', { name: 'index.ts' })).not.toBeInTheDocument()
+  })
+
+  it('restores lazy children for controlled expanded paths after remounting tree mode', async () => {
+    render(
+      <WorkspaceFileTree
+        expandedTreePaths={['/workspace/src']}
+        includeHidden={false}
+        onExpandedTreePathsChange={vi.fn()}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="tree"
+      />
+    )
+
+    await waitFor(() => expect(screen.getByRole('button', { name: 'index.ts' })).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: 'src' })).toHaveAttribute('aria-expanded', 'true')
+    expect(mocks.listDirectoryEntries).toHaveBeenCalledWith('/workspace/src', {
+      includeDirectories: true,
+      includeFiles: true,
+      includeHidden: false,
+      recursive: false
+    })
+  })
+
+  it('lazily loads tree nodes beyond the initial scan depth', async () => {
+    mocks.listDirectoryEntries
+      .mockResolvedValueOnce([{ path: '/workspace/src/components', isDirectory: true }])
+      .mockResolvedValueOnce([{ path: '/workspace/src/components/Button.tsx', isDirectory: false }])
+
+    render(
+      <WorkspaceFileTree
+        includeHidden={false}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="tree"
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'src' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'components' })).toBeInTheDocument())
+
+    fireEvent.click(screen.getByRole('button', { name: 'components' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Button.tsx' })).toBeInTheDocument())
+
+    expect(mocks.listDirectoryEntries).toHaveBeenNthCalledWith(2, '/workspace/src/components', {
+      includeDirectories: true,
+      includeFiles: true,
+      includeHidden: false,
+      recursive: false
+    })
+  })
+
+  it('selects files in tree mode without toggling directories', async () => {
+    const onSelectPath = vi.fn()
+    render(
+      <WorkspaceFileTree
+        includeHidden={false}
+        onSelectPath={onSelectPath}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="tree"
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'src' }))
+    await waitFor(() => expect(screen.getByRole('button', { name: 'index.ts' })).toBeInTheDocument())
+    fireEvent.click(screen.getByRole('button', { name: 'index.ts' }))
+
+    expect(onSelectPath).toHaveBeenCalledWith('/workspace/src/index.ts', 'file')
   })
 
   it('keeps list favorites outside collapsible metadata columns', () => {

@@ -31,7 +31,20 @@ import { normalizeFilePreviewPath } from '@renderer/utils/filePreview'
 import { isWin } from '@renderer/utils/platform'
 import { AbsoluteFilePathSchema } from '@shared/types/file'
 import { createFilePathHandle } from '@shared/utils/file'
-import { ArrowDownAZ, ArrowUpAZ, Eye, EyeOff, FolderOpen, Grid2X2, List, Pin, PinOff, Star, X } from 'lucide-react'
+import {
+  ArrowDownAZ,
+  ArrowUpAZ,
+  Eye,
+  EyeOff,
+  FolderOpen,
+  FolderTree,
+  Grid2X2,
+  List,
+  Pin,
+  PinOff,
+  Star,
+  X
+} from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -169,6 +182,7 @@ export default function TerminalPage() {
   const [terminalThemeKey, setTerminalThemeKey] = usePersistCache('terminal.theme')
   const [quickCommands, setQuickCommands] = usePersistCache('terminal.quick_commands')
   const [selectedWorkspacePath, setSelectedWorkspacePath] = useState<string | null>(null)
+  const [expandedWorkspaceTreePaths, setExpandedWorkspaceTreePaths] = useState<string[]>([])
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null)
   const [defaultRootResolved, setDefaultRootResolved] = useState(false)
   const [isEditingWorkspaceRoot, setIsEditingWorkspaceRoot] = useState(false)
@@ -476,6 +490,10 @@ export default function TerminalPage() {
   useEffect(() => {
     if (!isEditingWorkspaceRoot) setWorkspaceRootDraft(workspaceRoot ?? '')
   }, [isEditingWorkspaceRoot, workspaceRoot])
+
+  useEffect(() => {
+    setExpandedWorkspaceTreePaths([])
+  }, [workspaceRoot])
 
   useEffect(() => {
     workspaceRootRef.current = workspaceRoot
@@ -986,6 +1004,16 @@ export default function TerminalPage() {
               <Grid2X2 />
             </Button>
           </NormalTooltip>
+          <NormalTooltip content={t('terminal.workspace.view.tree')}>
+            <Button
+              aria-label={t('terminal.workspace.view.tree')}
+              onClick={() => setViewMode('tree')}
+              size="icon-sm"
+              title={t('terminal.workspace.view.tree')}
+              variant={viewMode === 'tree' ? 'secondary' : 'ghost'}>
+              <FolderTree />
+            </Button>
+          </NormalTooltip>
         </div>
         {viewMode === 'icons' && (
           <div className="flex shrink-0 items-center gap-0.5">
@@ -1054,9 +1082,11 @@ export default function TerminalPage() {
             <div className="h-full min-h-0 overflow-hidden" data-testid="workspace-file-tree">
               <WorkspaceFileTree
                 contextMenuActions={workspaceContextMenuActions}
+                expandedTreePaths={expandedWorkspaceTreePaths}
                 favoriteDirectoryPaths={favoriteDirectories}
                 iconSize={iconSize as WorkspaceIconSize}
                 includeHidden={includeHidden}
+                onExpandedTreePathsChange={setExpandedWorkspaceTreePaths}
                 onHighlightPath={setSelectedWorkspacePath}
                 onOpenChildHistoryPath={openWorkspaceChildHistory}
                 onOpenParentPath={openWorkspaceParent}
@@ -1091,9 +1121,11 @@ export default function TerminalPage() {
         <div className="min-h-0 flex-1 overflow-hidden" data-testid="workspace-file-tree">
           <WorkspaceFileTree
             contextMenuActions={workspaceContextMenuActions}
+            expandedTreePaths={expandedWorkspaceTreePaths}
             favoriteDirectoryPaths={favoriteDirectories}
             iconSize={iconSize as WorkspaceIconSize}
             includeHidden={includeHidden}
+            onExpandedTreePathsChange={setExpandedWorkspaceTreePaths}
             onHighlightPath={setSelectedWorkspacePath}
             onOpenChildHistoryPath={openWorkspaceChildHistory}
             onOpenParentPath={openWorkspaceParent}

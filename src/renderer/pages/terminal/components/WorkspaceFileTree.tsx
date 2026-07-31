@@ -1,6 +1,7 @@
 import { EmptyState } from '@cherrystudio/ui'
 import { cn } from '@cherrystudio/ui/lib/utils'
 import { Icon } from '@iconify/react'
+import { loggerService } from '@logger'
 import { useCommandShortcutPreferences } from '@renderer/hooks/command'
 import { useDirectoryTree } from '@renderer/hooks/useDirectoryTree'
 import { getShortcutBindingFromKeyboardEvent } from '@renderer/utils/command'
@@ -8,7 +9,7 @@ import { getFileIconName } from '@renderer/utils/fileIconName'
 import { platform } from '@renderer/utils/platform'
 import type { SupportedPlatform } from '@shared/types/command'
 import { resolveCommandByKeybinding } from '@shared/utils/command'
-import { Star } from 'lucide-react'
+import { ChevronDown, ChevronRight, Star } from 'lucide-react'
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -25,6 +26,7 @@ import { WorkspaceContextMenu, type WorkspaceContextMenuActions } from './Worksp
 
 const TERMINAL_PATH_DRAG_MIME_TYPE = 'application/x-cherry-terminal-path'
 const MATERIAL_ICON_PREFIX = 'material-icon-theme:'
+const logger = loggerService.withContext('WorkspaceFileTree')
 const WORKSPACE_ICON_CLASS: Record<WorkspaceIconSize, string> = {
   small: 'size-4',
   medium: 'size-6',
@@ -83,6 +85,8 @@ export interface WorkspaceFileTreeProps {
   onHighlightPath?: (path: string) => void
   onOpenChildHistoryPath?: () => void
   onOpenParentPath?: (path: string) => void
+  expandedTreePaths?: readonly string[]
+  onExpandedTreePathsChange?: (paths: string[]) => void
   contextMenuActions?: WorkspaceContextMenuActions
   favoriteDirectoryPaths?: readonly string[]
   onToggleFavoriteDirectory?: (path: string) => void
@@ -133,6 +137,12 @@ function getParentPath(path: string): string | null {
   return parentPath
 }
 
+function basenameOfPath(path: string): string {
+  const normalizedPath = path.replace(/\\/g, '/').replace(/\/+$/, '')
+  const index = normalizedPath.lastIndexOf('/')
+  return index < 0 ? normalizedPath : normalizedPath.slice(index + 1)
+}
+
 function getMarqueeRect(selection: MarqueeSelection) {
   const left = Math.min(selection.start.x, selection.current.x)
   const top = Math.min(selection.start.y, selection.current.y)
@@ -151,6 +161,82 @@ function getMarqueeRect(selection: MarqueeSelection) {
 
 function rectsIntersect(a: { left: number; right: number; top: number; bottom: number }, b: DOMRect) {
   return a.left <= b.right && a.right >= b.left && a.top <= b.bottom && a.bottom >= b.top
+}
+
+function flattenWorkspaceItems(items: readonly WorkspaceTreeItem[]): WorkspaceTreeItem[] {
+  const flattenedItems: WorkspaceTreeItem[] = []
+
+  const visit = (treeItems: readonly WorkspaceTreeItem[]) => {
+    for (const item of treeItems) {
+      flattenedItems.push(item)
+      if (item.children?.length) visit(item.children)
+    }
+  }
+
+  visit(items)
+  return flattenedItems
+}
+
+function flattenVisibleTreeItems(
+  items: readonly WorkspaceTreeItem[],
+  expandedPaths: ReadonlySet<string>
+): Array<{ item: WorkspaceTreeItem; depth: number }> {
+  const visibleItems: Array<{ item: WorkspaceTreeItem; depth: number }> = []
+
+  const visit = (treeItems: readonly WorkspaceTreeItem[], depth: number) => {
+    for (const item of treeItems) {
+      visibleItems.push({ item, depth })
+      if (item.kind === 'directory' && expandedPaths.has(item.path) && item.children?.length) {
+        visit(item.children, depth + 1)
+      }
+    }
+  }
+
+  visit(items, 0)
+  return visibleItems
+}
+
+function compareWorkspaceItems(
+  left: WorkspaceTreeItem,
+  right: WorkspaceTreeItem,
+  sortKey: WorkspaceSortKey,
+  sortDirection: WorkspaceSortDirection
+): number {
+  if (left.kind !== right.kind) return left.kind === 'directory' ? -1 : 1
+
+  const direction = sortDirection === 'asc' ? 1 : -1
+  if (sortKey === 'mtime') {
+    const result = left.mtime - right.mtime
+    if (result !== 0) return result * direction
+  }
+  if (sortKey === 'size') {
+    const result = left.size - right.size
+    if (result !== 0) return result * direction
+  }
+
+  return left.name.localeCompare(right.name) * direction
+}
+
+function mergeLazyTreeChildren(
+  items: readonly WorkspaceTreeItem[],
+  lazyChildrenByPath: ReadonlyMap<string, readonly WorkspaceTreeItem[]>,
+  sortKey: WorkspaceSortKey,
+  sortDirection: WorkspaceSortDirection
+): WorkspaceTreeItem[] {
+  return items.map((item) => {
+    if (item.kind !== 'directory') return item
+
+    const lazyChildren = lazyChildrenByPath.get(item.path)
+    const children = lazyChildren ?? item.children
+    if (!children?.length) return item
+
+    return {
+      ...item,
+      children: mergeLazyTreeChildren(children, lazyChildrenByPath, sortKey, sortDirection).sort((left, right) =>
+        compareWorkspaceItems(left, right, sortKey, sortDirection)
+      )
+    }
+  })
 }
 
 function WorkspaceItemIcon({ item, size = 'small' }: { item: WorkspaceTreeItem; size?: WorkspaceIconSize }) {
@@ -178,6 +264,8 @@ export function WorkspaceFileTree({
   onHighlightPath,
   onOpenChildHistoryPath,
   onOpenParentPath,
+  expandedTreePaths,
+  onExpandedTreePathsChange,
   contextMenuActions,
   favoriteDirectoryPaths,
   onToggleFavoriteDirectory,
@@ -186,12 +274,14 @@ export function WorkspaceFileTree({
 }: WorkspaceFileTreeProps) {
   return (
     <WorkspaceFileTreeContent
-      key={`${includeHidden}:${refreshKey ?? 0}`}
+      key={`${includeHidden}:${viewMode}:${refreshKey ?? 0}`}
       includeHidden={includeHidden}
       iconSize={iconSize}
       contextMenuActions={contextMenuActions}
       favoriteDirectoryPaths={favoriteDirectoryPaths}
       onHighlightPath={onHighlightPath}
+      expandedTreePaths={expandedTreePaths}
+      onExpandedTreePathsChange={onExpandedTreePathsChange}
       onOpenChildHistoryPath={onOpenChildHistoryPath}
       onOpenParentPath={onOpenParentPath}
       onSelectPath={onSelectPath}
@@ -218,6 +308,8 @@ function WorkspaceFileTreeContent({
   onHighlightPath,
   onOpenChildHistoryPath,
   onOpenParentPath,
+  expandedTreePaths,
+  onExpandedTreePathsChange,
   contextMenuActions,
   favoriteDirectoryPaths = [],
   onToggleFavoriteDirectory,
@@ -231,20 +323,51 @@ function WorkspaceFileTreeContent({
     respectGitignore: true,
     withStats: true
   })
-  const items = useMemo(
+  const projectedItems = useMemo(
     () => (root ? projectWorkspaceTree(root, sortKey, sortDirection) : []),
     // useDirectoryTree preserves root identity while applying mutations, so version must invalidate this projection.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [root, version, sortKey, sortDirection]
   )
-  const selectedItem = useMemo(() => items.find((item) => item.path === selectedPath) ?? null, [items, selectedPath])
-  const selectedIndex = useMemo(() => items.findIndex((item) => item.path === selectedPath), [items, selectedPath])
+  const [internalExpandedTreePaths, setInternalExpandedTreePaths] = useState<ReadonlySet<string>>(() => new Set())
+  const [lazyChildrenByPath, setLazyChildrenByPath] = useState<ReadonlyMap<string, readonly WorkspaceTreeItem[]>>(
+    () => new Map()
+  )
+  const effectiveExpandedTreePaths = useMemo(
+    () => new Set(expandedTreePaths ?? internalExpandedTreePaths),
+    [expandedTreePaths, internalExpandedTreePaths]
+  )
+  const items = useMemo(
+    () => mergeLazyTreeChildren(projectedItems, lazyChildrenByPath, sortKey, sortDirection),
+    [lazyChildrenByPath, projectedItems, sortDirection, sortKey]
+  )
+  const allItems = useMemo(() => flattenWorkspaceItems(items), [items])
+  const visibleTreeItems = useMemo(
+    () => flattenVisibleTreeItems(items, effectiveExpandedTreePaths),
+    [effectiveExpandedTreePaths, items]
+  )
+  const navigationItems = useMemo(
+    () => (viewMode === 'tree' ? visibleTreeItems.map(({ item }) => item) : items),
+    [items, viewMode, visibleTreeItems]
+  )
+  const selectedItem = useMemo(
+    () =>
+      navigationItems.find((item) => item.path === selectedPath) ??
+      allItems.find((item) => item.path === selectedPath) ??
+      null,
+    [allItems, navigationItems, selectedPath]
+  )
+  const selectedIndex = useMemo(
+    () => navigationItems.findIndex((item) => item.path === selectedPath),
+    [navigationItems, selectedPath]
+  )
   const favoriteDirectorySet = useMemo(() => new Set(favoriteDirectoryPaths), [favoriteDirectoryPaths])
   const [marqueeSelection, setMarqueeSelection] = useState<MarqueeSelection | null>(null)
   const [marqueeSelectedPaths, setMarqueeSelectedPaths] = useState<ReadonlySet<string>>(() => new Set())
   const [selectedPaths, setSelectedPaths] = useState<ReadonlySet<string>>(() => new Set())
   const [contextMenuItem, setContextMenuItem] = useState<WorkspaceTreeItem | null>(null)
   const isWorkspaceShortcutActiveRef = useRef(false)
+  const loadingLazyChildrenPathsRef = useRef<Set<string>>(new Set())
   const marqueeSelectedPathsRef = useRef<ReadonlySet<string>>(new Set())
   const previousRootPathRef = useRef(rootPath)
   const selectedPathsRef = useRef<ReadonlySet<string>>(new Set())
@@ -307,8 +430,8 @@ function WorkspaceFileTreeContent({
 
   const getCurrentSelectedItems = useCallback(() => {
     const currentPaths = new Set([...selectedPathsRef.current, ...marqueeSelectedPathsRef.current])
-    return items.filter((item) => currentPaths.has(item.path))
-  }, [items])
+    return allItems.filter((item) => currentPaths.has(item.path))
+  }, [allItems])
 
   const getShortcutTargetItems = useCallback(() => {
     const currentSelectedItems = getCurrentSelectedItems()
@@ -332,6 +455,10 @@ function WorkspaceFileTreeContent({
     setMarqueeSelection((currentSelection) => (currentSelection ? null : currentSelection))
     if (selectedPathsRef.current.size > 0) applySelectedPaths(new Set())
     setSelectionAnchorPath(null)
+    if (rootPathChanged) {
+      setLazyChildrenByPath(new Map())
+      setInternalExpandedTreePaths(new Set())
+    }
 
     if (rootPathChanged && canUseWorkspaceShortcuts && document.activeElement === document.body) {
       contentRef.current?.focus()
@@ -407,8 +534,8 @@ function WorkspaceFileTreeContent({
   const selectRangeToItem = (item: WorkspaceTreeItem) => {
     applyMarqueeSelectedPaths(new Set())
     const anchorPath = selectionAnchorPath ?? selectedPath ?? item.path
-    const anchorIndex = items.findIndex((candidate) => candidate.path === anchorPath)
-    const itemIndex = items.findIndex((candidate) => candidate.path === item.path)
+    const anchorIndex = navigationItems.findIndex((candidate) => candidate.path === anchorPath)
+    const itemIndex = navigationItems.findIndex((candidate) => candidate.path === item.path)
 
     if (anchorIndex < 0 || itemIndex < 0) {
       applySelectedPaths(new Set([item.path]))
@@ -418,7 +545,7 @@ function WorkspaceFileTreeContent({
 
     const startIndex = Math.min(anchorIndex, itemIndex)
     const endIndex = Math.max(anchorIndex, itemIndex)
-    applySelectedPaths(new Set(items.slice(startIndex, endIndex + 1).map((candidate) => candidate.path)))
+    applySelectedPaths(new Set(navigationItems.slice(startIndex, endIndex + 1).map((candidate) => candidate.path)))
   }
 
   const ensureContextMenuTarget = (item: WorkspaceTreeItem) => {
@@ -454,7 +581,7 @@ function WorkspaceFileTreeContent({
 
     const itemElement = (event.target as HTMLElement).closest<HTMLElement>('[data-workspace-item-path]')
     const item = itemElement?.dataset.workspaceItemPath
-      ? (items.find((candidate) => candidate.path === itemElement.dataset.workspaceItemPath) ?? null)
+      ? (allItems.find((candidate) => candidate.path === itemElement.dataset.workspaceItemPath) ?? null)
       : null
 
     setContextMenuItem(item)
@@ -466,6 +593,80 @@ function WorkspaceFileTreeContent({
     event.stopPropagation()
     action()
   }
+
+  const setExpandedPaths = useCallback(
+    (paths: ReadonlySet<string>) => {
+      if (onExpandedTreePathsChange) {
+        onExpandedTreePathsChange([...paths])
+        return
+      }
+      setInternalExpandedTreePaths(new Set(paths))
+    },
+    [onExpandedTreePathsChange]
+  )
+
+  const loadLazyTreeChildren = useCallback(
+    async (item: WorkspaceTreeItem) => {
+      if (lazyChildrenByPath.has(item.path)) return
+      if (loadingLazyChildrenPathsRef.current.has(item.path)) return
+      loadingLazyChildrenPathsRef.current.add(item.path)
+
+      try {
+        const entries = await window.api.file.listDirectoryEntries(item.path, {
+          includeDirectories: true,
+          includeFiles: true,
+          includeHidden,
+          recursive: false
+        })
+        const lazyChildren = entries.map((entry) => ({
+          id: entry.path,
+          name: basenameOfPath(entry.path),
+          path: entry.path,
+          kind: entry.isDirectory ? ('directory' as const) : ('file' as const),
+          mtime: 0,
+          size: 0
+        }))
+
+        setLazyChildrenByPath((currentChildren) => {
+          if (currentChildren.has(item.path)) return currentChildren
+          const nextChildren = new Map(currentChildren)
+          nextChildren.set(item.path, lazyChildren)
+          return nextChildren
+        })
+      } catch (error) {
+        logger.error(`Failed to load workspace tree children for ${item.path}`, error as Error)
+      } finally {
+        loadingLazyChildrenPathsRef.current.delete(item.path)
+      }
+    },
+    [includeHidden, lazyChildrenByPath]
+  )
+
+  useEffect(() => {
+    if (viewMode !== 'tree') return
+
+    for (const item of allItems) {
+      if (item.kind !== 'directory') continue
+      if (!effectiveExpandedTreePaths.has(item.path)) continue
+      if (item.children?.length || lazyChildrenByPath.has(item.path)) continue
+
+      void loadLazyTreeChildren(item)
+    }
+  }, [allItems, effectiveExpandedTreePaths, lazyChildrenByPath, loadLazyTreeChildren, viewMode])
+
+  const toggleTreeDirectory = useCallback(
+    (item: WorkspaceTreeItem) => {
+      const nextPaths = new Set(effectiveExpandedTreePaths)
+      if (nextPaths.has(item.path)) {
+        nextPaths.delete(item.path)
+      } else {
+        nextPaths.add(item.path)
+        void loadLazyTreeChildren(item)
+      }
+      setExpandedPaths(nextPaths)
+    },
+    [effectiveExpandedTreePaths, loadLazyTreeChildren, setExpandedPaths]
+  )
 
   const resolveFileManagerCommand = useCallback(
     (event: WorkspaceKeyboardEvent) =>
@@ -500,15 +701,45 @@ function WorkspaceFileTreeContent({
       }
 
       if (!hasModifier && !event.altKey && !event.shiftKey) {
+        if (viewMode === 'tree' && selectedItem) {
+          if (key === 'arrowright' && selectedItem.kind === 'directory') {
+            const firstChild = selectedItem.children?.[0]
+            if (!effectiveExpandedTreePaths.has(selectedItem.path)) {
+              runShortcut(event, () => toggleTreeDirectory(selectedItem))
+              return
+            }
+            if (firstChild) {
+              runShortcut(event, () => onHighlightPath?.(firstChild.path))
+              return
+            }
+          }
+
+          if (key === 'arrowleft') {
+            if (selectedItem.kind === 'directory' && effectiveExpandedTreePaths.has(selectedItem.path)) {
+              runShortcut(event, () => toggleTreeDirectory(selectedItem))
+              return
+            }
+
+            const parentPath = getParentPath(selectedItem.path)
+            const parentItem = parentPath ? allItems.find((item) => item.path === parentPath) : null
+            if (parentItem) {
+              runShortcut(event, () => onHighlightPath?.(parentItem.path))
+              return
+            }
+          }
+        }
+
         const direction =
           key === 'arrowdown' || key === 'arrowright' ? 1 : key === 'arrowup' || key === 'arrowleft' ? -1 : 0
 
-        if (direction !== 0 && items.length > 0) {
-          const fallbackIndex = direction > 0 ? 0 : items.length - 1
+        if (direction !== 0 && navigationItems.length > 0) {
+          const fallbackIndex = direction > 0 ? 0 : navigationItems.length - 1
           const nextIndex =
-            selectedIndex < 0 ? fallbackIndex : Math.min(items.length - 1, Math.max(0, selectedIndex + direction))
+            selectedIndex < 0
+              ? fallbackIndex
+              : Math.min(navigationItems.length - 1, Math.max(0, selectedIndex + direction))
 
-          runShortcut(event, () => onHighlightPath?.(items[nextIndex].path))
+          runShortcut(event, () => onHighlightPath?.(navigationItems[nextIndex].path))
           return
         }
       }
@@ -520,8 +751,8 @@ function WorkspaceFileTreeContent({
       if (command === 'file_manager.select_all') {
         runShortcut(event, () => {
           applyMarqueeSelectedPaths(new Set())
-          applySelectedPaths(new Set(items.map((item) => item.path)))
-          setSelectionAnchorPath(items[0]?.path ?? null)
+          applySelectedPaths(new Set(navigationItems.map((item) => item.path)))
+          setSelectionAnchorPath(navigationItems[0]?.path ?? null)
         })
         return
       }
@@ -592,15 +823,19 @@ function WorkspaceFileTreeContent({
       contextMenuActions,
       applyMarqueeSelectedPaths,
       applySelectedPaths,
+      allItems,
+      effectiveExpandedTreePaths,
       getShortcutTargetItems,
-      items,
+      navigationItems,
       onHighlightPath,
       onOpenChildHistoryPath,
       onOpenParentPath,
       resolveFileManagerCommand,
       rootPath,
       selectedIndex,
-      selectedItem
+      selectedItem,
+      toggleTreeDirectory,
+      viewMode
     ]
   )
 
@@ -640,13 +875,15 @@ function WorkspaceFileTreeContent({
     ).find((element) => element.dataset.workspaceItemPath === selectedPath)
 
     selectedElement?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
-  }, [selectedPath, items])
+  }, [navigationItems, selectedPath])
 
-  const renderItem = (item: WorkspaceTreeItem, className?: string) => {
+  const renderItem = (item: WorkspaceTreeItem, className?: string, depth = 0) => {
     const isHidden = isHiddenWorkspaceItem(item)
     const isSelected = selectedPath === item.path || selectedPaths.has(item.path) || marqueeSelectedPaths.has(item.path)
     const isFavoriteDirectory = item.kind === 'directory' && favoriteDirectorySet.has(item.path)
     const canToggleFavorite = item.kind === 'directory' && Boolean(onToggleFavoriteDirectory)
+    const isExpandedTreeDirectory =
+      viewMode === 'tree' && item.kind === 'directory' && effectiveExpandedTreePaths.has(item.path)
     const favoriteButton = canToggleFavorite ? (
       <button
         aria-label={t(isFavoriteDirectory ? 'terminal.workspace.favorite.remove' : 'terminal.workspace.favorite.add', {
@@ -676,9 +913,11 @@ function WorkspaceFileTreeContent({
     const button = (
       <div
         aria-label={item.name}
+        aria-expanded={viewMode === 'tree' && item.kind === 'directory' ? isExpandedTreeDirectory : undefined}
         className={cn(
           'group relative min-w-0 rounded-md text-left text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
           viewMode === 'list' && 'w-full',
+          viewMode === 'tree' && 'w-full',
           isSelected && 'bg-accent text-accent-foreground',
           isHidden && 'opacity-60',
           className
@@ -701,6 +940,15 @@ function WorkspaceFileTreeContent({
 
           if (event.metaKey || event.ctrlKey) {
             toggleItemSelection(item)
+            return
+          }
+
+          if (viewMode === 'tree' && item.kind === 'directory') {
+            applySelectedPaths(new Set())
+            applyMarqueeSelectedPaths(new Set())
+            setSelectionAnchorPath(item.path)
+            onHighlightPath?.(item.path)
+            toggleTreeDirectory(item)
             return
           }
 
@@ -731,6 +979,26 @@ function WorkspaceFileTreeContent({
               </span>
             )}
             <span className="line-clamp-2 w-full break-words text-center text-xs">{item.name}</span>
+          </span>
+        ) : viewMode === 'tree' ? (
+          <span
+            className="flex min-h-8 items-center gap-1 px-2 pr-9"
+            data-workspace-tree-row
+            style={{ paddingLeft: depth * 16 + 8 }}>
+            <span className="flex size-4 shrink-0 items-center justify-center text-muted-foreground">
+              {item.kind === 'directory' ? (
+                isExpandedTreeDirectory ? (
+                  <ChevronDown className="size-3.5" />
+                ) : (
+                  <ChevronRight className="size-3.5" />
+                )
+              ) : null}
+            </span>
+            <WorkspaceItemIcon item={item} />
+            <span className="truncate">{item.name}</span>
+            <span className="absolute top-1 right-1 flex justify-end" data-workspace-favorite-slot>
+              {favoriteButton}
+            </span>
           </span>
         ) : (
           <span className="grid min-h-8 items-center gap-2 px-2 pr-9" data-workspace-list-row>
@@ -781,6 +1049,10 @@ function WorkspaceFileTreeContent({
         </span>
       </div>
       {items.map((item) => renderItem(item))}
+    </div>
+  ) : viewMode === 'tree' ? (
+    <div className="space-y-0.5" data-testid="workspace-tree-container" data-workspace-tree-container>
+      {visibleTreeItems.map(({ item, depth }) => renderItem(item, undefined, depth))}
     </div>
   ) : (
     <div

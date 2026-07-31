@@ -8823,7 +8823,8 @@
       },
       "view": {
         "icons": "Icon view",
-        "list": "List view"
+        "list": "List view",
+        "tree": "Tree view"
       }
     }
   },
