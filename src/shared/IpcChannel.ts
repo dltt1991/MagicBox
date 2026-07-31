@@ -77,6 +77,7 @@ export enum IpcChannel {
   File_GetMetadata = 'file:getMetadata',
   File_ListDirectory = 'file:listDirectory',
   File_ListDirectoryEntries = 'file:listDirectoryEntries',
+  File_CancelDirectorySearch = 'file:cancelDirectorySearch',
   File_CheckFileName = 'file:checkFileName',
   File_ValidateNotesDirectory = 'file:validateNotesDirectory',
   File_BatchUploadMarkdown = 'file:batchUploadMarkdown',

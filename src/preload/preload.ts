@@ -45,6 +45,7 @@ type DirectoryListOptions = {
   includeDirectories?: boolean
   maxEntries?: number
   searchPattern?: string
+  searchRequestId?: string
 }
 
 type DirectoryEntry = {
@@ -161,6 +162,8 @@ const api = {
       ipcRenderer.invoke(IpcChannel.File_ListDirectory, dirPath, options),
     listDirectoryEntries: (dirPath: string, options?: DirectoryListOptions): Promise<DirectoryEntry[]> =>
       ipcRenderer.invoke(IpcChannel.File_ListDirectoryEntries, dirPath, options),
+    cancelDirectorySearch: (requestId: string): Promise<void> =>
+      ipcRenderer.invoke(IpcChannel.File_CancelDirectorySearch, requestId),
     checkFileName: (dirPath: string, fileName: string, isFile: boolean) =>
       ipcRenderer.invoke(IpcChannel.File_CheckFileName, dirPath, fileName, isFile),
     validateNotesDirectory: (dirPath: string) => ipcRenderer.invoke(IpcChannel.File_ValidateNotesDirectory, dirPath),

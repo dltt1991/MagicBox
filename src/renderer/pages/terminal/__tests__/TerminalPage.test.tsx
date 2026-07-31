@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom/vitest'
 
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type React from 'react'
 import { StrictMode } from 'react'
@@ -18,6 +18,8 @@ const mocks = vi.hoisted(() => ({
   safeOpen: vi.fn(),
   toastError: vi.fn(),
   isDirectory: vi.fn(),
+  listDirectoryEntries: vi.fn(),
+  cancelDirectorySearch: vi.fn(),
   resolvePath: vi.fn(),
   clipboardWriteText: vi.fn(),
   alert: vi.fn(),
@@ -95,6 +97,7 @@ vi.mock('../hooks/useTerminalSessions', () => ({
 }))
 
 vi.mock('@renderer/hooks/command', () => ({
+  useCommandContextKey: vi.fn(),
   useCommandHandler: (command: string, handler: () => void | Promise<void>, options?: { enabled?: boolean }) => {
     if (options?.enabled === false) {
       delete mocks.commandHandlers[command]
@@ -449,7 +452,8 @@ vi.mock('@cherrystudio/ui', () => ({
   DialogFooter: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DialogHeader: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   DialogTitle: ({ children }: { children: React.ReactNode }) => <h2>{children}</h2>,
-  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />,
+  EmptyState: ({ title }: { title?: string }) => <div data-testid="empty-state">{title}</div>,
+  Input: vi.fn((props: React.InputHTMLAttributes<HTMLInputElement>) => <input {...props} />),
   NormalTooltip: ({ children }: { children: React.ReactNode }) => children,
   Popover: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   PopoverContent: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
@@ -473,6 +477,10 @@ vi.mock('@cherrystudio/ui', () => ({
   ),
   SelectValue: () => <span />,
   Switch: ({ checked }: { checked: boolean }) => <input checked={checked} readOnly type="checkbox" />
+}))
+
+vi.mock('@iconify/react', () => ({
+  Icon: ({ className, icon }: { className?: string; icon: string }) => <span className={className} data-icon={icon} />
 }))
 
 import TerminalPage from '../TerminalPage'
@@ -502,6 +510,15 @@ beforeEach(() => {
   mocks.ipcRequest.mockReset()
   mocks.safeOpen.mockResolvedValue(undefined)
   mocks.isDirectory.mockResolvedValue(false)
+  mocks.listDirectoryEntries.mockReset()
+  mocks.cancelDirectorySearch.mockReset()
+  mocks.cancelDirectorySearch.mockResolvedValue(undefined)
+  mocks.listDirectoryEntries.mockResolvedValue([
+    { path: '/workspace/docs', isDirectory: true },
+    { path: '/workspace/docs/guide.md', isDirectory: false },
+    { path: '/workspace/src/index.ts', isDirectory: false },
+    { path: '/workspace/package.json', isDirectory: false }
+  ])
   mocks.resolvePath.mockResolvedValue('/Users/alice')
   mocks.clipboardWriteText.mockReset()
   Object.defineProperty(navigator, 'clipboard', {
@@ -513,6 +530,8 @@ beforeEach(() => {
   mocks.confirm.mockReturnValue(true)
   mocks.prompt.mockReset()
   window.api.file.isDirectory = mocks.isDirectory
+  window.api.file.listDirectoryEntries = mocks.listDirectoryEntries
+  window.api.file.cancelDirectorySearch = mocks.cancelDirectorySearch
   window.api.resolvePath = mocks.resolvePath
   window.alert = mocks.alert
   window.confirm = mocks.confirm
@@ -768,6 +787,549 @@ describe('TerminalPage', () => {
     await waitFor(() =>
       expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/Users/alice')
     )
+  })
+
+  it('opens workspace search from the file manager toolbar', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: '搜索文件' }))
+
+    expect(screen.getByRole('heading', { name: '搜索文件' })).toBeInTheDocument()
+    expect(screen.getByRole('textbox', { name: '搜索文件或文件夹' })).toBeInTheDocument()
+    expect(mocks.listDirectoryEntries).not.toHaveBeenCalled()
+  })
+
+  it('searches workspace entries with the query instead of recursively loading the whole workspace', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: '搜索文件' }))
+    await user.type(screen.getByRole('textbox', { name: '搜索文件或文件夹' }), 'guide')
+
+    await waitFor(() =>
+      expect(mocks.listDirectoryEntries).toHaveBeenCalledWith(
+        '/workspace',
+        expect.objectContaining({
+          includeDirectories: true,
+          includeFiles: true,
+          includeHidden: false,
+          maxEntries: 100,
+          maxDepth: 0,
+          searchPattern: 'guide',
+          recursive: true
+        })
+      )
+    )
+  })
+
+  it('starts workspace search requests shortly after typing', async () => {
+    vi.useFakeTimers()
+    try {
+      mocks.persistValues['terminal.workspace.root'] = '/workspace'
+
+      render(<TerminalPage />)
+
+      fireEvent.click(screen.getByRole('button', { name: '搜索文件' }))
+      const input = screen.getByRole('textbox', { name: '搜索文件或文件夹' })
+      fireEvent.change(input, { target: { value: 'guide' } })
+      await act(async () => {})
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(60)
+      })
+
+      expect(mocks.listDirectoryEntries).toHaveBeenCalledWith(
+        '/workspace',
+        expect.objectContaining({ searchPattern: 'guide' })
+      )
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('coalesces short workspace search input before requesting the filesystem', async () => {
+    vi.useFakeTimers()
+    try {
+      mocks.persistValues['terminal.workspace.root'] = '/workspace'
+
+      render(<TerminalPage />)
+
+      fireEvent.click(screen.getByRole('button', { name: '搜索文件' }))
+      const input = screen.getByRole('textbox', { name: '搜索文件或文件夹' })
+      fireEvent.change(input, { target: { value: 'a' } })
+      fireEvent.change(input, { target: { value: 'ab' } })
+      await act(async () => {})
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(100)
+      })
+
+      expect(mocks.listDirectoryEntries).not.toHaveBeenCalled()
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(80)
+      })
+
+      expect(mocks.listDirectoryEntries).toHaveBeenCalledTimes(1)
+      expect(mocks.listDirectoryEntries).toHaveBeenCalledWith(
+        '/workspace',
+        expect.objectContaining({ searchPattern: 'ab' })
+      )
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('switches workspace search between current directory and global home with buttons and Tab', async () => {
+    mocks.persistValues['terminal.workspace.root'] = '/workspace/src'
+
+    render(<TerminalPage />)
+
+    await waitFor(() => expect(mocks.resolvePath).toHaveBeenCalledWith('~'))
+    fireEvent.click(screen.getByRole('button', { name: '搜索文件' }))
+
+    const input = screen.getByRole('textbox', { name: '搜索文件或文件夹' })
+    fireEvent.change(input, { target: { value: 'guide' } })
+
+    await waitFor(() =>
+      expect(mocks.listDirectoryEntries).toHaveBeenLastCalledWith(
+        '/workspace/src',
+        expect.objectContaining({ searchPattern: 'guide' })
+      )
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: '全局' }))
+
+    await waitFor(() =>
+      expect(mocks.listDirectoryEntries).toHaveBeenLastCalledWith(
+        '/Users/alice',
+        expect.objectContaining({ searchPattern: 'guide' })
+      )
+    )
+
+    fireEvent.keyDown(input, { key: 'Tab' })
+
+    await waitFor(() =>
+      expect(mocks.listDirectoryEntries).toHaveBeenLastCalledWith(
+        '/workspace/src',
+        expect.objectContaining({ searchPattern: 'guide' })
+      )
+    )
+    expect(input).toHaveFocus()
+  })
+
+  it('stops showing the workspace search loading state when the search request stalls', async () => {
+    vi.useFakeTimers()
+    try {
+      mocks.persistValues['terminal.workspace.root'] = '/workspace'
+      mocks.listDirectoryEntries.mockReturnValue(new Promise(() => {}))
+
+      render(<TerminalPage />)
+
+      act(() => {
+        void mocks.commandHandlers['file_manager.search']?.()
+      })
+      fireEvent.change(screen.getByRole('textbox', { name: '搜索文件或文件夹' }), { target: { value: 'guide' } })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(120)
+      })
+
+      expect(screen.getByText('正在搜索工作区文件')).toBeInTheDocument()
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10_000)
+      })
+
+      expect(screen.getByText('无法搜索工作区文件')).toBeInTheDocument()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('does not keep showing stale workspace search results while a later query is still loading', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.listDirectoryEntries.mockResolvedValueOnce([{ path: '/workspace/docs/guide.md', isDirectory: false }])
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: '搜索文件' }))
+    await user.type(screen.getByRole('textbox', { name: '搜索文件或文件夹' }), 'guide')
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /guide\.md/ })).toBeInTheDocument())
+
+    mocks.listDirectoryEntries.mockReturnValueOnce(new Promise(() => {}))
+    fireEvent.change(screen.getByRole('textbox', { name: '搜索文件或文件夹' }), { target: { value: 'guides' } })
+
+    await waitFor(() => expect(mocks.listDirectoryEntries).toHaveBeenLastCalledWith('/workspace', expect.any(Object)))
+
+    expect(screen.queryByRole('button', { name: /guide\.md/ })).not.toBeInTheDocument()
+    expect(screen.getByText('正在搜索工作区文件')).toBeInTheDocument()
+  })
+
+  it('refreshes workspace search results after the fourth typed character', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.listDirectoryEntries
+      .mockResolvedValueOnce([{ path: '/workspace/docs/abc.md', isDirectory: false }])
+      .mockResolvedValueOnce([{ path: '/workspace/docs/abcd.md', isDirectory: false }])
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: '搜索文件' }))
+    const input = screen.getByRole('textbox', { name: '搜索文件或文件夹' })
+    fireEvent.change(input, { target: { value: 'abc' } })
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /abc\.md/ })).toBeInTheDocument())
+
+    fireEvent.change(input, { target: { value: 'abcd' } })
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /abcd\.md/ })).toBeInTheDocument())
+
+    expect(screen.queryByRole('button', { name: /abc\.md/ })).not.toBeInTheDocument()
+  })
+
+  it('filters cached workspace search results while a narrower query is loading', async () => {
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.listDirectoryEntries
+      .mockResolvedValueOnce([
+        { path: '/workspace/docs/guide.md', isDirectory: false },
+        { path: '/workspace/docs/gist.md', isDirectory: false }
+      ])
+      .mockReturnValueOnce(new Promise(() => {}))
+
+    render(<TerminalPage />)
+
+    fireEvent.click(screen.getByRole('button', { name: '搜索文件' }))
+    const input = screen.getByRole('textbox', { name: '搜索文件或文件夹' })
+    fireEvent.change(input, { target: { value: 'gui' } })
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /guide\.md/ })).toBeInTheDocument())
+
+    fireEvent.change(input, { target: { value: 'guid' } })
+
+    expect(screen.getByRole('button', { name: /guide\.md/ })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /gist\.md/ })).not.toBeInTheDocument()
+    expect(screen.getByText('正在搜索工作区文件')).toBeInTheDocument()
+  })
+
+  it('cancels the previous workspace search request when a newer request starts', async () => {
+    vi.useFakeTimers()
+    try {
+      mocks.persistValues['terminal.workspace.root'] = '/workspace'
+      mocks.listDirectoryEntries.mockReturnValue(new Promise(() => {}))
+
+      render(<TerminalPage />)
+
+      fireEvent.click(screen.getByRole('button', { name: '搜索文件' }))
+      const input = screen.getByRole('textbox', { name: '搜索文件或文件夹' })
+      fireEvent.change(input, { target: { value: 'guide' } })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(40)
+      })
+
+      expect(mocks.listDirectoryEntries).toHaveBeenCalledTimes(1)
+      const firstRequestId = mocks.listDirectoryEntries.mock.calls[0]?.[1]?.searchRequestId
+      expect(firstRequestId).toEqual(expect.any(String))
+
+      fireEvent.change(input, { target: { value: 'guides' } })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(40)
+      })
+
+      expect(mocks.cancelDirectorySearch).toHaveBeenCalledWith(firstRequestId)
+      expect(mocks.listDirectoryEntries).toHaveBeenCalledTimes(2)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('keeps workspace search usable when the preload does not expose directory search cancellation', async () => {
+    vi.useFakeTimers()
+    const originalCancelDirectorySearch = window.api.file.cancelDirectorySearch
+    try {
+      mocks.persistValues['terminal.workspace.root'] = '/workspace'
+      mocks.listDirectoryEntries.mockReturnValue(new Promise(() => {}))
+      window.api.file.cancelDirectorySearch = undefined as unknown as typeof window.api.file.cancelDirectorySearch
+
+      render(<TerminalPage />)
+
+      fireEvent.click(screen.getByRole('button', { name: '搜索文件' }))
+      const input = screen.getByRole('textbox', { name: '搜索文件或文件夹' })
+      fireEvent.change(input, { target: { value: 'guide' } })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(40)
+      })
+
+      fireEvent.change(input, { target: { value: 'guides' } })
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(40)
+      })
+
+      expect(mocks.listDirectoryEntries).toHaveBeenCalledTimes(2)
+    } finally {
+      window.api.file.cancelDirectorySearch = originalCancelDirectorySearch
+      vi.useRealTimers()
+    }
+  })
+
+  it('opens workspace search from the terminal page command handler', () => {
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+
+    render(<TerminalPage />)
+
+    act(() => {
+      void mocks.commandHandlers['file_manager.search']?.()
+    })
+
+    expect(screen.getByRole('heading', { name: '搜索文件' })).toBeInTheDocument()
+  })
+
+  it('filters workspace search results with wildcards without previewing the highlighted file', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.persistValues['terminal.workspace.preview_open'] = false
+
+    render(<TerminalPage />)
+
+    act(() => {
+      void mocks.commandHandlers['file_manager.search']?.()
+    })
+
+    await user.type(screen.getByRole('textbox', { name: '搜索文件或文件夹' }), '*.md')
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /guide\.md/ })).toBeInTheDocument())
+    expect(screen.queryByRole('button', { name: /index\.ts/ })).not.toBeInTheDocument()
+    expect(screen.queryByTestId('mock-workspace-preview-pane')).not.toBeInTheDocument()
+  })
+
+  it('keeps fuzzy workspace search results returned by the file search API', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.listDirectoryEntries.mockResolvedValue([
+      { path: '/workspace/src/FooBarController.ts', isDirectory: false },
+      { path: '/workspace/docs/fallback.txt', isDirectory: false }
+    ])
+
+    render(<TerminalPage />)
+
+    act(() => {
+      void mocks.commandHandlers['file_manager.search']?.()
+    })
+
+    await user.type(screen.getByRole('textbox', { name: '搜索文件或文件夹' }), 'fbc')
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /FooBarController\.ts/ })).toBeInTheDocument())
+  })
+
+  it('renders fuzzy search results that do not contain the typed text contiguously', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.listDirectoryEntries.mockResolvedValue([
+      { path: '/workspace/guotao-project/readme.md', isDirectory: false },
+      { path: '/workspace/gateway-tools', isDirectory: true }
+    ])
+
+    render(<TerminalPage />)
+
+    act(() => {
+      void mocks.commandHandlers['file_manager.search']?.()
+    })
+
+    await user.type(screen.getByRole('textbox', { name: '搜索文件或文件夹' }), 'gt')
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /guotao-project/ })).toBeInTheDocument())
+    expect(screen.getByRole('button', { name: /gateway-tools/ })).toBeInTheDocument()
+  })
+
+  it('uses a non-wildcard candidate query for workspace wildcard searches', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+
+    render(<TerminalPage />)
+
+    act(() => {
+      void mocks.commandHandlers['file_manager.search']?.()
+    })
+
+    await user.type(screen.getByRole('textbox', { name: '搜索文件或文件夹' }), '*.md')
+
+    await waitFor(() =>
+      expect(mocks.listDirectoryEntries).toHaveBeenLastCalledWith(
+        '/workspace',
+        expect.objectContaining({ searchPattern: '.md' })
+      )
+    )
+  })
+
+  it('orders workspace search results by filename relevance before path-only matches', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.listDirectoryEntries.mockResolvedValue([
+      { path: '/workspace/archive/guide-notes/random.txt', isDirectory: false },
+      { path: '/workspace/docs/guide.md', isDirectory: false },
+      { path: '/workspace/guide', isDirectory: true },
+      { path: '/workspace/docs/my-guide.md', isDirectory: false }
+    ])
+
+    render(<TerminalPage />)
+
+    act(() => {
+      void mocks.commandHandlers['file_manager.search']?.()
+    })
+
+    await user.type(screen.getByRole('textbox', { name: '搜索文件或文件夹' }), 'guide')
+    await waitFor(() => expect(screen.getByRole('button', { name: /^guide\s+guide$/ })).toBeInTheDocument())
+
+    const resultNames = screen
+      .getAllByRole('button')
+      .filter((button) => button.hasAttribute('aria-selected'))
+      .map((button) => button.textContent)
+
+    expect(resultNames).toEqual([
+      'guideguide',
+      'guide.mddocs/guide.md',
+      'my-guide.mddocs/my-guide.md',
+      'random.txtarchive/guide-notes/random.txt'
+    ])
+  })
+
+  it('keeps exact workspace search matches before partial matches', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.listDirectoryEntries.mockResolvedValue([
+      { path: '/workspace/docs/my-guide.md', isDirectory: false },
+      { path: '/workspace/docs/guidebook.md', isDirectory: false },
+      { path: '/workspace/docs/guide.md', isDirectory: false },
+      { path: '/workspace/guide', isDirectory: true }
+    ])
+
+    render(<TerminalPage />)
+
+    act(() => {
+      void mocks.commandHandlers['file_manager.search']?.()
+    })
+
+    await user.type(screen.getByRole('textbox', { name: '搜索文件或文件夹' }), 'guide')
+    await waitFor(() => expect(screen.getByRole('button', { name: /^guide\s+guide$/ })).toBeInTheDocument())
+
+    const resultNames = screen
+      .getAllByRole('button')
+      .filter((button) => button.hasAttribute('aria-selected'))
+      .map((button) => button.textContent)
+
+    expect(resultNames.slice(0, 2)).toEqual(['guideguide', 'guide.mddocs/guide.md'])
+  })
+
+  it('does not select a workspace search result while the user is typing', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+
+    render(<TerminalPage />)
+
+    act(() => {
+      void mocks.commandHandlers['file_manager.search']?.()
+    })
+
+    await user.type(screen.getByRole('textbox', { name: '搜索文件或文件夹' }), '.')
+    await waitFor(() => expect(screen.getByRole('button', { name: /guide\.md/ })).toBeInTheDocument())
+
+    expect(
+      screen.getAllByRole('button').filter((button) => button.getAttribute('aria-selected') === 'true')
+    ).toHaveLength(0)
+    await user.keyboard('{Enter}')
+    expect(screen.queryByRole('heading', { name: '搜索文件' })).toBeInTheDocument()
+  })
+
+  it('uses arrow keys to switch workspace search selection without previewing files', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.persistValues['terminal.workspace.preview_open'] = false
+
+    render(<TerminalPage />)
+
+    act(() => {
+      void mocks.commandHandlers['file_manager.search']?.()
+    })
+
+    const input = screen.getByRole('textbox', { name: '搜索文件或文件夹' })
+    await user.type(input, '.')
+    await waitFor(() => expect(screen.getByRole('button', { name: /guide\.md/ })).toBeInTheDocument())
+
+    await user.keyboard('{ArrowDown}')
+
+    expect(
+      screen.getAllByRole('button').filter((button) => button.getAttribute('aria-selected') === 'true')
+    ).toHaveLength(1)
+    expect(screen.queryByTestId('mock-workspace-preview-pane')).not.toBeInTheDocument()
+  })
+
+  it('does not preview a searched file when hovering over the search result', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.persistValues['terminal.workspace.preview_open'] = false
+
+    render(<TerminalPage />)
+
+    act(() => {
+      void mocks.commandHandlers['file_manager.search']?.()
+    })
+
+    await user.type(screen.getByRole('textbox', { name: '搜索文件或文件夹' }), '*.md')
+    const result = await screen.findByRole('button', { name: /guide\.md/ })
+
+    await user.hover(result)
+
+    expect(result).toHaveAttribute('aria-selected', 'true')
+    expect(screen.queryByTestId('mock-workspace-preview-pane')).not.toBeInTheDocument()
+  })
+
+  it('opens a searched file in its parent directory and keeps it selected for preview', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.persistValues['terminal.workspace.preview_open'] = false
+
+    render(<TerminalPage />)
+
+    act(() => {
+      void mocks.commandHandlers['file_manager.search']?.()
+    })
+
+    await user.type(screen.getByRole('textbox', { name: '搜索文件或文件夹' }), '*.md')
+    await waitFor(() => expect(screen.getByRole('button', { name: /guide\.md/ })).toBeInTheDocument())
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard('{Enter}')
+
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace/docs')
+    expect(screen.getByTestId('mock-workspace-preview-pane')).toHaveAttribute(
+      'data-file-path',
+      '/workspace/docs/guide.md'
+    )
+    expect(screen.queryByRole('heading', { name: '搜索文件' })).not.toBeInTheDocument()
+  })
+
+  it('opens a searched directory in the file manager', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+
+    render(<TerminalPage />)
+
+    act(() => {
+      void mocks.commandHandlers['file_manager.search']?.()
+    })
+
+    await user.type(screen.getByRole('textbox', { name: '搜索文件或文件夹' }), 'docs')
+    await waitFor(() => expect(screen.getByRole('button', { name: /^docs\s+docs$/ })).toBeInTheDocument())
+    await user.keyboard('{ArrowDown}')
+    await user.keyboard('{Enter}')
+
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace/docs')
+    expect(screen.queryByRole('heading', { name: '搜索文件' })).not.toBeInTheDocument()
   })
 
   it('adds favorite directories from the file tree', async () => {

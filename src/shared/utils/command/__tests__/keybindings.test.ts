@@ -129,6 +129,19 @@ describe('command definitions', () => {
       scope: 'renderer'
     })
   })
+
+  it('defines a configurable file manager search shortcut', () => {
+    expect(REGISTERED_KEYBINDINGS.find((rule) => rule.command === 'file_manager.search')).toMatchObject({
+      command: 'file_manager.search',
+      defaultBinding: ['CommandOrControl', 'F'],
+      preferenceKey: 'shortcut.file_manager.search',
+      scope: 'renderer'
+    })
+    expect(getCommandDefaultShortcutPreference('file_manager.search')).toEqual({
+      binding: ['CommandOrControl', 'F'],
+      enabled: true
+    })
+  })
 })
 
 describe('commandShortcutPreferenceKey', () => {

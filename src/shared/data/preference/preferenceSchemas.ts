@@ -491,6 +491,8 @@ export interface PreferenceSchemas {
     // target-key-definitions/complex/complex
     'shortcut.file_manager.rename': PreferenceTypes.PreferenceShortcutType
     // target-key-definitions/complex/complex
+    'shortcut.file_manager.search': PreferenceTypes.PreferenceShortcutType
+    // target-key-definitions/complex/complex
     'shortcut.file_manager.select_all': PreferenceTypes.PreferenceShortcutType
     // target-key-definitions/complex/complex
     'shortcut.quick_assistant.toggle': PreferenceTypes.PreferenceShortcutType
@@ -812,6 +814,7 @@ export const DefaultPreferences: PreferenceSchemas = {
     'shortcut.file_manager.paste': { binding: ['CommandOrControl', 'V'], enabled: true },
     'shortcut.file_manager.properties': { binding: ['CommandOrControl', 'I'], enabled: true },
     'shortcut.file_manager.rename': { binding: ['F2'], enabled: true },
+    'shortcut.file_manager.search': { binding: ['CommandOrControl', 'F'], enabled: true },
     'shortcut.file_manager.select_all': { binding: ['CommandOrControl', 'A'], enabled: true },
     'shortcut.quick_assistant.toggle': { binding: ['CommandOrControl', 'E'], enabled: false },
     'shortcut.selection.capture_text': { binding: [], enabled: false },
