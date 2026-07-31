@@ -31,6 +31,13 @@ export const terminalRequestSchemas = {
     }),
     output: TerminalSessionMetadataSchema
   }),
+  'terminal.session.ensure': defineRoute({
+    input: z.strictObject({
+      cwd: cwdSchema.optional(),
+      ...sizeSchema.shape
+    }),
+    output: TerminalSessionMetadataSchema
+  }),
   'terminal.session.list': defineRoute({
     input: z.void(),
     output: z.array(TerminalSessionMetadataSchema)

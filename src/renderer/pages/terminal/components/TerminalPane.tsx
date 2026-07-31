@@ -3,7 +3,8 @@ import '@xterm/xterm/css/xterm.css'
 import { FitAddon } from '@xterm/addon-fit'
 import { Unicode11Addon } from '@xterm/addon-unicode11'
 import { WebglAddon } from '@xterm/addon-webgl'
-import { type ILink, Terminal } from '@xterm/xterm'
+import { type ILink, type ITheme, Terminal } from '@xterm/xterm'
+import type { CSSProperties } from 'react'
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react'
 
 import type { TerminalBufferChunk } from '../hooks/useTerminalSessions'
@@ -18,9 +19,15 @@ const TERMINAL_FONT_SIZE_MAX = 36
 const TERMINAL_FONT_WHEEL_DELTA = 180
 const TERMINAL_LINE_HEIGHT = 1.25
 const TERMINAL_FONT_FAMILY = 'Menlo, Monaco, "Courier New", monospace'
+const ESCAPE_SEQUENCE = String.fromCharCode(27)
+const XTERM_PRIMARY_DEVICE_ATTRIBUTES_RESPONSE = new RegExp(`${ESCAPE_SEQUENCE}\\[\\?1;2c`, 'g')
 
 function clampTerminalFontSize(size: number): number {
   return Math.min(TERMINAL_FONT_SIZE_MAX, Math.max(TERMINAL_FONT_SIZE_MIN, size))
+}
+
+function sanitizeTerminalInput(data: string): string {
+  return data.replace(XTERM_PRIMARY_DEVICE_ATTRIBUTES_RESPONSE, '')
 }
 
 interface TerminalPaneProps {
@@ -32,7 +39,9 @@ interface TerminalPaneProps {
   onPathActivated?: (path: string) => void
   shellKind?: TerminalShellKind
   fontSize?: number
+  theme?: ITheme
   onFontSizeChange?: (fontSize: number) => void
+  focusRequestKey?: number
 }
 
 export function TerminalPane({
@@ -44,7 +53,9 @@ export function TerminalPane({
   onPathActivated,
   shellKind = 'posix',
   fontSize: controlledFontSize,
-  onFontSizeChange
+  theme,
+  onFontSizeChange,
+  focusRequestKey
 }: TerminalPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mountRef = useRef<HTMLDivElement>(null)
@@ -60,6 +71,11 @@ export function TerminalPane({
   const terminalFontSize = controlledFontSize ?? uncontrolledFontSize
   const terminalLineHeight = TERMINAL_LINE_HEIGHT
   const terminalFontFamily = TERMINAL_FONT_FAMILY
+  const terminalBackgroundColor = theme?.background ?? '#000000'
+  const terminalBackgroundStyle = {
+    '--terminal-background-color': terminalBackgroundColor,
+    backgroundColor: terminalBackgroundColor
+  } as CSSProperties
   cwdRef.current = cwd
   const updateTerminalFontSize = useCallback(
     (nextFontSize: number) => {
@@ -106,6 +122,7 @@ export function TerminalPane({
       fontFamily: terminalFontFamily,
       fontSize: terminalFontSize,
       lineHeight: terminalLineHeight,
+      theme,
       scrollback: 5000
     })
     const fitAddon = new FitAddon()
@@ -140,7 +157,10 @@ export function TerminalPane({
       })
     }
     scheduleFitRef.current = scheduleFit
-    const inputDisposable = terminal.onData((data) => onInputEvent(data))
+    const inputDisposable = terminal.onData((data) => {
+      const sanitizedData = sanitizeTerminalInput(data)
+      if (sanitizedData) onInputEvent(sanitizedData)
+    })
     const linkDisposable = terminal.registerLinkProvider({
       provideLinks: (bufferLineNumber, callback) => {
         const line = terminal.buffer.active.getLine(bufferLineNumber - 1)
@@ -191,6 +211,20 @@ export function TerminalPane({
     const terminal = terminalRef.current
     if (!terminal) return
 
+    terminal.options.theme = theme
+  }, [theme])
+
+  useEffect(() => {
+    const terminal = terminalRef.current
+    if (!terminal || focusRequestKey === undefined) return
+
+    terminal.focus()
+  }, [focusRequestKey])
+
+  useEffect(() => {
+    const terminal = terminalRef.current
+    if (!terminal) return
+
     const pendingBuffer = buffer.filter((chunk) => chunk.sequence > lastWrittenSequenceRef.current)
     if (pendingBuffer.length === 0) return
 
@@ -200,24 +234,31 @@ export function TerminalPane({
 
   return (
     <div
-      className="min-h-0 flex-1 overflow-hidden bg-black"
+      className="min-h-0 flex-1 overflow-hidden"
       data-terminal-session-id={sessionId}
       onDragOver={(event) => event.preventDefault()}
       onDrop={(event) => {
         const payload = event.dataTransfer.getData(TERMINAL_PATH_DRAG_MIME_TYPE)
         try {
-          const { path } = JSON.parse(payload) as { path?: unknown }
+          const { path, paths } = JSON.parse(payload) as { path?: unknown; paths?: unknown }
+          const droppedPaths = Array.isArray(paths) ? paths.filter((candidate) => typeof candidate === 'string') : []
+          if (droppedPaths.length > 0) {
+            onInputEvent(droppedPaths.map((droppedPath) => quotePathForShell(droppedPath, shellKind)).join(' '))
+            return
+          }
+
           if (typeof path === 'string') onInputEvent(quotePathForShell(path, shellKind))
         } catch {
           // Ignore drops that do not use the terminal path payload.
         }
       }}
-      ref={containerRef}>
+      ref={containerRef}
+      style={terminalBackgroundStyle}>
       <div
-        className="[&_.xterm-viewport]:!h-full h-full min-h-0 w-full overflow-hidden bg-black text-base [&_.xterm-screen]:h-full [&_.xterm-viewport]:bg-black [&_.xterm]:h-full [&_.xterm]:bg-black"
+        className="[&_.xterm-viewport]:!h-full [&_.xterm-viewport]:!bg-[var(--terminal-background-color)] h-full min-h-0 w-full overflow-hidden text-base [&_.xterm-screen]:h-full [&_.xterm]:h-full [&_.xterm]:bg-[var(--terminal-background-color)]"
         data-testid="terminal-xterm-mount"
         ref={mountRef}
-        style={{ fontSize: terminalFontSize }}
+        style={{ ...terminalBackgroundStyle, fontSize: terminalFontSize }}
       />
     </div>
   )

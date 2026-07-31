@@ -38,6 +38,7 @@ vi.mock('@xterm/addon-fit', () => ({
 vi.mock('@xterm/addon-unicode11', () => ({ Unicode11Addon: class Unicode11Addon {} }))
 vi.mock('@xterm/addon-webgl', () => ({ WebglAddon: class WebglAddon {} }))
 
+import { getTerminalTheme } from '../../lib/terminalThemes'
 import { TerminalPane } from '../TerminalPane'
 
 afterEach(() => {
@@ -47,6 +48,7 @@ afterEach(() => {
   mocks.terminal.rows = 24
   mocks.terminal.options = {}
   mocks.terminal.buffer.active.getLine.mockReset()
+  mocks.terminal.onData.mockClear()
   mocks.terminal.registerLinkProvider.mockClear()
   mocks.terminal.write.mockReset()
 })
@@ -130,13 +132,74 @@ describe('TerminalPane', () => {
     expect(mocks.Terminal).toHaveBeenCalledTimes(1)
   })
 
-  it('fills the terminal pane with xterm background color', () => {
+  it('does not forward xterm device-attribute responses as shell input', () => {
+    const onInput = vi.fn()
+    render(<TerminalPane buffer={[]} onInput={onInput} onResize={vi.fn()} sessionId="session-1" />)
+
+    const onData = mocks.terminal.onData as Mock<(handler: (data: string) => void) => { dispose: () => void }>
+    const onDataHandler = onData.mock.calls[0]?.[0]
+    onDataHandler?.('\u001b[?1;2c')
+    onDataHandler?.('\u001b[?1;2c')
+
+    expect(onInput).not.toHaveBeenCalled()
+
+    onDataHandler?.('ls\n')
+
+    expect(onInput).toHaveBeenCalledWith('ls\n')
+  })
+
+  it('fills the terminal pane with the selected theme background color', () => {
     const { container } = render(
-      <TerminalPane buffer={[]} onInput={vi.fn()} onResize={vi.fn()} sessionId="session-1" />
+      <TerminalPane
+        buffer={[]}
+        onInput={vi.fn()}
+        onResize={vi.fn()}
+        sessionId="session-1"
+        theme={getTerminalTheme('light').theme}
+      />
     )
 
-    expect(container.firstElementChild).toHaveClass('bg-black')
-    expect(screen.getByTestId('terminal-xterm-mount')).toHaveClass('bg-black')
+    expect(container.firstElementChild).toHaveStyle({ backgroundColor: '#f8fafc' })
+    expect(screen.getByTestId('terminal-xterm-mount')).toHaveStyle({ backgroundColor: '#f8fafc' })
+  })
+
+  it('creates xterm with the selected terminal theme', () => {
+    render(
+      <TerminalPane
+        buffer={[]}
+        onInput={vi.fn()}
+        onResize={vi.fn()}
+        sessionId="session-1"
+        theme={getTerminalTheme('dracula').theme}
+      />
+    )
+
+    expect(mocks.Terminal).toHaveBeenCalledWith(expect.objectContaining({ theme: getTerminalTheme('dracula').theme }))
+  })
+
+  it('updates the existing terminal instance when the selected theme changes', () => {
+    const { rerender } = render(
+      <TerminalPane
+        buffer={[]}
+        onInput={vi.fn()}
+        onResize={vi.fn()}
+        sessionId="session-1"
+        theme={getTerminalTheme('default-dark').theme}
+      />
+    )
+
+    rerender(
+      <TerminalPane
+        buffer={[]}
+        onInput={vi.fn()}
+        onResize={vi.fn()}
+        sessionId="session-1"
+        theme={getTerminalTheme('monokai').theme}
+      />
+    )
+
+    expect(mocks.Terminal).toHaveBeenCalledTimes(1)
+    expect(mocks.terminal.options).toMatchObject({ theme: getTerminalTheme('monokai').theme })
   })
 
   it('opens xterm inside a stable inner mount element', () => {
@@ -207,6 +270,19 @@ describe('TerminalPane', () => {
     })
 
     expect(onInput).toHaveBeenCalledWith("'/workspace/My App'")
+  })
+
+  it('inserts quoted workspace paths dropped from a multi-selection', () => {
+    const onInput = vi.fn()
+    const { container } = render(
+      <TerminalPane buffer={[]} onInput={onInput} onResize={vi.fn()} sessionId="session-1" />
+    )
+
+    fireEvent.drop(container.firstElementChild!, {
+      dataTransfer: { getData: () => '{"paths":["/workspace/My App","/workspace/src"]}' }
+    })
+
+    expect(onInput).toHaveBeenCalledWith("'/workspace/My App' '/workspace/src'")
   })
 
   it('inserts a Windows-quoted path when the active shell is Windows', () => {

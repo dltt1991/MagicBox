@@ -13,6 +13,8 @@ function requireSenderWindow(ctx: IpcContext): WindowId {
 export const terminalHandlers: IpcHandlersFor<typeof terminalRequestSchemas> = {
   'terminal.session.create': async (input, ctx) =>
     application.get('TerminalService').createSession({ ownerWindowId: requireSenderWindow(ctx), ...input }),
+  'terminal.session.ensure': async (input, ctx) =>
+    application.get('TerminalService').ensureSession({ ownerWindowId: requireSenderWindow(ctx), ...input }),
   'terminal.session.list': async (_input, ctx) =>
     application.get('TerminalService').listSessions(requireSenderWindow(ctx)),
   'terminal.session.input': async ({ id, data }, ctx) =>

@@ -1,6 +1,7 @@
 import { TreeDir, type TreeDirRoot, type TreeNode } from '@shared/utils/file'
 
 export type WorkspaceViewMode = 'list' | 'icons'
+export type WorkspaceIconSize = 'small' | 'medium' | 'large'
 export type WorkspaceSortKey = 'name' | 'mtime' | 'size'
 export type WorkspaceSortDirection = 'asc' | 'desc'
 

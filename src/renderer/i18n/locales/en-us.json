@@ -2701,6 +2701,14 @@
         "title": "Can't preview this PDF"
       }
     },
+    "spreadsheet": {
+      "column": "Column {{index}}",
+      "empty": {
+        "description": "This spreadsheet has no cells to display.",
+        "title": "Empty spreadsheet"
+      },
+      "truncated": "Showing only the first 500 rows and 50 columns."
+    },
     "text": {
       "empty": {
         "description": "This text file has no content.",
@@ -8243,6 +8251,10 @@
       "selection_assistant_toggle": "Toggle Selection Assistant",
       "show_app": "Show/Hide App",
       "show_settings": "Open Settings",
+      "terminal_close_all": "Terminal: Close All Terminal Tabs",
+      "terminal_close_current": "Terminal: Close Current Terminal Tab",
+      "terminal_close_others": "Terminal: Close Other Terminal Tabs",
+      "terminal_new": "Terminal: New Terminal Tab",
       "terminal_switch_next": "Terminal: Switch to Next Terminal Tab",
       "terminal_switch_previous": "Terminal: Switch to Previous Terminal Tab",
       "title": "Keyboard Shortcuts",
@@ -8677,9 +8689,44 @@
     "unpin": "Unpin Tab"
   },
   "terminal": {
+    "close_running_session_confirm": "{{process}} is still running in this terminal. Close this terminal tab?",
     "close_session": "Close terminal {{index}}",
     "new_session": "New terminal",
+    "quick_command": {
+      "command": "Command",
+      "command_content": "Command content",
+      "command_placeholder": "pnpm dev",
+      "customize": "Custom quick command",
+      "delete": "Delete quick command",
+      "dialog_create_title": "Custom quick command",
+      "dialog_description": "Enter a command and choose either a toolbar label or an icon.",
+      "dialog_edit_title": "Edit quick command",
+      "display_icon": "Icon",
+      "display_label": "Name",
+      "display_mode": "Display",
+      "edit": "Edit quick command",
+      "error_command_required": "Enter a command.",
+      "error_display_required": "Enter a toolbar label or upload an icon.",
+      "error_icon_read": "Unable to read this icon.",
+      "error_icon_required": "Upload an icon.",
+      "error_icon_too_large": "Icon image must be 1 MB or smaller.",
+      "error_icon_type": "Use a JPG, PNG, BMP, or ICO image.",
+      "icon": "Icon",
+      "label": "Toolbar label",
+      "label_placeholder": "Dev"
+    },
     "session": "Terminal {{index}}",
+    "theme": {
+      "default_dark": "Default Dark",
+      "dracula": "Dracula",
+      "gruvbox_dark": "Gruvbox Dark",
+      "light": "Light",
+      "monokai": "Monokai",
+      "nord": "Nord",
+      "one_dark_pro": "One Dark Pro",
+      "select": "Switch terminal theme",
+      "solarized_dark": "Solarized Dark"
+    },
     "title": "Terminal",
     "workspace": {
       "choose": "Choose workspace",
@@ -8725,6 +8772,18 @@
         "rename": "Enter a new name",
         "trash_confirm": "Delete \"{{name}}\"?",
         "trash_confirm_many": "Delete the selected {{count}} items?"
+      },
+      "favorite": {
+        "add": "Favorite {{name}}",
+        "empty": "Empty",
+        "remove": "Unfavorite {{name}}",
+        "remove_path": "Remove favorite {{path}}",
+        "title": "Favorites"
+      },
+      "icon_size": {
+        "large": "Large icons",
+        "medium": "Medium icons",
+        "small": "Small icons"
       },
       "include_hidden": "Show hidden files",
       "keep_directory": "Keep directory",

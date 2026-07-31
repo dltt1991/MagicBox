@@ -106,7 +106,11 @@ describe('file preview registry', () => {
     expect(resolveExtensionPlugin(`/tmp/slides.${extension}`, filePreviewRegistry)?.id).toBe('powerpoint')
   })
 
-  it.each(['html', 'htm'])('registers the HTML plugin for .%s files', (extension) => {
+  it.each(['csv', 'CSV', 'xlsx', 'XLSX'])('registers the spreadsheet plugin for .%s files', (extension) => {
+    expect(resolveExtensionPlugin(`/tmp/sheet.${extension}`, filePreviewRegistry)?.id).toBe('spreadsheet')
+  })
+
+  it.each(['html', 'htm', 'HTML', 'HTM'])('registers the HTML plugin for .%s files', (extension) => {
     expect(resolveExtensionPlugin(`/tmp/page.${extension}`, filePreviewRegistry)?.id).toBe('html')
   })
 
@@ -121,6 +125,20 @@ describe('file preview registry', () => {
   it('does not route an unknown extension through the registry', () => {
     expect(resolveExtensionPlugin('/tmp/source.unknown', filePreviewRegistry)).toBeNull()
   })
+
+  it.each(['md', 'markdown', 'mdx', 'pdf', 'png', 'jpg', 'html', 'htm', 'csv', 'tsv', 'xlsx', 'svg'])(
+    'does not route dedicated .%s formats through the text plugin',
+    (extension) => {
+      expect(resolveExtensionPlugin(`/tmp/source.${extension}`, filePreviewRegistry)?.id).not.toBe('text')
+    }
+  )
+
+  it.each(['Dockerfile', 'Makefile', '.env', '.gitignore', 'source.unknown'])(
+    'does not route special or unknown filename %s through the text plugin',
+    (fileName) => {
+      expect(resolveExtensionPlugin(`/tmp/${fileName}`, filePreviewRegistry)).toBeNull()
+    }
+  )
 
   it('matches text extensions case-insensitively', () => {
     expect(resolveExtensionPlugin('/tmp/source.JSON', filePreviewRegistry)?.id).toBe('text')

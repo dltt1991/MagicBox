@@ -673,6 +673,56 @@
       "description": "Command shortcut: tab.prev (unified command system)"
     },
     {
+      "targetKey": "shortcut.terminal.close_all",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [],
+        "enabled": false
+      },
+      "status": "classified",
+      "description": "Command shortcut: terminal.close_all (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.terminal.close_current",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "W"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: terminal.close_current (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.terminal.close_others",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "Alt",
+          "W"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: terminal.close_others (unified command system)"
+    },
+    {
+      "targetKey": "shortcut.terminal.new",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "T"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: terminal.new (unified command system)"
+    },
+    {
       "targetKey": "shortcut.terminal.switch_previous",
       "type": "PreferenceTypes.PreferenceShortcutType",
       "defaultValue": {

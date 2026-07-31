@@ -2701,6 +2701,14 @@
         "title": "无法预览此 PDF"
       }
     },
+    "spreadsheet": {
+      "column": "列 {{index}}",
+      "empty": {
+        "description": "此表格文件没有可显示的单元格。",
+        "title": "表格为空"
+      },
+      "truncated": "仅显示前 500 行和前 50 列。"
+    },
     "text": {
       "empty": {
         "description": "此文本文件没有内容。",
@@ -8243,6 +8251,10 @@
       "selection_assistant_toggle": "开关划词助手",
       "show_app": "显示 / 隐藏应用",
       "show_settings": "打开设置",
+      "terminal_close_all": "终端：关闭所有终端页",
+      "terminal_close_current": "终端：关闭当前终端页",
+      "terminal_close_others": "终端：关闭其它终端页",
+      "terminal_new": "终端：新建终端页",
       "terminal_switch_next": "终端：切换到下一个终端页",
       "terminal_switch_previous": "终端：切换到上一个终端页",
       "title": "快捷键",
@@ -8677,9 +8689,44 @@
     "unpin": "取消固定"
   },
   "terminal": {
+    "close_running_session_confirm": "终端中正在运行 {{process}}，确认关闭该终端页？",
     "close_session": "关闭终端 {{index}}",
     "new_session": "新建终端",
+    "quick_command": {
+      "command": "指令",
+      "command_content": "指令内容",
+      "command_placeholder": "pnpm dev",
+      "customize": "自定义快捷指令",
+      "delete": "删除快捷指令",
+      "dialog_create_title": "自定义快捷指令",
+      "dialog_description": "输入要执行的指令，并选择菜单栏显示名称或图标。",
+      "dialog_edit_title": "编辑快捷指令",
+      "display_icon": "图标",
+      "display_label": "名称",
+      "display_mode": "显示方式",
+      "edit": "编辑快捷指令",
+      "error_command_required": "请输入指令。",
+      "error_display_required": "请输入菜单栏显示名称或上传图标。",
+      "error_icon_read": "无法读取该图标。",
+      "error_icon_required": "请上传图标。",
+      "error_icon_too_large": "图标图片不能超过 1 MB。",
+      "error_icon_type": "请使用 JPG、PNG、BMP 或 ICO 图片。",
+      "icon": "图标",
+      "label": "菜单栏显示名称",
+      "label_placeholder": "开发"
+    },
     "session": "终端 {{index}}",
+    "theme": {
+      "default_dark": "Default Dark",
+      "dracula": "Dracula",
+      "gruvbox_dark": "Gruvbox Dark",
+      "light": "Light",
+      "monokai": "Monokai",
+      "nord": "Nord",
+      "one_dark_pro": "One Dark Pro",
+      "select": "切换终端风格",
+      "solarized_dark": "Solarized Dark"
+    },
     "title": "终端",
     "workspace": {
       "choose": "选择工作区",
@@ -8725,6 +8772,18 @@
         "rename": "输入新名称",
         "trash_confirm": "确定要删除“{{name}}”吗？",
         "trash_confirm_many": "确定要删除选中的 {{count}} 个项目吗？"
+      },
+      "favorite": {
+        "add": "收藏 {{name}}",
+        "empty": "空",
+        "remove": "取消收藏 {{name}}",
+        "remove_path": "取消收藏 {{path}}",
+        "title": "收藏"
+      },
+      "icon_size": {
+        "large": "大图标",
+        "medium": "中图标",
+        "small": "小图标"
       },
       "include_hidden": "显示隐藏文件",
       "keep_directory": "目录保持",
