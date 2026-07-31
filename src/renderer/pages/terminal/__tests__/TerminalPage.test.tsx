@@ -627,6 +627,57 @@ describe('TerminalPage', () => {
     expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-view-mode', 'tree')
   })
 
+  it('places workspace navigation buttons before the list view button', () => {
+    mocks.persistValues['terminal.workspace.root'] = '/workspace/projects'
+
+    render(<TerminalPage />)
+
+    const parentButton = screen.getByRole('button', { name: '返回上级目录' })
+    const historyButton = screen.getByRole('button', { name: '返回历史目录' })
+    const listButton = screen.getByRole('button', { name: '列表显示' })
+
+    expect(historyButton.compareDocumentPosition(parentButton)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(parentButton.compareDocumentPosition(listButton)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+    expect(historyButton.compareDocumentPosition(listButton)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+  })
+
+  it('navigates to the workspace parent and back from the toolbar', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace/projects'
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: '返回上级目录' }))
+    await waitFor(() =>
+      expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace')
+    )
+
+    await user.click(screen.getByRole('button', { name: '返回历史目录' }))
+    await waitFor(() =>
+      expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace/projects')
+    )
+  })
+
+  it('navigates parent and child history from the toolbar in tree view', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace/projects'
+    mocks.persistValues['terminal.workspace.view_mode'] = 'tree'
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: '返回上级目录' }))
+    await waitFor(() =>
+      expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace')
+    )
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-view-mode', 'tree')
+
+    await user.click(screen.getByRole('button', { name: '返回历史目录' }))
+    await waitFor(() =>
+      expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace/projects')
+    )
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-view-mode', 'tree')
+  })
+
   it('keeps expanded tree directories when opening a file preview', async () => {
     const user = userEvent.setup()
     mocks.persistValues['terminal.workspace.root'] = '/workspace'

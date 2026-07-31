@@ -33,6 +33,8 @@ import { AbsoluteFilePathSchema } from '@shared/types/file'
 import { createFilePathHandle } from '@shared/utils/file'
 import {
   ArrowDownAZ,
+  ArrowLeft,
+  ArrowUp,
   ArrowUpAZ,
   Eye,
   EyeOff,
@@ -153,11 +155,15 @@ function buildWorkspacePathSegments(path: string): Array<{ label: string; path: 
 }
 
 function getWorkspaceParentPath(path: string): string {
+  const usesWindowsSeparator = path.includes('\\') && !path.includes('/')
   const normalizedPath = path.replace(/\\/g, '/').replace(/\/+$/, '')
+  if (/^[A-Za-z]:$/.test(normalizedPath)) return usesWindowsSeparator ? `${normalizedPath}\\` : normalizedPath
+
   const index = normalizedPath.lastIndexOf('/')
   if (index <= 0) return '/'
 
-  return normalizedPath.slice(0, index)
+  const parentPath = normalizedPath.slice(0, index)
+  return usesWindowsSeparator ? parentPath.replace(/\//g, '\\') : parentPath
 }
 
 function formatWorkspaceSize(size: number): string {
@@ -901,6 +907,9 @@ export default function TerminalPage() {
   const sortDirectionLabel =
     sortDirection === 'asc' ? t('terminal.workspace.sort.asc') : t('terminal.workspace.sort.desc')
   const workspacePathSegments = workspaceRoot ? buildWorkspacePathSegments(workspaceRoot) : []
+  const workspaceParentPath = workspaceRoot ? getWorkspaceParentPath(workspaceRoot) : null
+  const canOpenWorkspaceParent = Boolean(workspaceRoot && workspaceParentPath && workspaceParentPath !== workspaceRoot)
+  const canOpenWorkspaceChildHistory = workspaceChildHistoryRef.current.length > 0
   const workspaceIconSizeOptions: Array<{
     value: WorkspaceIconSize
     label: string
@@ -1042,6 +1051,30 @@ export default function TerminalPage() {
       </div>
       <div className="flex h-9 shrink-0 items-center gap-1 border-border border-b px-2">
         <div className="flex shrink-0 items-center gap-0.5">
+          <NormalTooltip content={t('terminal.workspace.navigation.child_history')}>
+            <Button
+              aria-label={t('terminal.workspace.navigation.child_history')}
+              disabled={!canOpenWorkspaceChildHistory}
+              onClick={openWorkspaceChildHistory}
+              size="icon-sm"
+              title={t('terminal.workspace.navigation.child_history')}
+              variant="ghost">
+              <ArrowLeft className="text-foreground" strokeWidth={3.5} />
+            </Button>
+          </NormalTooltip>
+          <NormalTooltip content={t('terminal.workspace.navigation.parent')}>
+            <Button
+              aria-label={t('terminal.workspace.navigation.parent')}
+              disabled={!canOpenWorkspaceParent}
+              onClick={() => {
+                if (workspaceParentPath) openWorkspaceParent(workspaceParentPath)
+              }}
+              size="icon-sm"
+              title={t('terminal.workspace.navigation.parent')}
+              variant="ghost">
+              <ArrowUp className="text-foreground" strokeWidth={3.5} />
+            </Button>
+          </NormalTooltip>
           <NormalTooltip content={t('terminal.workspace.view.list')}>
             <Button
               aria-label={t('terminal.workspace.view.list')}

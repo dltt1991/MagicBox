@@ -8798,6 +8798,10 @@
         "show_terminal": "显示终端栏",
         "terminal_maximize": "最大化终端"
       },
+      "navigation": {
+        "child_history": "返回历史目录",
+        "parent": "返回上级目录"
+      },
       "no_root": "未选择工作区",
       "path_input": "输入工作区路径",
       "preview": {
