@@ -203,6 +203,42 @@ export const COMMAND_DEFINITIONS = [
     }
   }),
   defineCommand({
+    id: 'terminal.close_all',
+    titleKey: 'settings.shortcuts.terminal_close_all',
+    categoryKey: 'settings.shortcuts.terminal',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: []
+    }
+  }),
+  defineCommand({
+    id: 'terminal.close_current',
+    titleKey: 'settings.shortcuts.terminal_close_current',
+    categoryKey: 'settings.shortcuts.terminal',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'W']
+    }
+  }),
+  defineCommand({
+    id: 'terminal.close_others',
+    titleKey: 'settings.shortcuts.terminal_close_others',
+    categoryKey: 'settings.shortcuts.terminal',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'Alt', 'W']
+    }
+  }),
+  defineCommand({
+    id: 'terminal.new',
+    titleKey: 'settings.shortcuts.terminal_new',
+    categoryKey: 'settings.shortcuts.terminal',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'T']
+    }
+  }),
+  defineCommand({
     id: 'terminal.switch_previous',
     titleKey: 'settings.shortcuts.terminal_switch_previous',
     categoryKey: 'settings.shortcuts.terminal',

@@ -95,6 +95,7 @@ export class TerminalService extends BaseService {
         const session = this.sessions.get(metadata.id)
         if (!session) return
 
+        if (session.cwdRefreshTimer) clearTimeout(session.cwdRefreshTimer)
         session.metadata.status = 'exited'
         session.metadata.updatedAt = Date.now()
         application
@@ -105,12 +106,20 @@ export class TerminalService extends BaseService {
           exitCode,
           signal
         })
+        this.sessions.delete(metadata.id)
       })
       return metadata
     } catch (error) {
       logger.error(`Failed to create terminal session in ${cwd}`, error as Error)
       throw error
     }
+  }
+
+  public async ensureSession(input: CreateTerminalSessionInput): Promise<TerminalSessionMetadata> {
+    const existingSession = this.listSessions(input.ownerWindowId).at(-1)
+    if (existingSession) return existingSession
+
+    return this.createSession(input)
   }
 
   public listSessions(ownerWindowId: WindowId): TerminalSessionMetadata[] {
@@ -128,7 +137,10 @@ export class TerminalService extends BaseService {
   }
 
   public killSession(ownerWindowId: WindowId, id: string): void {
-    this.getOwnedSession(ownerWindowId, id).pty.kill()
+    const session = this.getOwnedSession(ownerWindowId, id)
+    if (session.cwdRefreshTimer) clearTimeout(session.cwdRefreshTimer)
+    this.sessions.delete(id)
+    session.pty.kill()
   }
 
   protected override async onStop(): Promise<void> {
@@ -202,6 +214,7 @@ export class TerminalService extends BaseService {
 
   private buildZshIntegrationScript(): string {
     return [
+      "PROMPT_EOL_MARK=''",
       "__cherry_term_encode(){ printf '%s' \"$1\" | base64 | tr -d '\\n'; }",
       '__cherry_term_update(){ printf \'\\033]777;cherry;cwd=%s;proc=%s\\007\' "$(__cherry_term_encode "$PWD")" "$(__cherry_term_encode "$1")"; }',
       "__cherry_term_precmd(){ __cherry_term_update ''; }",

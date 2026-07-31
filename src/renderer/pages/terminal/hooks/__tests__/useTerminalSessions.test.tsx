@@ -14,7 +14,7 @@ vi.mock('@renderer/ipc', () => ({
   }
 }))
 
-import { useTerminalSessions } from '../useTerminalSessions'
+import { __resetTerminalSessionsForTesting, useTerminalSessions } from '../useTerminalSessions'
 
 const session: TerminalSessionMetadata = {
   id: 'session-1',
@@ -28,21 +28,48 @@ const session: TerminalSessionMetadata = {
 
 describe('useTerminalSessions', () => {
   beforeEach(() => {
+    __resetTerminalSessionsForTesting()
     mocks.request.mockReset()
-    mocks.request.mockResolvedValue(session)
+    mocks.request.mockImplementation((route: string) => {
+      if (route === 'terminal.session.list') return Promise.resolve([])
+      return Promise.resolve(session)
+    })
     mocks.listeners.clear()
+  })
+
+  it('restores existing sessions before creating a new one', async () => {
+    mocks.request.mockImplementation((route: string) => {
+      if (route === 'terminal.session.list') return Promise.resolve([session])
+      return Promise.resolve(session)
+    })
+
+    const { result } = renderHook(() => useTerminalSessions({ cwd: '/workspace' }))
+
+    await act(async () => {})
+
+    expect(mocks.request).toHaveBeenCalledWith('terminal.session.list')
+    expect(mocks.request).not.toHaveBeenCalledWith(
+      'terminal.session.create',
+      expect.objectContaining({ cwd: '/workspace' })
+    )
+    expect(result.current.sessions).toEqual([{ ...session, buffer: [], nextBufferSequence: 0 }])
+    expect(result.current.activeSessionId).toBe(session.id)
   })
 
   it('creates a session with the workspace cwd and stores its metadata', async () => {
     const { result } = renderHook(() => useTerminalSessions({ cwd: '/workspace' }))
 
-    await act(() => result.current.createSession())
+    let createdSession: TerminalSessionMetadata | undefined
+    await act(async () => {
+      createdSession = await result.current.createSession()
+    })
 
     expect(mocks.request).toHaveBeenCalledWith('terminal.session.create', {
       cwd: '/workspace',
       cols: 80,
       rows: 24
     })
+    expect(createdSession).toEqual(session)
     expect(result.current.sessions).toEqual([{ ...session, buffer: [], nextBufferSequence: 0 }])
     expect(result.current.activeSessionId).toBe(session.id)
     expect(result.current.activeSession).toEqual({ ...session, buffer: [], nextBufferSequence: 0 })
@@ -58,6 +85,74 @@ describe('useTerminalSessions', () => {
       cols: 80,
       rows: 24
     })
+  })
+
+  it('ensures a session through the idempotent terminal route', async () => {
+    const { result } = renderHook(() => useTerminalSessions({ cwd: '/workspace' }))
+
+    await act(() => result.current.ensureSession({ cwd: '/workspace' }))
+
+    expect(mocks.request).toHaveBeenCalledWith('terminal.session.ensure', {
+      cwd: '/workspace',
+      cols: 80,
+      rows: 24
+    })
+    expect(result.current.sessions).toEqual([{ ...session, buffer: [], nextBufferSequence: 0 }])
+  })
+
+  it('keeps a created session when an older empty list response resolves later', async () => {
+    let resolveList: (value: TerminalSessionMetadata[]) => void = () => {}
+    mocks.request.mockImplementation((route: string) => {
+      if (route === 'terminal.session.list') {
+        return new Promise<TerminalSessionMetadata[]>((resolve) => {
+          resolveList = resolve
+        })
+      }
+      return Promise.resolve(session)
+    })
+    const { result } = renderHook(() => useTerminalSessions({ cwd: '/workspace' }))
+
+    await act(() => result.current.ensureSession())
+    await act(async () => {
+      resolveList([])
+    })
+
+    expect(result.current.sessions).toEqual([{ ...session, buffer: [], nextBufferSequence: 0 }])
+    expect(mocks.request.mock.calls.filter(([route]) => route === 'terminal.session.ensure')).toHaveLength(1)
+  })
+
+  it('coalesces concurrent session creation requests for the same cwd', async () => {
+    const first = renderHook(() => useTerminalSessions({ cwd: '/workspace' }))
+    const second = renderHook(() => useTerminalSessions({ cwd: '/workspace' }))
+
+    await act(async () => {
+      await Promise.all([first.result.current.createSession(), second.result.current.createSession()])
+    })
+
+    expect(mocks.request.mock.calls.filter(([route]) => route === 'terminal.session.create')).toHaveLength(1)
+    expect(first.result.current.sessions).toEqual([{ ...session, buffer: [], nextBufferSequence: 0 }])
+    expect(second.result.current.sessions).toEqual([{ ...session, buffer: [], nextBufferSequence: 0 }])
+  })
+
+  it('keeps created sessions available across terminal page remounts', async () => {
+    const first = renderHook(() => useTerminalSessions({ cwd: '/workspace' }))
+    await act(() => first.result.current.createSession())
+    await act(async () => {})
+    first.unmount()
+
+    mocks.request.mockClear()
+    mocks.request.mockImplementation((route: string) => {
+      if (route === 'terminal.session.list') return new Promise<never>(() => {})
+      return Promise.resolve(session)
+    })
+    const second = renderHook(() => useTerminalSessions({ cwd: '/workspace' }))
+
+    expect(second.result.current.sessions).toEqual([{ ...session, buffer: [], nextBufferSequence: 0 }])
+    expect(second.result.current.activeSessionId).toBe(session.id)
+    expect(mocks.request).not.toHaveBeenCalledWith(
+      'terminal.session.create',
+      expect.objectContaining({ cwd: '/workspace' })
+    )
   })
 
   it('appends terminal data to the matching session buffer', async () => {

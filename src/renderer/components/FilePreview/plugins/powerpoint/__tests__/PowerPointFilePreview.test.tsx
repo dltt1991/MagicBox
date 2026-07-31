@@ -56,6 +56,7 @@ const mocks = vi.hoisted(() => {
     loggerError: vi.fn(),
     mockFiles: { slides: new Map() },
     parseZipLazyMedia: vi.fn(),
+    readExternal: vi.fn(),
     renderList: vi.fn(),
     setZoom: vi.fn()
   }
@@ -146,8 +147,9 @@ beforeEach(() => {
   mocks.buildPresentation.mockImplementation(() => mocks.createMockPresentation())
   Object.defineProperty(window, 'api', {
     configurable: true,
-    value: { fs: { read: mocks.fsRead }, file: { getMetadata: mocks.getMetadata } }
+    value: { fs: { read: mocks.fsRead }, file: { getMetadata: mocks.getMetadata, readExternal: mocks.readExternal } }
   })
+  mocks.readExternal.mockResolvedValue('Slide 1\nRoadmap summary')
 })
 
 afterEach(cleanup)
@@ -194,14 +196,17 @@ describe('PowerPointFilePreview', () => {
     expect(presentation.slides[0].rels.has('rExternalImage')).toBe(false)
   })
 
-  it('rejects oversized PPTX via metadata before reading bytes', async () => {
+  it('renders PPTX files larger than the previous 25 MB preview limit', async () => {
     mocks.getMetadata.mockResolvedValueOnce({ kind: 'file', size: 25 * 1024 * 1024 + 1 })
 
     render(<PowerPointFilePreview filePath={filePath} fileName="roadmap.pptx" refreshKey={0} />)
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('file_preview.load_error.title')
-    expect(mocks.fsRead).not.toHaveBeenCalled()
-    expect(mocks.parseZipLazyMedia).not.toHaveBeenCalled()
+    await waitFor(() => expect(mocks.load).toHaveBeenCalledTimes(1))
+
+    expect(mocks.fsRead).toHaveBeenCalledWith(filePath)
+    expect(mocks.parseZipLazyMedia).toHaveBeenCalledTimes(1)
+    expect(mocks.readExternal).not.toHaveBeenCalled()
+    expect(screen.getByTestId('pptx-preview-page-indicator')).toHaveTextContent('1 / 3')
   })
 
   it('contains read failures inside the preview and logs the cause', async () => {
@@ -212,6 +217,19 @@ describe('PowerPointFilePreview', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent('file_preview.load_error.title')
     expect(screen.getByRole('alert')).toHaveTextContent('file_preview.load_error.description')
+    expect(mocks.loggerError).toHaveBeenCalledWith(`Failed to load PPTX preview: ${filePath}`, error)
+  })
+
+  it('falls back to extracted text when rich PPTX rendering fails', async () => {
+    const error = new Error('renderer failed')
+    mocks.parseZipLazyMedia.mockRejectedValueOnce(error)
+
+    render(<PowerPointFilePreview filePath={filePath} fileName="roadmap.pptx" refreshKey={0} />)
+
+    expect(await screen.findByText('Slide 1')).toBeInTheDocument()
+    expect(screen.getByText('Roadmap summary')).toBeInTheDocument()
+    expect(mocks.readExternal).toHaveBeenCalledWith(filePath, true)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(mocks.loggerError).toHaveBeenCalledWith(`Failed to load PPTX preview: ${filePath}`, error)
   })
 

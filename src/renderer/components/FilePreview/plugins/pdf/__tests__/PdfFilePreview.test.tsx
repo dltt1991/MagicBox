@@ -26,6 +26,7 @@ const mocks = vi.hoisted(() => ({
   pdfViewerConstructor: vi.fn(),
   pdfViewerDecreaseScale: vi.fn(),
   pdfViewerIncreaseScale: vi.fn(),
+  pdfViewerFirstPagePromise: Promise.resolve(),
   pdfViewerPageNumbers: [] as number[],
   pdfViewerScaleValues: [] as string[],
   pdfViewerSetDocument: vi.fn(),
@@ -75,7 +76,7 @@ vi.mock('pdfjs-dist/web/pdf_viewer.mjs', () => {
 
   class MockPDFViewer {
     cleanup = mocks.pdfViewerCleanup
-    firstPagePromise = Promise.resolve()
+    firstPagePromise = mocks.pdfViewerFirstPagePromise
     pageColors: { background?: string; foreground: string }
     setDocument = mocks.pdfViewerSetDocument
     private currentPage = 1
@@ -206,6 +207,7 @@ describe('PdfFilePreview', () => {
     mocks.pdfViewerPageNumbers.length = 0
     mocks.pdfViewerScaleValues.length = 0
     mocks.viewerInstances.length = 0
+    mocks.pdfViewerFirstPagePromise = Promise.resolve()
     mocks.pdfDocument.numPages = 3
     initialDataTheme = document.documentElement.getAttribute('data-theme')
     themeBackground = 'rgb(10, 11, 12)'
@@ -357,7 +359,7 @@ describe('PdfFilePreview', () => {
     expect(mocks.fsRead).toHaveBeenLastCalledWith(filePath)
   })
 
-  it('destroys loading, document, viewer, event, timer, and animation resources on unmount', async () => {
+  it('destroys resolved document, viewer, event, timer, and animation resources on unmount', async () => {
     const { unmount } = renderPreview()
     await waitFor(() => expect(mocks.pdfViewerSetDocument).toHaveBeenCalledWith(mocks.pdfDocument))
 
@@ -371,7 +373,8 @@ describe('PdfFilePreview', () => {
     unmount()
     await act(flushPdfEffects)
 
-    expect(mocks.loadingTaskDestroy).toHaveBeenCalled()
+    expect(mocks.loadingTaskDestroy).not.toHaveBeenCalled()
+    expect(mocks.pdfDocument.destroy).toHaveBeenCalled()
     expect(abortSignal.aborted).toBe(true)
     expect(mocks.pdfViewerSetDocument).toHaveBeenCalledWith(null)
     expect(mocks.pdfViewerCleanup).toHaveBeenCalled()
@@ -381,5 +384,72 @@ describe('PdfFilePreview', () => {
     expect(removeEventListener).toHaveBeenCalledWith('pointerdown', expect.any(Function))
     expect(clearTimeout).toHaveBeenCalled()
     expect(cancelAnimationFrame).toHaveBeenCalled()
+  })
+
+  it('ignores stale first-page initialization failures after the viewer is cleaned up', async () => {
+    const loggerError = vi.spyOn(mockRendererLoggerService, 'error').mockImplementation(() => {})
+    let rejectFirstPage!: (error: Error) => void
+    mocks.pdfViewerFirstPagePromise = new Promise((_, reject) => {
+      rejectFirstPage = reject
+    })
+
+    const view = renderPreview()
+    await waitFor(() => expect(mocks.pdfViewerSetDocument).toHaveBeenCalledWith(mocks.pdfDocument))
+
+    mocks.pdfViewerFirstPagePromise = Promise.resolve()
+    view.rerender(<PdfFilePreview filePath={filePath} fileName="paper.pdf" refreshKey={1} />)
+    await waitFor(() => expect(mocks.fsRead).toHaveBeenCalledTimes(2))
+
+    await act(async () => {
+      rejectFirstPage(new Error("Cannot read properties of null (reading 'sendWithPromise')"))
+      await flushPdfEffects()
+    })
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(loggerError).not.toHaveBeenCalledWith(
+      `Failed to initialize PDF preview: ${filePath}`,
+      expect.objectContaining({ message: "Cannot read properties of null (reading 'sendWithPromise')" })
+    )
+  })
+
+  it('does not show a preview failure for pdf.js teardown race errors', async () => {
+    const loggerError = vi.spyOn(mockRendererLoggerService, 'error').mockImplementation(() => {})
+    let rejectFirstPage!: (error: Error) => void
+    mocks.pdfViewerFirstPagePromise = new Promise((_, reject) => {
+      rejectFirstPage = reject
+    })
+
+    renderPreview()
+    await waitFor(() => expect(mocks.pdfViewerSetDocument).toHaveBeenCalledWith(mocks.pdfDocument))
+
+    await act(async () => {
+      rejectFirstPage(new Error("Cannot read properties of null (reading 'sendWithPromise')"))
+      await flushPdfEffects()
+    })
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(loggerError).not.toHaveBeenCalledWith(
+      `Failed to initialize PDF preview: ${filePath}`,
+      expect.objectContaining({ message: "Cannot read properties of null (reading 'sendWithPromise')" })
+    )
+  })
+
+  it('does not destroy the loaded document when only the viewer effect is rebuilt', async () => {
+    const view = renderPreview()
+    await waitFor(() => expect(mocks.pdfViewerSetDocument).toHaveBeenCalledWith(mocks.pdfDocument))
+
+    document.documentElement.setAttribute(
+      'data-theme',
+      initialDataTheme === 'pdf-rebuild-theme' ? 'pdf-rebuild-theme-updated' : 'pdf-rebuild-theme'
+    )
+
+    await act(flushPdfEffects)
+
+    expect(mocks.pdfDocument.destroy).not.toHaveBeenCalled()
+
+    view.unmount()
+    await act(flushPdfEffects)
+
+    expect(mocks.pdfDocument.destroy).toHaveBeenCalled()
   })
 })

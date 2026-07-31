@@ -5,9 +5,14 @@ import * as os from 'os'
 import * as path from 'path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+const { parseOfficeAsyncMock } = vi.hoisted(() => ({
+  parseOfficeAsyncMock: vi.fn()
+}))
+
 // `t` pulls in i18n + preference machinery that isn't initialized under test; the
 // dialog title it produces is irrelevant to these contracts, so stub it to the key.
 vi.mock('@main/i18n', () => ({ t: (key: string) => key }))
+vi.mock('officeparser', () => ({ default: { parseOfficeAsync: parseOfficeAsyncMock } }))
 
 import { fileStorage } from '../FileStorage'
 
@@ -62,6 +67,29 @@ describe('FileStorage', () => {
     it('writes the given content', async () => {
       await fileStorage.writeFile(event, tmpFile, 'content')
       expect(fs.readFileSync(tmpFile, 'utf-8')).toBe('content')
+    })
+  })
+
+  describe('readExternalFile', () => {
+    let tmpFile: string
+
+    beforeEach(() => {
+      tmpFile = path.join(os.tmpdir(), `filestorage-read-test-${uniqueId()}.PPTX`)
+      fs.writeFileSync(tmpFile, Buffer.from([80, 75, 3, 4]))
+      parseOfficeAsyncMock.mockResolvedValue('slide text')
+    })
+
+    afterEach(() => {
+      fs.rmSync(tmpFile, { force: true })
+    })
+
+    it('treats uppercase document extensions as Office documents', async () => {
+      await expect(fileStorage.readExternalFile(event, tmpFile, true)).resolves.toBe('slide text')
+
+      expect(parseOfficeAsyncMock).toHaveBeenCalledWith(
+        tmpFile,
+        expect.objectContaining({ tempFilesLocation: '/mock/app.temp' })
+      )
     })
   })
 

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const { terminalService } = vi.hoisted(() => ({
   terminalService: {
     createSession: vi.fn(),
+    ensureSession: vi.fn(),
     listSessions: vi.fn(),
     writeInput: vi.fn(),
     resizeSession: vi.fn(),
@@ -54,15 +55,23 @@ describe('terminal handlers', () => {
 
   it('delegates terminal commands to TerminalService', async () => {
     terminalService.createSession.mockResolvedValue({ id: 's1' })
+    terminalService.ensureSession.mockResolvedValue({ id: 's1' })
     terminalService.listSessions.mockReturnValue([])
 
     await terminalHandlers['terminal.session.create']({ cwd: '/workspace', cols: 80, rows: 24 }, ctx)
+    await terminalHandlers['terminal.session.ensure']({ cwd: '/workspace', cols: 80, rows: 24 }, ctx)
     await terminalHandlers['terminal.session.list'](undefined, ctx)
     await terminalHandlers['terminal.session.input']({ id: 's1', data: 'ls\n' }, ctx)
     await terminalHandlers['terminal.session.resize']({ id: 's1', cols: 100, rows: 30 }, ctx)
     await terminalHandlers['terminal.session.kill']({ id: 's1' }, ctx)
 
     expect(terminalService.createSession).toHaveBeenCalledWith({
+      ownerWindowId: 'window-1',
+      cwd: '/workspace',
+      cols: 80,
+      rows: 24
+    })
+    expect(terminalService.ensureSession).toHaveBeenCalledWith({
       ownerWindowId: 'window-1',
       cwd: '/workspace',
       cols: 80,

@@ -88,6 +88,8 @@ describe('TerminalService', () => {
     service.killSession('window-1', session.id)
 
     expect(kill).toHaveBeenCalledOnce()
+    expect(service.listSessions('window-1')).toEqual([])
+    expect(() => service.writeInput('window-1', session.id, 'echo nope\n')).toThrow('Terminal session not found')
   })
 
   it('lists and controls only sessions owned by the caller window', async () => {
@@ -99,6 +101,41 @@ describe('TerminalService', () => {
     expect(service.listSessions('window-2')).toEqual([other])
     expect(() => service.writeInput('window-2', owned.id, 'rm -rf nope\n')).toThrow('Terminal session not found')
     expect(() => service.killSession('window-2', owned.id)).toThrow('Terminal session not found')
+  })
+
+  it('ensures one terminal session per caller window without creating duplicates', async () => {
+    const service = new TerminalService()
+    const first = await service.ensureSession({ ownerWindowId: 'window-1', cwd: '/workspace', cols: 80, rows: 24 })
+    const second = await service.ensureSession({ ownerWindowId: 'window-1', cwd: '/workspace', cols: 80, rows: 24 })
+    const otherWindow = await service.ensureSession({
+      ownerWindowId: 'window-2',
+      cwd: '/workspace',
+      cols: 80,
+      rows: 24
+    })
+
+    expect(second).toEqual(first)
+    expect(otherWindow.id).not.toBe(first.id)
+    expect(spawn).toHaveBeenCalledTimes(2)
+    expect(service.listSessions('window-1')).toEqual([first])
+    expect(service.listSessions('window-2')).toEqual([otherWindow])
+  })
+
+  it('creates a replacement session after the previous session is killed', async () => {
+    const service = new TerminalService()
+    const first = await service.ensureSession({ ownerWindowId: 'window-1', cwd: '/workspace', cols: 80, rows: 24 })
+
+    service.killSession('window-1', first.id)
+    const replacement = await service.ensureSession({
+      ownerWindowId: 'window-1',
+      cwd: '/workspace',
+      cols: 80,
+      rows: 24
+    })
+
+    expect(replacement.id).not.toBe(first.id)
+    expect(spawn).toHaveBeenCalledTimes(2)
+    expect(service.listSessions('window-1')).toEqual([replacement])
   })
 
   it('broadcasts PTY data and exit updates', async () => {
@@ -122,6 +159,7 @@ describe('TerminalService', () => {
       exitCode: 0,
       signal: undefined
     })
+    expect(service.listSessions('window-1')).toEqual([])
     expect(broadcast).not.toHaveBeenCalled()
   })
 
@@ -145,6 +183,17 @@ describe('TerminalService', () => {
           CHERRY_ORIGINAL_ZDOTDIR: '/mock/home'
         })
       })
+    )
+  })
+
+  it('clears zsh partial-line percent markers for shell integration output', async () => {
+    const service = new TerminalService()
+    await service.createSession({ ownerWindowId: 'window-1', cols: 80, rows: 24 })
+
+    expect(writeFileSync).toHaveBeenCalledWith(
+      '/mock/terminal-temp/zsh/.zshrc',
+      expect.stringContaining("PROMPT_EOL_MARK=''"),
+      'utf8'
     )
   })
 

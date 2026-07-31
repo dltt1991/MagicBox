@@ -8,12 +8,14 @@ import { getFileIconName } from '@renderer/utils/fileIconName'
 import { platform } from '@renderer/utils/platform'
 import type { SupportedPlatform } from '@shared/types/command'
 import { resolveCommandByKeybinding } from '@shared/utils/command'
+import { Star } from 'lucide-react'
 import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
   projectWorkspaceTree,
+  type WorkspaceIconSize,
   type WorkspaceSortDirection,
   type WorkspaceSortKey,
   type WorkspaceTreeItem,
@@ -22,9 +24,27 @@ import {
 import { WorkspaceContextMenu, type WorkspaceContextMenuActions } from './WorkspaceContextMenu'
 
 const TERMINAL_PATH_DRAG_MIME_TYPE = 'application/x-cherry-terminal-path'
-const LIST_COLUMN_CLASS = 'grid-cols-[minmax(10rem,1fr)_8.5rem_5.5rem]'
 const MATERIAL_ICON_PREFIX = 'material-icon-theme:'
-const ICON_SIZE_PX = 16
+const WORKSPACE_ICON_CLASS: Record<WorkspaceIconSize, string> = {
+  small: 'size-4',
+  medium: 'size-6',
+  large: 'size-8'
+}
+const WORKSPACE_ICON_PIXELS: Record<WorkspaceIconSize, number> = {
+  small: 16,
+  medium: 24,
+  large: 32
+}
+const ICON_CARD_CLASS: Record<WorkspaceIconSize, string> = {
+  small: 'min-h-20 p-2',
+  medium: 'min-h-24 p-3',
+  large: 'min-h-32 p-4'
+}
+const ICON_GRID_CLASS: Record<WorkspaceIconSize, string> = {
+  small: 'grid-cols-[repeat(auto-fill,minmax(4.75rem,1fr))]',
+  medium: 'grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))]',
+  large: 'grid-cols-[repeat(auto-fill,minmax(7rem,1fr))]'
+}
 
 type MarqueePoint = {
   x: number
@@ -56,6 +76,7 @@ export interface WorkspaceFileTreeProps {
   selectedPath: string | null
   includeHidden: boolean
   viewMode: WorkspaceViewMode
+  iconSize?: WorkspaceIconSize
   sortKey: WorkspaceSortKey
   sortDirection: WorkspaceSortDirection
   onSelectPath: (path: string, kind: WorkspaceTreeItem['kind']) => void
@@ -63,6 +84,8 @@ export interface WorkspaceFileTreeProps {
   onOpenChildHistoryPath?: () => void
   onOpenParentPath?: (path: string) => void
   contextMenuActions?: WorkspaceContextMenuActions
+  favoriteDirectoryPaths?: readonly string[]
+  onToggleFavoriteDirectory?: (path: string) => void
   refreshKey?: number
   restoreFocusKey?: number
 }
@@ -130,15 +153,15 @@ function rectsIntersect(a: { left: number; right: number; top: number; bottom: n
   return a.left <= b.right && a.right >= b.left && a.top <= b.bottom && a.bottom >= b.top
 }
 
-function WorkspaceItemIcon({ item }: { item: WorkspaceTreeItem }) {
+function WorkspaceItemIcon({ item, size = 'small' }: { item: WorkspaceTreeItem; size?: WorkspaceIconSize }) {
   const iconName = item.kind === 'directory' ? 'folder-base' : getFileIconName(item.path)
 
   return (
     <Icon
-      className="size-4 shrink-0"
-      height={ICON_SIZE_PX}
+      className={cn('shrink-0', WORKSPACE_ICON_CLASS[size])}
+      height={WORKSPACE_ICON_PIXELS[size]}
       icon={`${MATERIAL_ICON_PREFIX}${iconName}`}
-      width={ICON_SIZE_PX}
+      width={WORKSPACE_ICON_PIXELS[size]}
     />
   )
 }
@@ -148,6 +171,7 @@ export function WorkspaceFileTree({
   selectedPath,
   includeHidden,
   viewMode,
+  iconSize,
   sortKey,
   sortDirection,
   onSelectPath,
@@ -155,6 +179,8 @@ export function WorkspaceFileTree({
   onOpenChildHistoryPath,
   onOpenParentPath,
   contextMenuActions,
+  favoriteDirectoryPaths,
+  onToggleFavoriteDirectory,
   refreshKey,
   restoreFocusKey
 }: WorkspaceFileTreeProps) {
@@ -162,11 +188,14 @@ export function WorkspaceFileTree({
     <WorkspaceFileTreeContent
       key={`${includeHidden}:${refreshKey ?? 0}`}
       includeHidden={includeHidden}
+      iconSize={iconSize}
       contextMenuActions={contextMenuActions}
+      favoriteDirectoryPaths={favoriteDirectoryPaths}
       onHighlightPath={onHighlightPath}
       onOpenChildHistoryPath={onOpenChildHistoryPath}
       onOpenParentPath={onOpenParentPath}
       onSelectPath={onSelectPath}
+      onToggleFavoriteDirectory={onToggleFavoriteDirectory}
       rootPath={rootPath}
       restoreFocusKey={restoreFocusKey}
       sortDirection={sortDirection}
@@ -182,6 +211,7 @@ function WorkspaceFileTreeContent({
   selectedPath,
   includeHidden,
   viewMode,
+  iconSize = 'medium',
   sortKey,
   sortDirection,
   onSelectPath,
@@ -189,6 +219,8 @@ function WorkspaceFileTreeContent({
   onOpenChildHistoryPath,
   onOpenParentPath,
   contextMenuActions,
+  favoriteDirectoryPaths = [],
+  onToggleFavoriteDirectory,
   restoreFocusKey
 }: WorkspaceFileTreeProps) {
   const { t } = useTranslation()
@@ -207,6 +239,7 @@ function WorkspaceFileTreeContent({
   )
   const selectedItem = useMemo(() => items.find((item) => item.path === selectedPath) ?? null, [items, selectedPath])
   const selectedIndex = useMemo(() => items.findIndex((item) => item.path === selectedPath), [items, selectedPath])
+  const favoriteDirectorySet = useMemo(() => new Set(favoriteDirectoryPaths), [favoriteDirectoryPaths])
   const [marqueeSelection, setMarqueeSelection] = useState<MarqueeSelection | null>(null)
   const [marqueeSelectedPaths, setMarqueeSelectedPaths] = useState<ReadonlySet<string>>(() => new Set())
   const [selectedPaths, setSelectedPaths] = useState<ReadonlySet<string>>(() => new Set())
@@ -284,6 +317,11 @@ function WorkspaceFileTreeContent({
 
   const activateWorkspaceShortcuts = useCallback(() => {
     isWorkspaceShortcutActiveRef.current = true
+  }, [])
+
+  const activateWorkspaceKeyboard = useCallback(() => {
+    isWorkspaceShortcutActiveRef.current = true
+    contentRef.current?.focus({ preventScroll: true })
   }, [])
 
   useEffect(() => {
@@ -392,6 +430,16 @@ function WorkspaceFileTreeContent({
   }
 
   const getSelectedItemsForContextItem = useCallback(
+    (item: WorkspaceTreeItem) => {
+      const currentSelectedItems = getCurrentSelectedItems()
+      return currentSelectedItems.some((selectedItem) => selectedItem.path === item.path)
+        ? currentSelectedItems
+        : [item]
+    },
+    [getCurrentSelectedItems]
+  )
+
+  const getDraggedItemsForItem = useCallback(
     (item: WorkspaceTreeItem) => {
       const currentSelectedItems = getCurrentSelectedItems()
       return currentSelectedItems.some((selectedItem) => selectedItem.path === item.path)
@@ -584,15 +632,52 @@ function WorkspaceFileTreeContent({
     }
   }, [canUseWorkspaceShortcuts, handleKeyDown])
 
+  useEffect(() => {
+    if (!selectedPath) return
+
+    const selectedElement = Array.from(
+      contentRef.current?.querySelectorAll<HTMLElement>('[data-workspace-item-path]') ?? []
+    ).find((element) => element.dataset.workspaceItemPath === selectedPath)
+
+    selectedElement?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' })
+  }, [selectedPath, items])
+
   const renderItem = (item: WorkspaceTreeItem, className?: string) => {
     const isHidden = isHiddenWorkspaceItem(item)
     const isSelected = selectedPath === item.path || selectedPaths.has(item.path) || marqueeSelectedPaths.has(item.path)
+    const isFavoriteDirectory = item.kind === 'directory' && favoriteDirectorySet.has(item.path)
+    const canToggleFavorite = item.kind === 'directory' && Boolean(onToggleFavoriteDirectory)
+    const favoriteButton = canToggleFavorite ? (
+      <button
+        aria-label={t(isFavoriteDirectory ? 'terminal.workspace.favorite.remove' : 'terminal.workspace.favorite.add', {
+          name: item.name
+        })}
+        className={cn(
+          'flex size-6 items-center justify-center rounded text-muted-foreground transition duration-150 hover:scale-110 hover:bg-accent hover:text-foreground',
+          isFavoriteDirectory ? 'text-warning opacity-100' : 'opacity-0 group-hover:opacity-100'
+        )}
+        onClick={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+          onToggleFavoriteDirectory?.(item.path)
+        }}
+        onMouseDown={(event) => {
+          event.preventDefault()
+          event.stopPropagation()
+        }}
+        title={t(isFavoriteDirectory ? 'terminal.workspace.favorite.remove' : 'terminal.workspace.favorite.add', {
+          name: item.name
+        })}
+        type="button">
+        <Star className="size-4" fill={isFavoriteDirectory ? 'currentColor' : 'none'} />
+      </button>
+    ) : null
 
     const button = (
-      <button
+      <div
         aria-label={item.name}
         className={cn(
-          'min-w-0 rounded-md text-left text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
+          'group relative min-w-0 rounded-md text-left text-sm outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
           viewMode === 'list' && 'w-full',
           isSelected && 'bg-accent text-accent-foreground',
           isHidden && 'opacity-60',
@@ -607,6 +692,8 @@ function WorkspaceFileTreeContent({
         draggable
         key={item.id}
         onClick={(event) => {
+          if (contextMenuActions) activateWorkspaceKeyboard()
+
           if (event.shiftKey) {
             selectRangeToItem(item)
             return
@@ -623,31 +710,48 @@ function WorkspaceFileTreeContent({
           ensureContextMenuTarget(item)
         }}
         onMouseDown={() => {
-          if (contextMenuActions) restoreWorkspaceTreeFocus()
+          if (contextMenuActions) activateWorkspaceKeyboard()
         }}
         onDragStart={(event) => {
-          event.dataTransfer.setData(TERMINAL_PATH_DRAG_MIME_TYPE, JSON.stringify({ path: item.path }))
+          const draggedPaths = getDraggedItemsForItem(item).map((draggedItem) => draggedItem.path)
+          event.dataTransfer.setData(
+            TERMINAL_PATH_DRAG_MIME_TYPE,
+            JSON.stringify(draggedPaths.length === 1 ? { path: item.path } : { paths: draggedPaths })
+          )
         }}
-        title={item.path}
-        type="button">
+        role="button"
+        tabIndex={-1}
+        title={item.path}>
         {viewMode === 'icons' ? (
-          <span className="flex min-h-24 flex-col items-center justify-center gap-2 p-3">
-            <WorkspaceItemIcon item={item} />
+          <span className={cn('flex flex-col items-center justify-center gap-2', ICON_CARD_CLASS[iconSize])}>
+            <WorkspaceItemIcon item={item} size={iconSize} />
+            {favoriteButton && (
+              <span className="absolute top-1 right-1" data-workspace-favorite-slot>
+                {favoriteButton}
+              </span>
+            )}
             <span className="line-clamp-2 w-full break-words text-center text-xs">{item.name}</span>
           </span>
         ) : (
-          <span className={cn('grid min-h-8 items-center gap-2 px-2', LIST_COLUMN_CLASS)}>
+          <span className="grid min-h-8 items-center gap-2 px-2 pr-9" data-workspace-list-row>
             <span className="flex min-w-0 items-center gap-2">
               <WorkspaceItemIcon item={item} />
               <span className="truncate">{item.name}</span>
             </span>
-            <span className="truncate text-muted-foreground text-xs">{formatTime(item.mtime)}</span>
-            <span className="truncate text-right text-muted-foreground text-xs">
+            <span className="hidden truncate text-muted-foreground text-xs" data-workspace-list-metadata="mtime">
+              {formatTime(item.mtime)}
+            </span>
+            <span
+              className="hidden truncate text-right text-muted-foreground text-xs"
+              data-workspace-list-metadata="size">
               {item.kind === 'directory' ? '-' : formatSize(item.size)}
+            </span>
+            <span className="absolute top-1 right-1 flex justify-end" data-workspace-favorite-slot>
+              {favoriteButton}
             </span>
           </span>
         )}
-      </button>
+      </div>
     )
 
     return button
@@ -661,26 +765,30 @@ function WorkspaceFileTreeContent({
     <EmptyState className="h-full" title={t('terminal.workspace.tree.error')} />
   ) : items.length === 0 ? (
     <EmptyState className="h-full" title={t('terminal.workspace.tree.no_files')} />
-  ) : (
-    <>
-      {viewMode === 'list' && (
-        <div
-          className={cn(
-            'sticky top-0 z-10 grid h-7 items-center gap-2 bg-background px-2 text-muted-foreground text-xs',
-            LIST_COLUMN_CLASS
-          )}
-          data-list-columns="workspace-file-list"
-          data-testid="workspace-list-header">
-          <span>{t('terminal.workspace.sort.name')}</span>
-          <span>{t('terminal.workspace.sort.mtime')}</span>
-          <span className="text-right">{t('terminal.workspace.sort.size')}</span>
-        </div>
-      )}
+  ) : viewMode === 'list' ? (
+    <div className="space-y-1" data-workspace-list-container>
       <div
-        className={viewMode === 'icons' ? 'grid grid-cols-[repeat(auto-fill,minmax(5.5rem,1fr))] gap-2' : 'space-y-1'}>
-        {items.map((item) => renderItem(item))}
+        className="sticky top-0 z-10 grid h-7 items-center gap-2 bg-background px-2 pr-9 text-muted-foreground text-xs"
+        data-list-columns="workspace-file-list"
+        data-testid="workspace-list-header"
+        data-workspace-list-row>
+        <span>{t('terminal.workspace.sort.name')}</span>
+        <span className="hidden" data-workspace-list-metadata="mtime">
+          {t('terminal.workspace.sort.mtime')}
+        </span>
+        <span className="hidden text-right" data-workspace-list-metadata="size">
+          {t('terminal.workspace.sort.size')}
+        </span>
       </div>
-    </>
+      {items.map((item) => renderItem(item))}
+    </div>
+  ) : (
+    <div
+      className={cn('grid gap-2', ICON_GRID_CLASS[iconSize])}
+      data-icon-size={iconSize}
+      data-testid="workspace-icon-grid">
+      {items.map((item) => renderItem(item))}
+    </div>
   )
 
   const content = (

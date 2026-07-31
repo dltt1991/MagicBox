@@ -205,6 +205,32 @@ describe('WorkspaceFileTree', () => {
     expect(setData).toHaveBeenCalledWith('application/x-cherry-terminal-path', '{"path":"/workspace/src"}')
   })
 
+  it('sets all selected workspace paths when dragging a selected row', () => {
+    render(
+      <WorkspaceFileTree
+        includeHidden={false}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
+    )
+    const src = screen.getByRole('button', { name: 'src' })
+    const appLog = screen.getByRole('button', { name: 'app.log' })
+    const setData = vi.fn()
+
+    fireEvent.click(src, { metaKey: true })
+    fireEvent.click(appLog, { metaKey: true })
+    fireEvent.dragStart(src, { dataTransfer: { setData } })
+
+    expect(setData).toHaveBeenCalledWith(
+      'application/x-cherry-terminal-path',
+      '{"paths":["/workspace/src","/workspace/app.log"]}'
+    )
+  })
+
   it('renders icon mode and sorts files by size while keeping directories first', () => {
     render(
       <WorkspaceFileTree
@@ -226,7 +252,7 @@ describe('WorkspaceFileTree', () => {
     ])
   })
 
-  it('uses one full-width column grid for list headers and rows', () => {
+  it('keeps list favorites outside collapsible metadata columns', () => {
     render(
       <WorkspaceFileTree
         includeHidden={false}
@@ -244,6 +270,12 @@ describe('WorkspaceFileTree', () => {
 
     expect(header).toHaveAttribute('data-list-columns', 'workspace-file-list')
     expect(row).toHaveAttribute('data-list-columns', 'workspace-file-list')
+    expect(header.closest('[data-workspace-list-container]')).toBeInTheDocument()
+    expect(header).toHaveAttribute('data-workspace-list-row')
+    expect(row.querySelector('[data-workspace-list-row]')).toBeInTheDocument()
+    expect(row.querySelector('[data-workspace-list-metadata="mtime"]')).toHaveClass('hidden')
+    expect(row.querySelector('[data-workspace-list-metadata="size"]')).toHaveClass('hidden')
+    expect(row.querySelector('[data-workspace-favorite-slot]')).toHaveClass('absolute')
     expect(row).toHaveClass('w-full')
   })
 
@@ -265,6 +297,74 @@ describe('WorkspaceFileTree', () => {
     expect(screen.getByRole('button', { name: '.env' })).toHaveAttribute('data-hidden', 'true')
     expect(screen.getByRole('button', { name: '.env' })).toHaveClass('opacity-60')
     expect(screen.getByRole('button', { name: 'src' })).not.toHaveAttribute('data-hidden')
+  })
+
+  it('toggles directory favorites from list rows', () => {
+    const onToggleFavoriteDirectory = vi.fn()
+    const onSelectPath = vi.fn()
+
+    render(
+      <WorkspaceFileTree
+        favoriteDirectoryPaths={['/workspace/src']}
+        includeHidden={false}
+        onSelectPath={onSelectPath}
+        onToggleFavoriteDirectory={onToggleFavoriteDirectory}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
+    )
+
+    expect(screen.getByRole('button', { name: 'terminal.workspace.favorite.remove' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'terminal.workspace.favorite.add' })).not.toBeInTheDocument()
+    expect(
+      screen
+        .getByRole('button', { name: 'terminal.workspace.favorite.remove' })
+        .closest('[data-workspace-favorite-slot]')
+    ).toHaveClass('absolute')
+
+    fireEvent.click(screen.getByRole('button', { name: 'terminal.workspace.favorite.remove' }))
+
+    expect(onToggleFavoriteDirectory).toHaveBeenCalledWith('/workspace/src')
+    expect(onSelectPath).not.toHaveBeenCalled()
+  })
+
+  it('toggles directory favorites from icon cards and sizes thumbnails', () => {
+    const onToggleFavoriteDirectory = vi.fn()
+    const onSelectPath = vi.fn()
+
+    render(
+      <WorkspaceFileTree
+        favoriteDirectoryPaths={['/workspace/src']}
+        iconSize="large"
+        includeHidden={false}
+        onSelectPath={onSelectPath}
+        onToggleFavoriteDirectory={onToggleFavoriteDirectory}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="icons"
+      />
+    )
+
+    expect(screen.getByTestId('workspace-icon-grid')).toHaveAttribute('data-icon-size', 'large')
+    expect(screen.getByRole('button', { name: 'terminal.workspace.favorite.remove' })).toBeInTheDocument()
+    expect(
+      screen
+        .getByRole('button', { name: 'terminal.workspace.favorite.remove' })
+        .closest('[data-workspace-favorite-slot]')
+    ).toHaveClass('absolute')
+    expect(
+      screen.getByRole('button', { name: 'src' }).querySelector('[data-icon="material-icon-theme:folder-base"]')
+    ).toHaveClass('size-8')
+
+    fireEvent.click(screen.getByRole('button', { name: 'terminal.workspace.favorite.remove' }))
+
+    expect(onToggleFavoriteDirectory).toHaveBeenCalledWith('/workspace/src')
+    expect(onSelectPath).not.toHaveBeenCalled()
   })
 
   it('uses material icons for folders and file types', () => {
@@ -666,6 +766,130 @@ describe('WorkspaceFileTree', () => {
 
     fireEvent.keyDown(tree, { key: 'ArrowLeft' })
     expect(onHighlightPath).toHaveBeenLastCalledWith('/workspace/src')
+  })
+
+  it('keeps arrow navigation active after clicking a workspace row with the context menu enabled', () => {
+    const onHighlightPath = vi.fn()
+    const { rerender } = render(
+      <WorkspaceFileTree
+        contextMenuActions={createActions()}
+        includeHidden={false}
+        onHighlightPath={onHighlightPath}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
+    )
+
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'src' }))
+    fireEvent.click(screen.getByRole('button', { name: 'src' }))
+    fireEvent.keyDown(document.body, { key: 'ArrowDown' })
+
+    expect(onHighlightPath).toHaveBeenLastCalledWith('/workspace/src')
+
+    rerender(
+      <WorkspaceFileTree
+        contextMenuActions={createActions()}
+        includeHidden={false}
+        onHighlightPath={onHighlightPath}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath="/workspace/src"
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
+    )
+
+    fireEvent.keyDown(document.body, { key: 'ArrowDown' })
+
+    expect(onHighlightPath).toHaveBeenLastCalledWith('/workspace/app.log')
+  })
+
+  it('activates arrow navigation when a workspace row receives only a click event', () => {
+    const onHighlightPath = vi.fn()
+    render(
+      <WorkspaceFileTree
+        contextMenuActions={createActions()}
+        includeHidden={false}
+        onHighlightPath={onHighlightPath}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath="/workspace/src"
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'src' }))
+    fireEvent.keyDown(document.body, { key: 'ArrowDown' })
+
+    expect(onHighlightPath).toHaveBeenLastCalledWith('/workspace/app.log')
+  })
+
+  it('keeps parent and child history shortcuts active after clicking a workspace row', () => {
+    const actions = createActions()
+    const onOpenChildHistoryPath = vi.fn()
+    const onOpenParentPath = vi.fn()
+    render(
+      <WorkspaceFileTree
+        contextMenuActions={actions}
+        includeHidden={false}
+        onOpenChildHistoryPath={onOpenChildHistoryPath}
+        onOpenParentPath={onOpenParentPath}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace/projects"
+        selectedPath="/workspace/src"
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
+    )
+
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'src' }))
+    fireEvent.click(screen.getByRole('button', { name: 'src' }))
+    fireEvent.keyDown(document.body, { key: 'ArrowUp', metaKey: true })
+    fireEvent.keyDown(document.body, { key: 'ArrowDown', metaKey: true })
+
+    expect(onOpenParentPath).toHaveBeenCalledWith('/workspace')
+    expect(onOpenChildHistoryPath).toHaveBeenCalledOnce()
+  })
+
+  it('scrolls the highlighted workspace item into view after keyboard navigation', () => {
+    const scrollIntoView = vi.fn()
+    const { rerender } = render(
+      <WorkspaceFileTree
+        includeHidden={false}
+        onHighlightPath={vi.fn()}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath={null}
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
+    )
+    const appLog = screen.getByRole('button', { name: 'app.log' })
+    appLog.scrollIntoView = scrollIntoView
+
+    rerender(
+      <WorkspaceFileTree
+        includeHidden={false}
+        onHighlightPath={vi.fn()}
+        onSelectPath={vi.fn()}
+        rootPath="/workspace"
+        selectedPath="/workspace/app.log"
+        sortDirection="asc"
+        sortKey="name"
+        viewMode="list"
+      />
+    )
+
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' })
   })
 
   it('keeps keyboard focus on the workspace tree after opening a directory', () => {

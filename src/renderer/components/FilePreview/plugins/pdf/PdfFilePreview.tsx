@@ -105,6 +105,17 @@ function destroyLoadingTask(loadingTask: PDFDocumentLoadingTask, filePath: strin
   })
 }
 
+function destroyDocumentProxy(documentProxy: PDFDocumentProxy, filePath: string): void {
+  void Promise.resolve(documentProxy.destroy()).catch((error: unknown) => {
+    const normalized = error instanceof Error ? error : new Error(String(error))
+    logger.error(`Failed to destroy PDF document proxy: ${filePath}`, normalized)
+  })
+}
+
+function isPdfJsTeardownRaceError(error: Error): boolean {
+  return error.message.includes("Cannot read properties of null (reading 'sendWithPromise')")
+}
+
 function PdfPreviewTooLarge({ filePath }: { filePath: AbsoluteFilePath }) {
   const { t } = useTranslation()
 
@@ -241,6 +252,7 @@ export default function PdfFilePreview({ filePath, fileName, refreshKey }: FileP
   useEffect(() => {
     let cancelled = false
     let loadingTask: PDFDocumentLoadingTask | null = null
+    let loadedDocument: PDFDocumentProxy | null = null
 
     setDocumentProxy(null)
     setStatus('loading')
@@ -264,8 +276,13 @@ export default function PdfFilePreview({ filePath, fileName, refreshKey }: FileP
 
         loadingTask = getDocument({ data: pdfData })
         const nextDocument = await loadingTask.promise
-        if (cancelled) return
+        if (cancelled) {
+          destroyDocumentProxy(nextDocument, filePath)
+          return
+        }
 
+        loadingTask = null
+        loadedDocument = nextDocument
         setDocumentProxy(nextDocument)
       } catch (error) {
         if (cancelled) return
@@ -284,6 +301,10 @@ export default function PdfFilePreview({ filePath, fileName, refreshKey }: FileP
       if (loadingTask) {
         destroyLoadingTask(loadingTask, filePath)
         loadingTask = null
+      }
+      if (loadedDocument) {
+        destroyDocumentProxy(loadedDocument, filePath)
+        loadedDocument = null
       }
     }
   }, [filePath, refreshKey])
@@ -434,6 +455,7 @@ export default function PdfFilePreview({ filePath, fileName, refreshKey }: FileP
         .catch((error: unknown) => {
           if (pdfViewerRef.current !== pdfViewer) return
           const normalized = error instanceof Error ? error : new Error(String(error))
+          if (isPdfJsTeardownRaceError(normalized)) return
           logger.error(`Failed to initialize PDF preview: ${filePath}`, normalized)
           setStatus('error')
           setDocumentProxy(null)
@@ -448,12 +470,16 @@ export default function PdfFilePreview({ filePath, fileName, refreshKey }: FileP
       container.addEventListener('pointerdown', focusContainer)
     } catch (error) {
       const normalized = error instanceof Error ? error : new Error(String(error))
+      if (isPdfJsTeardownRaceError(normalized)) return
       logger.error(`Failed to initialize PDF preview: ${filePath}`, normalized)
       setStatus('error')
       setDocumentProxy(null)
     }
 
     return () => {
+      if (pdfViewerRef.current === pdfViewer) {
+        pdfViewerRef.current = null
+      }
       viewerAbortController.abort()
       eventBus.off('pagesinit', handlePagesInit)
       eventBus.off('pagerendered', syncBackground)
@@ -465,9 +491,6 @@ export default function PdfFilePreview({ filePath, fileName, refreshKey }: FileP
       clearPinchWheelTimers()
       detachDocument(pdfViewer)
       pdfViewer.cleanup()
-      if (pdfViewerRef.current === pdfViewer) {
-        pdfViewerRef.current = null
-      }
     }
   }, [applyViewerBackground, documentProxy, filePath, focusContainer])
 

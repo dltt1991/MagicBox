@@ -318,13 +318,30 @@ export type RendererPersistCacheSchema = {
   'terminal.workspace.root': string | null
   'terminal.workspace.include_hidden': boolean
   'terminal.workspace.view_mode': 'list' | 'icons'
+  'terminal.workspace.icon_size': 'small' | 'medium' | 'large'
   'terminal.workspace.sort_key': 'name' | 'mtime' | 'size'
   'terminal.workspace.sort_direction': 'asc' | 'desc'
   'terminal.workspace.preview_open': boolean
   'terminal.workspace.preview_sizes': [number, number]
   'terminal.workspace.terminal_visible': boolean
   'terminal.workspace.keep_directory': boolean
+  'terminal.workspace.favorite_directories': string[]
+  'terminal.quick_commands': Array<{
+    id: string
+    command: string
+    iconDataUrl?: string
+    label?: string
+  }>
   'terminal.font_size': number
+  'terminal.theme':
+    | 'default-dark'
+    | 'light'
+    | 'solarized-dark'
+    | 'dracula'
+    | 'monokai'
+    | 'one-dark-pro'
+    | 'gruvbox-dark'
+    | 'nord'
   'terminal.layout.mode': 'right' | 'bottom' | 'terminal-maximized' | 'files-maximized' | 'preview-maximized'
   'terminal.layout.last_split_mode': 'right' | 'bottom'
   'terminal.layout.right_sizes': [number, number]
@@ -371,13 +388,17 @@ export const DefaultRendererPersistCache: RendererPersistCacheSchema = {
   'terminal.workspace.root': null,
   'terminal.workspace.include_hidden': false,
   'terminal.workspace.view_mode': 'list',
+  'terminal.workspace.icon_size': 'medium',
   'terminal.workspace.sort_key': 'name',
   'terminal.workspace.sort_direction': 'asc',
   'terminal.workspace.preview_open': true,
   'terminal.workspace.preview_sizes': [55, 45],
   'terminal.workspace.terminal_visible': true,
   'terminal.workspace.keep_directory': false,
+  'terminal.workspace.favorite_directories': [],
+  'terminal.quick_commands': [],
   'terminal.font_size': 18,
+  'terminal.theme': 'default-dark',
   'terminal.layout.mode': 'right',
   'terminal.layout.last_split_mode': 'right',
   'terminal.layout.right_sizes': [35, 65],

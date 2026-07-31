@@ -21,6 +21,16 @@ describe('useCommandShortcuts', () => {
   it('shows terminal tab switching shortcuts in settings', () => {
     const { result } = renderHook(() => useCommandShortcuts())
 
+    expect(result.current.shortcuts.some((shortcut) => shortcut.label === 'settings.shortcuts.terminal_new')).toBe(true)
+    expect(
+      result.current.shortcuts.some((shortcut) => shortcut.label === 'settings.shortcuts.terminal_close_current')
+    ).toBe(true)
+    expect(
+      result.current.shortcuts.some((shortcut) => shortcut.label === 'settings.shortcuts.terminal_close_others')
+    ).toBe(true)
+    expect(
+      result.current.shortcuts.some((shortcut) => shortcut.label === 'settings.shortcuts.terminal_close_all')
+    ).toBe(true)
     expect(
       result.current.shortcuts.some((shortcut) => shortcut.label === 'settings.shortcuts.terminal_switch_next')
     ).toBe(true)

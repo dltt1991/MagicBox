@@ -38,6 +38,23 @@ describe('getCommandShortcutLabel', () => {
     )
   })
 
+  it('uses the Option symbol for macOS Alt-based command shortcuts', () => {
+    expect(
+      getCommandShortcutLabel('terminal.close_others', undefined, {
+        context: {},
+        isMac: true,
+        platform: 'darwin'
+      })
+    ).toBe('⌘⌥W')
+    expect(
+      getCommandShortcutLabel('terminal.close_others', undefined, {
+        context: {},
+        isMac: false,
+        platform: 'win32'
+      })
+    ).toBe('Ctrl+Alt+W')
+  })
+
   it('returns empty label when unavailable', () => {
     expect(getCommandShortcutLabel('topic.create', { binding: [], enabled: true }, { context: {}, isMac: true })).toBe(
       ''

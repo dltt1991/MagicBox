@@ -110,6 +110,34 @@
     -webkit-user-drag: none;
   }
 
+  [data-workspace-list-container] {
+    container-type: inline-size;
+  }
+
+  [data-workspace-list-row] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  @container (min-width: 28rem) {
+    [data-workspace-list-row] {
+      grid-template-columns: minmax(0, 1fr) 8.5rem;
+    }
+
+    [data-workspace-list-metadata='mtime'] {
+      display: block;
+    }
+  }
+
+  @container (min-width: 38rem) {
+    [data-workspace-list-row] {
+      grid-template-columns: minmax(0, 1fr) 8.5rem 5.5rem;
+    }
+
+    [data-workspace-list-metadata='size'] {
+      display: block;
+    }
+  }
+
   ul {
     list-style: none;
   }
