@@ -317,7 +317,7 @@ export type RendererPersistCacheSchema = {
   'ui.chat.artifact_pane.width': number
   'terminal.workspace.root': string | null
   'terminal.workspace.include_hidden': boolean
-  'terminal.workspace.view_mode': 'list' | 'icons'
+  'terminal.workspace.view_mode': 'list' | 'icons' | 'tree'
   'terminal.workspace.icon_size': 'small' | 'medium' | 'large'
   'terminal.workspace.sort_key': 'name' | 'mtime' | 'size'
   'terminal.workspace.sort_direction': 'asc' | 'desc'

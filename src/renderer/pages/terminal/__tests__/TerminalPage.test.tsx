@@ -26,7 +26,7 @@ const mocks = vi.hoisted(() => ({
   persistValues: {
     'terminal.workspace.root': null as string | null,
     'terminal.workspace.include_hidden': false,
-    'terminal.workspace.view_mode': 'list' as 'list' | 'icons',
+    'terminal.workspace.view_mode': 'list' as 'list' | 'icons' | 'tree',
     'terminal.workspace.sort_key': 'name' as 'name' | 'mtime' | 'size',
     'terminal.workspace.sort_direction': 'asc' as 'asc' | 'desc',
     'terminal.workspace.preview_open': true,
@@ -241,7 +241,9 @@ vi.mock('../components/WorkspaceFileTree', () => ({
     onOpenChildHistoryPath,
     onOpenParentPath,
     onSelectPath,
+    onExpandedTreePathsChange,
     onToggleFavoriteDirectory,
+    expandedTreePaths,
     favoriteDirectoryPaths,
     iconSize,
     restoreFocusKey,
@@ -267,7 +269,9 @@ vi.mock('../components/WorkspaceFileTree', () => ({
     onOpenChildHistoryPath?: () => void
     onOpenParentPath?: (path: string) => void
     onSelectPath: (path: string, kind: 'directory' | 'file') => void
+    onExpandedTreePathsChange?: (paths: string[]) => void
     onToggleFavoriteDirectory?: (path: string) => void
+    expandedTreePaths?: string[]
     favoriteDirectoryPaths?: string[]
     iconSize?: string
     restoreFocusKey?: number
@@ -282,6 +286,7 @@ vi.mock('../components/WorkspaceFileTree', () => ({
       data-sort-direction={sortDirection}
       data-sort-key={sortKey}
       data-testid="mock-workspace-file-tree"
+      data-expanded-tree-paths={expandedTreePaths?.join('\n') ?? ''}
       data-favorites={favoriteDirectoryPaths?.join('\n') ?? ''}
       data-icon-size={iconSize ?? ''}
       data-view-mode={viewMode}>
@@ -290,6 +295,9 @@ vi.mock('../components/WorkspaceFileTree', () => ({
       </button>
       <button onClick={() => onSelectPath('/workspace/src', 'directory')} type="button">
         select directory
+      </button>
+      <button onClick={() => onExpandedTreePathsChange?.(['/workspace/src'])} type="button">
+        expand src
       </button>
       <button onClick={() => onOpenParentPath?.('/workspace')} type="button">
         navigate parent
@@ -586,6 +594,33 @@ describe('TerminalPage', () => {
     expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-view-mode', 'icons')
     expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-sort-key', 'mtime')
     expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-sort-direction', 'desc')
+  })
+
+  it('switches the workspace file manager to tree view', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: '文件树视图' }))
+
+    expect(mocks.persistValues['terminal.workspace.view_mode']).toBe('tree')
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-view-mode', 'tree')
+  })
+
+  it('keeps expanded tree directories when opening a file preview', async () => {
+    const user = userEvent.setup()
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.persistValues['terminal.workspace.view_mode'] = 'tree'
+    mocks.persistValues['terminal.workspace.preview_open'] = false
+
+    render(<TerminalPage />)
+
+    await user.click(screen.getByRole('button', { name: 'expand src' }))
+    await user.click(screen.getByRole('button', { name: 'select file' }))
+
+    expect(screen.getByTestId('workspace-preview-pane')).toBeInTheDocument()
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-expanded-tree-paths', '/workspace/src')
   })
 
   it('changes the workspace root from the path breadcrumb', async () => {
