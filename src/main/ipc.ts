@@ -24,6 +24,36 @@ import { decompress } from './utils/zip'
 
 const logger = loggerService.withContext('IPC')
 
+const directorySearchControllers = new Map<string, AbortController>()
+
+function cancelDirectorySearch(requestId: string) {
+  const controller = directorySearchControllers.get(requestId)
+  if (!controller) return
+
+  controller.abort()
+  directorySearchControllers.delete(requestId)
+}
+
+async function runCancellableDirectorySearch<T>(
+  options: { searchRequestId?: string } | undefined,
+  run: (signal?: AbortSignal) => Promise<T>
+): Promise<T> {
+  const requestId = options?.searchRequestId
+  if (!requestId) return run()
+
+  cancelDirectorySearch(requestId)
+  const controller = new AbortController()
+  directorySearchControllers.set(requestId, controller)
+
+  try {
+    return await run(controller.signal)
+  } finally {
+    if (directorySearchControllers.get(requestId) === controller) {
+      directorySearchControllers.delete(requestId)
+    }
+  }
+}
+
 export async function registerIpc() {
   void backupManager.cleanupStaleTempArtifacts()
 
@@ -147,10 +177,13 @@ export async function registerIpc() {
   ipcMain.handle(IpcChannel.File_Write, fileManager.writeFile.bind(fileManager))
   ipcMain.handle(IpcChannel.File_SaveImage, fileManager.saveImage.bind(fileManager))
   ipcMain.handle(IpcChannel.File_BinaryImage, fileManager.binaryImage.bind(fileManager))
-  ipcMain.handle(IpcChannel.File_ListDirectory, (_e, dirPath, options) => searchListDirectory(dirPath, options))
-  ipcMain.handle(IpcChannel.File_ListDirectoryEntries, (_e, dirPath, options) =>
-    searchListDirectoryEntries(dirPath, options)
+  ipcMain.handle(IpcChannel.File_ListDirectory, (_e, dirPath, options) =>
+    runCancellableDirectorySearch(options, (signal) => searchListDirectory(dirPath, { ...options, signal }))
   )
+  ipcMain.handle(IpcChannel.File_ListDirectoryEntries, (_e, dirPath, options) =>
+    runCancellableDirectorySearch(options, (signal) => searchListDirectoryEntries(dirPath, { ...options, signal }))
+  )
+  ipcMain.handle(IpcChannel.File_CancelDirectorySearch, (_e, requestId: string) => cancelDirectorySearch(requestId))
   ipcMain.handle(IpcChannel.File_CheckFileName, fileManager.fileNameGuard.bind(fileManager))
   ipcMain.handle(IpcChannel.File_ValidateNotesDirectory, fileManager.validateNotesDirectory.bind(fileManager))
   ipcMain.handle(IpcChannel.File_BatchUploadMarkdown, fileManager.batchUploadMarkdownFiles.bind(fileManager))

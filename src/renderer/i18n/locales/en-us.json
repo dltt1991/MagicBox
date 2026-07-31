@@ -8222,6 +8222,7 @@
       "file_manager_paste": "File Manager: Paste",
       "file_manager_properties": "File Manager: Properties",
       "file_manager_rename": "File Manager: Rename",
+      "file_manager_search": "File Manager: Search",
       "file_manager_select_all": "File Manager: Select All",
       "filter": "Filter",
       "label": "Key",
@@ -8806,6 +8807,17 @@
         "open_in_new_tab": "Open in new tab",
         "open_system": "Open in system app",
         "show_in_folder": "Show in folder"
+      },
+      "search": {
+        "empty_query": "Type a file or folder name to search",
+        "error": "Unable to search workspace files",
+        "input": "Search files or folders",
+        "loading": "Searching workspace files",
+        "no_results": "No matching results",
+        "placeholder": "Search files or folders, supports * and ?",
+        "scope_current": "Current Folder",
+        "scope_global": "Global",
+        "title": "Search Files"
       },
       "sort": {
         "asc": "Ascending",

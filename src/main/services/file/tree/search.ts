@@ -1,17 +1,15 @@
 /**
  * Directory search — ripgrep + fuzzy matching.
  *
- * `listDirectory` and `listDirectoryEntries` are public. All ripgrep /
- * scoring internals are private.
+ * Only `listDirectory` is public. All ripgrep / scoring internals are private.
  *
  * Two modes share one entry point, distinguished by `options.searchPattern`:
  *   - List mode (`searchPattern === '.'`, the default): enumerate the
  *     directory tree. No result cap by default — set `maxEntries` only when
  *     truncation is desired (e.g. autocomplete dropdowns).
- *   - Search mode (`searchPattern` is a user query): ripgrep glob pre-filter
- *     plus JS-side fuzzy scoring. Caller controls `maxEntries` for the
- *     dropdown size; the fuzzy branch can scan all files before JS-side
- *     fuzzy matching when the glob misses everything.
+ *   - Search mode (`searchPattern` is a user query): FanBox-style breadth-first
+ *     filesystem walk with a time budget and fuzzy scoring. Caller controls
+ *     `maxEntries` for the dropdown size.
  */
 
 import { spawn } from 'node:child_process'
@@ -32,9 +30,11 @@ const logger = loggerService.withContext('Utils:File:Search')
 // stay literal-faithful to the legacy `FileStorage` implementation.
 interface DirectoryListOptionsInternal extends DirectoryListOptions {
   fuzzy?: boolean
+  signal?: AbortSignal
 }
 
-type ResolvedOptions = Required<DirectoryListOptionsInternal>
+type ResolvedOptions = Required<Omit<DirectoryListOptionsInternal, 'searchRequestId' | 'signal'>> &
+  Pick<DirectoryListOptionsInternal, 'searchRequestId' | 'signal'>
 
 const DEFAULT_DIRECTORY_LIST_OPTIONS: ResolvedOptions = {
   recursive: true,
@@ -51,14 +51,11 @@ const DEFAULT_DIRECTORY_LIST_OPTIONS: ResolvedOptions = {
   fuzzy: true
 }
 
-// ─── Scoring constants ─────────────────────────────────────────────────────
+function throwIfAborted(signal?: AbortSignal): void {
+  if (!signal?.aborted) return
 
-const SCORE_SEGMENT_MATCH = 60
-const SCORE_FILENAME_CONTAINS = 80
-const SCORE_FILENAME_STARTS = 100
-const SCORE_CONSECUTIVE_CHAR = 15
-const SCORE_WORD_BOUNDARY = 20
-const PATH_LENGTH_PENALTY_FACTOR = 4
+  throw signal.reason instanceof Error ? signal.reason : new Error('Directory search aborted')
+}
 
 const EXCLUDED_DIRS = new Set([
   'node_modules',
@@ -72,6 +69,10 @@ const EXCLUDED_DIRS = new Set([
   'coverage',
   '.cache'
 ])
+
+const SEARCH_WALK_FILE_LIMIT = 60_000
+const SEARCH_WALK_MATCH_LIMIT_MULTIPLIER = 4
+const SEARCH_WALK_TIME_BUDGET_MS = 4_000
 
 // `defaultRipgrepGlobArgs()` is the single source of these patterns; both
 // chokidar's `ignored` predicate and the post-scan filter consume the same
@@ -89,49 +90,69 @@ async function resolveRipgrepBinary(): Promise<string | null> {
   return fs.existsSync(binaryPath) ? binaryPath : null
 }
 
-interface RipgrepResult {
-  exitCode: number
-  stdout: string
-  stderr: string
+function getRipgrepOutputLineLimit(options: ResolvedOptions, multiplier = 1): number | undefined {
+  if (!Number.isFinite(options.maxEntries) || options.maxEntries === Number.MAX_SAFE_INTEGER) {
+    return undefined
+  }
+
+  return Math.max(options.maxEntries, options.maxEntries * multiplier)
 }
 
-async function executeRipgrep(args: string[]): Promise<RipgrepResult> {
+async function executeRipgrep(args: string[], maxOutputLines?: number): Promise<{ exitCode: number; output: string }> {
   const ripgrepBinaryPath = await resolveRipgrepBinary()
   if (!ripgrepBinaryPath) {
     throw new Error('Ripgrep binary not available')
   }
 
   return new Promise((resolve, reject) => {
-    const child = spawn(ripgrepBinaryPath, ['--no-config', '--ignore-case', ...args], {
+    const child = spawn(ripgrepBinaryPath, ['--no-config', '--ignore-case', '--no-messages', ...args], {
       env: { ...process.env, ...getBinaryExecutionEnv() },
       stdio: ['pipe', 'pipe', 'pipe']
     })
 
-    let stdout = ''
-    let stderr = ''
+    let output = ''
+    let errorOutput = ''
+    let outputLineCount = 0
+    let stoppedAfterLimit = false
 
     child.stdout.on('data', (data: Buffer) => {
-      stdout += data.toString()
+      const chunk = data.toString()
+      output += chunk
+
+      if (!maxOutputLines || stoppedAfterLimit) return
+
+      outputLineCount += chunk.split('\n').filter((line) => line.trim()).length
+      if (outputLineCount >= maxOutputLines) {
+        stoppedAfterLimit = true
+        child.kill('SIGTERM')
+      }
     })
 
     child.stderr.on('data', (data: Buffer) => {
-      stderr += data.toString()
+      errorOutput += data.toString()
     })
 
     child.on('close', (code: number | null, signal: NodeJS.Signals | null) => {
+      if (stoppedAfterLimit) {
+        resolve({
+          exitCode: 0,
+          output
+        })
+        return
+      }
+
       // `code === null` happens when the process was killed by a signal
       // (SIGKILL / SIGTERM on OOM, parent crash, etc.). Coercing it to 0
       // would surface as "ripgrep exited successfully with no matches" =
       // an empty directory listing, which is indistinguishable from a real
       // empty result. Reject explicitly so callers can decide.
       if (code === null && signal !== null) {
-        reject(new Error(`Ripgrep terminated by signal ${signal}: ${stderr || stdout}`))
+        reject(new Error(`Ripgrep terminated by signal ${signal}: ${errorOutput || output}`))
         return
       }
       resolve({
         exitCode: code ?? 0,
-        stdout,
-        stderr
+        output: output || errorOutput
       })
     })
 
@@ -141,43 +162,8 @@ async function executeRipgrep(args: string[]): Promise<RipgrepResult> {
   })
 }
 
-function getUsableRipgrepOutput(result: RipgrepResult): string {
-  if (result.exitCode < 2) return result.stdout
-
-  const stderr = result.stderr.trim()
-  if (!result.stdout.trim()) {
-    throw new Error(`Ripgrep failed with exit code ${result.exitCode}: ${stderr || 'No output available'}`)
-  }
-
-  logger.warn('Ripgrep reported traversal errors; keeping available results', {
-    exitCode: result.exitCode,
-    stderr
-  })
-
-  return result.stdout
-}
-
-function buildRipgrepBaseArgs(options: ResolvedOptions, resolvedPath: string): string[] {
-  const args: string[] = ['--files']
-
-  if (options.includeHidden) {
-    // ripgrep skips dotfiles by default; opt-in to surface them.
-    args.push('--hidden')
-  } else {
-    args.push('--glob', '!.*')
-  }
-
-  args.push(...defaultRipgrepGlobArgs())
-
-  if (!options.recursive) {
-    args.push('--max-depth', '1')
-  } else if (options.maxDepth > 0) {
-    args.push('--max-depth', options.maxDepth.toString())
-  }
-
-  args.push(resolvedPath)
-
-  return args
+function hasRipgrepResults(output: string): boolean {
+  return output.split('\n').some((line) => line.trim())
 }
 
 // ─── Directory walk ────────────────────────────────────────────────────────
@@ -185,11 +171,13 @@ function buildRipgrepBaseArgs(options: ResolvedOptions, resolvedPath: string): s
 async function searchDirectories(
   resolvedPath: string,
   options: ResolvedOptions,
-  currentDepth: number = 0
+  currentDepth: number = 0,
+  limit: number = options.maxEntries
 ): Promise<string[]> {
   if (!options.includeDirectories) return []
   if (!options.recursive && currentDepth > 0) return []
   if (options.maxDepth > 0 && currentDepth >= options.maxDepth) return []
+  if (limit <= 0) return []
 
   const directories: string[] = []
 
@@ -206,16 +194,17 @@ async function searchDirectories(
 
       if (options.searchPattern === '.' || entry.name.toLowerCase().includes(searchPatternLower)) {
         directories.push(fullPath)
+        if (directories.length >= limit) break
       }
 
-      if (options.recursive && (options.maxDepth <= 0 || currentDepth < options.maxDepth)) {
-        const subDirs = await searchDirectories(fullPath, options, currentDepth + 1)
+      if (options.recursive && currentDepth < options.maxDepth) {
+        const subDirs = await searchDirectories(fullPath, options, currentDepth + 1, limit - directories.length)
         directories.push(...subDirs)
+        if (directories.length >= limit) break
       }
     }
   } catch (error) {
     logger.warn(`Failed to search directories in: ${resolvedPath}`, error as Error)
-    if (currentDepth === 0) throw error
   }
 
   return directories
@@ -249,7 +238,14 @@ async function searchByFilename(resolvedPath: string, options: ResolvedOptions):
 
     args.push(resolvedPath)
 
-    const output = getUsableRipgrepOutput(await executeRipgrep(args))
+    const { exitCode, output } = await executeRipgrep(args, getRipgrepOutputLineLimit(options))
+
+    // Exit 0 = matches; 1 = no matches. With --hidden, macOS privacy
+    // protected subdirectories can make ripgrep return 2 while still
+    // emitting usable stdout for accessible entries; keep that partial list.
+    if (exitCode >= 2 && !hasRipgrepResults(output)) {
+      throw new Error(`Ripgrep failed with exit code ${exitCode}: ${output}`)
+    }
 
     files.push(
       ...output
@@ -270,155 +266,122 @@ async function searchByFilename(resolvedPath: string, options: ResolvedOptions):
   return [...sortedDirectories, ...sortedFiles].slice(0, options.maxEntries)
 }
 
-// ─── Fuzzy scoring ─────────────────────────────────────────────────────────
+// ─── FanBox-style fuzzy search ─────────────────────────────────────────────
 
-/**
- * Fuzzy match: every char in `query` appears in `text` in order (case-insensitive).
- * Example: "updater" matches "packages/update/src/node/updateController.ts".
- */
-function isFuzzyMatch(text: string, query: string): boolean {
-  const textLower = text.toLowerCase()
+function getFanboxFuzzyScore(query: string, target: string): number {
   const queryLower = query.toLowerCase()
-
-  let i = 0
-  let j = 0
-  while (i < textLower.length && j < queryLower.length) {
-    if (textLower[i] === queryLower[j]) j++
-    i++
-  }
-  return j === queryLower.length
-}
-
-/**
- * Fuzzy match score (higher = better). Weighs segment matches, filename
- * prefix/contains, consecutive runs, word boundaries, with a log penalty
- * on path length so deeper paths don't dominate.
- */
-function getFuzzyMatchScore(filePath: string, query: string): number {
-  const pathLower = filePath.toLowerCase()
-  const queryLower = query.toLowerCase()
-  const fileName = filePath.split('/').pop() ?? ''
-  const fileNameLower = fileName.toLowerCase()
-
+  const targetLower = target.toLowerCase()
+  let queryIndex = 0
   let score = 0
+  let lastIndex = -1
+  let streak = 0
 
-  const pathSegments = pathLower.split(/[/\\]/)
-  let segmentMatchCount = 0
-  for (const segment of pathSegments) {
-    if (isFuzzyMatch(segment, queryLower)) segmentMatchCount++
-  }
-  score += segmentMatchCount * SCORE_SEGMENT_MATCH
+  for (let targetIndex = 0; targetIndex < targetLower.length && queryIndex < queryLower.length; targetIndex++) {
+    if (targetLower[targetIndex] !== queryLower[queryIndex]) continue
 
-  if (fileNameLower.startsWith(queryLower)) {
-    score += SCORE_FILENAME_STARTS
-  } else if (fileNameLower.includes(queryLower)) {
-    score += SCORE_FILENAME_CONTAINS
-  }
-
-  let i = 0
-  let j = 0
-  let consecutiveCount = 0
-  let maxConsecutive = 0
-  while (i < pathLower.length && j < queryLower.length) {
-    if (pathLower[i] === queryLower[j]) {
-      consecutiveCount++
-      maxConsecutive = Math.max(maxConsecutive, consecutiveCount)
-      j++
+    let points = 10
+    if (targetIndex === lastIndex + 1) {
+      streak++
+      points += streak * 8
     } else {
-      consecutiveCount = 0
+      streak = 0
     }
-    i++
-  }
-  score += maxConsecutive * SCORE_CONSECUTIVE_CHAR
-
-  // Word-boundary bonus — only credit once to avoid inflating repeated patterns.
-  const boundaryPrefix = queryLower.slice(0, Math.min(3, queryLower.length))
-  const words = pathLower.split(/[/\\._-]/)
-  for (const word of words) {
-    if (word.startsWith(boundaryPrefix)) {
-      score += SCORE_WORD_BOUNDARY
-      break
-    }
+    if (targetIndex === 0 || /[/_. -]/.test(targetLower[targetIndex - 1])) points += 15
+    points += Math.max(0, 8 - targetIndex * 0.1)
+    score += points
+    lastIndex = targetIndex
+    queryIndex++
   }
 
-  score -= Math.log(filePath.length + 1) * PATH_LENGTH_PENALTY_FACTOR
-
+  if (queryIndex < queryLower.length) return -1
+  score -= (targetLower.length - queryLower.length) * 0.2
   return score
 }
 
-function queryToGlobPattern(query: string): string {
-  // Escape special glob chars (including ! for negation), then interleave with *.
-  const escaped = query.replace(/[[\]{}()*+?.,\\^$|#!]/g, '\\$&')
-  return '*' + escaped.split('').join('*') + '*'
-}
+async function searchByWalking(resolvedPath: string, options: ResolvedOptions): Promise<string[]> {
+  const query = options.searchPattern.trim()
+  if (!query) return []
 
-interface ScoredSearchEntry {
-  path: string
-  isDirectory: boolean
-  score: number
-}
+  const deadline = Date.now() + SEARCH_WALK_TIME_BUDGET_MS
+  const queue: Array<{ path: string; depth: number }> = [{ path: resolvedPath, depth: 0 }]
+  const matches: Array<{ path: string; score: number }> = []
+  const matchLimit = Number.isFinite(options.maxEntries)
+    ? Math.max(options.maxEntries, options.maxEntries * SEARCH_WALK_MATCH_LIMIT_MULTIPLIER)
+    : SEARCH_WALK_FILE_LIMIT
+  let scannedFiles = 0
 
-function parseRipgrepPaths(output: string): string[] {
-  return output
-    .split('\n')
-    .filter((line) => line.trim())
-    .map((line) => line.replace(/\\/g, '/'))
-}
+  const pushMatch = async (entryPath: string, name: string, isDirectory: boolean, bonus: number) => {
+    throwIfAborted(options.signal)
+    const nameScore = getFanboxFuzzyScore(query, name)
+    if (nameScore <= 0) return
 
-function scoreFuzzyPaths(
-  paths: readonly string[],
-  resolvedPath: string,
-  query: string,
-  isDirectory: boolean
-): ScoredSearchEntry[] {
-  return paths
-    .map((entryPath) => ({ entryPath, relativePath: path.relative(resolvedPath, entryPath).replace(/\\/g, '/') }))
-    .filter(({ relativePath }) => isFuzzyMatch(relativePath, query))
-    .map(({ entryPath, relativePath }) => ({
-      path: entryPath,
-      isDirectory,
-      score: getFuzzyMatchScore(relativePath, query)
-    }))
-}
+    let mtime = 0
+    try {
+      throwIfAborted(options.signal)
+      mtime = (await fs.promises.lstat(entryPath)).mtimeMs
+    } catch {
+      throwIfAborted(options.signal)
+      // Keep the name match even if metadata is unavailable.
+    }
+    throwIfAborted(options.signal)
 
-function compareScoredSearchEntries(a: ScoredSearchEntry, b: ScoredSearchEntry): number {
-  if (a.score !== b.score) return b.score - a.score
-  if (a.isDirectory !== b.isDirectory) return a.isDirectory ? -1 : 1
-  return a.path.localeCompare(b.path)
-}
+    const pathBonus = getFanboxFuzzyScore(query, entryPath) > 0 ? 3 : 0
+    const recencyBonus = Math.max(0, 20 - (Date.now() - mtime) / 86_400_000) * 0.6
+    matches.push({ path: entryPath, score: nameScore + pathBonus + recencyBonus + bonus + (isDirectory ? 6 : 0) })
+  }
 
-async function searchFuzzyFiles(resolvedPath: string, options: ResolvedOptions): Promise<ScoredSearchEntry[]> {
-  if (!options.includeFiles) return []
-  const args = buildRipgrepBaseArgs(options, resolvedPath)
-  const globPattern = queryToGlobPattern(options.searchPattern)
-  args.splice(args.length - 1, 0, '--iglob', globPattern)
-  const firstOutput = getUsableRipgrepOutput(await executeRipgrep(args))
-  const firstCandidates = scoreFuzzyPaths(parseRipgrepPaths(firstOutput), resolvedPath, options.searchPattern, false)
-  if (firstCandidates.length > 0) return firstCandidates
-  logger.debug('Fuzzy glob returned no results, scanning all files before JS fuzzy matching')
-  const fallbackOutput = getUsableRipgrepOutput(await executeRipgrep(buildRipgrepBaseArgs(options, resolvedPath)))
-  return scoreFuzzyPaths(parseRipgrepPaths(fallbackOutput), resolvedPath, options.searchPattern, false)
-}
+  while (queue.length > 0) {
+    throwIfAborted(options.signal)
+    if (Date.now() > deadline || scannedFiles >= SEARCH_WALK_FILE_LIMIT || matches.length >= matchLimit) break
 
-async function searchFuzzyDirectories(resolvedPath: string, options: ResolvedOptions): Promise<ScoredSearchEntry[]> {
-  if (!options.includeDirectories) return []
-  const directories = await searchDirectories(resolvedPath, { ...options, searchPattern: '.' })
-  return scoreFuzzyPaths(directories, resolvedPath, options.searchPattern, true)
+    const current = queue.shift()
+    if (!current) break
+    if (!options.recursive && current.depth > 0) continue
+    if (options.maxDepth > 0 && current.depth >= options.maxDepth) continue
+
+    let entries: fs.Dirent[]
+    try {
+      throwIfAborted(options.signal)
+      entries = await fs.promises.readdir(current.path, { withFileTypes: true })
+    } catch {
+      throwIfAborted(options.signal)
+      continue
+    }
+
+    for (const entry of entries) {
+      throwIfAborted(options.signal)
+      if (Date.now() > deadline || scannedFiles >= SEARCH_WALK_FILE_LIMIT || matches.length >= matchLimit) break
+      if (entry.name === '.DS_Store') continue
+      if (!options.includeHidden && entry.name.startsWith('.')) continue
+
+      const entryPath = path.join(current.path, entry.name).replace(/\\/g, '/')
+      const isDirectory = entry.isDirectory()
+
+      if (isDirectory) {
+        if (EXCLUDED_DIRS.has(entry.name)) continue
+        if (options.includeDirectories) {
+          await pushMatch(entryPath, entry.name, true, 0)
+        }
+        if (options.recursive) queue.push({ path: entryPath, depth: current.depth + 1 })
+        continue
+      }
+
+      scannedFiles++
+      if (!options.includeFiles) continue
+
+      await pushMatch(entryPath, entry.name, false, 0)
+    }
+  }
+
+  matches.sort((left, right) => right.score - left.score)
+  return matches.slice(0, options.maxEntries).map((item) => item.path)
 }
 
 // ─── Main dispatch ─────────────────────────────────────────────────────────
 
 async function listDirectoryWithRipgrep(resolvedPath: string, options: ResolvedOptions): Promise<string[]> {
-  // Search mode w/ fuzzy: collect files and directories, then score globally.
   if (options.fuzzy && options.searchPattern && options.searchPattern !== '.') {
-    const [files, directories] = await Promise.all([
-      searchFuzzyFiles(resolvedPath, options),
-      searchFuzzyDirectories(resolvedPath, options)
-    ])
-    return [...files, ...directories]
-      .sort(compareScoredSearchEntries)
-      .slice(0, options.maxEntries)
-      .map((entry) => entry.path)
+    return searchByWalking(resolvedPath, options)
   }
 
   // List mode (searchPattern === '.') or non-fuzzy search: filename glob path.
@@ -437,7 +400,7 @@ async function listDirectoryWithRipgrep(resolvedPath: string, options: ResolvedO
  */
 export async function listDirectory(
   dirPath: AbsoluteFilePath | string,
-  options?: DirectoryListOptions
+  options?: DirectoryListOptionsInternal
 ): Promise<string[]> {
   const mergedOptions: ResolvedOptions = {
     ...DEFAULT_DIRECTORY_LIST_OPTIONS,
@@ -455,7 +418,8 @@ export async function listDirectory(
     throw new Error(`Path is not a directory: ${resolvedPath}`)
   }
 
-  if (mergedOptions.includeFiles && !(await resolveRipgrepBinary())) {
+  const usesWalkingSearch = mergedOptions.fuzzy && mergedOptions.searchPattern && mergedOptions.searchPattern !== '.'
+  if (!usesWalkingSearch && !(await resolveRipgrepBinary())) {
     throw new Error('Ripgrep binary not available')
   }
 
@@ -470,15 +434,18 @@ export async function listDirectory(
  */
 export async function listDirectoryEntries(
   dirPath: AbsoluteFilePath | string,
-  options?: DirectoryListOptions
+  options?: DirectoryListOptionsInternal
 ): Promise<DirectoryEntry[]> {
   const paths = await listDirectory(dirPath, options)
   const entries = await Promise.all(
     paths.map(async (entryPath) => {
       try {
+        throwIfAborted(options?.signal)
         const stat = await fs.promises.stat(entryPath)
+        throwIfAborted(options?.signal)
         return { path: entryPath as AbsoluteFilePath, isDirectory: stat.isDirectory() }
       } catch {
+        throwIfAborted(options?.signal)
         // Entry vanished between listing and stat — drop it (matches the
         // renderer's old per-entry isDirectory failure handling).
         return null

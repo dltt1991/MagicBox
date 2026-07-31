@@ -23,7 +23,7 @@ import {
 import { cn } from '@cherrystudio/ui/lib/utils'
 import { usePersistCache } from '@data/hooks/useCache'
 import { useOpenFilePreviewTab } from '@renderer/components/FilePreview'
-import { useCommandHandler } from '@renderer/hooks/command'
+import { useCommandContextKey, useCommandHandler } from '@renderer/hooks/command'
 import { ipcApi } from '@renderer/ipc'
 import { toast } from '@renderer/services/toast'
 import { safeOpen } from '@renderer/utils/file/safeOpen'
@@ -42,6 +42,7 @@ import {
   List,
   Pin,
   PinOff,
+  Search,
   Star,
   X
 } from 'lucide-react'
@@ -55,6 +56,7 @@ import { TerminalWorkspaceLayout } from './components/TerminalWorkspaceLayout'
 import type { WorkspaceContextMenuActions } from './components/WorkspaceContextMenu'
 import { WorkspaceFileTree } from './components/WorkspaceFileTree'
 import { WorkspacePreviewPane } from './components/WorkspacePreviewPane'
+import { WorkspaceSearchDialog } from './components/WorkspaceSearchDialog'
 import { useTerminalSessions } from './hooks/useTerminalSessions'
 import {
   createTerminalQuickCommandId,
@@ -150,6 +152,14 @@ function buildWorkspacePathSegments(path: string): Array<{ label: string; path: 
   ]
 }
 
+function getWorkspaceParentPath(path: string): string {
+  const normalizedPath = path.replace(/\\/g, '/').replace(/\/+$/, '')
+  const index = normalizedPath.lastIndexOf('/')
+  if (index <= 0) return '/'
+
+  return normalizedPath.slice(0, index)
+}
+
 function formatWorkspaceSize(size: number): string {
   if (size < 1024) return `${size} B`
 
@@ -184,6 +194,7 @@ export default function TerminalPage() {
   const [selectedWorkspacePath, setSelectedWorkspacePath] = useState<string | null>(null)
   const [expandedWorkspaceTreePaths, setExpandedWorkspaceTreePaths] = useState<string[]>([])
   const [activeFilePath, setActiveFilePath] = useState<string | null>(null)
+  const [globalWorkspaceRoot, setGlobalWorkspaceRoot] = useState<string | null>(null)
   const [defaultRootResolved, setDefaultRootResolved] = useState(false)
   const [isEditingWorkspaceRoot, setIsEditingWorkspaceRoot] = useState(false)
   const [workspaceRootDraft, setWorkspaceRootDraft] = useState(workspaceRoot ?? '')
@@ -196,6 +207,7 @@ export default function TerminalPage() {
     useState<WorkspacePasteConflictDialogState | null>(null)
   const [workspacePasteConflictName, setWorkspacePasteConflictName] = useState('')
   const [favoriteMenuOpen, setFavoriteMenuOpen] = useState(false)
+  const [workspaceSearchOpen, setWorkspaceSearchOpen] = useState(false)
   const [quickCommandDialogOpen, setQuickCommandDialogOpen] = useState(false)
   const [editingQuickCommand, setEditingQuickCommand] = useState<TerminalQuickCommand | null>(null)
   const [quickCommandInput, setQuickCommandInput] = useState('')
@@ -213,6 +225,7 @@ export default function TerminalPage() {
   const quickCommandRunInFlightRef = useRef(false)
   const openFilePreviewTab = useOpenFilePreviewTab()
   const selectedTerminalTheme = getTerminalTheme(terminalThemeKey)
+  useCommandContextKey('terminal.active', true)
   const {
     activeSession,
     activeSessionId,
@@ -475,17 +488,19 @@ export default function TerminalPage() {
   }, [sessions.length, terminalVisible])
 
   useEffect(() => {
-    if (workspaceRoot || defaultRootResolved) return
+    if (defaultRootResolved) return
     setDefaultRootResolved(true)
     void window.api
       .resolvePath('~')
       .then((homePath) => {
-        if (homePath) setWorkspaceRootState(homePath)
+        if (!homePath) return
+        setGlobalWorkspaceRoot(homePath)
+        if (!workspaceRootRef.current) setWorkspaceRootState(homePath)
       })
       .catch(() => {
         // Keep the explicit empty state if the platform home path cannot be resolved.
       })
-  }, [defaultRootResolved, setWorkspaceRootState, workspaceRoot])
+  }, [defaultRootResolved, setWorkspaceRootState])
 
   useEffect(() => {
     if (!isEditingWorkspaceRoot) setWorkspaceRootDraft(workspaceRoot ?? '')
@@ -502,6 +517,11 @@ export default function TerminalPage() {
   useEffect(() => {
     if (keepDirectory || !activeSession?.cwd) return
     if (activeSession.cwd === lastAutoFollowCwdRef.current) return
+
+    if (!workspaceRootRef.current) {
+      lastAutoFollowCwdRef.current = activeSession.cwd
+      return
+    }
 
     lastAutoFollowCwdRef.current = activeSession.cwd
     if (activeSession.cwd === workspaceRoot) return
@@ -571,6 +591,34 @@ export default function TerminalPage() {
     },
     [setPreviewOpen, setWorkspaceRootState, workspaceRoot]
   )
+
+  const openWorkspaceSearch = useCallback(() => {
+    setWorkspaceSearchOpen(true)
+  }, [])
+
+  const openWorkspaceSearchResult = useCallback(
+    (item: Pick<WorkspaceTreeItem, 'kind' | 'path'>) => {
+      workspaceChildHistoryRef.current = []
+
+      if (item.kind === 'directory') {
+        setWorkspaceRootState(item.path)
+        setSelectedWorkspacePath(null)
+        setActiveFilePath(null)
+        setPreviewOpen(false)
+        setWorkspaceSearchOpen(false)
+        return
+      }
+
+      setWorkspaceRootState(getWorkspaceParentPath(item.path))
+      setSelectedWorkspacePath(item.path)
+      setActiveFilePath(item.path)
+      setPreviewOpen(true)
+      setWorkspaceSearchOpen(false)
+    },
+    [setPreviewOpen, setWorkspaceRootState]
+  )
+
+  useCommandHandler('file_manager.search', openWorkspaceSearch)
 
   const refreshWorkspace = useCallback(() => {
     setWorkspaceRefreshKey((currentKey) => currentKey + 1)
@@ -937,6 +985,16 @@ export default function TerminalPage() {
             )}
           </PopoverContent>
         </Popover>
+        <NormalTooltip content={t('terminal.workspace.search.title')}>
+          <Button
+            aria-label={t('terminal.workspace.search.title')}
+            onClick={openWorkspaceSearch}
+            size="icon-sm"
+            title={t('terminal.workspace.search.title')}
+            variant="ghost">
+            <Search />
+          </Button>
+        </NormalTooltip>
         {isEditingWorkspaceRoot ? (
           <Input
             aria-label={t('terminal.workspace.path_input')}
@@ -1314,6 +1372,14 @@ export default function TerminalPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <WorkspaceSearchDialog
+        globalRootPath={globalWorkspaceRoot}
+        includeHidden={includeHidden}
+        onOpenChange={setWorkspaceSearchOpen}
+        onOpenResult={openWorkspaceSearchResult}
+        open={workspaceSearchOpen}
+        rootPath={workspaceRoot}
+      />
       <TerminalWorkspaceLayout
         fileManager={fileManager}
         onShowTerminal={() => {

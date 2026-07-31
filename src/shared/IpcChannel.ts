@@ -71,6 +71,7 @@ export enum IpcChannel {
   Fs_ReadText = 'fs:readText',
   File_ListDirectory = 'file:listDirectory',
   File_ListDirectoryEntries = 'file:listDirectoryEntries',
+  File_CancelDirectorySearch = 'file:cancelDirectorySearch',
   File_CheckFileName = 'file:checkFileName',
   File_ValidateNotesDirectory = 'file:validateNotesDirectory',
   File_BatchUploadMarkdown = 'file:batchUploadMarkdown',

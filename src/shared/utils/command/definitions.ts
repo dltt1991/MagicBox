@@ -136,7 +136,8 @@ export const COMMAND_DEFINITIONS = [
     categoryKey: 'settings.shortcuts.chat',
     scope: 'renderer',
     keybinding: {
-      defaultBinding: ['CommandOrControl', 'F']
+      defaultBinding: ['CommandOrControl', 'F'],
+      when: '!terminal.active'
     }
   }),
   defineCommand({
@@ -285,6 +286,16 @@ export const COMMAND_DEFINITIONS = [
     scope: 'renderer',
     keybinding: {
       defaultBinding: ['CommandOrControl', 'Right']
+    }
+  }),
+  defineCommand({
+    id: 'file_manager.search',
+    titleKey: 'settings.shortcuts.file_manager_search',
+    categoryKey: 'settings.shortcuts.file_manager',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: ['CommandOrControl', 'F'],
+      when: 'terminal.active'
     }
   }),
   defineCommand({
