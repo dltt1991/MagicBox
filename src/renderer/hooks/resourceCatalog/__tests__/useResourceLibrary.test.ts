@@ -172,7 +172,7 @@ describe('useResourceLibrary', () => {
       listResult([
         {
           id: 'agent-1',
-          name: 'Magic Box Assistant',
+          name: 'Magic Assistant',
           description: '',
           configuration: { builtin_role: 'assistant' },
           model: null,
@@ -194,7 +194,7 @@ describe('useResourceLibrary', () => {
       listResult([
         {
           id: 'agent-1',
-          name: 'Magic Box Assistant',
+          name: 'Magic Assistant',
           description: '',
           configuration: { builtin_role: 'assistant' },
           model: null,

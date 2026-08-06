@@ -67,7 +67,7 @@ export const CHERRY_BUILTIN_AUTO_APPROVED_TOOL_NAMES: readonly string[] = [
 ]
 
 /**
- * Assistant MCP tools safe to auto-approve for local Magic Box Assistant sessions: `navigate` only,
+ * Assistant MCP tools safe to auto-approve for local Magic Assistant sessions: `navigate` only,
  * which emits a clickable link the user must click themselves. `diagnose` reads local machine data
  * (logs, source files, config, host info) and MUST go through per-call approval — the Assistant
  * also reads untrusted web/KB content, and auto-approved web_fetch would complete a prompt-injection

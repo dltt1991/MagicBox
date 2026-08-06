@@ -1398,8 +1398,8 @@
     },
     "deeply_thought": "已深度思考（用时 {{seconds}} 秒）",
     "default": {
-      "description": "你好，我是 Magic Box 助手。你可以立刻开始跟我聊天",
-      "name": "Magic Box 助手",
+      "description": "你好，我是 Magic 助手。你可以立刻开始跟我聊天",
+      "name": "Magic 助手",
       "topic": {
         "name": "默认对话"
       }
@@ -5730,6 +5730,7 @@
       "social": {
         "title": "社交账号"
       },
+      "temporarilyUnavailable": "暂不可用",
       "title": "关于我们",
       "updateAvailable": "发现新版本 {{version}}",
       "updateError": "更新出错",

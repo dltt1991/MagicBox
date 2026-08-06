@@ -37,7 +37,7 @@ describe('CherryAssistantSeeder', () => {
     expect(new CherryAssistantSeeder().version).toBe('1')
   })
 
-  it('registers the CherryAI default model before Magic Box Assistant in the production registry', () => {
+  it('registers the CherryAI default model before Magic Assistant in the production registry', () => {
     const modelSeederIndex = seeders.findIndex((seeder) => seeder instanceof CherryAiDefaultModelSeeder)
     const assistantSeederIndex = seeders.findIndex((seeder) => seeder instanceof CherryAssistantSeeder)
 
@@ -68,7 +68,7 @@ describe('CherryAssistantSeeder', () => {
     const [agent] = builtinAgents(dbh.db)
     expect(agent).toMatchObject({
       type: 'claude-code',
-      name: 'Magic Box Assistant',
+      name: 'Magic Assistant',
       description: '',
       instructions: '',
       model: null
@@ -97,7 +97,7 @@ describe('CherryAssistantSeeder', () => {
     new CherryAssistantSeeder().run(dbh.db)
 
     const [agent] = builtinAgents(dbh.db)
-    expect(agent.name).toBe('Magic Box 助理')
+    expect(agent.name).toBe('Magic 助理')
   })
 
   it('falls back to the English name when preferred system languages are unavailable', () => {
@@ -108,7 +108,7 @@ describe('CherryAssistantSeeder', () => {
     expect(() => new CherryAssistantSeeder().run(dbh.db)).not.toThrow()
 
     const [agent] = builtinAgents(dbh.db)
-    expect(agent.name).toBe('Magic Box Assistant')
+    expect(agent.name).toBe('Magic Assistant')
   })
 
   it('skips when any active agent exists and SeedRunner still journals the one-time eligibility check', () => {

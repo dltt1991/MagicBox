@@ -84,7 +84,7 @@ import type { ClaudeCodeSettings, McpToolDisplayMetadata, SteerHolder, ToolAppro
 
 const logger = loggerService.withContext('ClaudeCodeSettingsBuilder')
 const MINIMAL_CHERRY_ASSISTANT_INSTRUCTIONS =
-  'You are Magic Box Assistant, the built-in helper for Magic Box. Help users understand and troubleshoot Magic Box.'
+  'You are Magic Assistant, the built-in helper for Magic Box. Help users understand and troubleshoot Magic Box.'
 const require_ = createRequire(import.meta.url)
 const promptBuilder = new PromptBuilder()
 const ASK_USER_QUESTION_TOOL_NAME = 'AskUserQuestion'
@@ -208,7 +208,7 @@ function extractSteerText(input: AgentRuntimeUserInput): string {
 }
 
 /**
- * Build a lightweight environment snapshot (~200 tokens) for Magic Box Assistant.
+ * Build a lightweight environment snapshot (~200 tokens) for Magic Assistant.
  * Injected into system prompt so the agent knows the user's setup immediately.
  */
 function buildAssistantContext(): string {
@@ -279,7 +279,7 @@ export async function buildClaudeCodeSessionSettings(
       ? channelService.findBySessionId(session.id)
       : options.linkedChannelSnapshot
   // External channel turns are untrusted and have no local approval UI; never expose
-  // Assistant diagnostics there. Local Magic Box Assistant sessions keep the full MCP.
+  // Assistant diagnostics there. Local Magic Assistant sessions keep the full MCP.
   const assistantMcpEnabled = isAssistant && linkedChannelSnapshot === null
 
   // Warm the agent's MCP tool caches before building approval descriptors (step 4) and tool-card
@@ -1061,7 +1061,7 @@ export async function buildSystemPrompt(
     if (definition?.instructions) {
       instructions = definition.instructions
     } else if (isAssistant) {
-      logger.error('Builtin Magic Box Assistant definition missing; using minimal fallback instructions')
+      logger.error('Builtin Magic Assistant definition missing; using minimal fallback instructions')
       instructions = MINIMAL_CHERRY_ASSISTANT_INSTRUCTIONS
     }
   }
@@ -1182,11 +1182,11 @@ export function buildMcpServers(
     totalMcpServers: Object.keys(mcpList).length
   })
 
-  // 5. Assistant — navigate + diagnose tools (local Magic Box Assistant sessions only)
+  // 5. Assistant — navigate + diagnose tools (local Magic Assistant sessions only)
   if (assistantMcpEnabled) {
     const assistantServer = new AssistantServer()
     mcpList.assistant = { type: 'sdk', name: 'assistant', instance: assistantServer.mcpServer }
-    logger.debug('Magic Box Assistant: injected assistant MCP server', {
+    logger.debug('Magic Assistant: injected assistant MCP server', {
       agentId: session.agentId,
       totalMcpServers: Object.keys(mcpList).length
     })

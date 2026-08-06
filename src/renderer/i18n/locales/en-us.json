@@ -1398,8 +1398,8 @@
     },
     "deeply_thought": "Deeply thought ({{seconds}} seconds)",
     "default": {
-      "description": "Hello, I'm Magic Box Assistant. You can start chatting with me right away",
-      "name": "Magic Box Assistant",
+      "description": "Hello, I'm Magic Assistant. You can start chatting with me right away",
+      "name": "Magic Assistant",
       "topic": {
         "name": "Default Conversation"
       }
@@ -5730,6 +5730,7 @@
       "social": {
         "title": "Social Accounts"
       },
+      "temporarilyUnavailable": "Temporarily unavailable",
       "title": "About",
       "updateAvailable": "Found new version {{version}}",
       "updateError": "Update error",
