@@ -10,6 +10,7 @@ import {
 } from '@renderer/utils/miniAppKeepAlive'
 import { cn } from '@renderer/utils/style'
 import { clearWebviewState, getWebviewLoaded, setWebviewLoaded } from '@renderer/utils/webviewStateManager'
+import type { MiniApp } from '@shared/data/types/miniApp'
 import type { WebviewTag } from 'electron'
 import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
 
@@ -25,6 +26,20 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react'
  *  - All other webviews stay mounted but display:none (keep-alive)
  */
 const logger = loggerService.withContext('MiniAppTabsPool')
+const IDLE_RELOAD_MS = 15 * 60 * 1000
+const IDLE_RELOAD_PRESET_IDS = new Set(['moonshot', 'doubao'])
+
+const shouldReloadAfterIdle = (app: MiniApp) =>
+  IDLE_RELOAD_PRESET_IDS.has(app.appId) ||
+  (app.presetMiniAppId ? IDLE_RELOAD_PRESET_IDS.has(app.presetMiniAppId) : false)
+
+const reloadWebview = (webview: WebviewTag) => {
+  if (webview.reloadIgnoringCache) {
+    webview.reloadIgnoringCache()
+    return
+  }
+  webview.reload()
+}
 
 const MiniAppTabsPool: React.FC = () => {
   const { openedKeepAliveMiniApps, currentMiniAppId, setOpenedKeepAliveMiniApps } = useMiniApps()
@@ -37,6 +52,7 @@ const MiniAppTabsPool: React.FC = () => {
 
   // webview refs (pool-internal, used to control show/hide)
   const webviewRefs = useRef<Map<string, WebviewTag | null>>(new Map())
+  const inactiveSinceByAppIdRef = useRef<Map<string, number>>(new Map())
 
   const activeMiniAppId = useMemo(() => {
     const url = tabs.find((t) => t.id === activeTabId)?.url ?? ''
@@ -92,6 +108,8 @@ const MiniAppTabsPool: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appMetadataSignature])
 
+  const appById = useMemo(() => new Map(apps.map((app) => [app.appId, app])), [apps])
+
   /** 设置 ref 回调 */
   const handleSetRef = (appid: string, el: WebviewTag | null) => {
     if (el) {
@@ -114,12 +132,31 @@ const MiniAppTabsPool: React.FC = () => {
 
   /** Toggle display: only the active one is visible, the rest are hidden */
   useEffect(() => {
+    const now = Date.now()
     webviewRefs.current.forEach((ref, id) => {
       if (!ref) return
       const active = id === currentMiniAppId && shouldShow
       ref.style.display = active ? 'inline-flex' : 'none'
+
+      if (!active) {
+        if (!inactiveSinceByAppIdRef.current.has(id)) {
+          inactiveSinceByAppIdRef.current.set(id, now)
+        }
+        return
+      }
+
+      const inactiveSince = inactiveSinceByAppIdRef.current.get(id)
+      inactiveSinceByAppIdRef.current.delete(id)
+      if (inactiveSince === undefined) return
+
+      const idleMs = now - inactiveSince
+      const app = appById.get(id)
+      if (!app || idleMs < IDLE_RELOAD_MS || !shouldReloadAfterIdle(app) || ref.isLoading()) return
+
+      logger.debug(`Reloading idle mini app webview: ${id}`, { idleMs })
+      reloadWebview(ref)
     })
-  }, [currentMiniAppId, shouldShow, apps.length])
+  }, [appById, currentMiniAppId, shouldShow])
 
   /** When an entry is in the Map but no longer in openedKeepAlive, remove the ref (React unmounts the element itself) */
   useEffect(() => {
@@ -128,6 +165,7 @@ const MiniAppTabsPool: React.FC = () => {
     for (const id of webviewRefs.current.keys()) {
       if (!activeIds.has(id)) {
         webviewRefs.current.delete(id)
+        inactiveSinceByAppIdRef.current.delete(id)
         if (getWebviewLoaded(id)) {
           setWebviewLoaded(id, false)
         }

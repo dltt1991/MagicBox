@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => {
     open: vi.fn(),
     options: {},
     registerLinkProvider: vi.fn(() => ({ dispose: vi.fn() })),
+    refresh: vi.fn(),
     unicode: { activeVersion: '' },
     write: vi.fn()
   }
@@ -49,6 +50,7 @@ afterEach(() => {
   mocks.terminal.options = {}
   mocks.terminal.buffer.active.getLine.mockReset()
   mocks.terminal.onData.mockClear()
+  mocks.terminal.refresh.mockReset()
   mocks.terminal.registerLinkProvider.mockClear()
   mocks.terminal.write.mockReset()
 })
@@ -257,6 +259,19 @@ describe('TerminalPane', () => {
     )
 
     expect(mocks.terminal.write).toHaveBeenLastCalledWith('xx')
+  })
+
+  it('refreshes the visible terminal rows after writing buffered output', () => {
+    render(
+      <TerminalPane
+        buffer={[{ sequence: 0, data: '中文输出' }]}
+        onInput={vi.fn()}
+        onResize={vi.fn()}
+        sessionId="session-1"
+      />
+    )
+
+    expect(mocks.terminal.refresh).toHaveBeenCalledWith(0, 23)
   })
 
   it('inserts a quoted workspace path dropped from the file tree', () => {

@@ -1,15 +1,51 @@
 import type { MiniApp } from '@shared/data/types/miniApp'
 import { render } from '@testing-library/react'
 import { useEffect } from 'react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const mockWebviews = vi.hoisted(
+  () =>
+    new Map<
+      string,
+      {
+        style: { display?: string }
+        reload: ReturnType<typeof vi.fn>
+        reloadIgnoringCache: ReturnType<typeof vi.fn>
+        isLoading: ReturnType<typeof vi.fn>
+      }
+    >()
+)
+
+const getMockWebview = (appid: string) => {
+  let webview = mockWebviews.get(appid)
+  if (!webview) {
+    webview = {
+      style: {},
+      reload: vi.fn(),
+      reloadIgnoringCache: vi.fn(),
+      isLoading: vi.fn(() => false)
+    }
+    mockWebviews.set(appid, webview)
+  }
+  return webview
+}
 
 // `WebviewContainer` renders an Electron `<webview>` element which JSDOM can't
 // instantiate. Stub it with a div carrying the same `data-mini-app-id` so DOM
 // order assertions still work.
 vi.mock('@renderer/components/MiniApp/WebviewContainer', () => ({
-  default: ({ appid, url }: { appid: string; url: string }) => (
-    <div data-mini-app-id={appid} data-testid={`webview-${appid}`} data-url={url} />
-  )
+  default: ({
+    appid,
+    url,
+    onSetRefCallback
+  }: {
+    appid: string
+    url: string
+    onSetRefCallback: (appid: string, el: unknown) => void
+  }) => {
+    onSetRefCallback(appid, getMockWebview(appid))
+    return <div data-mini-app-id={appid} data-testid={`webview-${appid}`} data-url={url} />
+  }
 }))
 
 const stubApp = (id: string): MiniApp => ({
@@ -72,6 +108,8 @@ const renderedAppUrls = (container: HTMLElement): string[] =>
   Array.from(container.querySelectorAll<HTMLElement>('[data-mini-app-id]')).map((el) => el.dataset.url as string)
 
 describe('MiniAppTabsPool', () => {
+  let now = 1_000
+
   beforeEach(() => {
     mocks.openedKeepAliveMiniApps = []
     mocks.currentMiniAppId = ''
@@ -80,6 +118,13 @@ describe('MiniAppTabsPool', () => {
     mocks.tabs = []
     mocks.activeTabId = ''
     mocks.clearWebviewState.mockReset()
+    mockWebviews.clear()
+    now = 1_000
+    vi.spyOn(Date, 'now').mockImplementation(() => now)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('renders webviews in stable appId-sorted order regardless of LRU order', () => {
@@ -133,6 +178,73 @@ describe('MiniAppTabsPool', () => {
 
     expect(renderedAppIds(container)).toEqual(['alpha', 'bravo'])
     expect(renderedAppUrls(container)).toEqual(['https://renamed-alpha.example.com', 'https://bravo.example.com'])
+  })
+
+  it('reloads Kimi after it becomes visible following a long idle period', () => {
+    const moonshot = { ...stubApp('moonshot'), presetMiniAppId: 'moonshot', url: 'https://kimi.moonshot.cn/' }
+    const doubao = { ...stubApp('doubao'), presetMiniAppId: 'doubao', url: 'https://www.doubao.com/chat/' }
+    mocks.openedKeepAliveMiniApps = [moonshot, doubao]
+    mocks.currentMiniAppId = 'moonshot'
+    mocks.tabs = [{ id: 't1', url: '/app/mini-app/moonshot' }]
+    mocks.activeTabId = 't1'
+
+    const { rerender } = render(<MiniAppTabsPool />)
+
+    mocks.currentMiniAppId = 'doubao'
+    mocks.tabs = [{ id: 't1', url: '/app/mini-app/doubao' }]
+    rerender(<MiniAppTabsPool />)
+
+    now += 16 * 60 * 1000
+    mocks.currentMiniAppId = 'moonshot'
+    mocks.tabs = [{ id: 't1', url: '/app/mini-app/moonshot' }]
+    rerender(<MiniAppTabsPool />)
+
+    expect(getMockWebview('moonshot').reloadIgnoringCache).toHaveBeenCalledTimes(1)
+    expect(getMockWebview('doubao').reloadIgnoringCache).not.toHaveBeenCalled()
+  })
+
+  it('does not reload Kimi after a short idle period', () => {
+    const moonshot = { ...stubApp('moonshot'), presetMiniAppId: 'moonshot', url: 'https://kimi.moonshot.cn/' }
+    const doubao = { ...stubApp('doubao'), presetMiniAppId: 'doubao', url: 'https://www.doubao.com/chat/' }
+    mocks.openedKeepAliveMiniApps = [moonshot, doubao]
+    mocks.currentMiniAppId = 'moonshot'
+    mocks.tabs = [{ id: 't1', url: '/app/mini-app/moonshot' }]
+    mocks.activeTabId = 't1'
+
+    const { rerender } = render(<MiniAppTabsPool />)
+
+    mocks.currentMiniAppId = 'doubao'
+    mocks.tabs = [{ id: 't1', url: '/app/mini-app/doubao' }]
+    rerender(<MiniAppTabsPool />)
+
+    now += 5 * 60 * 1000
+    mocks.currentMiniAppId = 'moonshot'
+    mocks.tabs = [{ id: 't1', url: '/app/mini-app/moonshot' }]
+    rerender(<MiniAppTabsPool />)
+
+    expect(getMockWebview('moonshot').reloadIgnoringCache).not.toHaveBeenCalled()
+  })
+
+  it('does not reload other mini apps after a long idle period', () => {
+    const alpha = stubApp('alpha')
+    const bravo = stubApp('bravo')
+    mocks.openedKeepAliveMiniApps = [alpha, bravo]
+    mocks.currentMiniAppId = 'alpha'
+    mocks.tabs = [{ id: 't1', url: '/app/mini-app/alpha' }]
+    mocks.activeTabId = 't1'
+
+    const { rerender } = render(<MiniAppTabsPool />)
+
+    mocks.currentMiniAppId = 'bravo'
+    mocks.tabs = [{ id: 't1', url: '/app/mini-app/bravo' }]
+    rerender(<MiniAppTabsPool />)
+
+    now += 16 * 60 * 1000
+    mocks.currentMiniAppId = 'alpha'
+    mocks.tabs = [{ id: 't1', url: '/app/mini-app/alpha' }]
+    rerender(<MiniAppTabsPool />)
+
+    expect(getMockWebview('alpha').reloadIgnoringCache).not.toHaveBeenCalled()
   })
 
   it('trims the oldest unprotected webviews when the keep-alive cap decreases', () => {
