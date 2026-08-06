@@ -581,7 +581,7 @@ describe('TerminalPage', () => {
     expect(mocks.createSession).not.toHaveBeenCalled()
     expect(screen.getByTestId('terminal-pane')).toBeInTheDocument()
     await waitFor(() =>
-      expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/Users/alice')
+      expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace')
     )
   })
 
@@ -746,6 +746,25 @@ describe('TerminalPage', () => {
     render(<TerminalPage />)
 
     expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace/app')
+  })
+
+  it('uses the initial active terminal cwd before the default home workspace resolves', async () => {
+    mocks.activeSession = { id: 'session-1', cwd: '/workspace/中文目录', buffer: [] }
+
+    render(<TerminalPage />)
+
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace/中文目录')
+    await waitFor(() => expect(mocks.resolvePath).toHaveBeenCalledWith('~'))
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace/中文目录')
+  })
+
+  it('decodes URI-encoded terminal cwd values before following them in the file manager', () => {
+    mocks.persistValues['terminal.workspace.root'] = '/workspace'
+    mocks.activeSession = { id: 'session-1', cwd: '/workspace/%E4%B8%AD%E6%96%87%E7%9B%AE%E5%BD%95', buffer: [] }
+
+    render(<TerminalPage />)
+
+    expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace/中文目录')
   })
 
   it('keeps a user-selected folder when directory keeping is off until the terminal cwd changes', async () => {
@@ -1597,7 +1616,7 @@ describe('TerminalPage', () => {
 
     expect(mocks.persistValues['terminal.workspace.terminal_visible']).toBe(false)
     await waitFor(() =>
-      expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/Users/alice')
+      expect(screen.getByTestId('mock-workspace-file-tree')).toHaveAttribute('data-root-path', '/workspace')
     )
   })
 

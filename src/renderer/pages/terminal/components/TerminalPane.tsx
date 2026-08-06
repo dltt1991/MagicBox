@@ -144,6 +144,7 @@ export function TerminalPane({
 
     const fit = () => {
       fitAddon.fit()
+      terminal.refresh(0, Math.max(0, terminal.rows - 1))
       if (terminal.cols > 0 && terminal.rows > 0) {
         onResizeEvent({ cols: terminal.cols, rows: terminal.rows })
       }
@@ -230,6 +231,8 @@ export function TerminalPane({
 
     terminal.write(pendingBuffer.map((chunk) => chunk.data).join(''))
     lastWrittenSequenceRef.current = pendingBuffer.at(-1)?.sequence ?? lastWrittenSequenceRef.current
+    terminal.refresh(0, Math.max(0, terminal.rows - 1))
+    scheduleFitRef.current?.()
   }, [buffer])
 
   return (

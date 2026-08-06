@@ -119,6 +119,16 @@ function isPathInsideRoot(path: string, root: string): boolean {
   return path === root || path.startsWith(`${root}/`) || path.startsWith(`${root}\\`)
 }
 
+function normalizeTerminalCwdPath(path: string): string {
+  if (!path.includes('%')) return path
+
+  try {
+    return decodeURI(path)
+  } catch {
+    return path
+  }
+}
+
 function buildWorkspacePathSegments(path: string): Array<{ label: string; path: string }> {
   if (!path) return []
 
@@ -523,15 +533,17 @@ export default function TerminalPage() {
   useEffect(() => {
     if (keepDirectory || !activeSession?.cwd) return
     if (activeSession.cwd === lastAutoFollowCwdRef.current) return
+    const nextWorkspaceRoot = normalizeTerminalCwdPath(activeSession.cwd)
 
     if (!workspaceRootRef.current) {
       lastAutoFollowCwdRef.current = activeSession.cwd
+      setWorkspaceRootState(nextWorkspaceRoot)
       return
     }
 
     lastAutoFollowCwdRef.current = activeSession.cwd
-    if (activeSession.cwd === workspaceRoot) return
-    setWorkspaceRootState(activeSession.cwd)
+    if (nextWorkspaceRoot === workspaceRoot) return
+    setWorkspaceRootState(nextWorkspaceRoot)
     setSelectedWorkspacePath(null)
     setActiveFilePath(null)
     setPreviewOpen(false)
