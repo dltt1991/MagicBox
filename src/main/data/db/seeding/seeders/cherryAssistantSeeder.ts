@@ -10,13 +10,15 @@ import type { DbType, ISeeder } from '../../types'
 // A seeder is a versioned rollout snapshot, not a live view of the AI package.
 // Runtime restoration reads the current package definition in the AI module;
 // keeping this seed local avoids either direction crossing the Data/AI boundary.
+export const MAGIC_ASSISTANT_AVATAR = '✨'
+
 const CHERRY_ASSISTANT_SEED = {
   name: {
     default: 'Magic Assistant',
     zh: 'Magic Box 小助手'
   },
   configuration: {
-    avatar: '🍒',
+    avatar: MAGIC_ASSISTANT_AVATAR,
     permission_mode: 'acceptEdits',
     max_turns: 100,
     bootstrap_completed: true,
