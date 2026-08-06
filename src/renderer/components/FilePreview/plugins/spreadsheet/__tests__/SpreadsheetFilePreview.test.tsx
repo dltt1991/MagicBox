@@ -73,7 +73,9 @@ afterEach(cleanup)
 
 describe('SpreadsheetFilePreview', () => {
   it('loads spreadsheet bytes and renders the first sheet as a read-only table', async () => {
-    render(<SpreadsheetFilePreview filePath={filePath} fileName="sales.xlsx" refreshKey={0} />)
+    render(
+      <SpreadsheetFilePreview filePath={filePath} fileName="sales.xlsx" metadata={{ size: 1024 }} refreshKey={0} />
+    )
 
     expect(screen.getByRole('status')).toHaveTextContent('file_preview.loading')
     expect(await screen.findByRole('table', { name: 'Q1' })).toBeInTheDocument()
@@ -90,7 +92,7 @@ describe('SpreadsheetFilePreview', () => {
   it('renders CSV files through the same spreadsheet table path', async () => {
     const csvPath = '/tmp/workbook/data.csv' as AbsoluteFilePath
 
-    render(<SpreadsheetFilePreview filePath={csvPath} fileName="data.csv" refreshKey={0} />)
+    render(<SpreadsheetFilePreview filePath={csvPath} fileName="data.csv" metadata={{ size: 1024 }} refreshKey={0} />)
 
     await screen.findByRole('table', { name: 'data.csv' })
 
@@ -104,7 +106,14 @@ describe('SpreadsheetFilePreview', () => {
     const csvPath = '/tmp/workbook/large.csv' as AbsoluteFilePath
     mocks.getMetadata.mockResolvedValueOnce({ kind: 'file', size: 25 * 1024 * 1024 + 1 })
 
-    render(<SpreadsheetFilePreview filePath={csvPath} fileName="large.csv" refreshKey={0} />)
+    render(
+      <SpreadsheetFilePreview
+        filePath={csvPath}
+        fileName="large.csv"
+        metadata={{ size: 25 * 1024 * 1024 + 1 }}
+        refreshKey={0}
+      />
+    )
 
     expect(await screen.findByRole('table', { name: 'large.csv' })).toBeInTheDocument()
     expect(mocks.fsReadText).toHaveBeenCalledWith(csvPath)
@@ -115,7 +124,9 @@ describe('SpreadsheetFilePreview', () => {
   it('shows an empty state when the workbook has no cells', async () => {
     mocks.sheetToJson.mockReturnValueOnce([])
 
-    render(<SpreadsheetFilePreview filePath={filePath} fileName="sales.xlsx" refreshKey={0} />)
+    render(
+      <SpreadsheetFilePreview filePath={filePath} fileName="sales.xlsx" metadata={{ size: 1024 }} refreshKey={0} />
+    )
 
     await waitFor(() =>
       expect(screen.getByTestId('empty-state')).toHaveTextContent('file_preview.spreadsheet.empty.title')
@@ -126,7 +137,9 @@ describe('SpreadsheetFilePreview', () => {
     const error = new Error('bad workbook')
     mocks.fsRead.mockRejectedValueOnce(error)
 
-    render(<SpreadsheetFilePreview filePath={filePath} fileName="sales.xlsx" refreshKey={0} />)
+    render(
+      <SpreadsheetFilePreview filePath={filePath} fileName="sales.xlsx" metadata={{ size: 1024 }} refreshKey={0} />
+    )
 
     expect(await screen.findByRole('alert')).toHaveTextContent('file_preview.load_error.title')
     expect(screen.getByRole('alert')).toHaveTextContent('file_preview.load_error.description')

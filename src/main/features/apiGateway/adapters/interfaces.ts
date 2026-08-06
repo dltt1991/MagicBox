@@ -21,10 +21,14 @@ import type { ToolSet, UIMessageChunk } from 'ai'
  * breakdown on this channel.
  */
 export interface GatewayUsageMetadata {
-  totalTokens?: number
-  promptTokens?: number
-  completionTokens?: number
-  thoughtsTokens?: number
+  stats?: {
+    totalTokens?: number
+    inputTokens?: number
+    outputTokens?: number
+    outputTokenDetails?: {
+      reasoningTokens?: number
+    }
+  }
 }
 
 /**
@@ -108,6 +112,8 @@ export interface StreamAdapterOptions {
   messageId?: string
   /** Initial input token count */
   inputTokens?: number
+  /** Restore a provider-safe tool name to the identity expected by the API client. */
+  toClientToolName?: (toolName: string) => string
 }
 
 /**
@@ -129,6 +135,9 @@ export interface IMessageConverter<TInputParams = unknown> {
    * tools): the model emits the call and the gateway forwards it to the client.
    */
   toAiSdkTools?(params: TInputParams): ToolSet | undefined
+
+  /** Restore a provider-safe tool name before returning a tool call to the API client. */
+  toClientToolName?(toolName: string): string
 
   /**
    * Extract stream/generation options from input params

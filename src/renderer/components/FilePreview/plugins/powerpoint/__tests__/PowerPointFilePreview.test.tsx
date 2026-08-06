@@ -142,7 +142,6 @@ const filePath = '/tmp/presentations/roadmap.pptx' as AbsoluteFilePath
 beforeEach(() => {
   vi.clearAllMocks()
   mocks.fsRead.mockResolvedValue(new Uint8Array([80, 75, 3, 4]))
-  mocks.getMetadata.mockResolvedValue({ kind: 'file', size: 1024 })
   mocks.parseZipLazyMedia.mockResolvedValue(mocks.mockFiles)
   mocks.buildPresentation.mockImplementation(() => mocks.createMockPresentation())
   Object.defineProperty(window, 'api', {
@@ -156,7 +155,9 @@ afterEach(cleanup)
 
 describe('PowerPointFilePreview', () => {
   it('loads and renders PPTX slides with a centered standalone toolbar', async () => {
-    render(<PowerPointFilePreview filePath={filePath} fileName="roadmap.pptx" refreshKey={0} />)
+    render(
+      <PowerPointFilePreview filePath={filePath} fileName="roadmap.pptx" metadata={{ size: 1024 }} refreshKey={0} />
+    )
 
     expect(screen.getByRole('status')).toHaveTextContent('file_preview.loading')
     await waitFor(() => expect(mocks.load).toHaveBeenCalledTimes(1))
@@ -186,7 +187,9 @@ describe('PowerPointFilePreview', () => {
   })
 
   it('removes external media relationships before loading the viewer', async () => {
-    render(<PowerPointFilePreview filePath={filePath} fileName="roadmap.pptx" refreshKey={0} />)
+    render(
+      <PowerPointFilePreview filePath={filePath} fileName="roadmap.pptx" metadata={{ size: 1024 }} refreshKey={0} />
+    )
 
     await waitFor(() => expect(mocks.load).toHaveBeenCalledTimes(1))
 
@@ -199,7 +202,14 @@ describe('PowerPointFilePreview', () => {
   it('renders PPTX files larger than the previous 25 MB preview limit', async () => {
     mocks.getMetadata.mockResolvedValueOnce({ kind: 'file', size: 25 * 1024 * 1024 + 1 })
 
-    render(<PowerPointFilePreview filePath={filePath} fileName="roadmap.pptx" refreshKey={0} />)
+    render(
+      <PowerPointFilePreview
+        filePath={filePath}
+        fileName="roadmap.pptx"
+        metadata={{ size: 25 * 1024 * 1024 + 1 }}
+        refreshKey={0}
+      />
+    )
 
     await waitFor(() => expect(mocks.load).toHaveBeenCalledTimes(1))
 
@@ -213,7 +223,9 @@ describe('PowerPointFilePreview', () => {
     const error = new Error('corrupt pptx')
     mocks.fsRead.mockRejectedValueOnce(error)
 
-    render(<PowerPointFilePreview filePath={filePath} fileName="roadmap.pptx" refreshKey={0} />)
+    render(
+      <PowerPointFilePreview filePath={filePath} fileName="roadmap.pptx" metadata={{ size: 1024 }} refreshKey={0} />
+    )
 
     expect(await screen.findByRole('alert')).toHaveTextContent('file_preview.load_error.title')
     expect(screen.getByRole('alert')).toHaveTextContent('file_preview.load_error.description')
@@ -224,7 +236,9 @@ describe('PowerPointFilePreview', () => {
     const error = new Error('renderer failed')
     mocks.parseZipLazyMedia.mockRejectedValueOnce(error)
 
-    render(<PowerPointFilePreview filePath={filePath} fileName="roadmap.pptx" refreshKey={0} />)
+    render(
+      <PowerPointFilePreview filePath={filePath} fileName="roadmap.pptx" metadata={{ size: 1024 }} refreshKey={0} />
+    )
 
     expect(await screen.findByText('Slide 1')).toBeInTheDocument()
     expect(screen.getByText('Roadmap summary')).toBeInTheDocument()
@@ -234,11 +248,15 @@ describe('PowerPointFilePreview', () => {
   })
 
   it('rebuilds and destroys the viewer when refreshKey changes', async () => {
-    const view = render(<PowerPointFilePreview filePath={filePath} fileName="roadmap.pptx" refreshKey={0} />)
+    const view = render(
+      <PowerPointFilePreview filePath={filePath} fileName="roadmap.pptx" metadata={{ size: 1024 }} refreshKey={0} />
+    )
     await waitFor(() => expect(mocks.fsRead).toHaveBeenCalledTimes(1))
     await waitFor(() => expect(mocks.load).toHaveBeenCalledTimes(1))
 
-    view.rerender(<PowerPointFilePreview filePath={filePath} fileName="roadmap.pptx" refreshKey={1} />)
+    view.rerender(
+      <PowerPointFilePreview filePath={filePath} fileName="roadmap.pptx" metadata={{ size: 1024 }} refreshKey={1} />
+    )
 
     await waitFor(() => expect(mocks.fsRead).toHaveBeenCalledTimes(2))
     await waitFor(() => expect(mocks.load).toHaveBeenCalledTimes(2))

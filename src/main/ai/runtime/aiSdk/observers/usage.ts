@@ -1,5 +1,5 @@
 /**
- * Per-step token accumulator → `message-metadata` chunk. Reading
+ * Per-step token accumulator → live `message-metadata` chunk. Reading
  * `result.totalUsage` is unreliable because some providers skip the
  * top-level `finish` part; per-step `usage` chunks survive, modulo the
  * Vercel gateway shape bug handled by `gatewayUsageNormalizeFeature`.
@@ -13,6 +13,7 @@
  *   inputTokenDetails.cacheWriteTokens   → cacheWriteTokens
  */
 
+import type { MessageStats } from '@shared/data/types/message'
 import type { LanguageModelUsage } from 'ai'
 
 import type { Agent } from '../Agent'
@@ -48,32 +49,68 @@ export function mergeUsage(a: LanguageModelUsage, b: LanguageModelUsage): Langua
             textTokens: addOpt(a.outputTokenDetails?.textTokens, b.outputTokenDetails?.textTokens),
             reasoningTokens: addOpt(a.outputTokenDetails?.reasoningTokens, b.outputTokenDetails?.reasoningTokens)
           }
-        : (undefined as unknown as LanguageModelUsage['outputTokenDetails'])
+        : (undefined as unknown as LanguageModelUsage['outputTokenDetails']),
+    // `raw` is per-step (one upstream request) and opaque, so it cannot be
+    // merged — only the latest is retained. Never derive a cumulative
+    // provider-reported cost from it. Per-call cost is captured by the
+    // language-model usage middleware before this cumulative UI projection.
+    raw: b.raw ?? a.raw
   }
 }
 
 export { ZERO_USAGE }
 
+/** Drop `undefined`-valued keys; return `undefined` when nothing is left. */
+function compact<T extends Record<string, number | undefined>>(obj: T): { [K in keyof T]?: number } | undefined {
+  const out: Record<string, number> = {}
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'number') out[key] = value
+  }
+  return Object.keys(out).length > 0 ? (out as { [K in keyof T]?: number }) : undefined
+}
+
+/** Project cumulative AI SDK usage into the live `MessageStats` UI shape. */
+function usageToStats(total: LanguageModelUsage, contextTokens: number | undefined): MessageStats {
+  const inputTokenDetails = compact({
+    noCacheTokens: total.inputTokenDetails?.noCacheTokens,
+    cacheReadTokens: total.inputTokenDetails?.cacheReadTokens,
+    cacheWriteTokens: total.inputTokenDetails?.cacheWriteTokens
+  })
+  const outputTokenDetails = compact({
+    textTokens: total.outputTokenDetails?.textTokens,
+    reasoningTokens: total.outputTokenDetails?.reasoningTokens
+  })
+  return {
+    ...(total.inputTokens !== undefined ? { inputTokens: total.inputTokens } : {}),
+    ...(total.outputTokens !== undefined ? { outputTokens: total.outputTokens } : {}),
+    ...(total.totalTokens !== undefined ? { totalTokens: total.totalTokens } : {}),
+    contextTokens,
+    ...(inputTokenDetails ? { inputTokenDetails } : {}),
+    ...(outputTokenDetails ? { outputTokenDetails } : {})
+  }
+}
+
 export function attachUsageObserver(agent: Agent): void {
   let total: LanguageModelUsage = ZERO_USAGE
+  let lastStepTotalTokens: number | undefined
 
   agent.on('onStart', () => {
     total = ZERO_USAGE
+    lastStepTotalTokens = undefined
   })
 
   agent.on('onStepFinish', (step) => {
     if (!step.usage) return
     total = mergeUsage(total, step.usage)
+    // contextTokens is the real end-of-turn context size; trust it only when the
+    // provider reported inputTokens. Otherwise totalTokens collapses to output-only
+    // (addTokenCounts(undefined, out) === out) — a bogus anchor that would suppress
+    // durable compaction — so leave it undefined and let estimateContext fall back to tokenx.
+    lastStepTotalTokens = typeof step.usage.inputTokens === 'number' ? step.usage.totalTokens : undefined
     agent.write({
       type: 'message-metadata',
       messageMetadata: {
-        totalTokens: total.totalTokens,
-        promptTokens: total.inputTokens,
-        completionTokens: total.outputTokens,
-        thoughtsTokens: total.outputTokenDetails?.reasoningTokens,
-        noCacheTokens: total.inputTokenDetails?.noCacheTokens,
-        cacheReadTokens: total.inputTokenDetails?.cacheReadTokens,
-        cacheWriteTokens: total.inputTokenDetails?.cacheWriteTokens
+        stats: usageToStats(total, lastStepTotalTokens)
       }
     })
   })

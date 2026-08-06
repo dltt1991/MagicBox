@@ -12,10 +12,24 @@
 import os from 'node:os'
 import path from 'node:path'
 
+import { loggerService } from '@logger'
 import { isMac, isWin } from '@main/core/platform'
 import { app } from 'electron'
 
 import { CHERRY_HOME, LOGS_DIR } from './constants'
+
+const logger = loggerService.withContext('PathRegistry')
+
+type UserSystemPathName = 'desktop' | 'documents' | 'downloads'
+
+function getUserSystemPath(name: UserSystemPathName, fallback: string): string {
+  try {
+    return app.getPath(name)
+  } catch (error) {
+    logger.warn(`Failed to resolve system path '${name}', using fallback '${fallback}'`, error as Error)
+    return fallback
+  }
+}
 
 /**
  * Build the frozen path registry. Called once during preboot (after
@@ -41,6 +55,7 @@ export function buildPathRegistry() {
   const appExtraResources = process.resourcesPath
   // `resources/` inside asar (bundled assets) — distinct from appExtraResources
   const appRootResources = path.join(app.getAppPath(), 'resources')
+  const sysHome = os.homedir()
 
   return Object.freeze({
     // -- A. cherry.* — ~/.cherrystudio infrastructure --
@@ -49,11 +64,11 @@ export function buildPathRegistry() {
     'cherry.config': path.join(CHERRY_HOME, 'config'),
 
     // -- B. sys.* — OS directories (prefer app.* or cherry.* for Magic Box-owned paths) --
-    'sys.home': os.homedir(),
+    'sys.home': sysHome,
     'sys.temp': sysTemp, // OS-wide; prefer app.temp for Magic Box-specific temp
-    'sys.downloads': app.getPath('downloads'),
-    'sys.documents': app.getPath('documents'),
-    'sys.desktop': app.getPath('desktop'),
+    'sys.downloads': getUserSystemPath('downloads', path.join(sysHome, 'Downloads')),
+    'sys.documents': getUserSystemPath('documents', path.join(sysHome, 'Documents')),
+    'sys.desktop': getUserSystemPath('desktop', path.join(sysHome, 'Desktop')),
     'sys.music': app.getPath('music'),
     'sys.pictures': app.getPath('pictures'),
     'sys.videos': app.getPath('videos'),
@@ -76,7 +91,7 @@ export function buildPathRegistry() {
     'app.temp': appTemp, // Magic Box-specific temp under sys.temp
     'app.userdata': appUserData, // Electron per-app data dir (Magic Box-owned)
     'app.userdata.data': appUserDataData,
-    'app.database.file': path.join(appUserData, 'cherrystudio.sqlite'),
+    'app.database.file': path.join(appUserDataData, 'cherrystudio.sqlite'),
     // Dev: relative to __dirname; packaged: shipped via extraResources
     'app.database.migrations': app.isPackaged
       ? path.join(appExtraResources, 'migrations/sqlite-drizzle')
@@ -127,12 +142,18 @@ export function buildPathRegistry() {
     'feature.agents.skills.builtin': path.join(appRootResources, 'skills'), // bundled skill templates (read-only)
     'feature.agents.skills': path.join(appUserDataData, 'Skills'), // installed skills storage
     'feature.agents.skills.install.temp': path.join(appTemp, 'skill-install'),
-    'feature.agents.claude.root': path.join(appUserData, '.claude'), // Claude Code config (relocated from ~/.claude for Windows compat)
-    'feature.agents.claude.skills': path.join(appUserData, '.claude', 'skills'), // symlinks → feature.agents.skills
+    'feature.agents.claude.root': path.join(appUserDataData, 'Agents', '.claude'), // v1 userData/.claude is copied here during v2 migration
+    'feature.agents.claude.skills': path.join(appUserDataData, 'Agents', '.claude', 'skills'), // symlinks → feature.agents.skills
     'feature.agents.channels': path.join(appUserDataData, 'Channels'),
     'feature.agents.data': path.join(appUserDataData, 'Agents'), // per-agent identity + memory data
     'feature.agents.system_workspaces': path.join(appUserDataData, 'Agents', 'system'), // app-owned session workspaces
     'feature.agents.builtin': path.join(appRootResources, 'builtin-agents'), // bundled agent templates (read-only)
+    'feature.agents.assistant.manifest.file': path.join(
+      appRootResources,
+      'builtin-agents',
+      'cherry-assistant',
+      'product-manifest.json'
+    ),
 
     // Files / Notes / Knowledgebase
     'feature.files.data': path.join(appUserDataData, 'Files'),
@@ -154,7 +175,7 @@ export function buildPathRegistry() {
     // 'app.database.file' — every journal write fsyncs their shared parent,
     // which is what makes a commit-step marker imply the DB rename is
     // durable (see restoreJournal.ts). Never relocate the two independently.
-    'feature.backup.restore.file': path.join(appUserData, 'restore-journal.json'),
+    'feature.backup.restore.file': path.join(appUserDataData, 'restore-journal.json'),
     'feature.backup.restore.staging': path.join(appUserData, 'restore-staging'),
 
     // Stored in the profile it authorizes for reset.
@@ -227,6 +248,7 @@ const NO_ENSURE = [
   'app.database.migrations',
   'feature.provider_registry.data',
   'feature.agents.builtin',
+  'feature.agents.assistant.manifest.file',
   'feature.agents.skills.builtin',
   // AgentSessionService stores this path through DataApi. The runtime creates
   // the concrete session directory later, keeping database writes filesystem-free.

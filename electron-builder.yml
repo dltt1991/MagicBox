@@ -79,6 +79,8 @@ asarUnpack:
   - "node_modules/@img/sharp-*/**"
   - "node_modules/@anthropic-ai/claude-agent-sdk-*/**" # native CLI binary must live on disk to be spawned
   - "node_modules/@aiany/sqlite-vec-*/**" # sqlite-vec extension (.dylib/.so/.dll) is dlopen'd at runtime — must live on disk
+  - "node_modules/@node-rs/xxhash-*/**" # native N-API binary must be unpacked for runtime loading
+  - "node_modules/@firecrawl/anydoc-*/**" # native N-API binary must be unpacked for runtime loading
 extraResources:
   - from: "migrations/sqlite-drizzle"
     to: "migrations/sqlite-drizzle"
@@ -87,6 +89,9 @@ extraResources:
 win:
   executableName: Magic Box
   artifactName: ${productName}-${version}-${arch}-setup.${ext}
+  extraResources:
+    - from: "node_modules/@aiany/sqlite-vec-windows-${arch}/vec0.dll"
+      to: "app.asar.unpacked/node_modules/@aiany/sqlite-vec-windows-${arch}/vec0.dll"
   target:
     - target: nsis
     - target: portable
@@ -172,34 +177,19 @@ releaseInfo:
     - [macOS] Transparent windows are now enabled by default for new macOS users (existing choices and Windows behavior are unchanged)
     - [Data] Data Reset in Settings is now a real v2 userData wipe
 
-    🚀 Action Required
-    - [Knowledge] Downloaded local embedding models are no longer selected automatically for new knowledge bases; enable an embedding model in RAG settings to use vector or hybrid retrieval
-    - [macOS] To use an opaque window on macOS, turn off Transparent Window in Settings > Display & Language
+    🤖 More Powerful Agents
+    - Supports both OpenAI and Anthropic endpoints, reuses Claude and Codex subscriptions, and works with more models
+    - The core Agent runtime is built in, greatly reducing dependency installation and environment setup
+    - Complete research, documents, presentations, data analysis, and coding faster, with one-click previews of results
 
-    🐛 Bug Fixes
-    - [Selection] The Selection Assistant no longer keeps a hidden action-window renderer process running (and recreating it on every launch) while the feature is disabled
-    - [Selection] Restored the processing timer for the Selection Assistant and fixed the opacity slider overflowing its popover
-    - [Quick Assistant] Settings now close the assistant selector after choosing an assistant
-    - [OpenClaw] Stopped excessive local gateway health requests during application shutdown
-    - [AI] Error diagnosis now consistently uses the default free model instead of relying on provider model-list order
-    - [Dialog] Smoother shared open and close animations; dialogs no longer disappear before their final frame
-    - [Knowledge] Restored a full-width New Knowledge Base action in the navigator
-    - [Chat] Removed the entrance animation for newly loaded messages
-    - [Chat] Tab switching no longer auto-expands the active conversation in the sidebar; global search jumps still reveal the target conversation
-    - [Chat] Previous and Next buttons in message navigation now go in the correct direction
-    - [Chat] Recalled prompts now preserve the current multi-model selection instead of sending to only one model
-    - [Chat] Conversation link preview cards now wait 1.5 seconds before appearing, reducing accidental popups while reading
-    - [Chat] Prevented unsafe deletion of the root message in a conversation
-    - [Chat] Fixed the Artifact pane title bar background in dark mode, and restored maximized right panes after switching tabs
-    - [Chat] Fixed chat requests failing on Gemini when a file is attached ("read_file ... schema didn't specify the schema type field")
-    - [Web Search] Fixed Bocha web search failures when successful API responses contain nullable message or result content fields
-    - [Security] Hardened the add-model flow against command injection and path traversal
+    🛠️ More Tool Upgrades
+    - Agents can read and maintain knowledge bases, helping your knowledge grow continuously like a Wiki
+    - Code tools are upgraded to Code Mate, with one-click model service configuration for Claude Code, Codex, and more
+    - Image generation dynamically shows the parameters available for each model, making results easier to control
 
     ⚡ Performance
-    - [Chat] Sent messages no longer snap to the viewport top: nearby conversations return to and follow the live bottom, while users reading farther back keep their position
-    - [Agent] Large tool results are now lazy-loaded in agent sessions
-    - [Chat] Initial conversation rendering is staged so the first messages appear faster
-    - [Composer] Composer controls now wait for the editor to be ready, avoiding jank on first render
+    - A fully upgraded data foundation stays responsive even with extensive history
+    - Smoother scrolling in very long conversations, while large-folder imports no longer block the interface
 
     <!--LANG:zh-CN-->
     Magic Box 2.0.0-beta.2 - 知识库、智能体、聊天与界面改进
@@ -223,32 +213,17 @@ releaseInfo:
     - [macOS] macOS 上默认启用透明窗口（已有选择和 Windows 行为不变）
     - [数据] 设置中的「数据重置」现在是真正意义上的 v2 userData 清理
 
-    🚀 需要操作
-    - [知识库] 已下载的本地嵌入模型不再自动用于新建知识库；如需向量或混合检索，请在 RAG 设置中开启嵌入模型
-    - [macOS] 如需关闭透明窗口，请在 设置 > 显示与语言 中关闭「透明窗口」
+    🤖 Agent 能力强化
+    - 同时兼容 OpenAI 与 Anthropic 端点，可复用 Claude 和 Codex 订阅，支持更多模型
+    - Agent 核心运行环境内置，大幅减少依赖安装和环境配置
+    - 更快完成信息收集、文档撰写、PPT、数据分析和代码开发，一键预览成果
 
-    🐛 问题修复
-    - [划词助手] 关闭划词助手功能后，不再保留隐藏的动作窗口渲染进程（也不再每次启动都重建它）
-    - [划词助手] 恢复了划词助手的处理计时器，并修复了透明度滑块溢出弹层的问题
-    - [快捷助手] 在设置中选择助手后会自动关闭选择器
-    - [OpenClaw] 修复了应用关闭时本地网关大量健康检查请求的问题
-    - [AI] 错误诊断现在一律使用默认免费模型，不再依赖提供商模型列表的顺序
-    - [弹窗] 改进了弹窗开合动画，弹窗不再在最终帧前消失
-    - [知识库] 恢复了知识库导航中通栏的「新建知识库」操作
-    - [聊天] 移除了新加载消息的入场动画
-    - [聊天] 切换标签页不再自动展开侧边栏的当前会话；全局搜索跳转仍会定位到目标会话
-    - [聊天] 消息导航的上一个/下一个按钮方向已修正
-    - [聊天] 召回的提问现在会保留当前的多模型选择，不再只发给一个模型
-    - [聊天] 对话链接预览卡片改为延迟 1.5 秒出现，减少阅读时的误弹
-    - [聊天] 防止了对话根消息被不安全地删除
-    - [聊天] 修复了暗色模式下 Artifact 面板标题栏背景，以及切换标签页后右侧面板未恢复最大化的问题
-    - [聊天] 修复了 Gemini 在带文件附件时请求失败的问题（"read_file ... schema didn't specify the schema type field"）
-    - [网络搜索] 修复了 Bocha 网络搜索在 API 返回中含有可空字段时失败的问题
-    - [安全] 加固了添加模型的流程，防止命令注入和路径穿越
+    🛠️ 更多工具升级
+    - Agent 可读取和维护知识库，让知识像 Wiki 一样持续积累
+    - 代码工具升级为 Code Mate，可将模型服务一键配置到 Claude Code、Codex 等编程工具
+    - 绘图根据不同生图模型动态显示可用参数，更容易控制生成结果
 
     ⚡ 性能优化
-    - [聊天] 发送消息后不再吸附到视口顶部：靠近底部的会话回到并跟随实时底部，向上阅读更远的用户则保持原位置
-    - [智能体] 大型工具结果现在在智能体会话中按需懒加载
-    - [聊天] 初始对话渲染分阶段进行，首批消息出现得更快
-    - [输入框] 输入框控件改为等待编辑器就绪后再渲染，避免初次渲染卡顿
+    - 数据底座全面升级，历史记录再多也能保持流畅
+    - 优化超长对话滚动和大文件夹导入，不再阻塞界面操作
     <!--LANG:END-->

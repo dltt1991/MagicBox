@@ -96,6 +96,8 @@ export interface CreateDirectoryWatcherOptions {
   readonly ignore?: (path: AbsoluteFilePath) => boolean
   /** Stability window for `awaitWriteFinish` (ms). Default: 200. Set to 0 to disable. */
   readonly stabilityThresholdMs?: number
+  /** Emit entries discovered by chokidar's initial scan. Default: `false`. */
+  readonly emitInitial?: boolean
 }
 
 /** OS-junk basenames suppressed regardless of caller's `ignore` predicate. */
@@ -133,7 +135,7 @@ class DirectoryWatcherImpl implements DirectoryWatcher {
             }
           ]
         : [builtinIgnore],
-      ignoreInitial: true,
+      ignoreInitial: this.opts.emitInitial !== true,
       depth,
       awaitWriteFinish: stability > 0 ? { stabilityThreshold: stability, pollInterval: 100 } : false,
       ignorePermissionErrors: true,

@@ -139,11 +139,16 @@
         "description": "Recibe y responde a mensajes a través de WeChat utilizando la API de iLink Bot.",
         "disconnected": "Desconectado",
         "loginHint": "El primer inicio de sesión requiere escanear un código QR. Verifica los registros de la aplicación para obtener la URL de inicio de sesión.",
+        "qrExpired": "Código QR expirado. Por favor, inténtalo de nuevo cambiando el canal.",
         "qrHint": "Abre WeChat en tu teléfono, escanea el código QR para iniciar sesión.",
         "qrTitle": "Inicio de sesión con código QR de WeChat",
         "title": "WeChat",
         "whoamiTip": "Consejo: Envía /whoami en WeChat para obtener el ID de un usuario."
       }
+    },
+    "composer": {
+      "background_running_one": "{{count}} tarea en segundo plano en ejecución",
+      "background_running_other": "{{count}} tareas en segundo plano en ejecución"
     },
     "delete": {
       "content": "Eliminar este Agente forzará la terminación y eliminación de todas las sesiones bajo este Agente. ¿Está seguro?",
@@ -230,6 +235,7 @@
           "discard_and_continue": "Descartar y continuar",
           "title": "¿Descartar cambios no guardados?"
         },
+        "metadata_pending": "El archivo se guardó, pero sus metadatos aún se están recuperando. No reintente este guardado.",
         "refresh_failed": "No se puede volver a cargar el contenido más reciente del archivo.",
         "save_failed": "No se puede guardar este archivo. El guardado automático está pausado hasta que reintente o descarte los cambios.",
         "unsaved": "No guardado",
@@ -272,6 +278,16 @@
       "too_large": {
         "description": "El archivo excede el límite de vista previa de {{limit}}.",
         "title": "Archivo demasiado grande para previsualizar"
+      },
+      "tree_error": {
+        "invalid_path": {
+          "description": "El panel de archivos requiere una ruta local absoluta válida. Por favor, seleccione el directorio de trabajo nuevamente.",
+          "title": "Ruta de espacio de trabajo no válida"
+        },
+        "load_error": {
+          "description": "Asegúrate de que el directorio de trabajo todavía existe y es accesible, e inténtalo de nuevo.",
+          "title": "No se pudieron cargar los archivos del espacio de trabajo"
+        }
       },
       "unavailable": {
         "description": "Este archivo no pudo abrirse; es posible que haya sido movido o eliminado.",
@@ -320,16 +336,25 @@
         "more": "+{{count}} más",
         "no_artifacts": "No se han declarado entregables",
         "no_subagents": "Sin subagentes",
-        "subagents": "Subagentes"
+        "shell_tasks": "Comandos en segundo plano",
+        "subagents": "Subagentes",
+        "workflows": "Flujos de trabajo"
       },
       "status": {
         "activity": "Actividad",
         "agent": "Agente",
         "context": "Contexto",
         "no_tasks": "Sin tareas activas",
+        "run_task_live_one": "{{count}} en vivo",
+        "run_task_live_other": "{{count}} en directo",
+        "run_tasks": "Subtareas",
         "selected_tool": "Herramienta seleccionada",
+        "stop_run_task": "Detener tarea",
+        "stop_run_task_failed": "Error al detener la tarea",
         "task_count": "{{completed}} / {{total}} completado",
         "tasks": "Tareas",
+        "tool_uses_one": "{{count}} llamada a herramienta",
+        "tool_uses_other": "{{count}} llamadas a herramientas",
         "tools_active": "Activo",
         "tools_done": "Hecho",
         "tools_failed": "Falló",
@@ -434,12 +459,19 @@
         "this_week": "Esta semana",
         "today": "Hoy",
         "unknown_agent": "Agente desconocido",
+        "unknown_agent_tip": "Este es un grupo de sesión histórico sin agente, no un agente real. Es solo de visualización y no puede continuar ejecutándose.",
         "yesterday": "Ayer"
       },
       "label_one": "Sesión",
       "label_other": "Sesiones",
       "list": {
         "title": "Tareas"
+      },
+      "model_switch_confirm": {
+        "confirm": "Cambiar modelo",
+        "description": "Diferentes modelos pueden entender y procesar el contexto de manera diferente. Cambiar puede afectar la continuidad o la calidad de las respuestas posteriores. ¿Desea continuar?",
+        "skip_for_app_run": "No preguntar de nuevo hasta que cierre la aplicación",
+        "title": "¿Cambiar a \"{{model}}\"?"
       },
       "new": "Nueva tarea",
       "pin": {
@@ -607,12 +639,17 @@
         },
         "permissionMode": {
           "acceptEdits": {
-            "description": "Las ediciones de archivos y las operaciones del sistema de archivos se aprueban automáticamente.",
-            "title": "Aceptar automáticamente las ediciones de archivos"
+            "description": "Edita archivos libremente. Pregunta antes de los comandos.",
+            "title": "Aceptar ediciones automáticamente"
+          },
+          "auto": {
+            "description": "Se ejecuta sin preguntas rutinarias. Una comprobación de seguridad bloquea las acciones arriesgadas.",
+            "title": "Aprobar por mí",
+            "warning": "Requiere un modelo compatible; otros pueden ignorarlo o seguir preguntando."
           },
           "bypassPermissions": {
-            "description": "Todos los mensajes de permiso se omiten — úsalo con precaución.",
-            "title": "Omitir verificaciones de permisos",
+            "description": "Omite las comprobaciones de permisos. Puede eliminar archivos y usar la red.",
+            "title": "Acceso completo",
             "warning": "Usar con precaución: todas las herramientas se ejecutarán sin pedir aprobación."
           },
           "confirmChange": {
@@ -620,14 +657,14 @@
             "title": "¿Cambiar modo de permisos?"
           },
           "default": {
-            "description": "Se aplican los controles de permisos normales.",
-            "title": "Predeterminado (preguntar antes de continuar)"
+            "description": "Pregunta antes de editar archivos o ejecutar comandos.",
+            "title": "Preguntar antes de actuar"
           },
           "helper": "Especifica cómo el agente maneja la autorización de uso de herramientas",
           "placeholder": "Seleccionar modo de permisos",
           "plan": {
-            "description": "Claude solo puede usar herramientas de solo lectura y presenta un plan antes de ejecutarlo.",
-            "title": "Modo de planificación (próximamente)"
+            "description": "Planifica sin editar archivos. Solo se ejecutan comandos de solo lectura o verificados.",
+            "title": "Solo planificar"
           },
           "title": "Modo de permisos"
         },
@@ -663,6 +700,14 @@
       }
     },
     "sidebar_title": "Agentes",
+    "speed": {
+      "effort": "Esfuerzo",
+      "fast": "Rápido",
+      "faster": "Más rápido",
+      "label": "Velocidad",
+      "smarter": "Más inteligente",
+      "title": "Configuración de respuesta"
+    },
     "tasks": {
       "add": "Agregar tarea",
       "cancel": "Cancelar",
@@ -723,6 +768,13 @@
         "placeholder": "¿Qué debe hacer el agente cuando se ejecute esta tarea?"
       },
       "resume": "Reanudar",
+      "reuseSession": {
+        "bound": "Ver sesión",
+        "description": "Continúa cada ejecución en la misma sesión en lugar de iniciar una nueva.",
+        "label": "Reutilizar sesión",
+        "pending": "Esperando la primera ejecución",
+        "warning": "Una sesión reutilizada sigue acumulando contexto, lo que aumenta el costo de tokens con el tiempo y puede desbordar la ventana de contexto del modelo. Para vincular una sesión limpia, deshabilítela y guarde, luego habilítela y guarde."
+      },
       "run": "Ejecutar",
       "runTriggered": "Tarea activada",
       "save": "Guardar",
@@ -1035,7 +1087,6 @@
   },
   "apiGateway": {
     "actions": {
-      "copy": "Copiar",
       "regenerate": "Regenerar",
       "restart": {
         "button": "Reiniciar",
@@ -1056,13 +1107,10 @@
     "fields": {
       "apiKey": {
         "copyTooltip": "Copiar Clave API",
-        "description": "Token de autenticación seguro para el acceso a la API",
         "label": "Clave API",
         "placeholder": "La clave API se generará automáticamente"
       },
       "port": {
-        "description": "Número de puerto TCP para el servidor HTTP (1000-65535)",
-        "helpText": "Detén el servidor para cambiar el puerto",
         "label": "Puerto"
       },
       "url": {
@@ -1071,7 +1119,6 @@
       }
     },
     "messages": {
-      "apiKeyCopied": "Clave API copiada al portapapeles",
       "apiKeyRegenerated": "Clave API regenerada",
       "notEnabled": "El servidor de API no está habilitado.",
       "operationFailed": "Falló la operación del Servidor API: ",
@@ -1081,8 +1128,7 @@
       "startError": "Error al iniciar el Servidor API: ",
       "startSuccess": "Servidor API iniciado exitosamente",
       "stopError": "Error al detener el Servidor API: ",
-      "stopSuccess": "Servidor API detenido exitosamente",
-      "urlCopied": "URL del servidor copiada al portapapeles"
+      "stopSuccess": "Servidor API detenido exitosamente"
     },
     "status": {
       "running": "Ejecutándose",
@@ -1242,10 +1288,6 @@
           "tip": "El agente utilizará la capacidad del modelo grande para el reconocimiento de intenciones y decidirá si necesita invocar la base de conocimientos para responder. Esta función dependerá de las capacidades del modelo"
         }
       },
-      "max_tool_calls": {
-        "label": "Llamadas Máximas de Herramientas",
-        "tip": "Número máximo de llamadas a herramientas permitidas en una sola conversación. Valores más altos permiten operaciones de múltiples pasos más complejas, pero pueden incrementar el uso de tokens y el tiempo de respuesta."
-      },
       "mcp": {
         "description": "Servidor MCP habilitado por defecto",
         "enableFirst": "Habilite este servidor en la configuración de MCP primero",
@@ -1327,6 +1369,9 @@
       "label": "¿Está seguro de que desea realizar una copia de seguridad de los datos?"
     },
     "content": "Realizar una copia de seguridad de todos los datos, incluyendo registros de chat, configuraciones, bases de conocimiento y todos los demás datos. Tenga en cuenta que el proceso de copia de seguridad puede llevar algún tiempo, gracias por su paciencia.",
+    "error": {
+      "active_data_writers": "Una conversación o agente aún está en ejecución. Espere a que termine, luego inténtelo de nuevo."
+    },
     "progress": {
       "completed": "Copia de seguridad completada",
       "compressing": "Comprimiendo archivos...",
@@ -1393,6 +1438,11 @@
         "placeholder": "Buscar"
       }
     },
+    "compaction": {
+      "compacted": "Contexto compactado, ~{{count}} tokens ahorrados",
+      "compacted_plain": "Contexto compactado",
+      "compacting": "Compactando contexto…"
+    },
     "conversation": {
       "new": "Nueva conversación"
     },
@@ -1451,14 +1501,20 @@
       "image_preview_failed": "La vista previa de la imagen falló",
       "knowledge_base": "Base de conocimientos",
       "knowledge_base_disabled_by_files": "Elimina los archivos adjuntos para utilizar la Base de Conocimiento",
-      "knowledge_base_unavailable": "Selecciona un modelo capaz de usar herramientas o habilita el uso de herramientas en el prompt.",
+      "knowledge_base_unavailable": "Selecciona un modelo capaz de usar herramientas",
       "locate_editing_message": "Localizar mensaje original",
-      "mcp_unavailable": "Selecciona un modelo con capacidad para herramientas o habilita el uso de herramientas en el prompt.",
       "new": {
         "context": "Limpiar contexto {{Command}}"
       },
       "new_session": "Nueva Sesión {{Command}}",
       "new_topic": "Nuevo tema {{Command}}",
+      "note_reference": {
+        "description": "Adjunta una nota de Notas",
+        "empty": "No se encontraron notas",
+        "load_failed": "Error al cargar notas",
+        "loading": "Cargando notas...",
+        "title": "Nota de Referencia"
+      },
       "paste_text_file": "Pegar en la entrada",
       "pasted_text_file_name": "Pasted text.txt",
       "pause": "Pausar",
@@ -1559,6 +1615,7 @@
         },
         "open_file": "Abrir archivo",
         "open_file_error": "Error al abrir el archivo: {{path}}",
+        "open_with": "Abrir con",
         "reveal_in_finder": "Mostrar en el Finder"
       },
       "topics": "Temas",
@@ -1572,7 +1629,6 @@
         "image_or_document": "Subir imagen o documento",
         "upload_from_local": "Subir archivo local..."
       },
-      "url_context": "Contexto de la página web",
       "web_search": {
         "builtin": {
           "disabled_content": "La búsqueda web no es compatible con este modelo actualmente",
@@ -1589,18 +1645,16 @@
           "description": "No activar la función de búsqueda web",
           "label": "Sin búsqueda web"
         },
+        "route": {
+          "builtin": "Búsquedas con la herramienta integrada del modelo",
+          "client": "Búsquedas con {{provider}}"
+        },
         "settings": "Configuración de búsqueda en red"
       }
     },
     "mcp": {
-      "error": {
-        "parse_tool_call": "No se puede convertir al formato de llamada de herramienta válido: {{toolCall}}"
-      },
       "warning": {
-        "gemini_web_search": "Gemini no admite el uso simultáneo de herramientas de búsqueda nativa y llamadas de funciones",
-        "multiple_tools": "Existen múltiples herramientas MCP coincidentes, se ha seleccionado {{tool}}",
-        "no_tool": "No se encontró la herramienta MCP requerida {{tool}}",
-        "url_context": "Gemini no admite el uso simultáneo del contexto de la página web y las llamadas a funciones."
+        "gemini_web_search": "Gemini no admite el uso simultáneo de herramientas de búsqueda nativa y llamadas de funciones"
       }
     },
     "message": {
@@ -1641,8 +1695,17 @@
       "token_details": {
         "cache_read": "Lectura de caché",
         "cache_write": "Escritura en caché",
+        "cost": "Costo",
+        "cost_billed": "Facturado por el proveedor",
+        "cost_estimated": "Estimado",
+        "end_to_end_throughput": "Rendimiento de extremo a extremo",
         "input": "Entrada",
         "input_breakdown": "Desglose de entrada",
+        "lane_approval": "Aprobación",
+        "lane_model": "Modelo",
+        "lane_other": "Otro",
+        "lane_tool": "Herramienta",
+        "model_throughput": "Generación de modelos TPS",
         "output": "Salida",
         "reasoning": "Razonamiento",
         "reasoning_time": "Razonamiento",
@@ -1651,6 +1714,7 @@
         "text_output": "Salida de texto",
         "tokens": "{{value}} Tokens",
         "tokens_per_second_value": "{{value}} Tokens/s",
+        "total_duration": "Duración de extremo a extremo",
         "uncached": "Sin caché",
         "usage": "Uso de tokens",
         "waiting_first_token": "Esperando"
@@ -1667,6 +1731,9 @@
       }
     },
     "navigation": {
+      "anchor": {
+        "jump_to_turn": "Saltar al turno {{number}}"
+      },
       "bottom": "Volver abajo",
       "close": "Cerrar",
       "first": "Ya es el primer mensaje",
@@ -1924,6 +1991,7 @@
         "this_week": "Esta semana",
         "today": "Hoy",
         "unknown_assistant": "Asistente No Vinculado",
+        "unknown_assistant_tip": "Este es un grupo de conversación histórico sin un asistente, no un asistente real. Mueva la conversación a un asistente existente para continuar.",
         "yesterday": "Ayer"
       },
       "list": "Lista de temas",
@@ -2291,6 +2359,12 @@
     "generate_random_seed": "Generar semilla aleatoria",
     "get_embedding_dimension": "Obtener dimensión de incrustación",
     "go_to_settings": "Ir a la configuración",
+    "group": {
+      "create": "Nuevo Grupo",
+      "create_failed": "Error al crear el grupo",
+      "name_placeholder": "Introduzca el nombre del grupo...",
+      "name_required": "El nombre del grupo es obligatorio"
+    },
     "help": "Ayuda",
     "html_preview": "Vista previa de HTML",
     "i_know": "Entendido",
@@ -2318,6 +2392,7 @@
     "open_in": "Abrir en {{name}}",
     "open_in_new_tab": "Abrir en nueva pestaña",
     "open_sidebar": "Abrir barra lateral",
+    "other": "Otro",
     "placeholders": {
       "select": {
         "model": "Seleccionar modelo"
@@ -2446,6 +2521,7 @@
       "content": "Contenido bloqueado por el sistema de seguridad, modifica e intenta de nuevo",
       "context_length": "Conversación demasiado larga, por favor borra el historial o inicia un nuevo chat",
       "deprecated": "Este modelo ha sido retirado, por favor cambia a otro modelo",
+      "free_model_unavailable": "El diagnóstico de IA no está disponible temporalmente",
       "go_to_settings": "Ir a configuración",
       "knowledge": "Error en la vectorización de la base de conocimiento",
       "mcp": "Error de conexión al servidor MCP, verifica si el servicio está en ejecución",
@@ -2550,6 +2626,10 @@
     "user": "Usuario"
   },
   "file_preview": {
+    "directory": {
+      "description": "Selecciona un archivo en esta carpeta para previsualizarlo.",
+      "title": "Esta es una carpeta"
+    },
     "html": {
       "empty": {
         "description": "Este archivo HTML no tiene contenido.",
@@ -2615,6 +2695,10 @@
         "description": "Los archivos de texto mayores de {{limit}} MiB no se pueden previsualizar.",
         "title": "El archivo es demasiado grande"
       }
+    },
+    "unavailable": {
+      "description": "El archivo puede haber sido movido, eliminado o no se puede acceder a él.",
+      "title": "Archivo no disponible"
     },
     "unsupported": {
       "action": "Abrir con la aplicación predeterminada",
@@ -2876,6 +2960,10 @@
     "code": "Código",
     "empty_preview": "Sin contenido para mostrar",
     "generating": "Generando",
+    "interactive_preview": {
+      "action": "Ver página web",
+      "description": "Esta página web contiene scripts o recursos externos. Al abrirla puede ejecutar código y conectarse a Internet."
+    },
     "preview": "Vista previa",
     "split": "Dividir",
     "view_mode": "Modo de vista"
@@ -3018,6 +3106,7 @@
       "reindex_failed": "Error al reindexar la fuente de datos",
       "status": {
         "chunking": "Fragmentación",
+        "copying": "Copiando {{percent}}%",
         "embedding": "Incrustación",
         "error": "Error",
         "pending": "Esperando",
@@ -3115,6 +3204,7 @@
         "threshold": "Umbral de similitud para filtrar fragmentos de baja relevancia. Valores más altos hacen la recuperación más estricta."
       },
       "processor": "Proveedor de Procesamiento",
+      "processor_not_configured": "No configurado",
       "rerank_disabled": "Deshabilitado",
       "rerank_model": "Modelo de Reordenamiento",
       "reset_action": "Restablecer valores predeterminados",
@@ -3314,7 +3404,7 @@
             "label": "Modelo pequeño (opcional)"
           }
         },
-        "model_config": "Configuración del modelo",
+        "model_config": "Modelo",
         "section": {
           "advanced": {
             "desc": "Límites de ejecución y parámetros de tiempo de ejecución",
@@ -3365,7 +3455,12 @@
         }
       },
       "basic": {
+        "context_compress_enabled": "Compresión automática",
+        "context_compress_model": "Modelo de compresión",
+        "context_compress_model_follow": "Predeterminado",
         "context_count": "Recuento de contexto",
+        "context_management": "Gestión de contexto",
+        "context_truncate_threshold": "Umbral de truncamiento de salida de herramienta (caracteres)",
         "creative": "Creativo",
         "custom_params": "Parámetros personalizados",
         "custom_params_add": "Agregar parámetro",
@@ -3377,8 +3472,17 @@
           "avatar": {
             "hint": "Utilizado para identificar al asistente en la biblioteca y en los chats"
           },
+          "context_compress_enabled": {
+            "hint": "Resumir automáticamente los turnos anteriores al acercarse a la ventana de contexto"
+          },
           "context_count": {
             "hint": "Número de mensajes recientes conservados como contexto"
+          },
+          "context_management": {
+            "hint": "Anular la configuración global de gestión de contexto para este asistente; desactivado hereda la configuración global"
+          },
+          "context_truncate_threshold": {
+            "hint": "Las salidas de la herramienta que superen esta cantidad de caracteres se descargan y se truncan"
           },
           "custom_params": {
             "hint": "Parámetros adicionales del proveedor enviados con las solicitudes"
@@ -3419,6 +3523,7 @@
         "json_invalid": "Formato JSON inválido",
         "max_tokens": "Tokens máximos",
         "max_tool_calls": "Llamadas máximas de herramientas",
+        "max_tool_calls_default": "Predeterminado ({{count}} rondas)",
         "mcp_mode": "Modo MCP",
         "model": "Modelo predeterminado",
         "model_clear": "Claro",
@@ -3434,8 +3539,7 @@
         "tags": "Etiquetas",
         "temperature": "Temperatura",
         "title": "Configuración básica",
-        "top_p": "Top-P",
-        "unlimited": "Ilimitado"
+        "top_p": "Top-P"
       },
       "breadcrumb": "Biblioteca",
       "dialogs": {
@@ -3793,6 +3897,7 @@
       "pasted_text": "Archivo del portapapeles"
     },
     "backup": {
+      "cleanup_failed": "La copia de seguridad se completó, pero no se pudieron limpiar las copias antiguas.",
       "failed": "Backup fallido",
       "start": {
         "success": "Inicio de backup"
@@ -3808,7 +3913,9 @@
       }
     },
     "citation": "{{count}} contenido citado",
+    "citation_source": "Fuente de citación {{number}}",
     "citations": "Citas",
+    "conversation_reset": "No se ha encontrado el historial de conversación anterior — continuando en una nueva conversación",
     "copied": "Copiado",
     "copy": {
       "failed": "Copia fallida",
@@ -4090,6 +4197,7 @@
         "write": "Guardar",
         "writing": "Guardando"
       },
+      "agent_background": "Ejecutándose en segundo plano",
       "approvalRequired": "La herramienta \"{{tool}}\" requiere aprobación",
       "autoApproveEnabled": "Esta herramienta tiene habilitada la aprobación automática",
       "cancelled": "Cancelado",
@@ -4121,6 +4229,7 @@
         "tool": "Herramienta",
         "webFetch": "Obtención Web",
         "webSearch": "Búsqueda en la web",
+        "workflow": "Flujo de trabajo",
         "write": "Escribir"
       },
       "noData": "No hay datos disponibles para esta herramienta.",
@@ -4178,6 +4287,15 @@
         "plan_other": "{{count}} planes",
         "result_one": "{{count}} resultado",
         "result_other": "{{count}} resultados"
+      },
+      "workflow": {
+        "orchestrating": "Orquestando el flujo de trabajo",
+        "run_id": "ID de ejecución",
+        "script": "Script de flujo de trabajo",
+        "script_path": "Ruta del script",
+        "started": "Iniciado flujo de trabajo",
+        "summary": "Resumen",
+        "workflow": "flujo de trabajo"
       }
     },
     "topic": {
@@ -4209,6 +4327,7 @@
       "cutoff": "Truncando el contenido de búsqueda...",
       "fetch_complete": "{{count}} resultados de búsqueda",
       "fetch_empty": "No se encontraron resultados de búsqueda",
+      "fetch_opaque": "Buscado por el modelo",
       "partial_failure": "{{count}} resultados de búsqueda, algunas búsquedas fallaron"
     }
   },
@@ -4320,6 +4439,7 @@
     },
     "pinned": "Fijado",
     "price": {
+      "cache_read": "Precio de lectura de caché",
       "cost": "Costo",
       "currency": "Moneda",
       "custom": "Personalizado",
@@ -4441,7 +4561,8 @@
     "save_blocked_load_failed": "Guardado bloqueado porque no se pudo cargar la nota",
     "save_failed": "Error al guardar la nota",
     "save_failure": {
-      "description": "Esta nota no se pudo guardar. Tus ediciones permanecen en el editor y el guardado automático está pausado."
+      "description": "Esta nota no se pudo guardar. Tus ediciones permanecen en el editor y el guardado automático está pausado.",
+      "metadata_pending": "La nota se guardó, pero sus metadatos de archivo aún se están recuperando. No vuelva a intentar este guardado."
     },
     "search": {
       "both": "Nombre + Contenido",
@@ -4935,6 +5056,11 @@
     "seed_random": "Aleatorio",
     "seed_tip": "La misma semilla y la misma sugerencia generarán imágenes similares",
     "select_model": "Seleccionar modelo",
+    "showcase": {
+      "caption": "Elige una plantilla para empezar y personaliza el prompt a continuación.",
+      "styles_label": "Plantillas de prompts",
+      "title": "Un espacio para tu próxima obra maestra."
+    },
     "style_options": {
       "anime": "Anime",
       "auto": "Auto",
@@ -5074,6 +5200,7 @@
     "reset": "Restablecer",
     "rotate_left": "Rotar a la izquierda",
     "rotate_right": "Rotar a la derecha",
+    "save_as": "Guardar como",
     "source": "Ver código fuente",
     "zoom_in": "ampliar",
     "zoom_out": "reducir"
@@ -5130,7 +5257,7 @@
     "jina": "Jina",
     "lanyun": "Tecnología Lanyun",
     "lmstudio": "Estudio LM",
-    "local-embedding": "Qwen3 Embedding 0.6B",
+    "local-embedding": "Modelos locales",
     "longcat": "Totoro",
     "mimo": "Xiaomi MiMo",
     "mineru": "MinerU",
@@ -5158,6 +5285,7 @@
     "ppio": "PPIO Cloud Piao",
     "qiniu": "Qiniu AI",
     "qwenlm": "QwenLM",
+    "radeon-cloud": "Nube de GPU AMD",
     "silicon": "Silicio Fluido",
     "sophnet": "SophNet",
     "stepfun": "Función Salto",
@@ -5211,6 +5339,7 @@
       "label": "¿Está seguro de que desea restaurar los datos?"
     },
     "content": "La operación de restauración sobrescribirá todos los datos actuales de la aplicación con los datos de respaldo. Tenga en cuenta que el proceso de restauración puede llevar algún tiempo, gracias por su paciencia.",
+    "messages_paused": "Se está realizando una restauración de copia de seguridad; los mensajes nuevos están en pausa hasta que se complete.",
     "progress": {
       "completed": "Restauración completada",
       "copying_files": "Copiando archivos... {{progress}}%",
@@ -5656,6 +5785,7 @@
     },
     "assistant": {
       "create_new": "Nuevo Asistente",
+      "create_tag": "Nuevo",
       "empty_text": "Aún no hay asistentes",
       "filter": "Asistentes de filtro",
       "group_filter": "Filtrar por grupo",
@@ -5710,7 +5840,25 @@
         "title": "Empresa"
       },
       "feedback": {
+        "agent": {
+          "description": "Chatea con Cherry Assistant para compartir tus comentarios.",
+          "title": "Usar Agente"
+        },
+        "agent_error": "No se puede abrir Cherry Assistant para enviar comentarios. Inténtalo de nuevo.",
         "button": "Enviar feedback",
+        "dialog": {
+          "description": "Elige cómo compartir comentarios y ayúdanos a mejorar Cherry Studio.",
+          "title": "Elige un canal de retroalimentación"
+        },
+        "github": {
+          "description": "Crea un informe de error o una solicitud de funcionalidad en GitHub.",
+          "title": "Problema de GitHub"
+        },
+        "recommended": "Recomendado",
+        "survey": {
+          "description": "Comparta sus comentarios a través de nuestra encuesta de Feishu.",
+          "title": "Encuesta de retroalimentación"
+        },
         "title": "Enviar comentarios"
       },
       "label": "Acerca de nosotros",
@@ -5718,6 +5866,7 @@
         "button": "Ver",
         "title": "Registro de cambios"
       },
+      "repository": "Repositorio de GitHub",
       "social": {
         "title": "Cuentas sociales"
       },
@@ -5796,8 +5945,7 @@
       },
       "backup": {
         "skip_file_data_help": "Omitir la copia de seguridad de archivos de datos como imágenes y bases de conocimiento durante la copia de seguridad, respaldando únicamente historial de chat y configuraciones. Reduce el uso de espacio y acelera el proceso de copia de seguridad",
-        "skip_file_data_title": "Copia de seguridad reducida",
-        "v2_unavailable": "La copia de seguridad y restauración V2 aún no está disponible. Próximamente."
+        "skip_file_data_title": "Copia de seguridad reducida"
       },
       "clear_cache": {
         "button": "Limpiar caché",
@@ -6043,6 +6191,7 @@
         },
         "pathSelector": {
           "currentPath": "Ruta actual",
+          "fetchError": "Error al cargar la lista de carpetas de Nutstore",
           "return": "Volver",
           "title": "Ruta de almacenamiento de Nutstore"
         },
@@ -6578,7 +6727,8 @@
     },
     "hardware_acceleration": {
       "confirm": {
-        "content": "La desactivación de la aceleración por hardware requiere reiniciar la aplicación para que surta efecto, ¿desea reiniciar ahora?",
+        "content_disable": "Desactivar la aceleración por hardware requiere reiniciar la aplicación para que surta efecto. ¿Desea reiniciar ahora?",
+        "content_enable": "La activación de la aceleración por hardware requiere reiniciar la aplicación para que surta efecto. ¿Desea reiniciar ahora?",
         "title": "Se requiere reiniciar la aplicación"
       },
       "title": "Deshabilitar aceleración por hardware"
@@ -6633,9 +6783,6 @@
           "dxtFile": "Archivo de paquete DXT",
           "dxtHelp": "Selecciona un archivo .dxt que contenga un servidor MCP",
           "dxtProcessFailed": "Error al procesar el archivo DXT",
-          "error": {
-            "multipleServers": "No se puede importar desde múltiples servidores"
-          },
           "invalid": "Entrada no válida, verifica el formato JSON",
           "json": "Importar desde JSON",
           "mcpb": "Importar paquete MCPB",
@@ -6709,6 +6856,7 @@
         "allStatuses": "Todos los estados",
         "allTypes": "Todos los tipos",
         "builtinOnly": "Solo integrado",
+        "label": "Filtro",
         "status": "Filtrar por estado",
         "type": "Filtrar por tipo"
       },
@@ -6776,6 +6924,9 @@
         "noPromptsAvailable": "No hay indicaciones disponibles",
         "requiredField": "Campo obligatorio"
       },
+      "protocolInstall": {
+        "title": "Instalar MCP"
+      },
       "protocolInstallWarning": {
         "command": "Comando de inicio",
         "message": "Este MCP fue instalado desde una fuente externa a través del protocolo. Ejecutar herramientas desconocidas puede dañar tu computadora.",
@@ -6789,6 +6940,15 @@
       "providers": "Proveedores",
       "registry": "Repositorio de paquetes",
       "registryDefault": "Predeterminado",
+      "registryOptions": {
+        "custom": "Personalizado",
+        "npmTaobao": "Espejo NPM de Taobao",
+        "pipAliyun": "Aliyun",
+        "pipHuawei": "Nube de Huawei",
+        "pipTencent": "Tencent Cloud",
+        "pipTsinghua": "Tsinghua",
+        "pipUstc": "USTC"
+      },
       "registryTooltip": "Seleccione un repositorio para instalar paquetes, útil para resolver problemas de red con el repositorio predeterminado.",
       "requiresConfig": "Requiere configuración",
       "resources": {
@@ -6964,6 +7124,7 @@
         "display": "Gestión de pantalla",
         "preferences": "Preferencias"
       },
+      "hide_app": "Ocultar {{name}}",
       "open_link_external": {
         "description": "Cuando está habilitado, los enlaces que abren una nueva ventana dentro de una mini aplicación se abren en tu navegador predeterminado.",
         "title": "Abrir enlace en nueva ventana del navegador"
@@ -6976,6 +7137,7 @@
         "title": "Filtro de área de la miniaplicación"
       },
       "reset_tooltip": "Restablecer a los valores predeterminados",
+      "show_app": "Mostrar {{name}}",
       "title": "Configuración de Mini Apps",
       "visible": "Miniaplicaciones visibles"
     },
@@ -7222,6 +7384,7 @@
       "topic_naming": {
         "auto": "Renombrar temas automáticamente",
         "label": "Nombramiento del tema",
+        "model": "Modelo de Denominación",
         "prompt": "Sugerencias para nombramiento de temas"
       },
       "translate_model": "Modelo de traducción",
@@ -7632,6 +7795,13 @@
         "usage_title": "Uso",
         "usage_unit": "tokens"
       },
+      "radeon_cloud": {
+        "benefits": {
+          "cta": "Abrir Token Factory",
+          "description": "Equivale a 10 USD diarios en créditos de API: unos 10M–111M tokens de entrada/salida con las tarifas actuales, según el modelo y el tipo de token. Los créditos se restablecen a diario; actualmente no se admiten recargas.",
+          "title": "10 USD diarios en créditos de API gratuitos"
+        }
+      },
       "remove_duplicate_keys": "Eliminar claves duplicadas",
       "remove_invalid_keys": "Eliminar claves inválidas",
       "reorder_failed": "Error al reordenar proveedores",
@@ -7977,6 +8147,10 @@
         "check": "Comprobar",
         "check_failed": "Verificación fallida",
         "check_success": "Verificación exitosa",
+        "client_tools_preferred": {
+          "description": "Utilice los servicios de búsqueda y recuperación de URL configurados anteriormente incluso cuando el modelo tenga búsqueda integrada. Cuando está desactivado, el modelo lo gestiona.",
+          "label": "Preferir servicios de búsqueda configurados"
+        },
         "compression": {
           "cutoff": {
             "limit": {
@@ -8003,7 +8177,7 @@
           "save_failed": "Error al guardar",
           "zhipu_sync_failed": "Error al sincronizar la clave API de Zhipu con Web Search. Vuelve a guardar la clave o verifica la configuración de Web Search."
         },
-        "fetch_urls_provider": "Proveedor predeterminado de obtención de URL",
+        "fetch_urls_provider": "Proveedor de obtención de URL",
         "free": "Gratis",
         "is_default": "Por defecto",
         "local_provider": {
@@ -8107,6 +8281,108 @@
       "onclose": "Minimizar a la bandeja al cerrar",
       "show": "Mostrar bandera del sistema",
       "title": "Bandera"
+    },
+    "usage": {
+      "cards": {
+        "activeDays": "Días activos",
+        "cacheHitRate": "Tasa de aciertos de caché",
+        "cacheObservedTokens": "Entrada observable: {{tokens}}",
+        "cacheStartsWithNewRequests": "Comienza con nuevas solicitudes",
+        "dailyAverage": "Promedio diario",
+        "explicitApiKey": "Clave seleccionada",
+        "lastPeriod": "vs último período",
+        "matchedApiKey": "Sobrescritura coincidente",
+        "none": "N/A",
+        "peakDay": "Día pico",
+        "providerAuth": "Autenticación del proveedor",
+        "streak": "Racha más larga: {{days}} días",
+        "topModel": "Modelo de élite",
+        "totalCost": "Costo total",
+        "totalRequests": "Solicitudes",
+        "totalTokens": "Tokens totales",
+        "unattributedApiKey": "Solicitud no atribuida",
+        "unattributedSource": "Fuente no atribuida"
+      },
+      "chart": {
+        "bar": "Bar",
+        "line": "Línea",
+        "pie": "Pastel",
+        "stack": "Pila"
+      },
+      "currency": "Moneda",
+      "empty": {
+        "description": "El uso aparece después de que las solicitudes de IA compatibles crean registros de uso.",
+        "title": "Sin uso aún"
+      },
+      "explore": {
+        "analysis": "Análisis",
+        "chart": "Gráfico",
+        "clearDate": "Limpiar filtro de fecha",
+        "drilldownTitle": "{{date}} desglose",
+        "entries": "Solicitudes",
+        "groupBy": "Agrupar por",
+        "loadMore": "Cargar más",
+        "loading": "Cargando...",
+        "metric": "Métrica",
+        "noBreakdown": "No hay datos desglosados",
+        "noBreakdownDescription": "Prueba una ventana más amplia o un proveedor diferente.",
+        "noEntries": "Sin entradas",
+        "noEntriesDescription": "Prueba una ventana más amplia o un proveedor diferente.",
+        "rollup": "Rollup",
+        "selectedDate": "Fecha seleccionada: {{date}}",
+        "shareLabel": "Compartir",
+        "title": "Explorar",
+        "top": "Superior",
+        "totalEntries_one": "{{count}} entrada",
+        "totalEntries_other": "{{count}} entradas"
+      },
+      "groupBy": {
+        "apiKey": "Clave de API",
+        "model": "Modelo",
+        "provider": "Proveedor",
+        "source": "Asistente / Agente"
+      },
+      "heatmap": {
+        "ariaDate": "Uso el {{date}}",
+        "title": "Actividad diaria"
+      },
+      "metric": {
+        "cost": "Costo",
+        "requests": "Solicitudes",
+        "tokens": "Tokens"
+      },
+      "overview": {
+        "title": "Descripción general"
+      },
+      "rollup": {
+        "daily": "Diario",
+        "monthly": "Mensual",
+        "total": "Total",
+        "weekly": "Semanal"
+      },
+      "summary": "{{ventana}} / {{tokens}} tokens / {{requests}} solicitudes",
+      "table": {
+        "cost": "Coste",
+        "date": "Fecha",
+        "model": "Modelo",
+        "source": "Fuente",
+        "tokens": "Tokens",
+        "tps": "TPS",
+        "tpsValue": "{{value}} tok/s",
+        "ttft": "TTFT"
+      },
+      "title": "Análisis de Uso",
+      "tooltip": {
+        "cost": "Costo {{value}}",
+        "requests_one": "{{count}} solicitud",
+        "requests_other": "{{count}} solicitudes",
+        "tokens": "{{valor}} tokens"
+      },
+      "window": {
+        "30d": "Últimos 30 días",
+        "365d": "El año pasado",
+        "90d": "Últimos 90 días"
+      }
     },
     "use_system_title_bar": {
       "confirm": {
@@ -8283,6 +8559,7 @@
         "placeholder": "Buscar historial de traducciones"
       },
       "source": "Fuente",
+      "star": "Favorito",
       "success": {
         "add": "Guardado en el historial",
         "clear": "Historial borrado",

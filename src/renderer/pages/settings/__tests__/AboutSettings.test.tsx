@@ -74,6 +74,10 @@ vi.mock('@renderer/components/IndicatorLight', () => ({
   default: () => <span data-testid="indicator-light" />
 }))
 
+vi.mock('../FeedbackDialog', () => ({
+  FeedbackDialog: () => null
+}))
+
 vi.mock('@renderer/components/UpdateDialogPopup', () => ({
   default: { show: vi.fn() }
 }))
@@ -111,6 +115,7 @@ vi.mock('@renderer/ipc', () => ({
 vi.mock('react-i18next', () => ({
   initReactI18next: { type: '3rdParty', init: vi.fn() },
   useTranslation: () => ({
+    i18n: { language: 'zh-CN', resolvedLanguage: 'zh-CN' },
     t: (key: string) =>
       ({
         'docs.title': '文档',

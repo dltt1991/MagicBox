@@ -508,6 +508,20 @@ beforeEach(() => {
   mocks.createSession.mockResolvedValue({ id: 'created-session', cwd: '/workspace', buffer: [] })
   mocks.ensureSession.mockReset()
   mocks.ipcRequest.mockReset()
+  mocks.ipcRequest.mockImplementation(async (route: string, input?: { path?: string }) => {
+    if (route === 'file.path_stat') {
+      const targetPath = input?.path ?? ''
+      return {
+        path: targetPath,
+        name: targetPath.split('/').pop() ?? targetPath,
+        kind: (await mocks.isDirectory(targetPath)) ? 'directory' : 'file',
+        size: 0,
+        createdAt: 1,
+        modifiedAt: 2
+      }
+    }
+    return undefined
+  })
   mocks.safeOpen.mockResolvedValue(undefined)
   mocks.isDirectory.mockResolvedValue(false)
   mocks.listDirectoryEntries.mockReset()
@@ -529,7 +543,6 @@ beforeEach(() => {
   mocks.confirm.mockReset()
   mocks.confirm.mockReturnValue(true)
   mocks.prompt.mockReset()
-  window.api.file.isDirectory = mocks.isDirectory
   window.api.file.listDirectoryEntries = mocks.listDirectoryEntries
   window.api.file.cancelDirectorySearch = mocks.cancelDirectorySearch
   window.api.resolvePath = mocks.resolvePath

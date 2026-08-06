@@ -3,6 +3,8 @@
  * Uses setupTestDatabase() per CLAUDE.md testing guidelines.
  */
 
+import { readFileSync } from 'node:fs'
+
 import { userProviderTable } from '@data/db/schemas/userProvider'
 import { providerService } from '@data/services/ProviderService'
 import { generateOrderKeyBetween } from '@data/services/utils/orderKey'
@@ -509,7 +511,7 @@ describe('ProviderRegistryService', () => {
       expect(models[0].name).toBe('GPT-4o')
     })
 
-    it('preserves the exact apiModelId identity for same-canonical variants (keeps canonical presetModelId)', async () => {
+    it('preserves provider display names and exact apiModelId identities for same-canonical variants', async () => {
       // A provider serving one canonical model under several apiModelIds (tokenhub's dated 原厂直供 variants).
       mockReadModels.mockReturnValue({
         version: '1.0',
@@ -541,9 +543,21 @@ describe('ProviderRegistryService', () => {
       } as ReturnType<typeof readProviderRegistry>)
 
       const [dated] = providerRegistryService.resolveModels('tokenhub', ['deepseek-v4-flash-202605'])
+      const catalog = providerRegistryService.listProviderRegistryModels({ providerId: 'tokenhub' })
+
+      expect(
+        catalog.map((model) => ({
+          apiModelId: model.apiModelId,
+          name: model.name
+        }))
+      ).toEqual([
+        { apiModelId: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash' },
+        { apiModelId: 'deepseek-v4-flash-202605', name: 'DeepSeek-V4-Flash 原厂直供' }
+      ])
       // unique id rebuilt from the apiModelId (NOT collapsed to the canonical tokenhub::deepseek-v4-flash)
       expect(dated.id).toBe(createUniqueModelId('tokenhub', 'deepseek-v4-flash-202605'))
       expect(dated.apiModelId).toBe('deepseek-v4-flash-202605')
+      expect(dated.name).toBe('DeepSeek-V4-Flash 原厂直供')
       expect(dated.presetModelId).toBe('deepseek-v4-flash') // canonical preset preserved for metadata
     })
 
@@ -688,6 +702,32 @@ describe('ProviderRegistryService', () => {
       ])
       expect(disabled.map((item) => `${item.providerId}:${item.presetModelId}:${item.apiModelId}`)).toEqual([
         'cherryin:qwen-image:qwen-image'
+      ])
+    })
+
+    it('lists the seven Radeon Cloud provider-registry models', () => {
+      const readGeneratedRegistry = <T>(filename: string): T =>
+        JSON.parse(
+          readFileSync(new URL(`../../../../../packages/provider-registry/data/${filename}`, import.meta.url), 'utf8')
+        ) as T
+      mockReadModels.mockReturnValue(readGeneratedRegistry<ReturnType<typeof readModelRegistry>>('models.json'))
+      mockReadProviderModels.mockReturnValue(
+        readGeneratedRegistry<ReturnType<typeof readProviderModelRegistry>>('provider-models.json')
+      )
+      mockReadProviders.mockReturnValue(
+        readGeneratedRegistry<ReturnType<typeof readProviderRegistry>>('providers.json')
+      )
+
+      const models = providerRegistryService.listProviderRegistryModels({ providerId: 'radeon-cloud' })
+
+      expect(models.map(({ presetModelId, apiModelId }) => [presetModelId, apiModelId])).toEqual([
+        ['deepseek-v4-flash', 'DeepSeek-V4-Flash'],
+        ['deepseek-v4-pro', 'DeepSeek-V4-Pro'],
+        ['glm-5-1', 'GLM-5.1'],
+        ['glm-5-2', 'GLM-5.2'],
+        ['gpt-oss-120b', 'gpt-oss-120b'],
+        ['kimi-k2-6', 'Kimi-K2.6'],
+        ['qwen3-6-35b-a3b', 'Qwen3.6-35B-A3B']
       ])
     })
 

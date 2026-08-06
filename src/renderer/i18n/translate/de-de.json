@@ -139,11 +139,16 @@
         "description": "Nachrichten über WeChat mit der iLink Bot API empfangen und beantworten.",
         "disconnected": "Getrennt",
         "loginHint": "Die erste Anmeldung erfordert das Scannen eines QR-Codes. Überprüfe die App-Logs für die Anmelde-URL.",
+        "qrExpired": "QR-Code abgelaufen. Bitte versuchen Sie es erneut, indem Sie den Kanal wechseln.",
         "qrHint": "Öffnen Sie WeChat auf Ihrem Telefon, scannen Sie den QR-Code, um sich anzumelden.",
         "qrTitle": "WeChat-QR-Login",
         "title": "WeChat",
         "whoamiTip": "Tipp: Sende /whoami in WeChat, um die ID eines Benutzers zu erhalten."
       }
+    },
+    "composer": {
+      "background_running_one": "{{count}} Hintergrundaufgabe läuft",
+      "background_running_other": "{{count}} Hintergrundaufgaben laufen"
     },
     "delete": {
       "content": "Das Löschen dieses Agents wird alle Sitzungen unter diesem Agent zwangsweise beenden und löschen. Sind Sie sicher?",
@@ -230,6 +235,7 @@
           "discard_and_continue": "Verwerfen und fortfahren",
           "title": "Ungespeicherte Änderungen verwerfen?"
         },
+        "metadata_pending": "Die Datei wurde gespeichert, aber ihre Metadaten werden noch wiederhergestellt. Wiederholen Sie diesen Speichervorgang nicht.",
         "refresh_failed": "Die neuesten Dateiinhalte konnten nicht neu geladen werden.",
         "save_failed": "Die Datei konnte nicht gespeichert werden. Die automatische Speicherung ist angehalten, bis Sie es erneut versuchen oder die Änderungen verwerfen.",
         "unsaved": "Nicht gespeichert",
@@ -272,6 +278,16 @@
       "too_large": {
         "description": "Datei überschreitet das {{limit}}-Vorschau-Limit.",
         "title": "Datei zu groß zur Vorschau"
+      },
+      "tree_error": {
+        "invalid_path": {
+          "description": "Das Dateipanel erfordert einen gültigen absoluten lokalen Pfad. Bitte wählen Sie das Arbeitsverzeichnis erneut aus.",
+          "title": "Ungültiger Arbeitsbereich-Pfad"
+        },
+        "load_error": {
+          "description": "Stellen Sie sicher, dass das Arbeitsverzeichnis noch existiert und zugänglich ist, und versuchen Sie es dann erneut.",
+          "title": "Arbeitsbereichdateien konnten nicht geladen werden"
+        }
       },
       "unavailable": {
         "description": "Diese Datei konnte nicht geöffnet werden – sie wurde möglicherweise verschoben oder gelöscht.",
@@ -320,16 +336,25 @@
         "more": "+{{count}} weitere",
         "no_artifacts": "Keine erklärten Liefergegenstände",
         "no_subagents": "Keine Unteragenten",
-        "subagents": "Unteragenten"
+        "shell_tasks": "Hintergrundbefehle",
+        "subagents": "Unteragenten",
+        "workflows": "Workflows"
       },
       "status": {
         "activity": "Aktivität",
         "agent": "Agent",
         "context": "Kontext",
         "no_tasks": "Keine aktiven Aufgaben",
+        "run_task_live_one": "{{count}} live",
+        "run_task_live_other": "{{count}} live",
+        "run_tasks": "Unteraufgaben",
         "selected_tool": "Ausgewähltes Werkzeug",
+        "stop_run_task": "Aufgabe beenden",
+        "stop_run_task_failed": "Aufgabe konnte nicht gestoppt werden",
         "task_count": "{{completed}} / {{total}} abgeschlossen",
         "tasks": "Aufgaben",
+        "tool_uses_one": "{{count}} Tool-Aufruf",
+        "tool_uses_other": "{{count}} Tool-Aufrufe",
         "tools_active": "Aktiv",
         "tools_done": "Fertig",
         "tools_failed": "Fehlgeschlagen",
@@ -434,12 +459,19 @@
         "this_week": "Diese Woche",
         "today": "Heute",
         "unknown_agent": "Unbekannter Agent",
+        "unknown_agent_tip": "Dies ist eine historische Sitzungsgruppe ohne Agent, kein tatsächlicher Agent. Sie ist nur anzeigbar und kann nicht weiter ausgeführt werden.",
         "yesterday": "Gestern"
       },
       "label_one": "Sitzung",
       "label_other": "Sitzungen",
       "list": {
         "title": "Aufgaben"
+      },
+      "model_switch_confirm": {
+        "confirm": "Modell wechseln",
+        "description": "Verschiedene Modelle können den Kontext unterschiedlich verstehen und verarbeiten. Ein Wechsel kann die Kontinuität oder Qualität nachfolgender Antworten beeinträchtigen. Möchten Sie fortfahren?",
+        "skip_for_app_run": "Nicht erneut fragen, bis ich die App beende",
+        "title": "Zu „{{model}}“ wechseln?"
       },
       "new": "Neue Aufgabe",
       "pin": {
@@ -607,12 +639,17 @@
         },
         "permissionMode": {
           "acceptEdits": {
-            "description": "Dateibearbeitungen und Dateisystemoperationen werden automatisch genehmigt.",
-            "title": "Dateibearbeitungen automatisch akzeptieren"
+            "description": "Bearbeitet Dateien frei. Fragt vor Befehlen.",
+            "title": "Bearbeitungen automatisch annehmen"
+          },
+          "auto": {
+            "description": "Läuft ohne routinemäßige Rückfragen. Eine Sicherheitsprüfung blockiert riskante Aktionen.",
+            "title": "Für mich genehmigen",
+            "warning": "Erfordert ein Modell, das dies unterstützt; andere ignorieren den Modus möglicherweise oder fragen weiterhin nach."
           },
           "bypassPermissions": {
-            "description": "Alle Berechtigungsabfragen werden übersprungen. Bitte verwenden Sie diese Option mit Vorsicht.",
-            "title": "Alle Berechtigungsprüfungen überspringen",
+            "description": "Überspringt Berechtigungsprüfungen. Kann Dateien löschen und das Netzwerk nutzen.",
+            "title": "Vollzugriff",
             "warning": "Gefahr: Alle Tools werden ohne Genehmigung ausgeführt."
           },
           "confirmChange": {
@@ -620,14 +657,14 @@
             "title": "Berechtigungsmodus-Wechsel bestätigen?"
           },
           "default": {
-            "description": "Nur-Lese-Tools werden automatisch vorab autorisiert, andere Vorgänge erfordern weiterhin Berechtigungen.",
-            "title": "Standard (vor Fortsetzung fragen)"
+            "description": "Fragt vor dem Bearbeiten von Dateien oder dem Ausführen von Befehlen.",
+            "title": "Vor Aktionen fragen"
           },
           "helper": "Legen Sie fest, wie der Agent Tool-Autorisierungen verwaltet",
           "placeholder": "Berechtigungsmodus auswählen",
           "plan": {
-            "description": "Erbt die Standard-Nur-Lese-Tools und zeigt einen Plan vor der Ausführung an.",
-            "title": "Planungsmodus"
+            "description": "Plant, ohne Dateien zu bearbeiten. Es laufen nur schreibgeschützte oder geprüfte Befehle.",
+            "title": "Nur planen"
           },
           "title": "Berechtigungsmodus"
         },
@@ -663,6 +700,14 @@
       }
     },
     "sidebar_title": "Agenten",
+    "speed": {
+      "effort": "Aufwand",
+      "fast": "Schnell",
+      "faster": "Schneller",
+      "label": "Geschwindigkeit",
+      "smarter": "Intelligenter",
+      "title": "Antworteinstellungen"
+    },
     "tasks": {
       "add": "Aufgabe hinzufügen",
       "cancel": "Abbrechen",
@@ -723,6 +768,13 @@
         "placeholder": "Was soll der Agent tun, wenn diese Aufgabe ausgeführt wird?"
       },
       "resume": "Fortsetzen",
+      "reuseSession": {
+        "bound": "Sitzung anzeigen",
+        "description": "Führen Sie jede Ausführung in derselben Sitzung fort, anstatt eine neue zu starten.",
+        "label": "Sitzung wiederverwenden",
+        "pending": "Warten auf den ersten Lauf",
+        "warning": "Eine wiederverwendete Sitzung sammelt kontinuierlich Kontext an, was die Token-Kosten im Laufe der Zeit erhöht und das Kontextfenster des Modells überlaufen lassen kann. Um eine saubere Sitzung neu zu binden, deaktivieren und speichern Sie, dann aktivieren und speichern Sie erneut."
+      },
       "run": "Ausführen",
       "runTriggered": "Aufgabe ausgelöst",
       "save": "Speichern",
@@ -1035,7 +1087,6 @@
   },
   "apiGateway": {
     "actions": {
-      "copy": "Kopieren",
       "regenerate": "Neu generieren",
       "restart": {
         "button": "Neustarten",
@@ -1056,13 +1107,10 @@
     "fields": {
       "apiKey": {
         "copyTooltip": "API-Schlüssel kopieren",
-        "description": "Sicherheits-Token für API-Zugriff",
         "label": "API-Schlüssel",
         "placeholder": "API-Schlüssel wird automatisch generiert"
       },
       "port": {
-        "description": "TCP-Portnummer des HTTP-Servers (1000-65535)",
-        "helpText": "Server stoppen, um Port zu ändern",
         "label": "Port"
       },
       "url": {
@@ -1071,7 +1119,6 @@
       }
     },
     "messages": {
-      "apiKeyCopied": "API-Schlüssel in die Zwischenablage kopiert",
       "apiKeyRegenerated": "API-Schlüssel wurde neu generiert",
       "notEnabled": "API server is not enabled.",
       "operationFailed": "API-Server-Operation fehlgeschlagen:",
@@ -1081,8 +1128,7 @@
       "startError": "API-Server starten fehlgeschlagen:",
       "startSuccess": "API-Server erfolgreich gestartet",
       "stopError": "API-Server stoppen fehlgeschlagen:",
-      "stopSuccess": "API-Server erfolgreich gestoppt",
-      "urlCopied": "Server-URL in die Zwischenablage kopiert"
+      "stopSuccess": "API-Server erfolgreich gestoppt"
     },
     "status": {
       "running": "Läuft",
@@ -1242,10 +1288,6 @@
           "tip": "Der Assistent verwendet die Absichtserkennungsfähigkeit des großen Modells, um zu bestimmen, ob die Wissensdatenbank für die Antwort aufgerufen werden muss. Diese Funktion hängt von den Fähigkeiten des Modells ab"
         }
       },
-      "max_tool_calls": {
-        "label": "Maximale Werkzeugaufrufe",
-        "tip": "Maximale Anzahl von Tool-Aufrufen, die in einer einzelnen Konversation erlaubt sind. Höhere Werte ermöglichen komplexere, mehrstufige Operationen, können aber den Token-Verbrauch und die Antwortzeit erhöhen."
-      },
       "mcp": {
         "description": "Standardmäßig aktivierte MCP-Server",
         "enableFirst": "Bitte aktivieren Sie diesen Server zuerst in den MCP-Einstellungen",
@@ -1327,6 +1369,9 @@
       "label": "Möchten Sie wirklich eine Datensicherung durchführen?"
     },
     "content": "Sichern Sie alle Daten, einschließlich Chat-Verlauf, Einstellungen, Wissensdatenbank und alle anderen Daten. Bitte beachten Sie, dass der Backup-Vorgang einige Zeit in Anspruch nehmen kann. Vielen Dank für Ihre Geduld",
+    "error": {
+      "active_data_writers": "Eine Konversation oder ein Agent läuft noch. Warten Sie, bis sie/er fertig ist, und versuchen Sie es dann erneut."
+    },
     "progress": {
       "completed": "Backup abgeschlossen",
       "compressing": "Dateien werden komprimiert...",
@@ -1393,6 +1438,11 @@
         "placeholder": "Suchen"
       }
     },
+    "compaction": {
+      "compacted": "Kontext komprimiert, ~{{count}} Token gespart",
+      "compacted_plain": "Kontext komprimiert",
+      "compacting": "Kontext wird komprimiert…"
+    },
     "conversation": {
       "new": "Neuer Chat"
     },
@@ -1451,14 +1501,20 @@
       "image_preview_failed": "Bildvorschau fehlgeschlagen",
       "knowledge_base": "Wissensdatenbank",
       "knowledge_base_disabled_by_files": "Entfernen Sie angehängte Dateien, um die Wissensdatenbank zu verwenden.",
-      "knowledge_base_unavailable": "Wählen Sie ein modellfähiges Modell oder aktivieren Sie die Prompt-Werkzeugnutzung",
+      "knowledge_base_unavailable": "Wählen Sie ein werkzeugfähiges Modell",
       "locate_editing_message": "Ursprüngliche Nachricht finden",
-      "mcp_unavailable": "Wählen Sie ein modellbasiertes Werkzeug oder aktivieren Sie die Toolnutzung in der Eingabeaufforderung",
       "new": {
         "context": "Kontext löschen {{Command}}"
       },
       "new_session": "Neue Sitzung {{Command}}",
       "new_topic": "Neues Thema {{Command}}",
+      "note_reference": {
+        "description": "Eine Notiz aus Notizen anhängen",
+        "empty": "Keine Notizen gefunden",
+        "load_failed": "Notizen konnten nicht geladen werden",
+        "loading": "Notizen werden geladen...",
+        "title": "Referenzhinweis"
+      },
       "paste_text_file": "In die Eingabe einfügen",
       "pasted_text_file_name": "Pasted text.txt",
       "pause": "Pause",
@@ -1559,6 +1615,7 @@
         },
         "open_file": "Datei öffnen",
         "open_file_error": "Fehler beim Öffnen der Datei: {{path}}",
+        "open_with": "Öffnen mit",
         "reveal_in_finder": "Im Finder anzeigen"
       },
       "topics": "Themen",
@@ -1572,7 +1629,6 @@
         "image_or_document": "Bild oder Dokument hochladen",
         "upload_from_local": "Lokale Datei hochladen..."
       },
-      "url_context": "Webseiten-Kontext",
       "web_search": {
         "builtin": {
           "disabled_content": "Aktuelles Modell unterstützt keine Websuche",
@@ -1589,18 +1645,16 @@
           "description": "Websuchfunktion nicht aktivieren",
           "label": "Keine Websuche"
         },
+        "route": {
+          "builtin": "Suchen mit dem integrierten Tool des Modells",
+          "client": "Suchen mit {{provider}}"
+        },
         "settings": "Websuch-Einstellungen"
       }
     },
     "mcp": {
-      "error": {
-        "parse_tool_call": "Kann nicht in gültiges Tool-Aufrufformat konvertiert werden: {{toolCall}}"
-      },
       "warning": {
-        "gemini_web_search": "Gemini unterstützt nicht die gleichzeitige Verwendung von nativer Websuche und Funktionsaufrufen",
-        "multiple_tools": "Mehrere übereinstimmende MCP-Tools gefunden, {{tool}} wurde ausgewählt",
-        "no_tool": "Erforderliches MCP-Tool {{tool}} nicht gefunden",
-        "url_context": "Gemini unterstützt nicht die gleichzeitige Verwendung von Webseiten-Kontext und Funktionsaufrufen"
+        "gemini_web_search": "Gemini unterstützt nicht die gleichzeitige Verwendung von nativer Websuche und Funktionsaufrufen"
       }
     },
     "message": {
@@ -1641,8 +1695,17 @@
       "token_details": {
         "cache_read": "Cache-Lesevorgang",
         "cache_write": "Cache-Schreiben",
+        "cost": "Kosten",
+        "cost_billed": "Abgerechnet durch Anbieter",
+        "cost_estimated": "Geschätzt",
+        "end_to_end_throughput": "End-to-End-Durchsatz",
         "input": "Eingabe",
         "input_breakdown": "Eingabeaufschlüsselung",
+        "lane_approval": "Genehmigung",
+        "lane_model": "Modell",
+        "lane_other": "Andere",
+        "lane_tool": "Werkzeug",
+        "model_throughput": "Modellgenerierung TPS",
         "output": "Ausgabe",
         "reasoning": "Schlussfolgerung",
         "reasoning_time": "Schlussfolgerung",
@@ -1651,6 +1714,7 @@
         "text_output": "Textausgabe",
         "tokens": "{{value}} Tokens",
         "tokens_per_second_value": "{{value}} Token/s",
+        "total_duration": "Gesamtdauer",
         "uncached": "Nicht zwischengespeichert",
         "usage": "Token-Nutzung",
         "waiting_first_token": "Wartend"
@@ -1667,6 +1731,9 @@
       }
     },
     "navigation": {
+      "anchor": {
+        "jump_to_turn": "Springe zu Zug {{number}}"
+      },
       "bottom": "Zum Boden scrollen",
       "close": "Schließen",
       "first": "Bereits die erste Nachricht",
@@ -1924,6 +1991,7 @@
         "this_week": "Diese Woche",
         "today": "Heute",
         "unknown_assistant": "Unverknüpfter Assistent",
+        "unknown_assistant_tip": "Dies ist eine historische Gesprächsgruppe ohne Assistent, kein eigentlicher Assistent. Verschieben Sie das Gespräch zu einem vorhandenen Assistenten, um fortzufahren.",
         "yesterday": "Gestern"
       },
       "list": "Themenliste",
@@ -2291,6 +2359,12 @@
     "generate_random_seed": "Zufälligen Seed generieren",
     "get_embedding_dimension": "Abruf der Einbettungsdimension",
     "go_to_settings": "Zu Einstellungen",
+    "group": {
+      "create": "Neue Gruppe",
+      "create_failed": "Gruppe konnte nicht erstellt werden",
+      "name_placeholder": "Gruppennamen eingeben...",
+      "name_required": "Gruppenname ist erforderlich"
+    },
     "help": "Hilfe",
     "html_preview": "HTML-Vorschau",
     "i_know": "Verstanden",
@@ -2318,6 +2392,7 @@
     "open_in": "In {{name}} öffnen",
     "open_in_new_tab": "In neuem Tab öffnen",
     "open_sidebar": "Seitenleiste öffnen",
+    "other": "Andere",
     "placeholders": {
       "select": {
         "model": "Modell auswählen"
@@ -2446,6 +2521,7 @@
       "content": "Inhalt wurde vom Sicherheitssystem blockiert, bitte ändern und erneut versuchen",
       "context_length": "Unterhaltung zu lang, bitte Verlauf löschen oder einen neuen Chat beginnen",
       "deprecated": "Dieses Modell wurde außer Betrieb genommen, bitte wechseln Sie zu einem anderen Modell",
+      "free_model_unavailable": "Die KI-Diagnose ist vorübergehend nicht verfügbar.",
       "go_to_settings": "Zu Einstellungen",
       "knowledge": "Vektorisierung der Wissensdatenbank fehlgeschlagen",
       "mcp": "Verbindung zum MCP-Server fehlgeschlagen, prüfen Sie ob der Dienst läuft",
@@ -2550,6 +2626,10 @@
     "user": "Benutzer"
   },
   "file_preview": {
+    "directory": {
+      "description": "Wählen Sie eine Datei in diesem Ordner aus, um sie in der Vorschau anzuzeigen.",
+      "title": "Das ist ein Ordner"
+    },
     "html": {
       "empty": {
         "description": "Diese HTML-Datei hat keinen Inhalt.",
@@ -2615,6 +2695,10 @@
         "description": "Textdateien, die größer als {{limit}} MiB sind, können nicht in der Vorschau angezeigt werden.",
         "title": "Datei ist zu groß"
       }
+    },
+    "unavailable": {
+      "description": "Die Datei wurde möglicherweise verschoben, gelöscht oder ist nicht zugänglich.",
+      "title": "Datei nicht verfügbar"
     },
     "unsupported": {
       "action": "Mit Standard-App öffnen",
@@ -2876,6 +2960,10 @@
     "code": "Code",
     "empty_preview": "Kein Inhalt zum Anzeigen",
     "generating": "Wird generiert",
+    "interactive_preview": {
+      "action": "Webseite anzeigen",
+      "description": "Diese Webseite enthält Skripte oder externe Ressourcen. Beim Öffnen kann Code ausgeführt und eine Internetverbindung hergestellt werden."
+    },
     "preview": "Vorschau",
     "split": "Geteilte Ansicht",
     "view_mode": "Ansichtsmodus"
@@ -3018,6 +3106,7 @@
       "reindex_failed": "Fehler beim Neuerstellen des Datenquellen-Index",
       "status": {
         "chunking": "Chunking",
+        "copying": "Kopieren {{percent}}%",
         "embedding": "Einbettung",
         "error": "Fehler",
         "pending": "Warten",
@@ -3115,6 +3204,7 @@
         "threshold": "Ähnlichkeitsschwelle zum Filtern von wenig relevanten Chunks. Höhere Werte machen die Abfrage strenger."
       },
       "processor": "Verarbeitungsanbieter",
+      "processor_not_configured": "Nicht konfiguriert",
       "rerank_disabled": "Deaktiviert",
       "rerank_model": "Rerank-Modell",
       "reset_action": "Standardeinstellungen wiederherstellen",
@@ -3314,7 +3404,7 @@
             "label": "Kleines Modell (optional)"
           }
         },
-        "model_config": "Modellkonfiguration",
+        "model_config": "Modell",
         "section": {
           "advanced": {
             "desc": "Ausführungslimits und Laufzeitparameter",
@@ -3365,7 +3455,12 @@
         }
       },
       "basic": {
+        "context_compress_enabled": "Automatische Komprimierung",
+        "context_compress_model": "Komprimierungsmodell",
+        "context_compress_model_follow": "Standard",
         "context_count": "Kontextzählung",
+        "context_management": "Kontextverwaltung",
+        "context_truncate_threshold": "Zeichengrenzwert für Tool-Ausgabe-Abkürzung",
         "creative": "Kreativ",
         "custom_params": "Benutzerdefinierte Parameter",
         "custom_params_add": "Parameter hinzufügen",
@@ -3377,8 +3472,17 @@
           "avatar": {
             "hint": "Wird verwendet, um den Assistenten in der Bibliothek und in Chats zu identifizieren"
           },
+          "context_compress_enabled": {
+            "hint": "Ältere Gesprächswendungen automatisch zusammenfassen, wenn sich das Kontextfenster füllt"
+          },
           "context_count": {
             "hint": "Anzahl der kürzlichen Nachrichten, die als Kontext beibehalten werden"
+          },
+          "context_management": {
+            "hint": "Globale Kontextverwaltungseinstellungen für diesen Assistenten überschreiben; aus übernimmt die globalen Einstellungen"
+          },
+          "context_truncate_threshold": {
+            "hint": "Tool-Ausgaben, die diese Zeichenanzahl überschreiten, werden ausgelagert und abgeschnitten"
           },
           "custom_params": {
             "hint": "Zusätzliche Provider-Parameter, die mit Anfragen gesendet werden"
@@ -3419,6 +3523,7 @@
         "json_invalid": "Ungültiges JSON-Format",
         "max_tokens": "Maximale Token",
         "max_tool_calls": "Maximale Tool-Aufrufe",
+        "max_tool_calls_default": "Standard ({{count}} Runden)",
         "mcp_mode": "MCP-Modus",
         "model": "Standardmodell",
         "model_clear": "Klar",
@@ -3434,8 +3539,7 @@
         "tags": "Tags",
         "temperature": "Temperatur",
         "title": "Grundeinstellungen",
-        "top_p": "Top-P",
-        "unlimited": "Unbegrenzt"
+        "top_p": "Top-P"
       },
       "breadcrumb": "Bibliothek",
       "dialogs": {
@@ -3793,6 +3897,7 @@
       "pasted_text": "Datei aus Zwischenablage"
     },
     "backup": {
+      "cleanup_failed": "Die Sicherung wurde abgeschlossen, aber alte Sicherungen konnten nicht bereinigt werden.",
       "failed": "Backup fehlgeschlagen",
       "start": {
         "success": "Backup gestartet"
@@ -3808,7 +3913,9 @@
       }
     },
     "citation": "{{count}} Zitate",
+    "citation_source": "Zitierquelle {{number}}",
     "citations": "Zitate",
+    "conversation_reset": "Vorherige Gesprächshistorie konnte nicht gefunden werden — es wird in einem neuen Gespräch fortgefahren",
     "copied": "Kopiert",
     "copy": {
       "failed": "Kopieren fehlgeschlagen",
@@ -4090,6 +4197,7 @@
         "write": "Speichern",
         "writing": "Speichern"
       },
+      "agent_background": "Im Hintergrund ausführen",
       "approvalRequired": "Das Tool \"{{tool}}\" erfordert eine Genehmigung",
       "autoApproveEnabled": "Automatische Genehmigung für dieses Tool aktiviert",
       "cancelled": "Abgebrochen",
@@ -4121,6 +4229,7 @@
         "tool": "Werkzeug",
         "webFetch": "Web abrufen",
         "webSearch": "Websuche",
+        "workflow": "Workflow",
         "write": "Schreiben"
       },
       "noData": "Keine Daten für dieses Tool verfügbar",
@@ -4178,6 +4287,15 @@
         "plan_other": "{{count}} Pläne",
         "result_one": "{{count}} Ergebnis",
         "result_other": "{{count}} Ergebnisse"
+      },
+      "workflow": {
+        "orchestrating": "Orchestrierung von Workflows",
+        "run_id": "Lauf-ID",
+        "script": "Workflow-Skript",
+        "script_path": "Skriptpfad",
+        "started": "Workflow gestartet",
+        "summary": "Zusammenfassung",
+        "workflow": "workflow"
       }
     },
     "topic": {
@@ -4209,6 +4327,7 @@
       "cutoff": "Suchergebnisse werden gekürzt...",
       "fetch_complete": "{{count}} Suchergebnisse",
       "fetch_empty": "Keine Suchergebnisse gefunden",
+      "fetch_opaque": "Vom Modell durchsucht",
       "partial_failure": "{{count}} Suchergebnisse, einige Suchvorgänge sind fehlgeschlagen"
     }
   },
@@ -4320,6 +4439,7 @@
     },
     "pinned": "Angeheftet",
     "price": {
+      "cache_read": "Cache-Lesepreis",
       "cost": "Kosten",
       "currency": "Währung",
       "custom": "Benutzerdefiniert",
@@ -4441,7 +4561,8 @@
     "save_blocked_load_failed": "Speichern blockiert, da die Notiz nicht geladen werden konnte",
     "save_failed": "Fehler beim Speichern der Notiz",
     "save_failure": {
-      "description": "Diese Notiz konnte nicht gespeichert werden. Ihre Bearbeitungen bleiben im Editor erhalten und die automatische Speicherung ist pausiert."
+      "description": "Diese Notiz konnte nicht gespeichert werden. Ihre Bearbeitungen bleiben im Editor erhalten und die automatische Speicherung ist pausiert.",
+      "metadata_pending": "Die Notiz wurde gespeichert, aber ihre Dateimetadaten werden noch wiederhergestellt. Wiederholen Sie diesen Speichervorgang nicht."
     },
     "search": {
       "both": "Name + Inhalt",
@@ -4935,6 +5056,11 @@
     "seed_random": "Zufällig",
     "seed_tip": "Gleicher Seed und Prompt können ähnliche Bilder generieren",
     "select_model": "Modell auswählen",
+    "showcase": {
+      "caption": "Wähle eine Vorlage aus und passe anschließend den Prompt unten an.",
+      "styles_label": "Prompt-Vorlagen",
+      "title": "Raum für dein nächstes Meisterwerk."
+    },
     "style_options": {
       "anime": "Anime",
       "auto": "Auto",
@@ -5074,6 +5200,7 @@
     "reset": "Zurücksetzen",
     "rotate_left": "Nach links drehen",
     "rotate_right": "Nach rechts drehen",
+    "save_as": "Speichern unter",
     "source": "Quellcode anzeigen",
     "zoom_in": "Vergrößern",
     "zoom_out": "Verkleinern"
@@ -5130,7 +5257,7 @@
     "jina": "Jina",
     "lanyun": "Lanyun Technologie",
     "lmstudio": "LM Studio",
-    "local-embedding": "Qwen3 Embedding 0.6B",
+    "local-embedding": "Lokale Modelle",
     "longcat": "Meißner Riesenhamster",
     "mimo": "Xiaomi MiMo",
     "mineru": "MinerU",
@@ -5158,6 +5285,7 @@
     "ppio": "PPIO Cloud",
     "qiniu": "Qiniu Cloud KI-Inferenz",
     "qwenlm": "QwenLM",
+    "radeon-cloud": "AMD GPU Cloud",
     "silicon": "SiliconFlow",
     "sophnet": "SophNet",
     "stepfun": "StepFun",
@@ -5211,6 +5339,7 @@
       "label": "Möchten Sie die Daten wirklich wiederherstellen?"
     },
     "content": "Der Wiederherstellungsvorgang überschreibt alle aktuellen Anwendungsdaten mit den Backup-Daten. Bitte beachten Sie, dass der Wiederherstellungsprozess einige Zeit in Anspruch nehmen kann. Vielen Dank für Ihre Geduld",
+    "messages_paused": "Eine Wiederherstellung aus dem Backup läuft; neue Nachrichten sind bis zum Abschluss pausiert.",
     "progress": {
       "completed": "Wiederherstellung abgeschlossen",
       "copying_files": "Dateien kopieren... {{progress}}%",
@@ -5656,6 +5785,7 @@
     },
     "assistant": {
       "create_new": "Neuer Assistent",
+      "create_tag": "Neu",
       "empty_text": "Noch keine Assistenten",
       "filter": "Filter-Assistenten",
       "group_filter": "Nach Gruppe filtern",
@@ -5710,7 +5840,25 @@
         "title": "Unternehmen"
       },
       "feedback": {
+        "agent": {
+          "description": "Chatte mit dem Cherry Assistant, um Feedback zu teilen.",
+          "title": "Verwenden Sie Agent"
+        },
+        "agent_error": "Cherry Assistant für Feedback kann nicht geöffnet werden. Bitte versuchen Sie es erneut.",
         "button": "Feedback",
+        "dialog": {
+          "description": "Wählen Sie, wie Sie Feedback geben möchten, und helfen Sie uns, Cherry Studio zu verbessern.",
+          "title": "Wählen Sie einen Feedback-Kanal"
+        },
+        "github": {
+          "description": "Erstelle einen Fehlerbericht oder eine Funktionsanfrage auf GitHub.",
+          "title": "GitHub Issue"
+        },
+        "recommended": "Empfohlen",
+        "survey": {
+          "description": "Geben Sie Feedback über unsere Feishu-Umfrage.",
+          "title": "Feedback-Umfrage"
+        },
         "title": "Feedback"
       },
       "label": "Über uns",
@@ -5718,6 +5866,7 @@
         "button": "Anzeigen",
         "title": "Changelog"
       },
+      "repository": "GitHub-Repository",
       "social": {
         "title": "Social-Media-Konten"
       },
@@ -5796,8 +5945,7 @@
       },
       "backup": {
         "skip_file_data_help": "Bilder und Wissensdatenbank-Dateien beim Backup überspringen, nur Chat-Verlauf und Einstellungen sichern. Spart Speicher und beschleunigt Backup",
-        "skip_file_data_title": "Kompaktes Backup",
-        "v2_unavailable": "Backup & Restore V2 ist noch nicht verfügbar. Bald erhältlich."
+        "skip_file_data_title": "Kompaktes Backup"
       },
       "clear_cache": {
         "button": "Cache löschen",
@@ -6043,6 +6191,7 @@
         },
         "pathSelector": {
           "currentPath": "Aktueller Pfad",
+          "fetchError": "Fehler beim Laden der Nutstore-Ordnerliste",
           "return": "Zurück",
           "title": "Nutstore-Speicherpfad"
         },
@@ -6578,7 +6727,8 @@
     },
     "hardware_acceleration": {
       "confirm": {
-        "content": "Deaktivierung der Hardwarebeschleunigung erfordert Neustart. Jetzt neu starten?",
+        "content_disable": "Die Deaktivierung der Hardwarebeschleunigung erfordert einen Neustart der App, um wirksam zu werden. Möchten Sie jetzt neu starten?",
+        "content_enable": "Die Aktivierung der Hardwarebeschleunigung erfordert einen Neustart der App, um wirksam zu werden. Möchten Sie jetzt neu starten?",
         "title": "Anwendungsneustart erforderlich"
       },
       "title": "Hardwarebeschleunigung deaktivieren"
@@ -6633,9 +6783,6 @@
           "dxtFile": "DXT-Paket-Datei",
           "dxtHelp": "MCP-Server-Datei .dxt auswählen",
           "dxtProcessFailed": "DXT-Datei verarbeiten fehlgeschlagen",
-          "error": {
-            "multipleServers": "Import von mehreren Servern nicht möglich"
-          },
           "invalid": "Ungültige Eingabe, bitte JSON-Format überprüfen",
           "json": "Von JSON importieren",
           "mcpb": "MCPB-Bundle importieren",
@@ -6709,6 +6856,7 @@
         "allStatuses": "Alle Status",
         "allTypes": "Alle Typen",
         "builtinOnly": "Nur integriert",
+        "label": "Filter",
         "status": "Nach Status filtern",
         "type": "Nach Typ filtern"
       },
@@ -6776,6 +6924,9 @@
         "noPromptsAvailable": "Keine Prompts verfügbar",
         "requiredField": "Pflichtfeld"
       },
+      "protocolInstall": {
+        "title": "MCP installieren"
+      },
       "protocolInstallWarning": {
         "command": "Startbefehl",
         "message": "Dieses MCP wurde über ein Protokoll aus einer externen Quelle installiert. Das Ausführen unbekannter Tools kann Ihren Computer schädigen.",
@@ -6789,6 +6940,15 @@
       "providers": "Anbieter",
       "registry": "Paketverwaltungsquelle",
       "registryDefault": "Standard",
+      "registryOptions": {
+        "custom": "Benutzerdefiniert",
+        "npmTaobao": "Taobao NPM Mirror",
+        "pipAliyun": "Aliyun",
+        "pipHuawei": "Huawei Cloud",
+        "pipTencent": "Tencent Cloud",
+        "pipTsinghua": "Tsinghua",
+        "pipUstc": "USTC"
+      },
       "registryTooltip": "Quelle für Paketinstallation auswählen um Netzwerkprobleme der Standardquelle zu lösen",
       "requiresConfig": "Konfiguration erforderlich",
       "resources": {
@@ -6964,6 +7124,7 @@
         "display": "Anzeigeverwaltung",
         "preferences": "Einstellungen"
       },
+      "hide_app": "{{name}} ausblenden",
       "open_link_external": {
         "description": "Wenn aktiviert, öffnen Links, die in einem Mini-App-Fenster ein neues Fenster öffnen, in Ihrem Standardbrowser.",
         "title": "Neue Fensterlinks im Browser öffnen"
@@ -6976,6 +7137,7 @@
         "title": "Bereichsfilterung für Mini-Programme"
       },
       "reset_tooltip": "Zurücksetzen auf Standardwert",
+      "show_app": "{{name}} anzeigen",
       "title": "Mini-Apps-Einstellungen",
       "visible": "Angezeigte Mini-Apps"
     },
@@ -7222,6 +7384,7 @@
       "topic_naming": {
         "auto": "Thema automatisch umbenennen",
         "label": "Thema-Benennung",
+        "model": "Namensmodell",
         "prompt": "Thema-Benennung-Prompt"
       },
       "translate_model": "Übersetzungsmodell",
@@ -7632,6 +7795,13 @@
         "usage_title": "Verwendung",
         "usage_unit": "Tokens"
       },
+      "radeon_cloud": {
+        "benefits": {
+          "cta": "Token Factory öffnen",
+          "description": "Entspricht täglich 10 USD API-Guthaben: bei aktuellen Tarifen etwa 10M–111M Eingabe-/Ausgabe-Token, abhängig von Modell und Token-Typ. Das Guthaben wird täglich zurückgesetzt; Aufladungen werden derzeit nicht unterstützt.",
+          "title": "Täglich 10 USD kostenloses API-Guthaben"
+        }
+      },
       "remove_duplicate_keys": "Doppelte Schlüssel entfernen",
       "remove_invalid_keys": "Ungültige Schlüssel löschen",
       "reorder_failed": "Fehler beim Neuanordnen der Anbieter",
@@ -7977,6 +8147,10 @@
         "check": "Erkennen",
         "check_failed": "Erkennung fehlgeschlagen",
         "check_success": "Erkennung erfolgreich",
+        "client_tools_preferred": {
+          "description": "Verwenden Sie die oben konfigurierten Such- und URL-Abrufdienste auch dann, wenn das Modell eine integrierte Suche hat. Wenn ausgeschaltet, übernimmt das Modell die Verarbeitung.",
+          "label": "Konfigurierte Suchdienste bevorzugen"
+        },
         "compression": {
           "cutoff": {
             "limit": {
@@ -8003,7 +8177,7 @@
           "save_failed": "Speichern fehlgeschlagen",
           "zhipu_sync_failed": "Synchronisierung des Zhipu-API-Schlüssels mit der Websuche fehlgeschlagen. Bitte speichern Sie den Schlüssel erneut oder überprüfen Sie die Einstellungen der Websuche."
         },
-        "fetch_urls_provider": "Standard-URL-Abrufanbieter",
+        "fetch_urls_provider": "URL-Abrufanbieter",
         "free": "Kostenlos",
         "is_default": "Standard",
         "local_provider": {
@@ -8107,6 +8281,108 @@
       "onclose": "Bei Schließen ins Tray minimieren",
       "show": "Tray-Symbol anzeigen",
       "title": "Tray"
+    },
+    "usage": {
+      "cards": {
+        "activeDays": "Aktive Tage",
+        "cacheHitRate": "Cache-Trefferrate",
+        "cacheObservedTokens": "Beobachtbare Eingabe: {{tokens}}",
+        "cacheStartsWithNewRequests": "Beginnt mit neuen Anfragen",
+        "dailyAverage": "Tagesdurchschnitt",
+        "explicitApiKey": "Ausgewählter Schlüssel",
+        "lastPeriod": "gegen den letzten Zeitraum",
+        "matchedApiKey": "Übereinstimmende Überschreibung",
+        "none": "N/A",
+        "peakDay": "Höchsttag",
+        "providerAuth": "Anbieter-Authentifizierung",
+        "streak": "Längste Serie: {{days}} Tage",
+        "topModel": "Top-Model",
+        "totalCost": "Gesamtkosten",
+        "totalRequests": "Anfragen",
+        "totalTokens": "Gesamtzahl der Token",
+        "unattributedApiKey": "Nicht zugeordnete Anfrage",
+        "unattributedSource": "Unzugeordnete Quelle"
+      },
+      "chart": {
+        "bar": "Bar",
+        "line": "Zeile",
+        "pie": "Kuchen",
+        "stack": "Stapel"
+      },
+      "currency": "Währung",
+      "empty": {
+        "description": "Die Nutzung erscheint, nachdem unterstützte KI-Anfragen Nutzungsdatensätze erstellt haben.",
+        "title": "Noch keine Nutzung"
+      },
+      "explore": {
+        "analysis": "Analyse",
+        "chart": "Diagramm",
+        "clearDate": "Datumsfilter löschen",
+        "drilldownTitle": "{{date}} Drilldown",
+        "entries": "Anfragen",
+        "groupBy": "Gruppieren nach",
+        "loadMore": "Mehr laden",
+        "loading": "Wird geladen...",
+        "metric": "Metrisch",
+        "noBreakdown": "Keine Aufschlüsselung der Daten",
+        "noBreakdownDescription": "Versuchen Sie ein breiteres Fenster oder einen anderen Anbieter.",
+        "noEntries": "Keine Einträge",
+        "noEntriesDescription": "Probieren Sie ein breiteres Fenster oder einen anderen Anbieter aus.",
+        "rollup": "Rollup",
+        "selectedDate": "Ausgewähltes Datum: {{date}}",
+        "shareLabel": "Teilen",
+        "title": "Erkunden",
+        "top": "Spitze",
+        "totalEntries_one": "{{count}} Eintrag",
+        "totalEntries_other": "{{count}} Einträge"
+      },
+      "groupBy": {
+        "apiKey": "API-Schlüssel",
+        "model": "Modell",
+        "provider": "Anbieter",
+        "source": "Assistent / Agent"
+      },
+      "heatmap": {
+        "ariaDate": "Verwendung am {{date}}",
+        "title": "Tägliche Aktivität"
+      },
+      "metric": {
+        "cost": "Kosten",
+        "requests": "Anfragen",
+        "tokens": "Tokens"
+      },
+      "overview": {
+        "title": "Übersicht"
+      },
+      "rollup": {
+        "daily": "Täglich",
+        "monthly": "Monatlich",
+        "total": "Gesamt",
+        "weekly": "Wöchentlich"
+      },
+      "summary": "{{window}} / {{tokens}} Token / {{requests}} Anfragen",
+      "table": {
+        "cost": "Kosten",
+        "date": "Datum",
+        "model": "Modell",
+        "source": "Quelle",
+        "tokens": "Token",
+        "tps": "TPS",
+        "tpsValue": "{{value}} tok/s",
+        "ttft": "TTFT"
+      },
+      "title": "Nutzungsanalysen",
+      "tooltip": {
+        "cost": "Kosten {{value}}",
+        "requests_one": "{{count}} Anfrage",
+        "requests_other": "{{count}} Anfragen",
+        "tokens": "{{value}} Token"
+      },
+      "window": {
+        "30d": "Letzte 30 Tage",
+        "365d": "Letztes Jahr",
+        "90d": "Letzte 90 Tage"
+      }
     },
     "use_system_title_bar": {
       "confirm": {
@@ -8283,6 +8559,7 @@
         "placeholder": "Übersetzungsverlauf durchsuchen"
       },
       "source": "Quelle",
+      "star": "Lieblings-",
       "success": {
         "add": "In der Historie gespeichert",
         "clear": "Verlauf gelöscht",
