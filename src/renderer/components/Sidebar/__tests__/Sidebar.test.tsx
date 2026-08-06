@@ -288,8 +288,10 @@ describe('Sidebar resize handle', () => {
 
     const resizeHandle = container.querySelector('.cursor-col-resize') as HTMLElement
     const hotZone = resizeHandle.parentElement
+    const hiddenSidebar = container.firstElementChild
 
     // The hidden sidebar still needs a full-height interactive resize target outside the window drag region.
+    expect(hiddenSidebar).toHaveClass('z-50')
     expect(resizeHandle).toHaveClass('h-full', 'w-full', 'cursor-col-resize')
     expect(hotZone).toHaveClass('absolute', 'inset-y-0', 'left-0', 'z-50', 'w-4')
     expect(hotZone).toHaveClass('[-webkit-app-region:no-drag]')
@@ -305,6 +307,36 @@ describe('Sidebar resize handle', () => {
     expect(onResizePreview).toHaveBeenNthCalledWith(1, INTERMEDIATE_WIDTH)
     expect(setWidth).toHaveBeenCalledTimes(1)
     expect(setWidth).toHaveBeenLastCalledWith(SIDEBAR_FULL_THRESHOLD)
+  })
+
+  it('cancels hidden hover reveal when the hot zone starts resizing', () => {
+    vi.useFakeTimers()
+    const onHoverChange = vi.fn()
+
+    try {
+      const { container } = render(
+        <Sidebar
+          width={SIDEBAR_HIDDEN_THRESHOLD - 10}
+          setWidth={vi.fn()}
+          active={{ activeItem: 'chat' }}
+          entries={entries}
+          onHoverChange={onHoverChange}
+        />
+      )
+
+      const resizeHandle = container.querySelector('.cursor-col-resize') as HTMLElement
+      const hotZone = resizeHandle.parentElement as HTMLElement
+
+      fireEvent.mouseEnter(hotZone)
+      fireEvent.mouseDown(resizeHandle, { clientX: 0 })
+      vi.advanceTimersByTime(250)
+
+      expect(onHoverChange).toHaveBeenCalledTimes(1)
+      expect(onHoverChange).toHaveBeenLastCalledWith(false)
+    } finally {
+      vi.useRealTimers()
+      fireEvent.mouseUp(document)
+    }
   })
 
   it('renders the full layout at the full threshold', () => {
