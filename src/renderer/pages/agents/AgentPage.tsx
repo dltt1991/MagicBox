@@ -22,7 +22,6 @@ import { usePersistCache } from '@renderer/data/hooks/useCache'
 import { useInvalidateCache } from '@renderer/data/hooks/useDataApi'
 import { useAgent, useAgents } from '@renderer/hooks/agent/useAgent'
 import { useActiveSession, useLatestSession, useSession, useUpdateSession } from '@renderer/hooks/agent/useSession'
-import { useCommandHandler } from '@renderer/hooks/command'
 import { useAgentSessionsSource } from '@renderer/hooks/resourceViewSources'
 import {
   useCloseConversationTabs,
@@ -378,16 +377,6 @@ const AgentPage = () => {
   const toggleResourceListOpen = useCallback(() => {
     markManualPaneToggle(!effectiveShowSidebar)
   }, [effectiveShowSidebar, markManualPaneToggle])
-  useCommandHandler(
-    'app.sidebar.toggle',
-    () => {
-      if (isMessageOnlyView) return
-
-      toggleResourceListOpen()
-    },
-    { enabled: isActiveTab }
-  )
-
   useEffect(() => {
     if (isMessageOnlyView) return
     if (!activeSession) return

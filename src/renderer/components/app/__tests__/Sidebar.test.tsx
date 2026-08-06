@@ -121,6 +121,10 @@ vi.mock('@renderer/hooks/tab', () => ({
   })
 }))
 
+vi.mock('@renderer/hooks/command', () => ({
+  useCommandHandler: vi.fn()
+}))
+
 vi.mock('@renderer/services/mainWindowNavigation', () => ({
   openSettingsTab: mocks.openSettingsTab
 }))
@@ -136,8 +140,23 @@ vi.mock('../../icons/SvgIcon', () => ({
 }))
 
 vi.mock('../../layout/ShellTabBarActions', () => ({
-  SidebarShellActions: ({ layout, onSettingsClick }: { layout: string; onSettingsClick: () => void }) => (
-    <button type="button" data-testid={`sidebar-shell-actions-${layout}`} onClick={onSettingsClick} />
+  SidebarShellActions: ({
+    layout,
+    sidebarHidden,
+    onSidebarToggle,
+    onSettingsClick
+  }: {
+    layout: string
+    sidebarHidden?: boolean
+    onSidebarToggle?: () => void
+    onSettingsClick: () => void
+  }) => (
+    <>
+      <button type="button" data-testid={`sidebar-toggle-${layout}`} onClick={onSidebarToggle}>
+        {sidebarHidden ? 'pin' : 'hide'}
+      </button>
+      <button type="button" data-testid={`sidebar-shell-actions-${layout}`} onClick={onSettingsClick} />
+    </>
   )
 }))
 
@@ -203,6 +222,7 @@ vi.mock('../../Sidebar', async () => {
         <div
           className={isFloatingClosing ? 'slide-out-to-left-2 animate-out' : 'slide-in-from-left-2 animate-in'}
           data-testid="floating-sidebar">
+          <div data-testid="floating-sidebar-actions">{typeof actions === 'function' ? actions('full') : actions}</div>
           <button type="button" onClick={onDismiss}>
             dismiss
           </button>
@@ -279,6 +299,7 @@ vi.mock('react-i18next', () => ({
   })
 }))
 
+import { useCommandHandler } from '@renderer/hooks/command'
 import { resolveSidebarAppTabEntryUrl } from '@renderer/utils/sidebar'
 
 import Sidebar from '../Sidebar'
@@ -331,6 +352,47 @@ describe('app Sidebar', () => {
     fireEvent.click(screen.getByTestId('sidebar-shell-actions-icon'))
 
     expect(mocks.openSettingsTab).toHaveBeenCalledWith('/settings/provider')
+  })
+
+  it('hides the visible sidebar from the footer toggle above settings', () => {
+    render(<Sidebar />)
+
+    expect(screen.getByTestId('sidebar-toggle-icon')).toHaveTextContent('hide')
+
+    fireEvent.click(screen.getByTestId('sidebar-toggle-icon'))
+
+    expect(mocks.setSidebarWidth).toHaveBeenCalledWith(0)
+  })
+
+  it('toggles the app sidebar from the left sidebar shortcut command', () => {
+    render(<Sidebar />)
+
+    const shortcutHandler = vi
+      .mocked(useCommandHandler)
+      .mock.calls.find(([command]) => command === 'app.sidebar.toggle')?.[1]
+
+    expect(shortcutHandler).toBeDefined()
+
+    act(() => {
+      void shortcutHandler?.()
+    })
+
+    expect(mocks.setSidebarWidth).toHaveBeenCalledWith(0)
+  })
+
+  it('restores the hidden sidebar from the auto-revealed footer toggle', () => {
+    mocks.sidebarWidth = 0
+
+    render(<Sidebar />)
+
+    fireEvent.click(screen.getByText('reveal'))
+
+    expect(screen.getByTestId('floating-sidebar')).toBeInTheDocument()
+    expect(screen.getByTestId('sidebar-toggle-full')).toHaveTextContent('pin')
+
+    fireEvent.click(screen.getByTestId('sidebar-toggle-full'))
+
+    expect(mocks.setSidebarWidth).toHaveBeenCalledWith(50)
   })
 
   it('derives conversation detach URLs from instance metadata', () => {

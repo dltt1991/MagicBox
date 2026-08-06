@@ -1,6 +1,5 @@
-import type { TooltipProps } from '@cherrystudio/ui'
+import { Tooltip, type TooltipProps } from '@cherrystudio/ui'
 import { usePreference } from '@data/hooks/usePreference'
-import { CommandTooltip } from '@renderer/components/command'
 import { SidebarCollapseIcon, SidebarExpandIcon } from '@renderer/components/icons/SidebarToggleIcons'
 import NavbarIcon from '@renderer/components/NavbarIcon'
 import { t } from 'i18next'
@@ -38,7 +37,7 @@ export function ConversationSidebarToggleButton({
   }
 
   return (
-    <CommandTooltip command="app.sidebar.toggle" label={label} placement={tooltipPlacement} delay={tooltipDelay}>
+    <Tooltip content={label} placement={tooltipPlacement} delay={tooltipDelay}>
       <NavbarIcon
         tone="conversation"
         aria-label={label}
@@ -47,6 +46,6 @@ export function ConversationSidebarToggleButton({
         {...buttonProps}>
         <ToggleIcon />
       </NavbarIcon>
-    </CommandTooltip>
+    </Tooltip>
   )
 }

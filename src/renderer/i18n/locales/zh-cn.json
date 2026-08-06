@@ -4372,6 +4372,7 @@
   "navbar": {
     "expand": "伸缩对话框",
     "hide_sidebar": "隐藏侧边栏",
+    "pin_sidebar": "固定侧边栏",
     "show_sidebar": "显示侧边栏",
     "window": {
       "close": "关闭",

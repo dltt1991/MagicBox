@@ -307,6 +307,38 @@ describe('Sidebar resize handle', () => {
     expect(setWidth).toHaveBeenLastCalledWith(SIDEBAR_FULL_THRESHOLD)
   })
 
+  it('waits for an intentional hover before revealing the hidden sidebar', () => {
+    vi.useFakeTimers()
+    const onHoverChange = vi.fn()
+
+    try {
+      const { container } = render(
+        <Sidebar
+          width={SIDEBAR_HIDDEN_THRESHOLD - 10}
+          setWidth={vi.fn()}
+          active={{ activeItem: 'chat' }}
+          entries={entries}
+          onHoverChange={onHoverChange}
+        />
+      )
+
+      const resizeHandle = container.querySelector('.cursor-col-resize') as HTMLElement
+      const hotZone = resizeHandle.parentElement as HTMLElement
+
+      fireEvent.mouseEnter(hotZone)
+      vi.advanceTimersByTime(600)
+
+      expect(onHoverChange).not.toHaveBeenCalled()
+
+      vi.advanceTimersByTime(100)
+
+      expect(onHoverChange).toHaveBeenCalledTimes(1)
+      expect(onHoverChange).toHaveBeenLastCalledWith(true)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('cancels hidden hover reveal when the hot zone starts resizing', () => {
     vi.useFakeTimers()
     const onHoverChange = vi.fn()
