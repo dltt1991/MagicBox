@@ -6,7 +6,7 @@ import path from 'path'
 import { getBinarySearchDirs } from './binaryEnv'
 
 /**
- * Resolution for Cherry-managed binaries — turns a tool name into the on-disk
+ * Resolution for Magic Box-managed binaries — turns a tool name into the on-disk
  * path of the bundled-or-installed executable, searching the layout defined by
  * `binaryEnv.getBinarySearchDirs()` (mise shims first, then `cherry.bin`).
  */

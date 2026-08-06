@@ -109,7 +109,7 @@ describe('PromptBuilder', () => {
 
     const result = await builder.buildSystemPrompt('/workspace')
 
-    expect(result).toContain('You are a personal assistant running inside Cherry Studio')
+    expect(result).toContain('You are a personal assistant running inside Magic Box')
     expect(result).toContain('## Autonomy Tools')
     expect(result).toContain('## Memories')
     expect(result).toContain('`/workspace/SOUL.md`')
@@ -143,7 +143,7 @@ describe('PromptBuilder', () => {
     const result = await builder.buildSystemPrompt('/workspace')
 
     expect(result).toContain('You are CustomBot')
-    expect(result).not.toContain('You are a personal assistant running inside Cherry Studio')
+    expect(result).not.toContain('You are a personal assistant running inside Magic Box')
   })
 
   it('includes soul.md in memories section', async () => {
@@ -175,13 +175,13 @@ describe('PromptBuilder', () => {
 
   it('includes memory/FACT.md in memories section', async () => {
     setupFiles({
-      '/workspace/memory/FACT.md': '# Active Projects\n\n- Cherry Studio'
+      '/workspace/memory/FACT.md': '# Active Projects\n\n- Magic Box'
     })
 
     const result = await builder.buildSystemPrompt('/workspace')
 
     expect(result).toContain('<facts>')
-    expect(result).toContain('Cherry Studio')
+    expect(result).toContain('Magic Box')
     expect(result).toContain('</facts>')
     expect(result).toContain('WHAT you know')
   })
@@ -190,7 +190,7 @@ describe('PromptBuilder', () => {
     setupFiles({
       '/workspace/soul.md': 'Be concise.',
       '/workspace/user.md': 'Name: V',
-      '/workspace/memory/FACT.md': 'Project: Cherry Studio'
+      '/workspace/memory/FACT.md': 'Project: Magic Box'
     })
 
     const result = await builder.buildSystemPrompt('/workspace')

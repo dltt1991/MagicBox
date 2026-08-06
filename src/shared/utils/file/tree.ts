@@ -31,6 +31,8 @@ export interface TreeNodeStats {
   readonly mtime: number
   /** Best-effort birthtime in ms; falls back to mtime on filesystems without birth-time. */
   readonly birthtime: number
+  /** File size in bytes. Directories use the filesystem-reported entry size. */
+  readonly size?: number
 }
 
 /** Serializable wire shape. Mirrors `TreeNode` minus the live `parent` pointer. */
@@ -66,7 +68,7 @@ export const DirectoryTreeOptionsSchema = z.strictObject({
 
   /**
    * When `true`, the builder stats every entry up front and exposes
-   * `mtime`/`birthtime` on each node (and `SerializedTreeNode.stats`).
+   * `mtime`/`birthtime`/`size` on each node (and `SerializedTreeNode.stats`).
    * Costs `O(n)` stat calls; only enable when actually needed for sorting.
    */
   withStats: z.boolean().optional(),

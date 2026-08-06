@@ -102,6 +102,46 @@ describe('command definitions', () => {
       enabled: true
     })
   })
+
+  it('defines terminal tab management commands with terminal-style defaults', () => {
+    expect(REGISTERED_KEYBINDINGS.find((rule) => rule.command === 'terminal.new')).toMatchObject({
+      command: 'terminal.new',
+      defaultBinding: ['CommandOrControl', 'T'],
+      preferenceKey: 'shortcut.terminal.new',
+      scope: 'renderer'
+    })
+    expect(REGISTERED_KEYBINDINGS.find((rule) => rule.command === 'terminal.close_current')).toMatchObject({
+      command: 'terminal.close_current',
+      defaultBinding: ['CommandOrControl', 'W'],
+      preferenceKey: 'shortcut.terminal.close_current',
+      scope: 'renderer'
+    })
+    expect(REGISTERED_KEYBINDINGS.find((rule) => rule.command === 'terminal.close_others')).toMatchObject({
+      command: 'terminal.close_others',
+      defaultBinding: ['CommandOrControl', 'Alt', 'W'],
+      preferenceKey: 'shortcut.terminal.close_others',
+      scope: 'renderer'
+    })
+    expect(REGISTERED_KEYBINDINGS.find((rule) => rule.command === 'terminal.close_all')).toMatchObject({
+      command: 'terminal.close_all',
+      defaultBinding: [],
+      preferenceKey: 'shortcut.terminal.close_all',
+      scope: 'renderer'
+    })
+  })
+
+  it('defines a configurable file manager search shortcut', () => {
+    expect(REGISTERED_KEYBINDINGS.find((rule) => rule.command === 'file_manager.search')).toMatchObject({
+      command: 'file_manager.search',
+      defaultBinding: ['CommandOrControl', 'F'],
+      preferenceKey: 'shortcut.file_manager.search',
+      scope: 'renderer'
+    })
+    expect(getCommandDefaultShortcutPreference('file_manager.search')).toEqual({
+      binding: ['CommandOrControl', 'F'],
+      enabled: true
+    })
+  })
 })
 
 describe('commandShortcutPreferenceKey', () => {

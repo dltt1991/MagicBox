@@ -9,7 +9,7 @@ per turn, or Claude Code's SDK `query`.
 
 The boundary is:
 
-- `AgentSessionRuntimeService` owns Cherry's UI/session lifecycle.
+- `AgentSessionRuntimeService` owns Magic Box's UI/session lifecycle.
 - `AgentSessionRuntimeDriver` owns the concrete agent-session runtime lifecycle.
 
 Claude Code is the first driver. Its `query`, warm query, SDK input

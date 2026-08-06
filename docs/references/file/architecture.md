@@ -15,20 +15,20 @@
 
 ### 1.0 Core Principle
 
-> **FileManager manages files introduced via explicit calls to `createInternalEntry` / `ensureExternalEntry`**—files exist as one of two origins: `internal` (Cherry owns the content) or `external` (records a path reference only). Which origin the caller chooses is a business-layer decision; FileManager makes no assumptions about it.
+> **FileManager manages files introduced via explicit calls to `createInternalEntry` / `ensureExternalEntry`**—files exist as one of two origins: `internal` (Magic Box owns the content) or `external` (records a path reference only). Which origin the caller chooses is a business-layer decision; FileManager makes no assumptions about it.
 
 ### 1.0.1 Semantics of Origin
 
 The `origin` field on a FileEntry defines content ownership, with two values:
 
-- **`internal`**: Cherry owns the file content, physically stored at `{userData}/Data/Files/{id}.{ext}`. The caller hands a Buffer/Stream/source file to FileManager, which copies and takes ownership. `name` / `ext` / `size` are authoritative on the row (atomic writes keep DB and FS in sync).
-- **`external`**: Cherry only records an absolute path reference on the user's side, does not copy content, and does not own the file. `name` / `ext` on the row are pure projections of `externalPath` (basename / extname); `size` is **not stored** (always `null`) — live value is obtained via File IPC `getMetadata`. File availability and content changes are determined by the user side.
+- **`internal`**: Magic Box owns the file content, physically stored at `{userData}/Data/Files/{id}.{ext}`. The caller hands a Buffer/Stream/source file to FileManager, which copies and takes ownership. `name` / `ext` / `size` are authoritative on the row (atomic writes keep DB and FS in sync).
+- **`external`**: Magic Box only records an absolute path reference on the user's side, does not copy content, and does not own the file. `name` / `ext` on the row are pure projections of `externalPath` (basename / extname); `size` is **not stored** (always `null`) — live value is obtained via File IPC `getMetadata`. File availability and content changes are determined by the user side.
 
 Which origin to pick is the **caller's** decision; FileManager makes no assumption about the business layer.
 
 ### 1.0.2 Best-effort Semantics for External
 
-An external entry is a persistent record that "the caller expressed the intent to reference this path at some point in time"—analogous to the "best-effort external reference" seen in tools like codex. It does not guarantee the file remains stable, nor that the content matches what it was when first referenced. Cherry does not actively mirror FS changes; instead, FS changes naturally surface as "reading new content next time" or "the entry turns dangling".
+An external entry is a persistent record that "the caller expressed the intent to reference this path at some point in time"—analogous to the "best-effort external reference" seen in tools like codex. It does not guarantee the file remains stable, nor that the content matches what it was when first referenced. Magic Box does not actively mirror FS changes; instead, FS changes naturally surface as "reading new content next time" or "the entry turns dangling".
 
 ### 1.1 What the File Module Includes
 
@@ -192,7 +192,7 @@ Data-shape layer    FileEntry                          FileInfo
 Picking a handle variant is a **call-site choice of reference form**, not a statement about the file itself. Crucially, **the two axes are orthogonal**:
 
 - **Reference form** (this layer): `FileEntryHandle` routes through the entry system (FileManager, versionCache, DanglingCache updates); `FilePathHandle` bypasses FileEntry state coordination and delegates to the file-module path helper, which then uses the underlying FS primitive.
-- **Content ownership** (`FileEntry.origin`, not visible in the handle): `internal` means Cherry owns `{userData}/Data/Files/{id}.{ext}`; `external` means Cherry only records a reference to a user-owned path.
+- **Content ownership** (`FileEntry.origin`, not visible in the handle): `internal` means Magic Box owns `{userData}/Data/Files/{id}.{ext}`; `external` means Magic Box only records a reference to a user-owned path.
 
 The **same physical external file** can therefore be reached by either handle variant. A `FileEntryHandle` to its entry goes through the entry-aware code path (dangling updates, version cache, identity-tracked operations); a `FilePathHandle` to the same absolute path goes through pure FS. Picking one is a matter of which subsystem the caller wants in the loop — not a property of the file.
 
@@ -219,7 +219,7 @@ Once a handle is dispatched, the handler works with either a `FileEntry` (the DB
 
 - **`FileEntry` has identity fields** `FileInfo` lacks: `id`, `origin`, `externalPath`, `deletedAt`.
 - **`FileInfo` has live fields** `FileEntry` lacks: `path` (derived, never stored on `FileEntry`), `modifiedAt`, and a live `size`.
-- **`FileEntry.size` is origin-gated**. For `origin='internal'` it is an authoritative byte count (kept in sync by atomic writes). For `origin='external'` it is **always `null`** — external files may change outside Cherry at any time, so no DB snapshot is stored. Consumers that need a live value for an external entry call File IPC `getMetadata(handle)` / `batchGetMetadata({ items })`, which runs `fs.stat` on demand. This eliminates the "is this snapshot current?" question at the type level rather than at call sites.
+- **`FileEntry.size` is origin-gated**. For `origin='internal'` it is an authoritative byte count (kept in sync by atomic writes). For `origin='external'` it is **always `null`** — external files may change outside Magic Box at any time, so no DB snapshot is stored. Consumers that need a live value for an external entry call File IPC `getMetadata(handle)` / `batchGetMetadata({ items })`, which runs `fs.stat` on demand. This eliminates the "is this snapshot current?" question at the type level rather than at call sites.
 - **`FileEntry.name` / `FileEntry.ext` never drift**. For internal they are user-editable SoT; for external they are pure projections of `externalPath` (basename / extname) and therefore stable as long as the entry itself exists.
 
 **Projection is one-way**. `FileEntry → FileInfo` is always possible via `toFileInfo(entry)` (async — performs `fs.stat` plus path resolution based on `origin`, which is also how the live `size` is materialized for external). The reverse is **not a type conversion**: it is a state change, and requires explicit registration through `FileManager.createInternalEntry` or `ensureExternalEntry`. The Zod brand on `FileEntrySchema` enforces this — arbitrary object literals cannot satisfy the `FileEntry` type.
@@ -312,7 +312,7 @@ describe that logical surface, including routes that are not wired yet.
 
 | Method | Description |
 |---|---|
-| `createInternalEntry` / `batchCreateInternalEntries` | Create a new Cherry-owned FileEntry (writes to `{userData}/Data/Files/{id}.{ext}`; each call produces an independent new entry, no conflict possible) |
+| `createInternalEntry` / `batchCreateInternalEntries` | Create a new Magic Box-owned FileEntry (writes to `{userData}/Data/Files/{id}.{ext}`; each call produces an independent new entry, no conflict possible) |
 | `ensureExternalEntry` / `batchEnsureExternalEntries` | Pure upsert by `externalPath`—the entry point first validates the path shape via `AbsoluteFilePathSchema` (shape-only, no rewrite), then `ensureExternalEntry` canonicalizes it to the byte-faithful lexical form via the `canonicalizeFilePath()` factory (see `canonicalize.ts`) before matching; reuses the existing entry with the same path or inserts a new one. Idempotent by design—callers may safely repeat calls. No "restore" branch: external entries cannot be trashed. External rows carry no stored `size` (always `null`); live values come from `getMetadata`. |
 | `trash` / `restore` | Soft delete based on deletedAt (DB only). **Internal-origin only** — external-origin entries cannot be trashed (`fe_external_no_delete` CHECK); passing an external id throws. |
 | `batchTrash` / `batchRestore` | Batch versions of `trash` / `restore` — same internal-origin-only rule. |
@@ -337,23 +337,23 @@ describe that logical surface, including routes that are not wired yet.
 
 ### 3.4 Operational Semantics for External Files
 
-**Impact of Cherry's operations on external files**:
+**Impact of Magic Box's operations on external files**:
 
 | User action | Physical external file |
 |---|---|
-| Trash from Cherry | **Not applicable** — external-origin entries cannot be trashed (`fe_external_no_delete` CHECK) |
-| Restore from Cherry | **Not applicable** — external-origin entries are never trashed |
-| permanentDelete from Cherry (entry-level) | **Untouched** — only the DB row is deleted; the physical file remains on disk |
-| write / writeIfUnchanged from Cherry | **Overwritten** (atomic write) |
-| Rename from Cherry | **Physically renamed** (the external filename also changes) |
+| Trash from Magic Box | **Not applicable** — external-origin entries cannot be trashed (`fe_external_no_delete` CHECK) |
+| Restore from Magic Box | **Not applicable** — external-origin entries are never trashed |
+| permanentDelete from Magic Box (entry-level) | **Untouched** — only the DB row is deleted; the physical file remains on disk |
+| write / writeIfUnchanged from Magic Box | **Overwritten** (atomic write) |
+| Rename from Magic Box | **Physically renamed** (the external filename also changes) |
 | `remove(path)` (from `@main/utils/file/fs`) via `FilePathHandle` (path-level) | **Deleted** — this is a deliberate path-level operation, not coupled to any file_entry row |
 
 **Key principles**:
-- Cherry does not perform automatic / watcher-driven external file modifications
-- Cherry does perform user-explicitly-requested external file modifications (save, rename)
-- **Entry-level deletion (`permanentDelete` on an external file_entry) does NOT touch the physical file** — this decouples "remove from Cherry's tracking" from "destroy on disk". If a user truly wants to delete the physical file, they invoke the path-level `remove(path)` (from `@main/utils/file/fs`, via a `FilePathHandle`) explicitly, which is not bound to any entry row.
-- External entry lifecycle is monotonic (Active → Deleted), with no Trashed state — "remove entry from Cherry's view" always means clearing the DB row + cascading persistent file association rows
-- **Cherry does not track external file rename/move**—when a file is moved outside of Cherry, the corresponding entry becomes dangling (best-effort semantics); the caller must proactively call `ensureExternalEntry` on the new path to establish a new reference (upsert by path; reuses existing entry if hit)
+- Magic Box does not perform automatic / watcher-driven external file modifications
+- Magic Box does perform user-explicitly-requested external file modifications (save, rename)
+- **Entry-level deletion (`permanentDelete` on an external file_entry) does NOT touch the physical file** — this decouples "remove from Magic Box's tracking" from "destroy on disk". If a user truly wants to delete the physical file, they invoke the path-level `remove(path)` (from `@main/utils/file/fs`, via a `FilePathHandle`) explicitly, which is not bound to any entry row.
+- External entry lifecycle is monotonic (Active → Deleted), with no Trashed state — "remove entry from Magic Box's view" always means clearing the DB row + cascading persistent file association rows
+- **Magic Box does not track external file rename/move**—when a file is moved outside of Magic Box, the corresponding entry becomes dangling (best-effort semantics); the caller must proactively call `ensureExternalEntry` on the new path to establish a new reference (upsert by path; reuses existing entry if hit)
 
 Similar to VS Code's behavior model for open files: it changes when you tell it to, without modifying behind the scenes; if you change the file externally, it won't auto-follow.
 
@@ -364,7 +364,7 @@ The IPC method name `permanentDelete` is polymorphic on handle/origin and does n
 | Call site | User-facing label | Confirmation copy |
 |---|---|---|
 | entry handle, `origin = 'internal'` | "Permanently delete" / "永久删除" | "This file will be permanently deleted from your library and from disk. This action cannot be undone." |
-| entry handle, `origin = 'external'` | "**Remove from library**" / "从库中移除" | "Cherry will stop tracking this file. The file on disk is not affected; it will remain where it is." |
+| entry handle, `origin = 'external'` | "**Remove from library**" / "从库中移除" | "Magic Box will stop tracking this file. The file on disk is not affected; it will remain where it is." |
 | path handle | "Delete file" / "删除文件" | "This file will be permanently removed from disk. This action cannot be undone." |
 
 The internal and path branches are **true destructive actions** (red button, clear warning). The external-entry branch is an **un-tracking** operation — the user's file is not touched. Presenting it with "permanent delete" language creates two classic bug paths:
@@ -1093,9 +1093,9 @@ src/main/utils/file/                  -- shared raw FS helpers, open to the enti
 - **External entry is a best-effort reference**: no guarantee the file remains stable, no guarantee content matches the reference-time content. Equivalent to "the user expressed intent to reference this path at some point" semantics in tools like codex
 - **External entry path is globally unique**: at most one row per `externalPath` at any time, regardless of any state (SQLite global unique index on `externalPath`; internal rows have `externalPath = null` and are exempt, since SQLite treats multiple NULLs as distinct). `ensureExternalEntry` is therefore a pure upsert by path — reuse if an entry exists, otherwise insert; no "restore" branch is possible because external entries cannot be trashed.
 - **External entries cannot be trashed**: enforced at the DB layer by `CHECK (origin != 'external' OR deletedAt IS NULL)` (`fe_external_no_delete`). External lifecycle is monotonic: create via `ensureExternalEntry` → update in place via `write` / `rename` → remove via `permanentDelete` (DB row only). There is no soft-delete / restore cycle for external entries. Calling `trash` / `restore` on an external id throws.
-- **External entries allow explicit user edits**: `write` / `writeIfUnchanged` / `createWriteStream` / `rename` take effect on external (delegated to ops' atomic write / fs.rename), triggered by explicit user action. Cherry does **not** perform automatic / watcher-driven external file modifications
+- **External entries allow explicit user edits**: `write` / `writeIfUnchanged` / `createWriteStream` / `rename` take effect on external (delegated to ops' atomic write / fs.rename), triggered by explicit user action. Magic Box does **not** perform automatic / watcher-driven external file modifications
 - **`permanentDelete` on external is entry-level, not file-level**: removes only the DB row + CASCADE-cleans persistent association refs; the physical file is left untouched. Path-level deletion remains available via `remove(path)` (from `@main/utils/file/fs`, reached through a `FilePathHandle`), which is a separate explicit call not bound to any entry id.
-- **Cherry does not track rename/move of external files**: an external rename turns the entry dangling; the user must re-@ to establish a new reference
+- **Magic Box does not track rename/move of external files**: an external rename turns the entry dangling; the user must re-@ to establish a new reference
 - **External entry DB row carries no `size`**: `size` is `null` on every external row by design (enforced by `fe_size_internal_only` CHECK). `name` / `ext` are pure projections of `externalPath` and do not drift. Live `size` / `mtime` are served by File IPC `getMetadata(handle)` / `batchGetMetadata({ items })`; DataApi never exposes them.
 - **Dangling state exposed via DanglingCache + File IPC query methods** (`getDanglingState` / `batchGetDanglingStates`); never exposed via DataApi: not persisted to DB; watcher events + cold-path stat push updates
 - **Physical paths are not persisted**: internal is derived from `application.getPath('feature.files.data', ...)`; external is read from the `externalPath` column

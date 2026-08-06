@@ -375,7 +375,7 @@ export class SkillService {
    * live under `.claude/skills/`. Those entries can be real directories or
    * user-created symlinks to directories.
    *
-   * Cherry-managed skills also appear under `.claude/skills/` as symlinks when
+   * Magic Box-managed skills also appear under `.claude/skills/` as symlinks when
    * enabled for Claude SDK discovery, but their source of truth is
    * `agent_global_skill` and they are rendered by `list({ agentId })`. Keep
    * them out of this local-only list.

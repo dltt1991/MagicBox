@@ -378,7 +378,7 @@ files: 'id, name, origin_name, path, size, ext, type, created_at, count'
 
 **新模型映射建议**：
 
-- chat attach 均为 **origin='internal'**（复制到 Cherry 私有目录，避免用户移动原文件时消息坏掉）
+- chat attach 均为 **origin='internal'**（复制到 Magic Box 私有目录，避免用户移动原文件时消息坏掉）
 - `file_ref` 新增行：`sourceType='chat_message'`, `sourceId=blockId`, `role='attachment' \| 'image'`
 - Block.file 字段去除，只留 fileEntryId；UI 渲染时通过 `useQuery('/files/entries/:id')` lazy 拿
 
@@ -486,7 +486,7 @@ files: 'id, name, origin_name, path, size, ext, type, created_at, count'
 
 **新模型映射**：
 
-- 临时文本/粘贴图片应作为 `origin='internal'`（Cherry 全权管理），并通过 `tempSessionFileRef`（`src/shared/data/types/file/ref/tempSession.ts`）持有引用，session 结束或真正挂到 message 时 promote 为 `chat_message` ref
+- 临时文本/粘贴图片应作为 `origin='internal'`（Magic Box 全权管理），并通过 `tempSessionFileRef`（`src/shared/data/types/file/ref/tempSession.ts`）持有引用，session 结束或真正挂到 message 时 promote 为 `chat_message` ref
 
 **迁移复杂度**：**M**
 
@@ -541,7 +541,7 @@ files: 'id, name, origin_name, path, size, ext, type, created_at, count'
 
 ### 6.10 Settings / Backup / Export
 
-**桶归属**：**I**。Export 产物（Word / Zip）和 Backup 归档由业务模块自管——用户指定落点后脱手，Cherry 不维护这些文件的身份。迁移后直接用 `FilePath` / `FileInfo`，不走 FileManager。
+**桶归属**：**I**。Export 产物（Word / Zip）和 Backup 归档由业务模块自管——用户指定落点后脱手，Magic Box 不维护这些文件的身份。迁移后直接用 `FilePath` / `FileInfo`，不走 FileManager。
 
 - `BackupService.ts`：用 `selectFolder / open` — 与 FileMetadata 基本解耦
 - `utils/export.ts`（1113 行附近）：多处调用 `file.save`、`file.saveImage`、`file.readExternal`、`file.write` — 都是纯路径操作
@@ -620,7 +620,7 @@ files: 'id, name, origin_name, path, size, ext, type, created_at, count'
 ## 9. 开放问题（需要产品或架构决策）
 
 1. **Chat attach 到底是 internal 还是 external？**
-   - 用户拖拽图片进对话：复制到 Cherry 目录（internal，安全）还是仅引用（external，省空间但用户移动文件会导致消息损坏）？
+   - 用户拖拽图片进对话：复制到 Magic Box 目录（internal，安全）还是仅引用（external，省空间但用户移动文件会导致消息损坏）？
    - 目前旧 `FileStorage.uploadFile` 是强制 internal。v2 应该继承这个决定还是给用户一个选项？
 
 2. **`count` 引用计数 vs `file_ref` 的一致性窗口**

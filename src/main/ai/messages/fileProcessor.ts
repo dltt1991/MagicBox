@@ -1,7 +1,7 @@
 /**
  * Main-process file reader for AI message parts.
  *
- * Cherry's v2 messages reference file bytes by either:
+ * Magic Box's v2 messages reference file bytes by either:
  *   - `providerMetadata.cherry.fileEntryId` (preferred; path-resilient,
  *     written by v1→v2 migrator and future producer-side rework), or
  *   - `FileUIPart.url = file://${absolutePath}` (legacy / external files;

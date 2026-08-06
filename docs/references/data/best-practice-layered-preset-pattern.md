@@ -117,7 +117,7 @@ File names follow the repo-wide [`naming-conventions.md` §3.2](../naming-conven
 
 A preset file should contain both type definitions and preset data:
 
-> **Note:** The `Provider` example below is for illustration purposes only and does not represent the actual provider implementation in Cherry Studio. Your actual data structure will vary based on your specific requirements.
+> **Note:** The `Provider` example below is for illustration purposes only and does not represent the actual provider implementation in Magic Box. Your actual data structure will vary based on your specific requirements.
 
 ```typescript
 // src/shared/data/presets/providers.ts

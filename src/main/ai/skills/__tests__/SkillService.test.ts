@@ -246,7 +246,7 @@ describe('SkillService', () => {
       expect(result.map((skill) => skill.filename).sort()).toEqual(['linked-skill', 'plain-skill'])
     })
 
-    it('skips Cherry-managed skill symlinks that point to the global skill storage', async () => {
+    it('skips Magic Box-managed skill symlinks that point to the global skill storage', async () => {
       const skillService = new SkillService()
       const workdir = await createTempDir('skill-local-workdir-')
       const skillsDir = path.join(workdir, '.claude', 'skills')
@@ -329,7 +329,7 @@ describe('SkillService', () => {
         sourcePath: 'large-skill',
         filename: 'large-skill',
         name: 'Large Skill',
-        description: 'Lives outside Cherry',
+        description: 'Lives outside Magic Box',
         category: 'skills',
         type: 'skill',
         version: '1.0.0',

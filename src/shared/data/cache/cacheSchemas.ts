@@ -311,9 +311,41 @@ export type RendererPersistCacheSchema = {
   'ui.tab.active_tab_id': string
   'ui.global_search.recent_items': CacheValueTypes.GlobalSearchRecentEntry[]
   'ui.sidebar.docked_tabs': CacheValueTypes.Tab[]
+  'ui.sidebar.terminal_favorite_migrated': boolean
   'ui.sidebar.width': number
   'ui.chat.sidebar.width': number
   'ui.chat.artifact_pane.width': number
+  'terminal.workspace.root': string | null
+  'terminal.workspace.include_hidden': boolean
+  'terminal.workspace.view_mode': 'list' | 'icons' | 'tree'
+  'terminal.workspace.icon_size': 'small' | 'medium' | 'large'
+  'terminal.workspace.sort_key': 'name' | 'mtime' | 'size'
+  'terminal.workspace.sort_direction': 'asc' | 'desc'
+  'terminal.workspace.preview_open': boolean
+  'terminal.workspace.preview_sizes': [number, number]
+  'terminal.workspace.terminal_visible': boolean
+  'terminal.workspace.keep_directory': boolean
+  'terminal.workspace.favorite_directories': string[]
+  'terminal.quick_commands': Array<{
+    id: string
+    command: string
+    iconDataUrl?: string
+    label?: string
+  }>
+  'terminal.font_size': number
+  'terminal.theme':
+    | 'default-dark'
+    | 'light'
+    | 'solarized-dark'
+    | 'dracula'
+    | 'monokai'
+    | 'one-dark-pro'
+    | 'gruvbox-dark'
+    | 'nord'
+  'terminal.layout.mode': 'right' | 'bottom' | 'terminal-maximized' | 'files-maximized' | 'preview-maximized'
+  'terminal.layout.last_split_mode': 'right' | 'bottom'
+  'terminal.layout.right_sizes': [number, number]
+  'terminal.layout.bottom_sizes': [number, number]
   // Recent composer inputs shared by chat and agent surfaces (MRU order, capped by the consumer)
   'ui.composer.input_history': string[]
   'ui.chat.last_used_assistant_id': string | null
@@ -349,9 +381,28 @@ export const DefaultRendererPersistCache: RendererPersistCacheSchema = {
   'ui.tab.active_tab_id': '',
   'ui.global_search.recent_items': [],
   'ui.sidebar.docked_tabs': [],
+  'ui.sidebar.terminal_favorite_migrated': false,
   'ui.sidebar.width': 50, // keep in sync with SIDEBAR_ICON_WIDTH (renderer Sidebar/constants.ts)
   'ui.chat.sidebar.width': 275,
   'ui.chat.artifact_pane.width': 460,
+  'terminal.workspace.root': null,
+  'terminal.workspace.include_hidden': false,
+  'terminal.workspace.view_mode': 'list',
+  'terminal.workspace.icon_size': 'medium',
+  'terminal.workspace.sort_key': 'name',
+  'terminal.workspace.sort_direction': 'asc',
+  'terminal.workspace.preview_open': true,
+  'terminal.workspace.preview_sizes': [55, 45],
+  'terminal.workspace.terminal_visible': true,
+  'terminal.workspace.keep_directory': false,
+  'terminal.workspace.favorite_directories': [],
+  'terminal.quick_commands': [],
+  'terminal.font_size': 18,
+  'terminal.theme': 'default-dark',
+  'terminal.layout.mode': 'right',
+  'terminal.layout.last_split_mode': 'right',
+  'terminal.layout.right_sizes': [35, 65],
+  'terminal.layout.bottom_sizes': [55, 45],
   'ui.composer.input_history': [],
   'ui.chat.last_used_assistant_id': null,
   'ui.chat.last_used_topic_id': null,

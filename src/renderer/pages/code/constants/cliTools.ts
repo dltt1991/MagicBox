@@ -30,7 +30,7 @@ export const CLI_TOOLS = [
 
 /**
  * Provider-less CLI tools: authenticate through their own login flow (OAuth /
- * device code) rather than a Cherry provider + model. They launch with a
+ * device code) rather than a Magic Box provider + model. They launch with a
  * working directory only — no provider config or model selection is offered.
  */
 export const PROVIDERLESS_CLI_TOOLS: ReadonlySet<CodeCli> = new Set([CodeCli.QODER_CLI, CodeCli.GITHUB_COPILOT_CLI])

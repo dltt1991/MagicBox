@@ -12,13 +12,13 @@ vi.mock('fs')
 vi.mock('path')
 vi.mock('@main/core/platform', () => ({ isWin: true }))
 vi.mock('../shellEnv', () => ({
-  getShellEnv: vi.fn(async () => ({ Path: 'C:\\Windows;C:\\mise\\shims;C:\\Cherry\\git\\cmd' }))
+  getShellEnv: vi.fn(async () => ({ Path: 'C:\\Windows;C:\\mise\\shims;C:\\Magic Box\\git\\cmd' }))
 }))
 vi.mock('../bundledGit', () => ({
   getBundledGitPath: vi.fn(() => null)
 }))
 
-const BUNDLED_GIT = 'C:\\Cherry\\resources\\binaries\\win32-x64\\git\\cmd\\git.exe'
+const BUNDLED_GIT = 'C:\\Magic Box\\resources\\binaries\\win32-x64\\git\\cmd\\git.exe'
 const MISE_SHIM = 'C:\\mise\\shims\\git.cmd'
 const SYSTEM_GIT = 'C:\\Git\\cmd\\git.exe'
 const originalProgramFiles = process.env.ProgramFiles

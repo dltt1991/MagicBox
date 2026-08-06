@@ -4,7 +4,7 @@ import { CommandTooltip } from '@renderer/components/command'
 import GlobalSearchPopup from '@renderer/components/GlobalSearch/GlobalSearchPopup'
 import type { SidebarVisibleLayout } from '@renderer/components/Sidebar'
 import { isLinux, isWin } from '@renderer/utils/platform'
-import { Search, Settings } from 'lucide-react'
+import { PanelLeftClose, PanelLeftOpen, Search, Settings } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { WindowControls } from '../WindowControls'
@@ -56,38 +56,74 @@ export function ShellTabBarActions() {
 
 export function SidebarShellActions({
   layout,
+  sidebarHidden = false,
+  onSidebarToggle,
   onSettingsClick
 }: {
   layout: SidebarVisibleLayout
+  sidebarHidden?: boolean
+  onSidebarToggle?: () => void
   onSettingsClick: () => void
 }) {
   const { t } = useTranslation()
+  const sidebarToggleLabel = t(sidebarHidden ? 'navbar.pin_sidebar' : 'navbar.hide_sidebar')
+  const SidebarToggleIcon = sidebarHidden ? PanelLeftOpen : PanelLeftClose
 
   if (layout === 'icon') {
     return (
-      <CommandTooltip command="app.settings.open" label={t('settings.title')} placement="right" delay={800}>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={t('settings.title')}
-          onClick={onSettingsClick}
-          className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground">
-          <Settings size={18} strokeWidth={1.6} />
-        </Button>
-      </CommandTooltip>
+      <>
+        {onSidebarToggle && (
+          <CommandTooltip command="app.sidebar.toggle" label={sidebarToggleLabel} placement="right" delay={800}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              aria-label={sidebarToggleLabel}
+              onClick={onSidebarToggle}
+              className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground">
+              <SidebarToggleIcon size={18} strokeWidth={1.6} />
+            </Button>
+          </CommandTooltip>
+        )}
+
+        <CommandTooltip command="app.settings.open" label={t('settings.title')} placement="right" delay={800}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={t('settings.title')}
+            onClick={onSettingsClick}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground">
+            <Settings size={18} strokeWidth={1.6} />
+          </Button>
+        </CommandTooltip>
+      </>
     )
   }
 
   return (
-    <Button
-      type="button"
-      variant="ghost"
-      aria-label={t('settings.title')}
-      onClick={onSettingsClick}
-      className="flex w-full items-center justify-start gap-2.5 rounded-lg px-2.5 py-1.75 text-[13px] text-foreground transition-colors hover:bg-accent/60 dark:text-foreground">
-      <Settings size={16} strokeWidth={1.6} />
-      <span>{t('settings.title')}</span>
-    </Button>
+    <>
+      {onSidebarToggle && (
+        <Button
+          type="button"
+          variant="ghost"
+          aria-label={sidebarToggleLabel}
+          onClick={onSidebarToggle}
+          className="flex w-full items-center justify-start gap-2.5 rounded-lg px-2.5 py-1.75 text-[13px] text-foreground transition-colors hover:bg-accent/60 dark:text-foreground">
+          <SidebarToggleIcon size={16} strokeWidth={1.6} />
+          <span>{sidebarToggleLabel}</span>
+        </Button>
+      )}
+
+      <Button
+        type="button"
+        variant="ghost"
+        aria-label={t('settings.title')}
+        onClick={onSettingsClick}
+        className="flex w-full items-center justify-start gap-2.5 rounded-lg px-2.5 py-1.75 text-[13px] text-foreground transition-colors hover:bg-accent/60 dark:text-foreground">
+        <Settings size={16} strokeWidth={1.6} />
+        <span>{t('settings.title')}</span>
+      </Button>
+    </>
   )
 }

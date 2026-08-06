@@ -114,6 +114,10 @@ const SIDEBAR_APP_DEFINITIONS = [
   {
     id: 'notes',
     routePrefix: '/app/notes'
+  },
+  {
+    id: 'terminal',
+    routePrefix: '/app/terminal'
   }
 ] as const satisfies readonly SidebarAppDefinition[]
 
@@ -338,6 +342,15 @@ export function getOrderedVisibleSidebarFavorites(
   return getOrderedVisibleSidebarFavoriteItems(favorites).flatMap((favorite) =>
     favorite.type === 'app' && isSidebarAppId(favorite.id) ? [favorite.id] : []
   )
+}
+
+export function migrateTerminalFavoriteDefault(
+  favorites: readonly SidebarFavoriteItem[] | undefined
+): SidebarFavoriteItem[] | undefined {
+  const items = getSidebarFavoriteItems(favorites)
+  if (items.some((item) => item.type === 'app' && item.id === 'terminal')) return undefined
+
+  return preserveForwardCompatibleSidebarFavoriteItems(favorites, [...items, createSidebarAppFavorite('terminal')])
 }
 
 // --- Favorites mutations -----------------------------------------------------

@@ -903,7 +903,7 @@ describe('OpenClawService gateway status state machine', () => {
       )
       const provider = {
         ...legacyProvider,
-        headers: { 'User-Agent': 'Cherry Studio', 'X-Synced': 'synced' },
+        headers: { 'User-Agent': 'Magic Box', 'X-Synced': 'synced' },
         models: [
           {
             id: 'gpt-4o',

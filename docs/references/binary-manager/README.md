@@ -12,7 +12,7 @@ Examples in scope: `uv`, `bun`, `ripgrep`, `gh`, `claude-code`, and npm/pipx CLI
 
 ## Tool definitions and runtime facts
 
-Cherry manages two disjoint sets of tools. **Fixed tools** — every Dependencies preset (`PRESETS_BINARY_TOOLS`) and every Code CLI executable — are code-owned: their canonical mise recipe lives in the in-code `FIXED_CATALOG`, and they write **zero** Preference. **Custom tools** are user-added: each is a `CustomToolDefinition` (`{ name, tool, requestedVersion? }`) persisted in the `feature.binary.tools` custom registry. A persisted definition means the user added that tool; it does **not** prove that an executable exists right now.
+Magic Box manages two disjoint sets of tools. **Fixed tools** — every Dependencies preset (`PRESETS_BINARY_TOOLS`) and every Code CLI executable — are code-owned: their canonical mise recipe lives in the in-code `FIXED_CATALOG`, and they write **zero** Preference. **Custom tools** are user-added: each is a `CustomToolDefinition` (`{ name, tool, requestedVersion? }`) persisted in the `feature.binary.tools` custom registry. A persisted definition means the user added that tool; it does **not** prove that an executable exists right now.
 
 Only the main process writes `feature.binary.tools`, through `BinaryManager.addCustomTool()` (persist-first Custom Add) and `BinaryManager.removeTool()`. `installByName()` never writes Preference — it resolves the fixed/custom recipe in main and applies it. The renderer sends commands and renders snapshots; it never writes definitions directly. There is no `state.json` or startup reconcile, so a restored custom registry does not automatically mutate the filesystem. A missing executable remains recoverable through the normal install path, while a custom definition remains removable. After `onAllReady` a lifecycle-owned, one-time `normalizeCustomDefinitions()` pass rewrites the registry to the canonical shape (dropping fixed-name entries, malformed entries, fixed-spec aliases, and duplicates, and mapping a legacy string `version` to `requestedVersion`) — schema hygiene only: it never installs, reconciles, or touches the filesystem. The hook schedules this work, and service stop cancels it before start or joins it once in flight. If a user mutation already holds the global mutex, hygiene yields to that operation and retries on the next launch rather than delaying shutdown behind an install.
 
@@ -22,7 +22,7 @@ Bundled copies are a separate availability source. The app extracts its shipped 
 
 ### Portable definitions and machine-local state
 
-Backup and restore transport `feature.binary.tools` as portable custom definitions only. Restoring them can recreate custom cards and requested version pins on another machine, but it never installs tools, recreates backend application, or copies operation/latest-version state. Fixed definitions come from the running Cherry Studio build and are not backup data. After restore, each machine derives `application` and `availability` from its own mise state, bundled files, and system PATH.
+Backup and restore transport `feature.binary.tools` as portable custom definitions only. Restoring them can recreate custom cards and requested version pins on another machine, but it never installs tools, recreates backend application, or copies operation/latest-version state. Fixed definitions come from the running Magic Box build and are not backup data. After restore, each machine derives `application` and `availability` from its own mise state, bundled files, and system PATH.
 
 ## Snapshots
 
@@ -35,7 +35,7 @@ Backup and restore transport `feature.binary.tools` as portable custom definitio
 
 The returned record is intentionally a superset of the requested names. It also includes custom registry entries, active operation entries, and discovered `node`/`python` runtime dependencies from mise. Candidate recipes come from the fixed catalog and the custom registry only — an operation-only name carries no recipe and so omits its `application` fact. This lets a newly mounted settings window render a complete management view.
 
-A snapshot obtains live mise data with one `mise ls --json` query and reports a mise executable only after its shim passes the platform-appropriate access check and `mise which` resolves an accessible target. System discovery uses the raw login-shell environment so Cherry's directories and `MISE_*` settings cannot make a Cherry executable look like a system executable.
+A snapshot obtains live mise data with one `mise ls --json` query and reports a mise executable only after its shim passes the platform-appropriate access check and `mise which` resolves an accessible target. System discovery uses the raw login-shell environment so Magic Box's directories and `MISE_*` settings cannot make a Magic Box executable look like a system executable.
 
 Snapshots are weakly consistent by design: they do not wait on the mutation mutex. The custom registry, operation cache, mise output, and filesystem may change while a snapshot is assembled. Consumers must treat a snapshot as a display/execution decision for that moment, refresh on `binary.availability_changed`, and drive update/uninstall/repair from `application`, never from `availability` alone.
 
@@ -88,7 +88,7 @@ Removing a runtime is guarded symmetrically. Under the mutation lock, removal of
 
 ### Availability without a definition is used in place
 
-A tool visible through `mise`, the system PATH, or a bundled binary but carrying no custom definition is used in place — Cherry never mints a management card from mere availability, and never offers to take over or shadow an existing installation. A fixed tool is always managed from its catalog entry; a custom tool always carries a definition and so always exposes Remove. The one adoption case lives inside install: when a `node`/`python` runtime is already present at the requested version, the install adopts that observed version instead of reinstalling (the runtime rule above).
+A tool visible through `mise`, the system PATH, or a bundled binary but carrying no custom definition is used in place — Magic Box never mints a management card from mere availability, and never offers to take over or shadow an existing installation. A fixed tool is always managed from its catalog entry; a custom tool always carries a definition and so always exposes Remove. The one adoption case lives inside install: when a `node`/`python` runtime is already present at the requested version, the install adopts that observed version instead of reinstalling (the runtime rule above).
 
 `feature.binary.install_states` is a main-owned, session-only internal Cache entry. It is not part of the shared cache schema or a renderer storage API; operations reach renderer windows only as part of snapshots. `feature.binary.latest_versions` is likewise a session cache: non-forced reads are cache-only, while a forced lookup runs `mise latest` for the applied fixed/custom recipes and writes results only if no mutation landed during the batch.
 
@@ -96,7 +96,7 @@ A tool visible through `mise`, the system PATH, or a bundled binary but carrying
 
 The request routes and events are the IpcApi schema in `src/shared/ipc/schemas/binary.ts` — the `binaryRequestSchemas` keys (renderer→main routes) and the `BinaryEventSchemas` type (main→renderer events). Read them there rather than a hand-copied list here, which would drift. Their handlers live in `src/main/ipc/handlers/binary.ts`.
 
-`binary.availability_changed` tells consumers to refresh their snapshots and invalidates displayed latest-version hints. The internal `isBinaryExists()` helper remains for main-process callers that only need Cherry-directory existence; it is not a renderer route.
+`binary.availability_changed` tells consumers to refresh their snapshots and invalidates displayed latest-version hints. The internal `isBinaryExists()` helper remains for main-process callers that only need Magic Box-directory existence; it is not a renderer route.
 
 ## Custom registry collision invariant
 
@@ -130,4 +130,4 @@ To ship a bundled executable, add its platform download/checksum definition to `
 
 A service that needs to execute a CLI asks `getToolSnapshots([executableName])` and uses the current availability path. It may execute a `mise`, bundled, or system result; availability alone is sufficient for that decision. If availability is `none` and the executable is a fixed catalog tool, it calls `installByName({ name: executableName })`; main resolves the canonical recipe. An arbitrary user-supplied recipe goes through `addCustomTool(definition)`. Re-read the snapshot after installation before launching.
 
-Do not recreate mise commands, custom registry writes, or binary search paths in a consumer. Use BinaryManager for install/remove and `application.getPath()` for main-process paths. `getBinaryPath()` and `isBinaryExists()` are narrower main-only helpers for Cherry search directories, not substitutes for snapshots when a consumer needs system-path availability.
+Do not recreate mise commands, custom registry writes, or binary search paths in a consumer. Use BinaryManager for install/remove and `application.getPath()` for main-process paths. `getBinaryPath()` and `isBinaryExists()` are narrower main-only helpers for Magic Box search directories, not substitutes for snapshots when a consumer needs system-path availability.

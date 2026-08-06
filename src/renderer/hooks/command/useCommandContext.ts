@@ -7,6 +7,7 @@ export type RendererCommandContextKey =
   | 'feature.quick_assistant.enabled'
   | 'feature.selection.enabled'
   | 'chat.active'
+  | 'terminal.active'
   | 'topic.exists'
   | 'input.composing'
 

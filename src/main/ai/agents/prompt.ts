@@ -57,7 +57,7 @@ type CacheEntry = {
   content: string
 }
 
-const DEFAULT_BASIC_PROMPT = `You are a personal assistant running inside Cherry Studio.
+const DEFAULT_BASIC_PROMPT = `You are a personal assistant running inside Magic Box.
 
 `
 

@@ -14,6 +14,8 @@ import { SidebarTooltip } from './Tooltip'
 import type { ResolvedSidebarEntry, SidebarActiveState, SidebarUser } from './types'
 import { useSidebarResize } from './useSidebarResize'
 
+const HIDDEN_SIDEBAR_HOVER_REVEAL_DELAY = 700
+
 export interface SidebarProps {
   width: number
   setWidth: (width: number) => void
@@ -171,18 +173,22 @@ export function Sidebar({
   // --- Hidden sidebar (hover zone + resize handle) ---
   if (layout === 'hidden') {
     return (
-      <div ref={sidebarRef} className="relative h-full w-2 shrink-0">
+      <div ref={sidebarRef} className="relative z-50 h-full w-2 shrink-0">
         <div
           className="absolute inset-y-0 left-0 z-50 w-4 [-webkit-app-region:no-drag]"
           onMouseEnter={() => {
-            if (hoverTimeout.current) clearTimeout(hoverTimeout.current)
-            hoverTimeout.current = setTimeout(() => onHoverChange?.(true), 200)
+            clearHoverDismiss()
+            hoverTimeout.current = setTimeout(() => {
+              hoverTimeout.current = null
+              onHoverChange?.(true)
+            }, HIDDEN_SIDEBAR_HOVER_REVEAL_DELAY)
           }}
           onMouseLeave={() => {
-            if (hoverTimeout.current) clearTimeout(hoverTimeout.current)
+            clearHoverDismiss()
           }}>
           <div
             onMouseDown={(event) => {
+              clearHoverDismiss()
               onHoverChange?.(false)
               startResizing(event)
             }}

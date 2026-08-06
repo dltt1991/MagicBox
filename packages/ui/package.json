@@ -1,7 +1,7 @@
 {
   "name": "@cherrystudio/ui",
   "version": "1.0.0-alpha.1",
-  "description": "Cherry Studio UI Component Library - React Components for Cherry Studio",
+  "description": "Magic Box UI Component Library - React Components for Magic Box",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -29,7 +29,7 @@
     "typescript",
     "cherry-studio"
   ],
-  "author": "Cherry Studio",
+  "author": "Magic Box",
   "license": "MIT",
   "repository": {
     "type": "git",

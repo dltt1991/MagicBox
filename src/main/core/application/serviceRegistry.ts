@@ -45,6 +45,7 @@ import { SelectionService } from '@main/services/selection/SelectionService'
 import { ShortcutService } from '@main/services/ShortcutService'
 import { StorageMonitorService } from '@main/services/StorageMonitorService'
 import { SubWindowService } from '@main/services/SubWindowService'
+import { TerminalService } from '@main/services/terminal'
 import { ThemeService } from '@main/services/ThemeService'
 import { TrayService } from '@main/services/TrayService'
 import { WebSearchService } from '@main/services/webSearch'
@@ -103,6 +104,7 @@ export const services = {
   ProtocolService,
   ProxyService,
   StorageMonitorService,
+  TerminalService,
   PythonService,
   TrayService,
   WebSearchService,

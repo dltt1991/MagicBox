@@ -1,3 +1,4 @@
+import { MockUseCacheUtils } from '@test-mocks/renderer/useCache'
 import { MockUsePreferenceUtils } from '@test-mocks/renderer/usePreference'
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -6,6 +7,7 @@ import { useSidebarFavorites } from '../useSidebarFavorites'
 
 describe('useSidebarFavorites', () => {
   beforeEach(() => {
+    MockUseCacheUtils.resetMocks()
     MockUsePreferenceUtils.resetMocks()
   })
 
@@ -16,6 +18,7 @@ describe('useSidebarFavorites', () => {
       [{ type: 'mini_app', id: 'other-app' }],
       setFavorites
     )
+    MockUseCacheUtils.setPersistCacheValue('ui.sidebar.terminal_favorite_migrated', true)
 
     const { result } = renderHook(() => useSidebarFavorites())
 

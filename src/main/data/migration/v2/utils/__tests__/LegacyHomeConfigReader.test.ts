@@ -132,8 +132,8 @@ describe('LegacyHomeConfigReader', () => {
       mockFs.readFileSync.mockReturnValue(
         JSON.stringify({
           appDataPath: [
-            { executablePath: '/Applications/Cherry Studio.app/exe', dataPath: '/Volumes/Ext1/Data' },
-            { executablePath: '/Applications/Cherry Studio Dev.app/exe', dataPath: '/Volumes/Ext2/DevData' }
+            { executablePath: '/Applications/Magic Box.app/exe', dataPath: '/Volumes/Ext1/Data' },
+            { executablePath: '/Applications/Magic Box Dev.app/exe', dataPath: '/Volumes/Ext2/DevData' }
           ]
         })
       )
@@ -141,8 +141,8 @@ describe('LegacyHomeConfigReader', () => {
       const reader = await createReader()
 
       expect(reader.getUserDataPath()).toEqual({
-        '/Applications/Cherry Studio.app/exe': '/Volumes/Ext1/Data',
-        '/Applications/Cherry Studio Dev.app/exe': '/Volumes/Ext2/DevData'
+        '/Applications/Magic Box.app/exe': '/Volumes/Ext1/Data',
+        '/Applications/Magic Box Dev.app/exe': '/Volumes/Ext2/DevData'
       })
     })
 

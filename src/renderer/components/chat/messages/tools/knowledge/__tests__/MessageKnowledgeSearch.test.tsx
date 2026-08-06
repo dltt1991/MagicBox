@@ -34,8 +34,8 @@ describe('MessageKnowledgeSearchToolTitle', () => {
             toolCallId: 'tool-call-1',
             tool: { id: 'knowledge-search', name: 'kb_search', type: 'builtin' },
             status: 'done',
-            arguments: { query: 'Cherry Studio', baseIds: ['base-1'] },
-            response: [{ id: 1, content: 'Cherry Studio', score: 0.9 }]
+            arguments: { query: 'Magic Box', baseIds: ['base-1'] },
+            response: [{ id: 1, content: 'Magic Box', score: 0.9 }]
           } as NormalToolResponse
         }
       />
@@ -45,6 +45,6 @@ describe('MessageKnowledgeSearchToolTitle', () => {
     expect(screen.queryByTestId('file-search-icon')).toBeNull()
 
     fireEvent.click(screen.getByRole('button'))
-    expect(await screen.findByText('Cherry Studio')).toBeInTheDocument()
+    expect(await screen.findByText('Magic Box')).toBeInTheDocument()
   })
 })

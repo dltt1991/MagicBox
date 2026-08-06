@@ -254,8 +254,8 @@ describe('writeCliConfigDraft', () => {
 
     it('drops previous config quick-options / model-roles / attribution / reasoning effort on switch', async () => {
       // Simulate a CLI config file written by a previous config that had every
-      // Cherry-managed field set. The new config asserts none of them, so all
-      // Cherry-managed keys must be cleared (each config is independent).
+      // Magic Box-managed field set. The new config asserts none of them, so all
+      // Magic Box-managed keys must be cleared (each config is independent).
       existing['/resolved~/.claude/settings.json'] = JSON.stringify({
         theme: 'dark',
         attribution: { commit: '', pr: '' },
@@ -532,7 +532,7 @@ describe('writeCliConfigDraft', () => {
 
       const { parse: parseToml } = await import('smol-toml')
       const parsed = parseToml(findWrite('config.toml')!.content) as Record<string, any>
-      expect(parsed.model_providers['cherry-OpenAI'].name).toBe('OpenAI (Cherry)')
+      expect(parsed.model_providers['cherry-OpenAI'].name).toBe('OpenAI (Magic Box)')
     })
 
     it('writes the literal "OpenAI" name when remote compaction is actually on', async () => {
@@ -616,7 +616,7 @@ describe('writeCliConfigDraft', () => {
       reasoning: { selectableEfforts: ['low', 'medium', 'high'] }
     } as unknown
 
-    it('writes a Cherry-* provider with the model and no reasoning by default', async () => {
+    it('writes a Magic Box-* provider with the model and no reasoning by default', async () => {
       mockGet({
         '/providers/deepseek': () => openaiCompatProvider,
         '/providers/deepseek/api-keys': () => ({ keys: [enabledKey] }),
@@ -646,7 +646,7 @@ describe('writeCliConfigDraft', () => {
       const providerWithRequestOptions = {
         ...openaiCompatProvider,
         settings: {
-          extraHeaders: { 'HTTP-Referer': 'https://cherry-ai.com', 'X-Title': 'Cherry Studio' }
+          extraHeaders: { 'HTTP-Referer': 'https://cherry-ai.com', 'X-Title': 'Magic Box' }
         }
       } as Provider
       mockGet({
@@ -663,11 +663,11 @@ describe('writeCliConfigDraft', () => {
       const options = JSON.parse(opencodeWrite().content).provider['cherry-DeepSeek'].options
       expect(options.headers).toEqual({
         'HTTP-Referer': 'https://cherry-ai.com',
-        'X-Title': 'Cherry Studio'
+        'X-Title': 'Magic Box'
       })
     })
 
-    it('writes OpenCode model limits from Cherry model metadata', async () => {
+    it('writes OpenCode model limits from Magic Box model metadata', async () => {
       mockGet({
         '/providers/deepseek': () => openaiCompatProvider,
         '/providers/deepseek/api-keys': () => ({ keys: [enabledKey] }),
@@ -861,7 +861,7 @@ describe('writeCliConfigDraft', () => {
       expect(settings.model).toEqual({ name: 'agent/deepseek-v4-flash' })
     })
 
-    it('preserves a field Cherry has no UI for instead of silently deleting it', async () => {
+    it('preserves a field Magic Box has no UI for instead of silently deleting it', async () => {
       // `general.preferredEditor` is MANAGED (clear.ts wipes it) but not WRITABLE
       // (no UI control writes it), so a save must leave it untouched.
       existing['/resolved~/.gemini/settings.json'] = JSON.stringify({ general: { preferredEditor: 'vim' } })
@@ -965,7 +965,7 @@ describe('writeCliConfigDraft', () => {
       })
     })
 
-    it('preserves a field Cherry has no UI for instead of silently deleting it', async () => {
+    it('preserves a field Magic Box has no UI for instead of silently deleting it', async () => {
       // `context.fileName` is MANAGED (clear.ts wipes it) but not WRITABLE
       // (no UI control writes it), so a save must leave it untouched.
       existing['/resolved~/.qwen/settings.json'] = JSON.stringify({ context: { fileName: ['QWEN.md'] } })
@@ -1021,7 +1021,7 @@ describe('writeCliConfigDraft', () => {
       expect(parsed.models['cherry-DeepSeek'].max_context_size).toBe(65536)
     })
 
-    it('preserves a field Cherry has no UI for instead of silently deleting it', async () => {
+    it('preserves a field Magic Box has no UI for instead of silently deleting it', async () => {
       // `loop_control.*` is MANAGED (clear.ts wipes it) but not WRITABLE
       // (no UI control writes it), so a save must leave it untouched.
       existing['/resolved~/.kimi-code/config.toml'] = 'loop_control = { max_steps_per_turn = 12 }'
@@ -1093,7 +1093,7 @@ describe('writeCliConfigDraft', () => {
       expect(parsed.env.ANTHROPIC_MODEL).toBe('deepseek:deepseek-reasoner')
     })
 
-    it('names the OpenCode provider "cherry-gateway" (not the localized-title-sanitized "cherry-Cherry-")', async () => {
+    it('names the OpenCode provider "cherry-gateway" (not the localized-title-sanitized "cherry-Magic Box-")', async () => {
       mockGet({ '/models/': () => ({ id: 'deepseek-chat', name: 'DeepSeek Chat' }) })
 
       await writeCliConfigDraft({
@@ -1216,7 +1216,7 @@ describe('writeCliConfigDraft', () => {
     })
   })
 
-  describe('clear on disable deletes Cherry-managed keys', () => {
+  describe('clear on disable deletes Magic Box-managed keys', () => {
     it('removes managed env keys and top-level keys from claude settings', async () => {
       existing['/resolved~/.claude/settings.json'] = JSON.stringify({
         theme: 'dark',

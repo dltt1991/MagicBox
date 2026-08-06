@@ -397,7 +397,7 @@ async function runFileSweepInner(deps: RunFileSweepDeps): Promise<FileSweepRepor
     // Per architecture §10.4 the (count, bytes) floor is an absolute "small
     // residue is always fine" carve-out, so a 19-file 100%-of-disk plan is
     // intentionally allowed through. Surface it at warn-level so on-call has
-    // a forensic breadcrumb when a user reports "Cherry deleted my files":
+    // a forensic breadcrumb when a user reports "Magic Box deleted my files":
     // the fraction would otherwise have tripped the safety threshold.
     if (!abortReason && planned.length > 0) {
       const countFraction = planned.length / Math.max(1, candidatesCount)

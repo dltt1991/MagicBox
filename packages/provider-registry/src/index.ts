@@ -1,5 +1,5 @@
 /**
- * Cherry Studio Registry
+ * Magic Box Registry
  * Main entry point for the model and provider registry system
  */
 

@@ -66,7 +66,7 @@ flowchart TD
 
 ### 4.1 选型
 
-模型 `onnx-community/Qwen3-Embedding-0.6B-ONNX`，默认 dtype **q8（~614MB）**，经 **transformers.js**（`@huggingface/transformers` 4.2.0）以 `device:'cpu'` 在主进程 `onnxruntime-node` 上运行。transformers.js 把 `onnxruntime-node` 精确锁定在 `1.24.3`，与 OCR 共用同一份（见 §6.1）。其依赖 `sharp`（Cherry 已打包）+ `@huggingface/tokenizers`（纯 JS，无额外原生件）。
+模型 `onnx-community/Qwen3-Embedding-0.6B-ONNX`，默认 dtype **q8（~614MB）**，经 **transformers.js**（`@huggingface/transformers` 4.2.0）以 `device:'cpu'` 在主进程 `onnxruntime-node` 上运行。transformers.js 把 `onnxruntime-node` 精确锁定在 `1.24.3`，与 OCR 共用同一份（见 §6.1）。其依赖 `sharp`（Magic Box 已打包）+ `@huggingface/tokenizers`（纯 JS，无额外原生件）。
 
 ### 4.2 编排层备选与否决
 
@@ -164,7 +164,7 @@ local-embedding::qwen3-embedding-0.6b
 
 ### 6.2 @napi-rs/canvas：已打包，需版本对齐
 
-**关键发现**：`@napi-rs/canvas` 已是 Cherry 依赖（顶层 `dependencies` + `optionalDependencies` 全平台子包钉 `0.1.97`，与 sharp / libsql 一起为跨平台出包；Cherry 源码**零处直接 import**，纯由 PDF 栈间接拉入）。所以原生 skia **0 新增**。但 `ppu-ocv` 要 `^1.0.0` 而 Cherry 在 `0.1.97`（0.1 老线，不含）→ 须对齐到 1.x。**`@napi-rs/canvas` v1.0.0 官方明示「无破坏性改动，安全升级」**，0.1→1.0 仅为成熟度晋升。
+**关键发现**：`@napi-rs/canvas` 已是 Magic Box 依赖（顶层 `dependencies` + `optionalDependencies` 全平台子包钉 `0.1.97`，与 sharp / libsql 一起为跨平台出包；Magic Box 源码**零处直接 import**，纯由 PDF 栈间接拉入）。所以原生 skia **0 新增**。但 `ppu-ocv` 要 `^1.0.0` 而 Magic Box 在 `0.1.97`（0.1 老线，不含）→ 须对齐到 1.x。**`@napi-rs/canvas` v1.0.0 官方明示「无破坏性改动，安全升级」**，0.1→1.0 仅为成熟度晋升。
 
 ### 6.3 PDF 依赖治理：升 pdfjs v6 + 移除 pdf-parse
 
@@ -172,7 +172,7 @@ local-embedding::qwen3-embedding-0.6b
 >
 > **方案已定（推翻 `pnpm.overrides` 方案）**：不用 override 强压版本，而是从根上对齐——**移除 pdf-parse + 把 pdfjs-dist 升到 v6**。这样 canvas 消费者只剩 pdfjs@6（要 `^1.0.0`）与 ppu-ocv（`^1.0.0`），自然 dedupe 成单份 1.x，无需任何 override。
 
-背景：`pdf-parse@2.4.5`（已是 latest）本质是 pdfjs 薄封装，却把 `@napi-rs/canvas` 硬钉 `0.1.80`，是阻断对齐的元凶；它在 Cherry 仅 `extractPdfText()`（`src/shared/utils/pdf.ts`）调 `getText()` 纯抽文本（IPC `Pdf_ExtractText` + AI PDF 兼容降级 `pdfCompatibility.ts`），**从不渲染**。
+背景：`pdf-parse@2.4.5`（已是 latest）本质是 pdfjs 薄封装，却把 `@napi-rs/canvas` 硬钉 `0.1.80`，是阻断对齐的元凶；它在 Magic Box 仅 `extractPdfText()`（`src/shared/utils/pdf.ts`）调 `getText()` 纯抽文本（IPC `Pdf_ExtractText` + AI PDF 兼容降级 `pdfCompatibility.ts`），**从不渲染**。
 
 治理动作：
 

@@ -17,8 +17,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
  * against an empty default directory, and the user's data appeared lost.
  *
  * Reported real config (single entry):
- *   executablePath: D:\Cherry Studio\Cherry Studio.exe   (v1 custom install dir)
- *   dataPath:       E:\Dropbox\Cherry Data\CherryStudio   (custom data dir, still on disk)
+ *   executablePath: D:\Magic Box\Magic Box.exe   (v1 custom install dir)
+ *   dataPath:       E:\Dropbox\Magic Box Data\CherryStudio   (custom data dir, still on disk)
  *
  * Coverage is split in two:
  *   - `selectLegacyUserData` — the pure decision matrix (A0/A1/B1–B4), driven
@@ -302,7 +302,7 @@ describe('selectLegacyUserData', () => {
 
 const REAL_USER_CONFIG = JSON.stringify({
   appDataPath: [
-    { executablePath: 'D:\\Cherry Studio\\Cherry Studio.exe', dataPath: 'E:\\Dropbox\\Cherry Data\\CherryStudio' }
+    { executablePath: 'D:\\Magic Box\\Magic Box.exe', dataPath: 'E:\\Dropbox\\Magic Box Data\\CherryStudio' }
   ]
 })
 
@@ -360,40 +360,40 @@ beforeEach(() => {
 
 describe('resolveMigrationPaths — legacy custom userData recovery', () => {
   it('redirects to the matching entry when the current exe matches exactly (regression guard)', () => {
-    h.normalizedExe.mockReturnValue('D:\\Cherry Studio\\Cherry Studio.exe')
+    h.normalizedExe.mockReturnValue('D:\\Magic Box\\Magic Box.exe')
     applyFs({
-      dirs: ['E:\\Dropbox\\Cherry Data\\CherryStudio'],
+      dirs: ['E:\\Dropbox\\Magic Box Data\\CherryStudio'],
       contents: {
         [CONFIG_FILE]: REAL_USER_CONFIG,
-        [marker('E:\\Dropbox\\Cherry Data\\CherryStudio', 'version.log')]: GOOD_VERSION_LOG
+        [marker('E:\\Dropbox\\Magic Box Data\\CherryStudio', 'version.log')]: GOOD_VERSION_LOG
       }
     })
 
     const result = resolveMigrationPaths()
 
-    expect(result.paths.userData).toBe('E:\\Dropbox\\Cherry Data\\CherryStudio')
+    expect(result.paths.userData).toBe('E:\\Dropbox\\Magic Box Data\\CherryStudio')
     expect(result.userDataChanged).toBe(true)
     expect(result.legacyDataConfirmed).toBe(true)
-    expect(h.setPath).toHaveBeenCalledWith('userData', 'E:\\Dropbox\\Cherry Data\\CherryStudio')
+    expect(h.setPath).toHaveBeenCalledWith('userData', 'E:\\Dropbox\\Magic Box Data\\CherryStudio')
   })
 
   it('recovers the sole recorded dataPath when v2 was reinstalled to a new location (exe no longer matches)', () => {
-    h.normalizedExe.mockReturnValue('C:\\Users\\me\\AppData\\Local\\Programs\\cherrystudio\\Cherry Studio.exe')
+    h.normalizedExe.mockReturnValue('C:\\Users\\me\\AppData\\Local\\Programs\\cherrystudio\\Magic Box.exe')
     applyFs({
-      dirs: ['E:\\Dropbox\\Cherry Data\\CherryStudio'],
+      dirs: ['E:\\Dropbox\\Magic Box Data\\CherryStudio'],
       contents: {
         [CONFIG_FILE]: REAL_USER_CONFIG,
-        [marker('E:\\Dropbox\\Cherry Data\\CherryStudio', 'version.log')]: GOOD_VERSION_LOG
+        [marker('E:\\Dropbox\\Magic Box Data\\CherryStudio', 'version.log')]: GOOD_VERSION_LOG
       }
     })
 
     const result = resolveMigrationPaths()
 
-    expect(result.paths.userData).toBe('E:\\Dropbox\\Cherry Data\\CherryStudio')
+    expect(result.paths.userData).toBe('E:\\Dropbox\\Magic Box Data\\CherryStudio')
     expect(result.userDataChanged).toBe(true)
     // B1 fuzzy recovery → notice surfaced to the introduction screen.
-    expect(result.dataLocation).toBe('E:\\Dropbox\\Cherry Data\\CherryStudio')
-    expect(h.setPath).toHaveBeenCalledWith('userData', 'E:\\Dropbox\\Cherry Data\\CherryStudio')
+    expect(result.dataLocation).toBe('E:\\Dropbox\\Magic Box Data\\CherryStudio')
+    expect(h.setPath).toHaveBeenCalledWith('userData', 'E:\\Dropbox\\Magic Box Data\\CherryStudio')
   })
 
   it('recovers the only on-disk dataPath among multiple entries when none match the current exe', () => {

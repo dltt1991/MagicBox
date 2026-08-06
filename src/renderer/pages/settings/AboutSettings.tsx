@@ -25,6 +25,8 @@ import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Streamdown } from 'streamdown'
 
+const ABOUT_FEATURES_AVAILABLE = false
+
 const AboutSettings: FC = () => {
   const [autoCheckUpdate, setAutoCheckUpdate] = usePreference('app.dist.auto_update.enabled')
   const [testPlan, setTestPlan] = usePreference('app.dist.test_plan.enabled')
@@ -70,7 +72,7 @@ const AboutSettings: FC = () => {
 
   const mailto = async () => {
     const email = 'support@cherry-ai.com'
-    const subject = 'Cherry Studio Feedback'
+    const subject = 'Magic Box Feedback'
     const version = (await ipcApi.request('app.get_info')).version
     const platform = window.electron.process.platform
     const url = `mailto:${email}?subject=${subject}&body=%0A%0AVersion: ${version} | Platform: ${platform}`
@@ -171,6 +173,8 @@ const AboutSettings: FC = () => {
   }
 
   const testChannels = getAvailableTestChannels()
+  const aboutActionsDisabled = !ABOUT_FEATURES_AVAILABLE
+  const unavailableLabel = t('settings.about.temporarilyUnavailable')
 
   return (
     <SettingsContentColumn theme={theme}>
@@ -179,8 +183,9 @@ const AboutSettings: FC = () => {
           <span className="font-semibold text-[15px]">{t('settings.about.title')}</span>
           <button
             type="button"
+            disabled={aboutActionsDisabled}
             onClick={() => onOpenWebsite('https://github.com/CherryHQ/cherry-studio')}
-            className="inline-flex items-center justify-center rounded-md p-1 text-foreground transition-colors hover:bg-muted">
+            className="inline-flex items-center justify-center rounded-md p-1 text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent">
             <Github className="size-5" />
           </button>
         </SettingTitle>
@@ -191,8 +196,9 @@ const AboutSettings: FC = () => {
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <button
               type="button"
+              disabled={aboutActionsDisabled}
               onClick={() => onOpenWebsite('https://github.com/CherryHQ/cherry-studio')}
-              className="relative cursor-pointer">
+              className="relative cursor-pointer disabled:cursor-not-allowed disabled:opacity-40">
               {appUpdateState.downloadProgress > 0 && (
                 <div className="-top-0.5 -left-0.5 pointer-events-none absolute">
                   <CircularProgress
@@ -209,12 +215,13 @@ const AboutSettings: FC = () => {
             </button>
 
             <div className="flex min-h-18 flex-col items-start justify-center">
-              <div className="mb-1 font-bold text-foreground text-lg">Cherry Studio</div>
+              <div className="mb-1 font-bold text-foreground text-lg">Magic Box</div>
               <div className="text-foreground-secondary text-sm">{t('settings.about.description')}</div>
               <button
                 type="button"
+                disabled={aboutActionsDisabled}
                 onClick={() => onOpenWebsite('https://github.com/CherryHQ/cherry-studio/releases')}
-                className="mt-1.5">
+                className="mt-1.5 disabled:cursor-not-allowed disabled:opacity-40">
                 <Badge className="cursor-pointer rounded-md border-primary/20 bg-primary/10 px-1.5 py-0 text-[11px] text-primary leading-4 transition-colors hover:bg-primary/15">
                   v{version}
                 </Badge>
@@ -229,13 +236,15 @@ const AboutSettings: FC = () => {
                 variant="outline"
                 loading={appUpdateState.checking}
                 onClick={onCheckUpdate}
-                disabled={appUpdateState.downloading}
+                disabled={aboutActionsDisabled || appUpdateState.downloading}
                 className="w-fit! min-w-0! shrink-0">
-                {appUpdateState.downloading
-                  ? t('settings.about.downloading')
-                  : appUpdateState.available
-                    ? t('settings.about.checkUpdate.available')
-                    : t('settings.about.checkUpdate.label')}
+                {aboutActionsDisabled
+                  ? unavailableLabel
+                  : appUpdateState.downloading
+                    ? t('settings.about.downloading')
+                    : appUpdateState.available
+                      ? t('settings.about.checkUpdate.available')
+                      : t('settings.about.checkUpdate.label')}
               </Button>
             </div>
           )}
@@ -246,14 +255,22 @@ const AboutSettings: FC = () => {
             <Divider className="my-3" />
             <SettingRow className="gap-3">
               <SettingRowTitle>{t('settings.general.auto_check_update.title')}</SettingRowTitle>
-              <Switch checked={autoCheckUpdate} onCheckedChange={(v) => setAutoCheckUpdate(v)} />
+              <Switch
+                checked={autoCheckUpdate}
+                disabled={aboutActionsDisabled}
+                onCheckedChange={(v) => setAutoCheckUpdate(v)}
+              />
             </SettingRow>
 
             <Divider className="my-3" />
             <SettingRow className="gap-3">
               <SettingRowTitle>{t('settings.general.test_plan.title')}</SettingRowTitle>
               <Tooltip content={t('settings.general.test_plan.tooltip')}>
-                <Switch checked={testPlan} onCheckedChange={(v) => handleSetTestPlan(v)} />
+                <Switch
+                  checked={testPlan}
+                  disabled={aboutActionsDisabled}
+                  onCheckedChange={(v) => handleSetTestPlan(v)}
+                />
               </Tooltip>
             </SettingRow>
 
@@ -265,6 +282,7 @@ const AboutSettings: FC = () => {
                   <SegmentedControl<UpgradeChannel>
                     value={getTestChannel()}
                     onValueChange={handleTestChannelChange}
+                    disabled={aboutActionsDisabled}
                     options={testChannels.map((option) => ({
                       value: option.value,
                       label: (
@@ -306,6 +324,8 @@ const AboutSettings: FC = () => {
           title={t('docs.title')}
           actionLabel={t('settings.about.website.button')}
           onAction={onOpenDocs}
+          disabled={aboutActionsDisabled}
+          disabledActionLabel={unavailableLabel}
         />
         <Divider className="my-3" />
         <AboutActionRow
@@ -313,6 +333,8 @@ const AboutSettings: FC = () => {
           title={t('settings.about.releases.title')}
           actionLabel={t('settings.about.releases.button')}
           onAction={showReleases}
+          disabled={aboutActionsDisabled}
+          disabledActionLabel={unavailableLabel}
         />
         <Divider className="my-3" />
         <AboutActionRow
@@ -320,6 +342,8 @@ const AboutSettings: FC = () => {
           title={t('settings.about.website.title')}
           actionLabel={t('settings.about.website.button')}
           onAction={() => onOpenWebsite('https://cherry-ai.com')}
+          disabled={aboutActionsDisabled}
+          disabledActionLabel={unavailableLabel}
         />
         <Divider className="my-3" />
         <AboutActionRow
@@ -327,6 +351,8 @@ const AboutSettings: FC = () => {
           title={t('settings.about.feedback.title')}
           actionLabel={t('settings.about.feedback.button')}
           onAction={() => onOpenWebsite('https://github.com/CherryHQ/cherry-studio/issues/new/choose')}
+          disabled={aboutActionsDisabled}
+          disabledActionLabel={unavailableLabel}
         />
         <Divider className="my-3" />
         <AboutActionRow
@@ -334,6 +360,8 @@ const AboutSettings: FC = () => {
           title={t('settings.about.enterprise.title')}
           actionLabel={t('settings.about.website.button')}
           onAction={showEnterprise}
+          disabled={aboutActionsDisabled}
+          disabledActionLabel={unavailableLabel}
         />
         <Divider className="my-3" />
         <AboutActionRow
@@ -341,6 +369,8 @@ const AboutSettings: FC = () => {
           title={t('settings.about.contact.title')}
           actionLabel={t('settings.about.contact.button')}
           onAction={mailto}
+          disabled={aboutActionsDisabled}
+          disabledActionLabel={unavailableLabel}
         />
         <Divider className="my-3" />
         <AboutActionRow
@@ -348,6 +378,8 @@ const AboutSettings: FC = () => {
           title={t('settings.about.careers.title')}
           actionLabel={t('settings.about.careers.button')}
           onAction={() => onOpenWebsite('https://www.cherry-ai.com/careers')}
+          disabled={aboutActionsDisabled}
+          disabledActionLabel={unavailableLabel}
         />
         <Divider className="my-3" />
         <AboutActionRow
@@ -355,6 +387,8 @@ const AboutSettings: FC = () => {
           title={t('settings.about.debug.title')}
           actionLabel={t('settings.about.debug.open')}
           onAction={debug}
+          disabled={aboutActionsDisabled}
+          disabledActionLabel={unavailableLabel}
         />
       </SettingGroup>
     </SettingsContentColumn>
@@ -363,11 +397,15 @@ const AboutSettings: FC = () => {
 
 function AboutActionRow({
   actionLabel,
+  disabled = false,
+  disabledActionLabel,
   icon,
   onAction,
   title
 }: {
   actionLabel: string
+  disabled?: boolean
+  disabledActionLabel?: string
   icon: ReactNode
   onAction: () => void | Promise<void>
   title: string
@@ -378,8 +416,8 @@ function AboutActionRow({
         {icon}
         {title}
       </SettingRowTitle>
-      <Button size="sm" onClick={() => void onAction()} variant="outline">
-        {actionLabel}
+      <Button size="sm" disabled={disabled} onClick={() => void onAction()} variant="outline">
+        {disabled ? disabledActionLabel || actionLabel : actionLabel}
       </Button>
     </SettingRow>
   )

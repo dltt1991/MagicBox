@@ -42,6 +42,8 @@ export interface FileTreeProps {
 
   /** When omitted, drag-and-drop is fully disabled (read-only tree). */
   onMove?: (sourceId: string, targetId: string, position: DragPosition) => void
+  /** Optional native drag payload hook for read-only tree consumers. */
+  onDragStart?: (node: FileTreeNode, event: React.DragEvent<HTMLElement>) => void
 
   /** When omitted, inline rename is disabled. */
   renameSlot?: FileTreeRenameSlot
@@ -51,7 +53,7 @@ export interface FileTreeProps {
 
   /** Optional trailing slot per row - e.g. ContextMenu trigger, action buttons, badges. */
   renderRowExtras?: (node: FileTreeNode) => React.ReactNode
-  /** Optional command-system context menu items for the whole row (Cherry/Native presentation). */
+  /** Optional command-system context menu items for the whole row (Magic Box/Native presentation). */
   getMenuItems?: (node: FileTreeNode) => readonly CommandContextMenuExtraItem[]
 
   /** Override default folder/file icons. */

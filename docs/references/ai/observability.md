@@ -6,7 +6,7 @@ user-facing surface; this doc covers the whole subsystem.
 
 ## What's instrumented
 
-Every AI SDK call run through Cherry produces an OpenTelemetry span
+Every AI SDK call run through Magic Box produces an OpenTelemetry span
 tree:
 
 ```
@@ -18,13 +18,13 @@ chat.turn                                      (root, created by context provide
 └── attributes: topicId, modelName, …          (set by AiTurnTrace / AdapterTracer)
 ```
 
-AI SDK's `experimental_telemetry` produces the inner spans; Cherry owns
+AI SDK's `experimental_telemetry` produces the inner spans; Magic Box owns
 the root span through `AiTurnTrace` so it lands in the same observability
 path without going through the AI SDK adapter.
 
 The main-process observability boundary is `src/main/ai/observability`:
 
-- `core/` creates Cherry-owned turn roots and common `cs.*` attributes.
+- `core/` creates Magic Box-owned turn roots and common `cs.*` attributes.
 - `adapters/aiSdk/` interprets AI SDK child spans.
 - `adapters/claudeCode/` interprets Claude Code OTLP spans and logs.
 - `storage/` keeps the in-memory span projection and JSONL-compatible history.

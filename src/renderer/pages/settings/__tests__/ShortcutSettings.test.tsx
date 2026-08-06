@@ -120,15 +120,18 @@ vi.mock('@cherrystudio/ui', async (importOriginal) => {
   }
 })
 
-const makeShortcut = (binding: ShortcutBinding = []): ShortcutListItem => {
-  const command: CommandId = 'app.search'
+const makeShortcut = (
+  binding: ShortcutBinding = [],
+  patch: Partial<Pick<ShortcutListItem, 'command' | 'group' | 'label'>> = {}
+): ShortcutListItem => {
+  const command: CommandId = patch.command ?? 'app.search'
   const key = commandShortcutPreferenceKey(command)
 
   return {
     command,
     key,
-    label: 'Search everywhere',
-    group: 'general',
+    label: patch.label ?? 'Search everywhere',
+    group: patch.group ?? 'general',
     keybinding: {
       command,
       scope: 'renderer',
@@ -207,5 +210,43 @@ describe('ShortcutSettings shortcut recorder', () => {
     fireEvent.keyDown(recorder, { key: 'Process', code: 'KeyK', ctrlKey: true, bubbles: true })
 
     expect(shortcutsMock.updatePreference).not.toHaveBeenCalled()
+  })
+
+  it('shows the file manager shortcut group', () => {
+    shortcutsMock.shortcuts = [
+      makeShortcut(),
+      makeShortcut(['Enter'], {
+        command: 'file_manager.open',
+        group: 'fileManager',
+        label: 'Open file manager item'
+      })
+    ]
+
+    renderShortcutSettings()
+
+    fireEvent.click(screen.getByRole('button', { name: 'settings.shortcuts.filter' }))
+
+    expect(
+      screen.getByRole('button', { name: /settings\.shortcuts\.categories\.file_manager\s+1/ })
+    ).toBeInTheDocument()
+    expect(screen.getByText('Open file manager item')).toBeInTheDocument()
+  })
+
+  it('shows the terminal shortcut group', () => {
+    shortcutsMock.shortcuts = [
+      makeShortcut(),
+      makeShortcut(['CommandOrControl', 'Right'], {
+        command: 'terminal.switch_next',
+        group: 'terminal',
+        label: 'Switch terminal tab'
+      })
+    ]
+
+    renderShortcutSettings()
+
+    fireEvent.click(screen.getByRole('button', { name: 'settings.shortcuts.filter' }))
+
+    expect(screen.getByRole('button', { name: /settings\.shortcuts\.categories\.terminal\s+1/ })).toBeInTheDocument()
+    expect(screen.getByText('Switch terminal tab')).toBeInTheDocument()
   })
 })

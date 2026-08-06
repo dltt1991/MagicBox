@@ -1,6 +1,6 @@
 # WindowManager Reference
 
-This is the main entry point for Cherry Studio's WindowManager documentation. WindowManager is a lifecycle-managed service that creates, tracks, and reuses Electron `BrowserWindow` instances with three lifecycle modes (default / singleton / pooled), IPC broadcast, domain-service event hooks, and elastic pool reuse.
+This is the main entry point for Magic Box's WindowManager documentation. WindowManager is a lifecycle-managed service that creates, tracks, and reuses Electron `BrowserWindow` instances with three lifecycle modes (default / singleton / pooled), IPC broadcast, domain-service event hooks, and elastic pool reuse.
 
 ## Quick Navigation
 
@@ -49,7 +49,7 @@ Per-type metadata in `windowRegistry.ts` is split into three layers. Each field 
 
 ## WM Does Not Know "Pin"
 
-**Cherry Studio windows do not share a single "pin" concept** — the three pinnable windows each mean something different by it:
+**Magic Box windows do not share a single "pin" concept** — the three pinnable windows each mean something different by it:
 
 | Window | What "pin" toggles |
 |---|---|

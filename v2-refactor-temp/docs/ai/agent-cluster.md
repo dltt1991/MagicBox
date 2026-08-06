@@ -141,4 +141,4 @@ The `'retry'` return is reserved — implementation is a known follow-up.
   retry policy.
 - `runToCompletion()` / `toTool()` for subagent / agent-as-tool
   composition (gated on a real consumer landing).
-- See also [Cherry AI tools — open work items](../../../v2-refactor-temp/docs/) if a more granular tool-loop split is wanted.
+- See also [Magic Box AI tools — open work items](../../../v2-refactor-temp/docs/) if a more granular tool-loop split is wanted.

@@ -8,10 +8,10 @@ import { CHERRY_PROVIDER_PREFIX } from './constants'
 export { sanitizeProviderName }
 
 /**
- * The provider-name segment Cherry writes into CLI provider keys (`cherry-<name>`) and
+ * The provider-name segment Magic Box writes into CLI provider keys (`cherry-<name>`) and
  * per-tool provider display fields. Real providers derive it from their sanitized display
  * name; the synthetic API gateway uses the fixed {@link CLI_API_GATEWAY_PROVIDER_NAME} so
- * the key is a clean `cherry-gateway` instead of the `Cherry-` its localized title sanitizes to.
+ * the key is a clean `cherry-gateway` instead of the `Magic Box-` its localized title sanitizes to.
  */
 export function cliProviderKeyName(provider: { id: string; name: string }): string {
   return isApiGatewayProviderId(provider.id)
@@ -45,7 +45,7 @@ export function omitKeysByPrefix<T>(record: Record<string, T>, prefix: string): 
   return Object.fromEntries(Object.entries(record).filter(([key]) => !key.startsWith(prefix)))
 }
 
-/** True when a model entry was injected by Cherry Studio (its `envKey` starts with `CHERRY_`). */
+/** True when a model entry was injected by Magic Box (its `envKey` starts with `CHERRY_`). */
 export function isCherryManagedModel(item: unknown): boolean {
   return Boolean(
     item &&
@@ -55,7 +55,7 @@ export function isCherryManagedModel(item: unknown): boolean {
   )
 }
 
-/** Find the provider key Cherry Studio manages (prefixed with `CHERRY_PROVIDER_PREFIX`). */
+/** Find the provider key Magic Box manages (prefixed with `CHERRY_PROVIDER_PREFIX`). */
 export function findCherryProviderKey(providers: Record<string, any>): string | undefined {
   return Object.keys(providers).find((key) => key.startsWith(CHERRY_PROVIDER_PREFIX))
 }

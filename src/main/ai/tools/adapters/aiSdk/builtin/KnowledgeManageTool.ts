@@ -7,7 +7,7 @@
  * per-turn selection — see `resolveKnowledgeBaseIds`) flows in via
  * `RequestContext.knowledgeBaseIds` and scopes which bases are reachable. Every
  * action mutates the base, so the tool is approval-gated
- * (`needsApproval: true`) — Cherry surfaces the approval card before it runs. The
+ * (`needsApproval: true`) — Magic Box surfaces the approval card before it runs. The
  * mutation itself lives in the shared `knowledgeLookup` core so the Claude Code
  * MCP bridge runs identical logic (gated there by Claude Code's own permission
  * prompt); this file is just the AI-SDK `tool()` wrapper.

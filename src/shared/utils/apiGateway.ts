@@ -52,7 +52,7 @@ export function stripGeminiGatewayModelSuffix(model: string): string {
 /**
  * A gateway model id is RESERVED — not routable through the Gemini `/v1beta` dialect —
  * when it ends with {@link GEMINI_GATEWAY_MODEL_SUFFIX}: the route strips exactly one
- * such suffix, so it cannot tell Cherry's sentinel apart from a real id that happens to
+ * such suffix, so it cannot tell Magic Box's sentinel apart from a real id that happens to
  * end in `@cherry`. The models list omits these and the route rejects them, keeping
  * list→request round-trips unambiguous. No real provider model ends in this marker.
  */

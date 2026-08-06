@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest'
 const { createClaudeCodeQueryOptions } = await import('../queryOptions')
 
 describe('createClaudeCodeQueryOptions', () => {
-  it('strips Cherry-only runtime settings before passing options to the SDK', () => {
+  it('strips Magic Box-only runtime settings before passing options to the SDK', () => {
     const opts = createClaudeCodeQueryOptions({
       modelId: 'sonnet',
       settings: {

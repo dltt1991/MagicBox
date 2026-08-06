@@ -2,7 +2,7 @@
  * Entry copy — produce a fresh internal entry whose content matches the source.
  *
  * Source can be internal or external. The copy is always an internal entry
- * (Cherry-owned), with a new UUIDv7 identifier and an optional renamed
+ * (Magic Box-owned), with a new UUIDv7 identifier and an optional renamed
  * display name. Implementation pipes through `createInternal({source:'path'})`
  * so it inherits the same write+rollback semantics.
  */

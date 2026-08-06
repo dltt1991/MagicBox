@@ -1,3 +1,4 @@
+import { usePersistCache } from '@data/hooks/useCache'
 import { usePreference } from '@data/hooks/usePreference'
 import { toast } from '@renderer/services/toast'
 import type { SidebarAppId } from '@renderer/utils/sidebar'
@@ -5,13 +6,14 @@ import {
   getOrderedVisibleSidebarFavoriteItems,
   getOrderedVisibleSidebarFavorites,
   getSidebarMiniAppFavoriteIds,
+  migrateTerminalFavoriteDefault,
   removeSidebarMiniApp,
   reorderSidebarFavorites,
   setSidebarAppPinned,
   toggleSidebarMiniApp
 } from '@renderer/utils/sidebar'
 import type { SidebarFavoriteItem } from '@shared/data/preference/preferenceTypes'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 /**
@@ -30,6 +32,9 @@ import { useTranslation } from 'react-i18next'
 export function useSidebarFavorites() {
   const { t } = useTranslation()
   const [favorites, setFavorites] = usePreference('ui.sidebar.favorites')
+  const [terminalFavoriteMigrated, setTerminalFavoriteMigrated] = usePersistCache(
+    'ui.sidebar.terminal_favorite_migrated'
+  )
 
   const favoriteItems = useMemo(() => getOrderedVisibleSidebarFavoriteItems(favorites), [favorites])
   const appFavorites = useMemo(() => getOrderedVisibleSidebarFavorites(favorites), [favorites])
@@ -43,6 +48,22 @@ export function useSidebarFavorites() {
     },
     [setFavorites, t]
   )
+
+  useEffect(() => {
+    if (terminalFavoriteMigrated) return
+
+    const migrated = migrateTerminalFavoriteDefault(favorites)
+    if (!migrated) {
+      setTerminalFavoriteMigrated(true)
+      return
+    }
+
+    void setFavorites(migrated)
+      .then(() => setTerminalFavoriteMigrated(true))
+      .catch(() => {
+        toast.error(t('common.error'))
+      })
+  }, [favorites, setFavorites, setTerminalFavoriteMigrated, t, terminalFavoriteMigrated])
 
   const setAppPinned = useCallback(
     (id: SidebarAppId, pinned: boolean) => persist(setSidebarAppPinned(favorites, id, pinned)),

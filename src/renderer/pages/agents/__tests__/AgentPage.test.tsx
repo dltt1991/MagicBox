@@ -1,6 +1,5 @@
 import { cacheService } from '@data/CacheService'
 import { WindowFrameProvider } from '@renderer/components/chat/shell/WindowFrameContext'
-import { useCommandHandler } from '@renderer/hooks/command'
 import { AGENT_WORKSPACE_TYPE } from '@shared/data/api/schemas/agentWorkspaces'
 import { DefaultPreferences } from '@shared/data/preference/preferenceSchemas'
 import { MIN_WINDOW_HEIGHT, SECOND_MIN_WINDOW_WIDTH } from '@shared/utils/window'
@@ -2297,14 +2296,7 @@ describe('AgentPage', () => {
     await waitFor(() => expect(agentPageMocks.activeSessionOptions?.activeSessionId).toBe('session-next'))
     expect(screen.getByTestId('pane-open')).toHaveTextContent('true')
 
-    const shortcutHandler = vi
-      .mocked(useCommandHandler)
-      .mock.calls.filter(([command]) => command === 'app.sidebar.toggle')
-      .at(-1)?.[1]
-
-    act(() => {
-      void shortcutHandler?.()
-    })
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle sidebar' }))
 
     expect(screen.getByTestId('pane-open')).toHaveTextContent('false')
     expect(agentPageMocks.setShowSidebar).not.toHaveBeenCalled()

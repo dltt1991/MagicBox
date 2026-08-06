@@ -81,11 +81,11 @@ function passesExtensionFilter(filePath: string, options: ResolvedTreeOptions): 
   return options.extensions.has(extOf(base))
 }
 
-function statsToFields(s: { mtimeMs: number; birthtimeMs: number }): TreeNodeStats {
+function statsToFields(s: { mtimeMs: number; birthtimeMs: number; size: number }): TreeNodeStats {
   // Some filesystems (ext4 < kernel 4.11, FAT, certain NFS) don't track birthtime;
   // mtimeMs is a safe fallback so consumers can sort consistently.
   const birth = s.birthtimeMs > 0 ? s.birthtimeMs : s.mtimeMs
-  return { mtime: s.mtimeMs, birthtime: birth }
+  return { mtime: s.mtimeMs, birthtime: birth, size: s.size }
 }
 
 async function statQuiet(absPath: string): Promise<TreeNodeStats | undefined> {
@@ -251,6 +251,7 @@ class DirectoryTreeBuilderImpl implements DirectoryTreeBuilder {
       normalized.map(async (p) => {
         try {
           const s = await nodeStat(p)
+          if (!s.isDirectory() && !s.isFile()) return null
           return { path: p, isDir: s.isDirectory(), stats: statsToFields(s) }
         } catch {
           return null

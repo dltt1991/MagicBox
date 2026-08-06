@@ -494,7 +494,7 @@ export const FormExample: Story = {
 export const SearchExample: Story = {
   render: function SearchExample() {
     const [query, setQuery] = useState('')
-    const items = ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry', 'Fig', 'Grape']
+    const items = ['Apple', 'Banana', 'Magic Box', 'Date', 'Elderberry', 'Fig', 'Grape']
     const filtered = items.filter((item) => item.toLowerCase().includes(query.toLowerCase()))
 
     return (

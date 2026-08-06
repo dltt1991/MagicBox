@@ -3,7 +3,7 @@
  *
  * Patches each span's `end()` to also convert the span via `AiSdkSpanAdapter`
  * and hand it to the sink registry. This is for AI SDK telemetry only;
- * Cherry-owned root spans use `startAiTurnTrace`.
+ * Magic Box-owned root spans use `startAiTurnTrace`.
  */
 
 import { loggerService } from '@logger'

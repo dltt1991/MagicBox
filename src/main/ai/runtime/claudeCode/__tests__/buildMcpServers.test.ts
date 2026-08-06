@@ -156,7 +156,7 @@ describe('adjustAllowedToolsForMcp', () => {
     expect(allowed).not.toContain('mcp__cherry-tools__*')
   })
 
-  it('additionally lists only the navigate assistant tool for the Cherry Assistant', () => {
+  it('additionally lists only the navigate assistant tool for the Magic Assistant', () => {
     const allowed = adjustAllowedToolsForMcp(true)
     expect(allowed).toEqual(
       expect.arrayContaining(['mcp__cherry-tools__kb_search', 'mcp__cherry-tools__kb_list', 'mcp__assistant__navigate'])

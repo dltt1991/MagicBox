@@ -48,16 +48,16 @@ export function buildPathRegistry() {
     'cherry.bin': path.join(CHERRY_HOME, 'bin'),
     'cherry.config': path.join(CHERRY_HOME, 'config'),
 
-    // -- B. sys.* — OS directories (prefer app.* or cherry.* for Cherry-owned paths) --
+    // -- B. sys.* — OS directories (prefer app.* or cherry.* for Magic Box-owned paths) --
     'sys.home': os.homedir(),
-    'sys.temp': sysTemp, // OS-wide; prefer app.temp for Cherry-specific temp
+    'sys.temp': sysTemp, // OS-wide; prefer app.temp for Magic Box-specific temp
     'sys.downloads': app.getPath('downloads'),
     'sys.documents': app.getPath('documents'),
     'sys.desktop': app.getPath('desktop'),
     'sys.music': app.getPath('music'),
     'sys.pictures': app.getPath('pictures'),
     'sys.videos': app.getPath('videos'),
-    'sys.appdata': app.getPath('appData'), // OS root; use app.userdata for Cherry-owned
+    'sys.appdata': app.getPath('appData'), // OS root; use app.userdata for Magic Box-owned
     'sys.appdata.autostart': path.join(app.getPath('appData'), 'autostart'), // Linux only
 
     // -- C. app.* — the Electron application itself --
@@ -73,8 +73,8 @@ export function buildPathRegistry() {
     'app.session': appSession,
     'app.session.cache': path.join(appSession, 'Cache'), // Chromium cache Directory
     'app.extra_resources': appExtraResources, // electron-builder extraResources output root
-    'app.temp': appTemp, // Cherry-specific temp under sys.temp
-    'app.userdata': appUserData, // Electron per-app data dir (Cherry-owned)
+    'app.temp': appTemp, // Magic Box-specific temp under sys.temp
+    'app.userdata': appUserData, // Electron per-app data dir (Magic Box-owned)
     'app.userdata.data': appUserDataData,
     'app.database.file': path.join(appUserData, 'cherrystudio.sqlite'),
     // Dev: relative to __dirname; packaged: shipped via extraResources
@@ -173,11 +173,12 @@ export function buildPathRegistry() {
     'feature.file_processing.temp': path.join(appTemp, 'file-processing'),
     'feature.preprocess.temp': path.join(appTemp, 'preprocess'),
     'feature.lan_transfer.temp': path.join(appTemp, 'lan-transfer'),
+    'feature.terminal.temp': path.join(appTemp, 'terminal'),
     // FileManager's `withTempCopy` escape hatch parent dir; each call mkdtemps a
     // unique sub-directory under here.
     'feature.files.tempcopy.temp': path.join(appTemp, 'files-tempcopy'),
 
-    // -- E. external.* — third-party tool paths (Cherry reads/writes, does NOT own) --
+    // -- E. external.* — third-party tool paths (Magic Box reads/writes, does NOT own) --
     'external.openclaw.config': path.join(os.homedir(), '.openclaw'),
     // Nested ternary (not object literal) to satisfy file-level ESLint constraint
     'external.obsidian.config_file': isWin

@@ -1,9 +1,9 @@
-# Cherry Studio LAN Transfer Protocol Specification
+# Magic Box LAN Transfer Protocol Specification
 
 > Version: 1.0
 > Last Updated: 2025-12
 
-This document defines the LAN file transfer protocol between the Cherry Studio desktop client (Electron) and mobile client (Expo).
+This document defines the LAN file transfer protocol between the Magic Box desktop client (Electron) and mobile client (Expo).
 
 ---
 
@@ -73,7 +73,7 @@ Mobile must publish the service via mDNS/Bonjour:
 
 ```typescript
 {
-  name: "Cherry Studio Mobile",
+  name: "Magic Box Mobile",
   type: "cherrystudio",
   protocol: "tcp",
   port: 53317,

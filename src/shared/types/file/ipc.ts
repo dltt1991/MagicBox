@@ -56,7 +56,7 @@ export interface ReadResult<T> {
 // ─── IPC Params ───
 
 /**
- * Params for creating a Cherry-owned (internal) FileEntry.
+ * Params for creating a Magic Box-owned (internal) FileEntry.
  *
  * Always produces a fresh entry with a new UUID — no conflict resolution.
  *
@@ -84,24 +84,24 @@ export interface ReadResult<T> {
  */
 export type CreateInternalEntryIpcParams =
   | {
-      /** Copy the file at `path` into Cherry storage. `name` / `ext` derived from basename+extname. */
+      /** Copy the file at `path` into Magic Box storage. `name` / `ext` derived from basename+extname. */
       source: 'path'
       path: AbsoluteFilePath
     }
   | {
-      /** Download the URL into Cherry storage. `name` / `ext` derived from URL tail, Content-Disposition, and Content-Type. */
+      /** Download the URL into Magic Box storage. `name` / `ext` derived from URL tail, Content-Disposition, and Content-Type. */
       source: 'url'
       url: UrlString
     }
   | {
-      /** Decode `data:<mime>;base64,...` and write into Cherry storage. `ext` derived from mime; caller may override the UX display name. */
+      /** Decode `data:<mime>;base64,...` and write into Magic Box storage. `ext` derived from mime; caller may override the UX display name. */
       source: 'base64'
       data: Base64String
       /** Optional display name override. If omitted, FileManager synthesizes one (e.g. `Pasted Image 2026-04-21`). */
       name?: string
     }
   | {
-      /** Write raw bytes into Cherry storage. No derivation possible — caller is the sole authority for `name` and `ext`. */
+      /** Write raw bytes into Magic Box storage. No derivation possible — caller is the sole authority for `name` and `ext`. */
       source: 'bytes'
       data: Uint8Array
       /** Display name without extension. */
@@ -266,7 +266,7 @@ export interface FileIpcApi {
   // Generic batch upsert remains type-only.
 
   /**
-   * Create a new Cherry-owned (internal) FileEntry. Always inserts a fresh
+   * Create a new Magic Box-owned (internal) FileEntry. Always inserts a fresh
    * row with a new UUID. No conflict / upsert semantics — call as many times
    * as needed, each invocation produces an independent entry.
    *

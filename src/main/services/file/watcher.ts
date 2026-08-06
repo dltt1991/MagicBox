@@ -116,7 +116,8 @@ class DirectoryWatcherImpl implements DirectoryWatcher {
   }
 
   private createWatcher(usePolling: boolean): FSWatcher {
-    const builtinIgnore = (p: string) => BUILTIN_IGNORE_BASENAMES.has(path.basename(p))
+    const builtinIgnore = (p: string, stats?: { isDirectory: () => boolean; isFile: () => boolean }) =>
+      BUILTIN_IGNORE_BASENAMES.has(path.basename(p)) || (stats ? !stats.isDirectory() && !stats.isFile() : false)
     const userIgnore = this.opts.ignore
     const recursive = this.opts.recursive !== false
     const stability = this.opts.stabilityThresholdMs ?? 200
@@ -135,6 +136,7 @@ class DirectoryWatcherImpl implements DirectoryWatcher {
       ignoreInitial: true,
       depth,
       awaitWriteFinish: stability > 0 ? { stabilityThreshold: stability, pollInterval: 100 } : false,
+      ignorePermissionErrors: true,
       usePolling
     })
 

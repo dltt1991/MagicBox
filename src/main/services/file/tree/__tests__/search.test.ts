@@ -1,5 +1,5 @@
 import type * as NodeFs from 'node:fs'
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { chmod, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
@@ -50,7 +50,7 @@ vi.mock('@main/utils/binaryEnv', () => ({
   getBinaryExecutionEnv: () => ({})
 }))
 
-const { listDirectory } = await import('../search')
+const { listDirectory, listDirectoryEntries } = await import('../search')
 
 beforeEach(async () => {
   // Default both spies to real-fs passthrough so the existing happy-path
@@ -76,10 +76,13 @@ const writeMany = async (root: string, count: number, prefix = 'file', ext = '.t
 
 describe.skipIf(!ripgrepAvailable)('listDirectory (list mode, no searchPattern)', () => {
   let tmp: string
+  let lockedDir: string | null = null
   beforeEach(async () => {
     tmp = await mkdtemp(path.join(tmpdir(), 'cherry-search-list-'))
+    lockedDir = null
   })
   afterEach(async () => {
+    if (lockedDir) await chmod(lockedDir, 0o700).catch(() => {})
     await rm(tmp, { recursive: true, force: true })
   })
 
@@ -133,6 +136,19 @@ describe.skipIf(!ripgrepAvailable)('listDirectory (list mode, no searchPattern)'
     expect(basenames).toContain('top.md')
     expect(basenames).not.toContain('nested.md')
   })
+
+  it('keeps accessible hidden entries when another hidden directory is unreadable', async () => {
+    await writeFile(path.join(tmp, 'visible.txt'), '1')
+    await writeFile(path.join(tmp, '.hidden'), '2')
+    lockedDir = path.join(tmp, '.locked')
+    await mkdir(lockedDir)
+    await chmod(lockedDir, 0o000)
+
+    const results = await listDirectory(tmp as AbsoluteFilePath, { includeHidden: true, maxDepth: 1 })
+
+    expect(results.some((p) => p.endsWith('/visible.txt'))).toBe(true)
+    expect(results.some((p) => p.endsWith('/.hidden'))).toBe(true)
+  })
 })
 
 describe.skipIf(!ripgrepAvailable)('listDirectory (search mode, fuzzy + maxEntries)', () => {
@@ -173,6 +189,66 @@ describe.skipIf(!ripgrepAvailable)('listDirectory (search mode, fuzzy + maxEntri
     expect(results[0]).toMatch(/updater\.ts$/)
     expect(results.some((p) => p.endsWith('unrelated.ts'))).toBe(false)
   })
+
+  it('keeps returning filename matches after the query grows beyond three characters', async () => {
+    await writeFile(path.join(tmp, 'abcd-note.md'), 'a')
+
+    const threeCharacterResults = await listDirectory(tmp as AbsoluteFilePath, {
+      searchPattern: 'abc',
+      maxEntries: 10
+    })
+    const fourCharacterResults = await listDirectory(tmp as AbsoluteFilePath, {
+      searchPattern: 'abcd',
+      maxEntries: 10
+    })
+
+    expect(threeCharacterResults.some((p) => p.endsWith('abcd-note.md'))).toBe(true)
+    expect(fourCharacterResults.some((p) => p.endsWith('abcd-note.md'))).toBe(true)
+  })
+
+  it('returns directory matches in search mode after the query grows beyond three characters', async () => {
+    await mkdir(path.join(tmp, 'abcd-folder'))
+    await writeFile(path.join(tmp, 'abcd-folder', 'inner.txt'), 'a')
+
+    const results = await listDirectory(tmp as AbsoluteFilePath, {
+      includeDirectories: true,
+      includeFiles: true,
+      searchPattern: 'abcd',
+      maxEntries: 10
+    })
+
+    expect(results.some((p) => p.endsWith('abcd-folder'))).toBe(true)
+  })
+
+  it('stops walking search when the caller aborts the request', async () => {
+    await writeFile(path.join(tmp, 'guide.md'), 'a')
+    const controller = new AbortController()
+    controller.abort(new Error('search cancelled'))
+
+    await expect(
+      listDirectoryEntries(tmp as AbsoluteFilePath, {
+        includeDirectories: true,
+        includeFiles: true,
+        searchPattern: 'guide',
+        maxEntries: 10,
+        signal: controller.signal
+      })
+    ).rejects.toThrow('search cancelled')
+  })
+
+  it('finds long filename queries even when many unrelated files are scanned first', async () => {
+    for (let i = 0; i < 180; i++) {
+      await writeFile(path.join(tmp, `aaa-${String(i).padStart(3, '0')}.txt`), 'a')
+    }
+    await writeFile(path.join(tmp, 'unique-long-query.md'), 'target')
+
+    const results = await listDirectory(tmp as AbsoluteFilePath, {
+      searchPattern: 'unique',
+      maxEntries: 5
+    })
+
+    expect(results.some((p) => p.endsWith('unique-long-query.md'))).toBe(true)
+  })
 })
 
 describe('listDirectory (error paths)', () => {
@@ -193,6 +269,18 @@ describe('listDirectory (error paths)', () => {
     mockExistsSync.mockReturnValue(false)
 
     await expect(listDirectory(tmp as AbsoluteFilePath)).rejects.toThrow(/Ripgrep binary not available/)
+  })
+
+  it('searches by walking even when the ripgrep binary cannot be located', async () => {
+    await writeFile(path.join(tmp, 'abcd-note.md'), 'a')
+    mockExistsSync.mockReturnValue(false)
+
+    const results = await listDirectory(tmp as AbsoluteFilePath, {
+      searchPattern: 'abcd',
+      maxEntries: 10
+    })
+
+    expect(results.some((p) => p.endsWith('abcd-note.md'))).toBe(true)
   })
 
   it('throws when the root path is not readable (EACCES from fs.promises.stat)', async () => {

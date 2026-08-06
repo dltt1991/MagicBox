@@ -101,7 +101,7 @@ export type MessageStats = z.infer<typeof MessageStatsSchema>
 // Message Data
 // ============================================================================
 
-/** Cherry-specific UIMessagePart with our custom DataUIPart types baked in. */
+/** Magic Box-specific UIMessagePart with our custom DataUIPart types baked in. */
 export type CherryMessagePart = UIMessagePart<CherryDataPartTypes, UITools>
 
 /**
@@ -110,13 +110,13 @@ export type CherryMessagePart = UIMessagePart<CherryDataPartTypes, UITools>
  *
  * Accepts the generic `UIMessagePart[]` for writes — the DB stores whatever
  * parts the AI SDK produces. Readers can narrow to `CherryMessagePart[]` when
- * they need Cherry-specific data part type safety.
+ * they need Magic Box-specific data part type safety.
  */
 export interface MessageData {
   parts?: CherryMessagePart[]
 }
 
-// ── Cherry-specific UI message types ────────────────────────────────
+// ── Magic Box-specific UI message types ────────────────────────────────
 
 /**
  * Metadata carried on a streamed `CherryUIMessage`.
@@ -180,10 +180,10 @@ export interface CherryUIMessageMetadata {
   stats?: MessageStats
 }
 
-/** Cherry Studio's UIMessage with custom metadata and data part types. */
+/** Magic Box's UIMessage with custom metadata and data part types. */
 export type CherryUIMessage = UIMessage<CherryUIMessageMetadata, CherryDataPartTypes>
 
-/** Cherry Studio's UIMessageChunk — inferred from CherryUIMessage. */
+/** Magic Box's UIMessageChunk — inferred from CherryUIMessage. */
 export type CherryUIMessageChunk = InferUIMessageChunk<CherryUIMessage>
 
 // Re-export AI SDK part types for convenience

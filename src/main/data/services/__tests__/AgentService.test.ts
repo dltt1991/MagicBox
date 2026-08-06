@@ -264,7 +264,7 @@ describe('AgentService', () => {
     })
 
     it('rejects updateAgent changing an existing builtin_role', async () => {
-      // Seed through the internal tx path, as the Cherry Assistant seeder does.
+      // Seed through the internal tx path, as the Magic Assistant seeder does.
       const agentId = 'agent_builtin_change'
       await insertAgent({ id: agentId, configuration: { builtin_role: 'assistant' } })
 
@@ -1122,7 +1122,7 @@ describe('AgentService', () => {
     it('searches the localized blank builtin description server-side and returns it for display', async () => {
       await insertAgent({
         id: 'agent_builtin_assistant',
-        name: 'Cherry Assistant',
+        name: 'Magic Assistant',
         description: '',
         configuration: { builtin_role: 'assistant' }
       })
@@ -1187,7 +1187,7 @@ describe('AgentService', () => {
     it('matches and displays the localized blank builtin description in global search', async () => {
       await insertAgent({
         id: 'agent_builtin_global_search',
-        name: 'Cherry Assistant',
+        name: 'Magic Assistant',
         description: '',
         configuration: { builtin_role: 'assistant' },
         updatedAt: 100
@@ -1197,7 +1197,7 @@ describe('AgentService', () => {
         expect.objectContaining({
           id: 'agent_builtin_global_search',
           subtitle:
-            'Built-in Cherry Studio advisor. Diagnose issues, guide operations, collect FAQs, submit bugs/feature requests, and search/create Skills'
+            'Built-in Magic Box advisor. Diagnose issues, guide operations, collect FAQs, submit bugs/feature requests, and search/create Skills'
         })
       ])
     })

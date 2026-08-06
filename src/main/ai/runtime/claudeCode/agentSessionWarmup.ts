@@ -337,7 +337,7 @@ export async function buildClaudeCodeQueryRequestForAgentSession(
 
 /**
  * Claude Agent SDK always speaks the Anthropic-native reasoning dialect. When its route points at
- * Cherry's gateway, the gateway translates those native fields again for the target endpoint.
+ * Magic Box's gateway, the gateway translates those native fields again for the target endpoint.
  */
 function resolveClaudeCodeThinkingOptions(
   model: Model,

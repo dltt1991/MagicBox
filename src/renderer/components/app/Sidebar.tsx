@@ -1,6 +1,7 @@
 import { usePersistCache } from '@data/hooks/useCache'
 import { usePreference } from '@data/hooks/usePreference'
 import { arrayMove } from '@dnd-kit/sortable'
+import { useCommandHandler } from '@renderer/hooks/command'
 import { useTabs } from '@renderer/hooks/tab'
 import useAvatar from '@renderer/hooks/useAvatar'
 import { useMiniApps } from '@renderer/hooks/useMiniApps'
@@ -25,6 +26,7 @@ import {
   getSidebarLayout,
   normalizeSidebarWidth,
   Sidebar as UISidebar,
+  SIDEBAR_ICON_WIDTH,
   type SidebarUser,
   type SidebarVisibleLayout,
   UserAvatar
@@ -157,6 +159,13 @@ export default function Sidebar({ ref }: { ref?: Ref<HTMLDivElement | null> }) {
     openSettingsTab('/settings/provider')
   }, [])
 
+  const handleSidebarToggle = useCallback(() => {
+    setHoverVisible(false)
+    setPreviewSidebarWidth(null)
+    setSidebarWidth(layout === 'hidden' ? SIDEBAR_ICON_WIDTH : 0)
+  }, [layout, setSidebarWidth])
+  useCommandHandler('app.sidebar.toggle', handleSidebarToggle)
+
   const handleOpenMiniAppTab = useCallback(
     (appId: string) => {
       const app = openableMiniAppById.get(appId)
@@ -247,7 +256,12 @@ export default function Sidebar({ ref }: { ref?: Ref<HTMLDivElement | null> }) {
     title: sidebarUser.name,
     logo: sidebarLogo,
     actions: (footerLayout: SidebarVisibleLayout) => (
-      <SidebarShellActions layout={footerLayout} onSettingsClick={handleOpenSettingsTab} />
+      <SidebarShellActions
+        layout={footerLayout}
+        sidebarHidden={layout === 'hidden'}
+        onSidebarToggle={handleSidebarToggle}
+        onSettingsClick={handleOpenSettingsTab}
+      />
     ),
     onEntriesReorder: handleReorder
   }

@@ -20,6 +20,7 @@ import { app, Menu, shell } from 'electron'
 const appMenuCommands: CommandId[] = ['app.settings.open', 'app.zoom.in', 'app.zoom.out', 'app.zoom.reset']
 
 const appMenuShortcutCommands = new Set(appMenuCommands)
+const editRoleShortcutPassthrough = { registerAccelerator: false }
 
 const getShortcutAccelerator = (command: CommandId): string | undefined => {
   const commandDefinition = findCommandDefinition(command)
@@ -113,9 +114,9 @@ export class AppMenuService extends BaseService {
           { type: 'role', role: 'undo', label: appMenu.undo },
           { type: 'role', role: 'redo', label: appMenu.redo },
           { type: 'separator' },
-          { type: 'role', role: 'cut', label: appMenu.cut },
-          { type: 'role', role: 'copy', label: appMenu.copy },
-          { type: 'role', role: 'paste', label: appMenu.paste },
+          { type: 'role', role: 'cut', label: appMenu.cut, ...editRoleShortcutPassthrough },
+          { type: 'role', role: 'copy', label: appMenu.copy, ...editRoleShortcutPassthrough },
+          { type: 'role', role: 'paste', label: appMenu.paste, ...editRoleShortcutPassthrough },
           { type: 'role', role: 'delete', label: appMenu.delete },
           { type: 'role', role: 'selectAll', label: appMenu.selectAll }
         ]

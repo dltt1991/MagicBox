@@ -1,5 +1,4 @@
-import type { PresentationData } from '@aiden0z/pptx-renderer'
-import { buildPresentation, parseZipLazyMedia, PptxViewer, RECOMMENDED_ZIP_LIMITS } from '@aiden0z/pptx-renderer'
+import type { PptxViewer, PresentationData } from '@aiden0z/pptx-renderer'
 import { EmptyState } from '@cherrystudio/ui'
 import { loggerService } from '@logger'
 import { createFilePathHandle } from '@shared/utils/file'
@@ -18,9 +17,11 @@ const PPTX_PREVIEW_DEFAULT_ZOOM = 100
 const PPTX_PREVIEW_ZOOM_STEP = 10
 const PPTX_PREVIEW_MIN_ZOOM = 50
 const PPTX_PREVIEW_MAX_ZOOM = 200
-const PPTX_PREVIEW_MAX_SOURCE_BYTES = 25 * 1024 * 1024
+const PPTX_PREVIEW_MAX_SOURCE_BYTES = 200 * 1024 * 1024
 const EXTERNAL_TARGET_MODE = 'external'
 const EXTERNAL_MEDIA_RELATIONSHIP_TYPES = new Set(['image', 'audio', 'video', 'media'])
+
+type PptxViewerInstance = InstanceType<typeof PptxViewer>
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max)
 const formatPptxZoom = (zoom: number): string => `${Math.round(zoom)}%`
@@ -45,8 +46,13 @@ function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
 
 function assertSourceSize(size: number): void {
   if (size > PPTX_PREVIEW_MAX_SOURCE_BYTES) {
-    throw new Error('PPTX preview supports files up to 25 MB')
+    throw new Error('PPTX preview supports files up to 200 MB')
   }
+}
+
+async function extractPptxTextFallback(filePath: string): Promise<string | null> {
+  const text = (await window.api.file.readExternal(filePath, true)).trim()
+  return text.length > 0 ? text : null
 }
 
 function throwIfAborted(signal: AbortSignal): void {
@@ -87,7 +93,7 @@ function stripExternalMediaRelationships(presentation: PresentationData): void {
 export default function PowerPointFilePreview({ filePath, fileName, refreshKey }: FilePreviewPluginProps) {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
-  const viewerRef = useRef<PptxViewer | null>(null)
+  const viewerRef = useRef<PptxViewerInstance | null>(null)
   const controlsBusyRef = useRef(false)
   const [error, setError] = useState<Error | null>(null)
   const [loading, setLoading] = useState(true)
@@ -95,6 +101,7 @@ export default function PowerPointFilePreview({ filePath, fileName, refreshKey }
   const [pageCount, setPageCount] = useState(0)
   const [zoom, setZoom] = useState(PPTX_PREVIEW_DEFAULT_ZOOM)
   const [controlsBusy, setControlsBusy] = useState(false)
+  const [fallbackText, setFallbackText] = useState<string | null>(null)
 
   const setPreviewControlsBusy = useCallback((busy: boolean) => {
     controlsBusyRef.current = busy
@@ -167,9 +174,11 @@ export default function PowerPointFilePreview({ filePath, fileName, refreshKey }
 
     const controller = new AbortController()
     let cancelled = false
-    let viewer: PptxViewer | null = null
+    let viewer: PptxViewerInstance | null = null
+    let canFallbackToText = false
 
     setError(null)
+    setFallbackText(null)
     setLoading(true)
     setCurrentPage(0)
     setPageCount(0)
@@ -187,20 +196,25 @@ export default function PowerPointFilePreview({ filePath, fileName, refreshKey }
 
         const pptxData = toUint8Array(await window.api.fs.read(filePath))
         assertSourceSize(pptxData.byteLength)
+        canFallbackToText = true
         if (cancelled) return
 
         throwIfAborted(controller.signal)
-        const pptxFiles = await parseZipLazyMedia(toArrayBuffer(pptxData), RECOMMENDED_ZIP_LIMITS)
+        const pptxRenderer = await import('@aiden0z/pptx-renderer')
+        const pptxFiles = await pptxRenderer.parseZipLazyMedia(
+          toArrayBuffer(pptxData),
+          pptxRenderer.RECOMMENDED_ZIP_LIMITS
+        )
         throwIfAborted(controller.signal)
-        const presentation = buildPresentation(pptxFiles, { lazySlides: true })
+        const presentation = pptxRenderer.buildPresentation(pptxFiles, { lazySlides: true })
         stripExternalMediaRelationships(presentation)
         throwIfAborted(controller.signal)
 
-        viewer = new PptxViewer(container, {
+        viewer = new pptxRenderer.PptxViewer(container, {
           fitMode: 'contain',
           zoomPercent: PPTX_PREVIEW_DEFAULT_ZOOM,
           scrollContainer: container,
-          zipLimits: RECOMMENDED_ZIP_LIMITS,
+          zipLimits: pptxRenderer.RECOMMENDED_ZIP_LIMITS,
           lazyMedia: true,
           lazySlides: true,
           pdfjs: false,
@@ -256,6 +270,22 @@ export default function PowerPointFilePreview({ filePath, fileName, refreshKey }
         container.innerHTML = ''
         const normalized = loadError instanceof Error ? loadError : new Error(String(loadError))
         logger.error(`Failed to load PPTX preview: ${filePath}`, normalized)
+        if (canFallbackToText) {
+          try {
+            const text = await extractPptxTextFallback(filePath)
+            if (cancelled) return
+            if (text) {
+              setFallbackText(text)
+              setError(null)
+              return
+            }
+          } catch (fallbackError) {
+            logger.warn('Failed to extract PPTX text fallback', {
+              filePath,
+              error: fallbackError instanceof Error ? fallbackError.message : String(fallbackError)
+            })
+          }
+        }
         setError(normalized)
       } finally {
         if (!cancelled) setLoading(false)
@@ -274,7 +304,8 @@ export default function PowerPointFilePreview({ filePath, fileName, refreshKey }
     }
   }, [filePath, focusContainer, refreshKey, setPreviewControlsBusy])
 
-  const hasPages = !error && pageCount > 0
+  const hasPages = !error && !fallbackText && pageCount > 0
+  const fallbackLines = fallbackText?.split(/\r?\n/) ?? []
 
   return (
     <FilePreviewLayout.Frame>
@@ -305,6 +336,17 @@ export default function PowerPointFilePreview({ filePath, fileName, refreshKey }
             className="absolute inset-0 overflow-auto bg-background outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:ring-inset"
             tabIndex={0}
           />
+          {fallbackText ? (
+            <div
+              data-testid="pptx-text-fallback"
+              className="absolute inset-0 overflow-auto bg-background p-4 text-foreground text-sm">
+              {fallbackLines.map((line, index) => (
+                <div key={`${index}-${line}`} className="min-h-5 whitespace-pre-wrap break-words">
+                  {line}
+                </div>
+              ))}
+            </div>
+          ) : null}
           {loading ? (
             <div
               role="status"

@@ -10,7 +10,7 @@ const DEFAULT_GATEWAY_HOST = '127.0.0.1'
 const DEFAULT_GATEWAY_PORT = 23333
 
 /**
- * The synthetic "Cherry Gateway" entry for the code-CLI provider list, plus the
+ * The synthetic "Magic Box Gateway" entry for the code-CLI provider list, plus the
  * live gateway credential and a lifecycle action. The `provider` flows through the
  * normal provider pipeline (card / model picker / config write), so its
  * `endpointConfigs` point at the local gateway and its `apiKeys` carry a runtime
@@ -26,7 +26,7 @@ export interface ApiGatewayProviderBundle {
 }
 
 /**
- * Build the synthetic Cherry Gateway provider from the API-gateway preference
+ * Build the synthetic Magic Box Gateway provider from the API-gateway preference
  * config. Returns `null` only when host/port are unavailable (never, given the
  * shipped defaults) so the gateway card is always offered for gateway-capable
  * tools. The provider is rebuilt whenever host/port/key change.

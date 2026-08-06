@@ -20,7 +20,6 @@ import {
 import HistoryRecordsView from '@renderer/components/history/HistoryRecordsView'
 import { ConversationResourceView } from '@renderer/components/resourceCatalog/conversation'
 import { usePersistCache } from '@renderer/data/hooks/useCache'
-import { useCommandHandler } from '@renderer/hooks/command'
 import { useAssistantTopicsSource } from '@renderer/hooks/resourceViewSources'
 import { useCurrentTab, useCurrentTabId, useIsActiveTab, useTabSelfMetadata } from '@renderer/hooks/tab'
 import { useAssistants } from '@renderer/hooks/useAssistant'
@@ -431,8 +430,6 @@ const HomePage: FC = () => {
       void EventEmitter.emit(EVENT_NAMES.SHOW_ASSISTANTS)
     })
   }, [effectiveShowSidebar, isMessageOnlyView, markManualPaneToggle])
-  useCommandHandler('app.sidebar.toggle', toggleResourceListOpen)
-
   useEffect(() => {
     if (isMessageOnlyView) return
     if (!state?.topic) return

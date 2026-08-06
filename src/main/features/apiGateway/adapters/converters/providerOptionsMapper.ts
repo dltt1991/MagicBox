@@ -2,7 +2,7 @@
  * Provider Options Mapper
  *
  * Normalizes reasoning controls from each gateway input dialect, then routes
- * them through the same descriptor-driven builders as Cherry's native chat
+ * them through the same descriptor-driven builders as Magic Box's native chat
  * path. Native Anthropic and Gemini requests keep a lossless fast path when
  * the target speaks the same dialect.
  */

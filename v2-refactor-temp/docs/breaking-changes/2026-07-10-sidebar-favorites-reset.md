@@ -8,7 +8,7 @@ date: 2026-07-10
 
 ## What changed
 
-Cherry Studio v2 resets migrated sidebar favorites to Chat, Agents, Translation, Paintings, and Knowledge Base. Legacy visible and hidden sidebar icon settings are not preserved.
+Magic Box v2 resets migrated sidebar favorites to Chat, Agents, Translation, Paintings, and Knowledge Base. Legacy visible and hidden sidebar icon settings are not preserved.
 
 ## Why this matters to the user
 

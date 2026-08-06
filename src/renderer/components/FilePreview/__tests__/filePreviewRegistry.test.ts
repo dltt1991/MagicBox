@@ -104,6 +104,10 @@ describe('file preview registry', () => {
     expect(resolveExtensionPlugin(`/tmp/slides.${extension}`, filePreviewRegistry)?.id).toBe('powerpoint')
   })
 
+  it.each(['csv', 'CSV', 'xlsx', 'XLSX'])('registers the spreadsheet plugin for .%s files', (extension) => {
+    expect(resolveExtensionPlugin(`/tmp/sheet.${extension}`, filePreviewRegistry)?.id).toBe('spreadsheet')
+  })
+
   it.each(['html', 'htm', 'HTML', 'HTM'])('registers the HTML plugin for .%s files', (extension) => {
     expect(resolveExtensionPlugin(`/tmp/page.${extension}`, filePreviewRegistry)?.id).toBe('html')
   })
@@ -116,7 +120,7 @@ describe('file preview registry', () => {
     expect(resolveExtensionPlugin(`/tmp/source.${extension}`, filePreviewRegistry)?.id).toBe('text')
   })
 
-  it.each(['md', 'markdown', 'mdx', 'pdf', 'png', 'jpg', 'html', 'htm', 'csv', 'tsv', 'svg'])(
+  it.each(['md', 'markdown', 'mdx', 'pdf', 'png', 'jpg', 'html', 'htm', 'csv', 'tsv', 'xlsx', 'svg'])(
     'does not route dedicated .%s formats through the text plugin',
     (extension) => {
       expect(resolveExtensionPlugin(`/tmp/source.${extension}`, filePreviewRegistry)?.id).not.toBe('text')

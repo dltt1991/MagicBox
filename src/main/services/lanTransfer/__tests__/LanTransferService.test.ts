@@ -67,7 +67,7 @@ vi.mock('node:net', async (importOriginal) => {
 
 vi.mock('electron', () => ({
   app: {
-    getName: vi.fn(() => 'Cherry Studio'),
+    getName: vi.fn(() => 'Magic Box'),
     getVersion: vi.fn(() => '1.0.0')
   },
   ipcMain: {

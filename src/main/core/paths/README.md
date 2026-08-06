@@ -34,11 +34,11 @@ application.getPath('invalid.key')
 | `cherry.*` | Generic infra under `~/.cherrystudio` | `cherry.home`, `cherry.bin` |
 | `sys.*` | OS-managed directories | `sys.home`, `sys.temp`, `sys.downloads` |
 | `app.*` | Electron app: install dir, userData, database, logs, temp root | `app.userdata`, `app.database.file` |
-| `feature.*` | Cherry-owned feature data (grouped by feature) | `feature.files.data`, `feature.mcp.oauth` |
-| `external.*` | Third-party paths (Cherry reads/writes, does NOT own) | `external.openclaw.config` |
+| `feature.*` | Magic Box-owned feature data (grouped by feature) | `feature.files.data`, `feature.mcp.oauth` |
+| `external.*` | Third-party paths (Magic Box reads/writes, does NOT own) | `external.openclaw.config` |
 
 **Default to `feature.*` for new keys.** The other four scopes are effectively closed.
-`feature.*` → Cherry creates/manages/may delete. `external.*` → Cherry MUST NOT delete.
+`feature.*` → Magic Box creates/manages/may delete. `external.*` → Magic Box MUST NOT delete.
 
 ## Key Naming Convention
 

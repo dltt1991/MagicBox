@@ -208,7 +208,7 @@ export class OpenClawService extends BaseService {
 
     // Refresh first so both system discovery and the spawned process see the
     // current login-shell environment. System tools retain the user's MISE_*;
-    // Cherry-managed shims use Cherry's execution environment.
+    // Magic Box-managed shims use Magic Box's execution environment.
     const managedShellEnv = await refreshShellEnv()
     const openclaw = await this.findOpenClawBinary()
     if (!openclaw) {
@@ -519,7 +519,7 @@ export class OpenClawService extends BaseService {
   }
 
   /**
-   * Sync Cherry Studio Provider configuration to OpenClaw
+   * Sync Magic Box Provider configuration to OpenClaw
    */
   public async syncConfig(uniqueModelId: UniqueModelId, port?: number): Promise<OperationResult> {
     try {

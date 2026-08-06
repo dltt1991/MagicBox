@@ -35,7 +35,7 @@ interface ConfigDraftControllerOptions
   extends Pick<ConfigEditPanelProps, 'cliTool' | 'provider' | 'providerConfig' | 'isCurrentProvider' | 'onSubmit'> {
   apiKeys?: Parameters<typeof cliConfigConnectionMatchesProvider>[3]
   onClose: () => void
-  /** Present when editing the Cherry gateway provider — drives gateway-addressed drafts + matching. */
+  /** Present when editing the Magic Box gateway provider — drives gateway-addressed drafts + matching. */
   gateway?: CliConfigGatewayContext
   /** Enabled models by unique id, used to resolve the gateway model's `apiModelId` for matching. */
   models?: Map<UniqueModelId, Model>

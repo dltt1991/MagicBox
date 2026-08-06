@@ -27,7 +27,7 @@ const anthropicEnvelope = (type: string, message: string) => ({ type: 'error' as
 /** OpenAI dialect envelope. */
 const openaiEnvelope = (type: string, message: string, code: string) => ({ error: { message, type, code } })
 
-/** Cherry REST envelope — mirrors the v2 `DataApiError` vocabulary. */
+/** Magic Box REST envelope — mirrors the v2 `DataApiError` vocabulary. */
 const restEnvelope = (code: string, message: string, details?: Record<string, unknown>) => ({
   error: { code, message, ...(details ? { details } : {}) }
 })
@@ -275,7 +275,7 @@ export function googleErrorHandler({ code, error, status }: GatewayErrorContext)
 }
 
 /**
- * Cherry REST error handler — for Cherry's own endpoints (`knowledge-bases`,
+ * Magic Box REST error handler — for Magic Box's own endpoints (`knowledge-bases`,
  * `models`) and the app-level fallback (`/health`, `/`, unmatched routes). Speaks
  * the same `{ error: { code, message, details? } }` vocabulary as the v2 data
  * layer (`ErrorCode` / `ERROR_STATUS_MAP`), so there is no provider delegate.

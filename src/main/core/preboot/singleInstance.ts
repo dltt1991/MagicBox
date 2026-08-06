@@ -5,10 +5,10 @@ import { app } from 'electron'
 const logger = loggerService.withContext('SingleInstance')
 
 /**
- * Require this process to be the primary Cherry Studio instance.
+ * Require this process to be the primary Magic Box instance.
  *
  * Claims Electron's single-instance lock via `app.requestSingleInstanceLock()`.
- * If another Cherry Studio process already holds the lock, this function
+ * If another Magic Box process already holds the lock, this function
  * logs the outcome, calls `application.quit()` to let the shared quit
  * machinery run, and then calls `process.exit(0)` as a belt-and-suspenders
  * terminator in case the Electron `quit` path is slow or blocked. Callers
@@ -37,7 +37,7 @@ const logger = loggerService.withContext('SingleInstance')
 export function requireSingleInstance(): void {
   if (app.requestSingleInstanceLock()) return
 
-  logger.info('Another Cherry Studio instance already holds the single-instance lock; exiting')
+  logger.info('Another Magic Box instance already holds the single-instance lock; exiting')
   application.quit()
   process.exit(0)
 }

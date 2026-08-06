@@ -33,7 +33,7 @@
     },
     "builtin": {
       "cherry_assistant": {
-        "description": "Built-in Cherry Studio advisor. Diagnose issues, guide operations, collect FAQs, submit bugs/feature requests, and search/create Skills"
+        "description": "Built-in Magic Box advisor. Diagnose issues, guide operations, collect FAQs, submit bugs/feature requests, and search/create Skills"
       }
     },
     "channels": {
@@ -1049,7 +1049,7 @@
     },
     "authHeaderText": "Use in Authorization header:",
     "configuration": "Configuration",
-    "description": "Expose Cherry Studio's AI capabilities through OpenAI- and Anthropic-compatible HTTP APIs",
+    "description": "Expose Magic Box's AI capabilities through OpenAI- and Anthropic-compatible HTTP APIs",
     "documentation": {
       "title": "API Documentation"
     },
@@ -1398,8 +1398,8 @@
     },
     "deeply_thought": "Deeply thought ({{seconds}} seconds)",
     "default": {
-      "description": "Hello, I'm Cherry Assistant. You can start chatting with me right away",
-      "name": "Cherry Assistant",
+      "description": "Hello, I'm Magic Assistant. You can start chatting with me right away",
+      "name": "Magic Assistant",
       "topic": {
         "name": "Default Conversation"
       }
@@ -2073,7 +2073,7 @@
     },
     "api_gateway": {
       "description": "Any CLI, every model",
-      "requires_running": "Keep Cherry Studio running after enabling — the external CLI connects to the gateway it hosts.",
+      "requires_running": "Keep Magic Box running after enabling — the external CLI connects to the gateway it hosts.",
       "title": "Unified Gateway"
     },
     "apply_failed": "Failed to write CLI config to the system file",
@@ -2602,6 +2602,14 @@
         "open_error": "Couldn't open this file",
         "title": "File is too large"
       }
+    },
+    "spreadsheet": {
+      "column": "Column {{index}}",
+      "empty": {
+        "description": "This spreadsheet has no cells to display.",
+        "title": "Empty spreadsheet"
+      },
+      "truncated": "Showing only the first 500 rows and 50 columns."
     },
     "text": {
       "empty": {
@@ -4364,6 +4372,7 @@
   "navbar": {
     "expand": "Expand Dialog",
     "hide_sidebar": "Hide Sidebar",
+    "pin_sidebar": "Pin Sidebar",
     "show_sidebar": "Show Sidebar",
     "window": {
       "close": "Close",
@@ -4583,12 +4592,12 @@
       "select_other_provider": "Select Other Provider",
       "setup_hint": "You can change providers anytime in Settings",
       "subtitle": "Connect a provider to unlock your All-in-One AI Workstation",
-      "title": "Welcome to Cherry Studio"
+      "title": "Welcome to Magic Box"
     }
   },
   "openclaw": {
     "checking_installation": "Checking OpenClaw installation...",
-    "description": "Use Cherry Studio providers to power OpenClaw, your personal AI assistant that works across WhatsApp, Telegram, Slack, Discord and more.",
+    "description": "Use Magic Box providers to power OpenClaw, your personal AI assistant that works across WhatsApp, Telegram, Slack, Discord and more.",
     "error": {
       "select_provider_model": "Please select a provider and model first"
     },
@@ -4609,7 +4618,7 @@
     },
     "installed_at": "OpenClaw installed at",
     "migration": {
-      "description": "An external OpenClaw installation was detected in PATH, but Cherry Studio uses its managed OpenClaw binary. Install the managed version to continue.",
+      "description": "An external OpenClaw installation was detected in PATH, but Magic Box uses its managed OpenClaw binary. Install the managed version to continue.",
       "install_button": "Reinstall OpenClaw",
       "title": "OpenClaw Needs Update"
     },
@@ -5515,7 +5524,7 @@
           },
           "description": {
             "0": "Selection Assistant requires <strong>Accessibility Permission</strong> to work properly.",
-            "1": "Please click \"<strong>Go to Settings</strong>\" and click the \"<strong>Open System Settings</strong>\" button in the permission request popup that appears later. Then find \"<strong>Cherry Studio</strong>\" in the application list that appears later and turn on the permission switch.",
+            "1": "Please click \"<strong>Go to Settings</strong>\" and click the \"<strong>Open System Settings</strong>\" button in the permission request popup that appears later. Then find \"<strong>Magic Box</strong>\" in the application list that appears later and turn on the permission switch.",
             "2": "After completing the settings, please reopen the selection assistant."
           },
           "title": "Accessibility Permission"
@@ -5539,7 +5548,7 @@
         "wayland_checklist_subtitle": "Ensure the following conditions are met to optimize the Wayland experience:",
         "wayland_description": "You are in a Wayland session. Due to system limitations, the toolbar may only appear at the center of the screen instead of following the selected text on some desktop environments. It is recommended to switch to an X11 session for the full experience.",
         "wayland_title": "Wayland Session Notice",
-        "xwayland_fail": "Not enabled, please launch Cherry Studio with the `--ozone-platform=x11` flag",
+        "xwayland_fail": "Not enabled, please launch Magic Box with the `--ozone-platform=x11` flag",
         "xwayland_label": "XWayland mode: ",
         "xwayland_pass": "Enabled"
       },
@@ -5721,6 +5730,7 @@
       "social": {
         "title": "Social Accounts"
       },
+      "temporarilyUnavailable": "Temporarily unavailable",
       "title": "About",
       "updateAvailable": "Found new version {{version}}",
       "updateError": "Update error",
@@ -5778,9 +5788,9 @@
         "path_changed_without_copy": "Path changed successfully",
         "restart_notice": "The app may need to restart multiple times to apply the changes",
         "select": "Modify Directory",
-        "select_error": "The selected directory may be used by another Cherry Studio instance. Close other instances and try again. If none are running, remove stale SingletonLock and SingletonSocket files from that directory.",
+        "select_error": "The selected directory may be used by another Magic Box instance. Close other instances and try again. If none are running, remove stale SingletonLock and SingletonSocket files from that directory.",
         "select_error_in_app_path": "New path is the same as the application installation path, please select another path",
-        "select_error_protected_path": "The selected path is protected by the operating system or Cherry Studio. Please choose another folder.",
+        "select_error_protected_path": "The selected path is protected by the operating system or Magic Box. Please choose another folder.",
         "select_error_root_path": "New path cannot be the root path",
         "select_error_same_path": "New path is the same as the old path, please select another path",
         "select_error_write_permission": "New path does not have write permission",
@@ -6397,14 +6407,14 @@
       "notInstalled": "Not installed",
       "openBinariesDir": "Open binaries directory",
       "remove": "Remove tool",
-      "removeConfirmMessage": "Remove \"{{name}}\" from Cherry Studio? Its portable definition will be deleted. Cherry will also clean up an exact mise-managed copy when present. System and bundled executables are never changed.",
+      "removeConfirmMessage": "Remove \"{{name}}\" from Magic Box? Its portable definition will be deleted. Magic Box will also clean up an exact mise-managed copy when present. System and bundled executables are never changed.",
       "removeConfirmTitle": "Remove Tool",
-      "removeDefinitionOnlyConfirmMessage": "Cherry could not safely clean up \"{{name}}\": {{details}} Removing only its definition will hide the card but leave its backend files installed. Continue?",
+      "removeDefinitionOnlyConfirmMessage": "Magic Box could not safely clean up \"{{name}}\": {{details}} Removing only its definition will hide the card but leave its backend files installed. Continue?",
       "removeDefinitionOnlyConfirmTitle": "Remove Definition Only?",
       "removeDefinitionOnlyDependents": "Installed tools depend on it: {{dependents}}.",
       "removeError": "Failed to remove tool",
       "removeErrorHint": "The cleanup command failed. Copy the log below to troubleshoot or share it for help.",
-      "removeRuntimeConfirmMessage": "Remove \"{{name}}\" from Cherry Studio? Cherry will clean up only an exact mise-managed copy. System and bundled runtimes are never changed. Installed npm or pip tools may block removal if they depend on this runtime.",
+      "removeRuntimeConfirmMessage": "Remove \"{{name}}\" from Magic Box? Magic Box will clean up only an exact mise-managed copy. System and bundled runtimes are never changed. Installed npm or pip tools may block removal if they depend on this runtime.",
       "runtimeDependency": "Runtime",
       "runtimeDependencyHint": "Runtime for npm/pip tools",
       "searchFailed": "Search failed, check logs",
@@ -6431,7 +6441,7 @@
         "uv": "Python package manager for MCP services and dependency installation."
       },
       "uninstall": "Uninstall",
-      "uninstallConfirmMessage": "Are you sure you want to uninstall \"{{name}}\"? Cherry Studio's backend copy will be deleted.",
+      "uninstallConfirmMessage": "Are you sure you want to uninstall \"{{name}}\"? Magic Box's backend copy will be deleted.",
       "uninstallConfirmTitle": "Uninstall Tool",
       "uninstallFailed": "Failed to uninstall tool",
       "uninstallSuccess": "Tool uninstalled",
@@ -6525,7 +6535,7 @@
       "common": {
         "menu": {
           "presentation_mode": {
-            "cherry": "Cherry",
+            "cherry": "Magic Box",
             "native": "Native",
             "restart": {
               "content": "Changing the menu style requires restarting the app to take effect. Do you want to restart now?",
@@ -7775,7 +7785,9 @@
         "all": "All",
         "assistant": "AI Tools",
         "chat": "Messages",
+        "file_manager": "File Manager",
         "general": "General",
+        "terminal": "Terminal",
         "title": "Shortcut Groups",
         "topic": "Conversations"
       },
@@ -7788,6 +7800,21 @@
       "empty": "No shortcuts are available in this group",
       "enabled": "Enable",
       "exit_fullscreen": "Exit Fullscreen",
+      "file_manager_copy": "File Manager: Copy",
+      "file_manager_copy_path": "File Manager: Copy Path",
+      "file_manager_cut": "File Manager: Cut",
+      "file_manager_delete": "File Manager: Delete",
+      "file_manager_new_file": "File Manager: New File",
+      "file_manager_new_folder": "File Manager: New Folder",
+      "file_manager_open": "File Manager: Open",
+      "file_manager_open_child_history": "File Manager: Open Child History",
+      "file_manager_open_parent": "File Manager: Open Parent",
+      "file_manager_open_terminal_here": "File Manager: Open Terminal Here",
+      "file_manager_paste": "File Manager: Paste",
+      "file_manager_properties": "File Manager: Properties",
+      "file_manager_rename": "File Manager: Rename",
+      "file_manager_search": "File Manager: Search",
+      "file_manager_select_all": "File Manager: Select All",
       "filter": "Filter",
       "label": "Key",
       "move_tab_to_first": "Move Tab to First",
@@ -7814,6 +7841,12 @@
       "selection_assistant_toggle": "Toggle Selection Assistant",
       "show_app": "Show/Hide App",
       "show_settings": "Open Settings",
+      "terminal_close_all": "Terminal: Close All Terminal Tabs",
+      "terminal_close_current": "Terminal: Close Current Terminal Tab",
+      "terminal_close_others": "Terminal: Close Other Terminal Tabs",
+      "terminal_new": "Terminal: New Terminal Tab",
+      "terminal_switch_next": "Terminal: Switch to Next Terminal Tab",
+      "terminal_switch_previous": "Terminal: Switch to Previous Terminal Tab",
       "title": "Keyboard Shortcuts",
       "toggle_left_sidebar": "Toggle Left Sidebar",
       "toggle_new_context": "Clear Context",
@@ -8135,6 +8168,161 @@
     "pin": "Pin Tab",
     "unpin": "Unpin Tab"
   },
+  "terminal": {
+    "close_running_session_confirm": "{{process}} is still running in this terminal. Close this terminal tab?",
+    "close_session": "Close terminal {{index}}",
+    "new_session": "New terminal",
+    "quick_command": {
+      "command": "Command",
+      "command_content": "Command content",
+      "command_placeholder": "pnpm dev",
+      "customize": "Custom quick command",
+      "delete": "Delete quick command",
+      "dialog_create_title": "Custom quick command",
+      "dialog_description": "Enter a command and choose either a toolbar label or an icon.",
+      "dialog_edit_title": "Edit quick command",
+      "display_icon": "Icon",
+      "display_label": "Name",
+      "display_mode": "Display",
+      "edit": "Edit quick command",
+      "error_command_required": "Enter a command.",
+      "error_display_required": "Enter a toolbar label or upload an icon.",
+      "error_icon_read": "Unable to read this icon.",
+      "error_icon_required": "Upload an icon.",
+      "error_icon_too_large": "Icon image must be 1 MB or smaller.",
+      "error_icon_type": "Use a JPG, PNG, BMP, or ICO image.",
+      "icon": "Icon",
+      "label": "Toolbar label",
+      "label_placeholder": "Dev"
+    },
+    "session": "Terminal {{index}}",
+    "theme": {
+      "default_dark": "Default Dark",
+      "dracula": "Dracula",
+      "gruvbox_dark": "Gruvbox Dark",
+      "light": "Light",
+      "monokai": "Monokai",
+      "nord": "Nord",
+      "one_dark_pro": "One Dark Pro",
+      "select": "Switch terminal theme",
+      "solarized_dark": "Solarized Dark"
+    },
+    "title": "Terminal",
+    "workspace": {
+      "choose": "Choose workspace",
+      "context": {
+        "copy": "Copy",
+        "copy_path": "Copy path",
+        "cut": "Cut",
+        "folder_properties": "Folder properties",
+        "new_file": "New file",
+        "new_folder": "New folder",
+        "open_file": "Open file",
+        "open_folder": "Open folder",
+        "open_terminal_here": "Open terminal here",
+        "paste": "Paste",
+        "properties": "Properties",
+        "rename": "Rename",
+        "trash": "Delete"
+      },
+      "dialog": {
+        "kind": {
+          "directory": "Folder",
+          "file": "File",
+          "other": "Other"
+        },
+        "new_file": "Enter a new file name",
+        "new_file_default": "New File.txt",
+        "new_folder": "Enter a new folder name",
+        "new_folder_default": "New Folder",
+        "operation_failed": "File operation failed",
+        "paste_conflict_description": "The target directory already contains an item with the same name.",
+        "paste_conflict_rename": "Rename",
+        "paste_conflict_rename_label": "New name",
+        "paste_conflict_replace": "Replace",
+        "paste_conflict_title": "Paste conflict",
+        "properties": {
+          "created_at": "Created",
+          "kind": "Type",
+          "modified_at": "Modified",
+          "name": "Name",
+          "path": "Path",
+          "size": "Size"
+        },
+        "rename": "Enter a new name",
+        "trash_confirm": "Delete \"{{name}}\"?",
+        "trash_confirm_many": "Delete the selected {{count}} items?"
+      },
+      "favorite": {
+        "add": "Favorite {{name}}",
+        "empty": "Empty",
+        "remove": "Unfavorite {{name}}",
+        "remove_path": "Remove favorite {{path}}",
+        "title": "Favorites"
+      },
+      "icon_size": {
+        "large": "Large icons",
+        "medium": "Medium icons",
+        "small": "Small icons"
+      },
+      "include_hidden": "Show hidden files",
+      "keep_directory": "Keep directory",
+      "layout": {
+        "bottom": "Stack panes",
+        "files_maximize": "Maximize file manager",
+        "hide_terminal": "Hide terminal pane",
+        "preview_maximize": "Maximize file manager",
+        "restore": "Restore split layout",
+        "right": "Side-by-side panes",
+        "show_terminal": "Show terminal pane",
+        "terminal_maximize": "Maximize terminal"
+      },
+      "navigation": {
+        "child_history": "Back to history directory",
+        "parent": "Go to parent directory"
+      },
+      "no_root": "No workspace selected",
+      "path_input": "Enter workspace path",
+      "preview": {
+        "close": "Close preview",
+        "copy_path": "Copy path",
+        "empty": "Select a file to preview",
+        "open_in_new_tab": "Open in new tab",
+        "open_system": "Open in system app",
+        "show_in_folder": "Show in folder"
+      },
+      "search": {
+        "empty_query": "Type a file or folder name to search",
+        "error": "Unable to search workspace files",
+        "input": "Search files or folders",
+        "loading": "Searching workspace files",
+        "no_results": "No matching results",
+        "placeholder": "Search files or folders, supports * and ?",
+        "scope_current": "Current Folder",
+        "scope_global": "Global",
+        "title": "Search Files"
+      },
+      "sort": {
+        "asc": "Ascending",
+        "desc": "Descending",
+        "label": "Sort by",
+        "mtime": "Time",
+        "name": "Name",
+        "size": "Size"
+      },
+      "tree": {
+        "empty": "Choose a workspace to browse files",
+        "error": "Unable to load workspace files",
+        "loading": "Loading workspace files",
+        "no_files": "No files found"
+      },
+      "view": {
+        "icons": "Icon view",
+        "list": "List view",
+        "tree": "Tree view"
+      }
+    }
+  },
   "title": {
     "apps": "Apps",
     "chat": "Chat",
@@ -8148,6 +8336,7 @@
     "openclaw": "OpenClaw",
     "paintings": "Paintings",
     "settings": "Settings",
+    "terminal": "Terminal",
     "translate": "Translate",
     "work": "Work"
   },

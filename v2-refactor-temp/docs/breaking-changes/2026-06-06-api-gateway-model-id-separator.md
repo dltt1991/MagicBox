@@ -12,11 +12,11 @@ When calling the local API gateway, the `model` field is now parsed as `provider
 
 ## Why this matters to the user
 
-Any external client, script, or agent that points at Cherry Studio's gateway (`/v1/chat/completions`, `/v1/messages`, `/v1/responses`) and hard-codes the `provider::model` form will now fail model resolution — the whole `provider::model` string is treated as the provider id and the leading `:` makes the model id invalid, yielding an `Invalid model format` error.
+Any external client, script, or agent that points at Magic Box's gateway (`/v1/chat/completions`, `/v1/messages`, `/v1/responses`) and hard-codes the `provider::model` form will now fail model resolution — the whole `provider::model` string is treated as the provider id and the leading `:` makes the model id invalid, yielding an `Invalid model format` error.
 
 ## What the user should do
 
-Update the `model` value from `provider::model` to `provider:model` (single colon). Configure clients to use the model ids shown in Cherry Studio's gateway/model list, which already use the single-colon form.
+Update the `model` value from `provider::model` to `provider:model` (single colon). Configure clients to use the model ids shown in Magic Box's gateway/model list, which already use the single-colon form.
 
 ## Notes for release manager
 

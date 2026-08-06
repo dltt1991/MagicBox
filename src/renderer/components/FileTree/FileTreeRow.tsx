@@ -10,6 +10,7 @@ import type { FileTreeAnimationSlot, FileTreeNode, FileTreeRenameSlot } from './
 
 interface FileTreeRowProps {
   args: RenderRowArgs<FileTreeNode>
+  onDragStart?: (node: FileTreeNode, event: React.DragEvent<HTMLElement>) => void
   renameSlot?: FileTreeRenameSlot
   animationSlot?: FileTreeAnimationSlot
   renderRowExtras?: (node: FileTreeNode) => React.ReactNode
@@ -25,7 +26,7 @@ const CHEVRON_SIZE_PX = 11
 const MATERIAL_ICON_PREFIX = 'material-icon-theme:'
 
 export function FileTreeRow(props: FileTreeRowProps) {
-  const { args, renameSlot, animationSlot, renderRowExtras, getMenuItems, fileIcon, folderIcon } = props
+  const { args, onDragStart, renameSlot, animationSlot, renderRowExtras, getMenuItems, fileIcon, folderIcon } = props
   const { node, depth, isExpanded, isSelected, isDragging, dragPosition, toggleExpanded, selectNode, dragHandleProps } =
     args
 
@@ -78,7 +79,13 @@ export function FileTreeRow(props: FileTreeRowProps) {
       {...effectiveDragHandleProps}
       data-node-id={node.id}
       data-kind={node.kind}
+      draggable={isRenaming ? false : onDragStart ? true : effectiveDragHandleProps.draggable}
       onClick={handleRowClick}
+      onDragStart={(event) => {
+        if (isRenaming) return
+        effectiveDragHandleProps.onDragStart?.(event)
+        onDragStart?.(node, event)
+      }}
       title={node.name}
       style={indent}
       className={cn(

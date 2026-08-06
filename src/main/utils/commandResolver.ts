@@ -11,7 +11,7 @@ import { getShellEnv } from './shellEnv'
  * Resolution for arbitrary executables in the user's environment — locating
  * commands (npx, uvx, git, …) in the captured shell env, with Windows-specific
  * fallbacks (`where.exe`, mise) and Git Bash discovery. Distinct from
- * `binaryResolver.ts`, which resolves Cherry's own managed binaries.
+ * `binaryResolver.ts`, which resolves Magic Box's own managed binaries.
  */
 
 const logger = loggerService.withContext('Utils:CommandResolver')

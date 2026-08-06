@@ -1,9 +1,9 @@
-# Cherry Studio Design System
+# Magic Box Design System
 
 > **Token architecture:** The normative v2 contract for variable layers, Shadcn/Tailwind mappings, compatibility,
 > and migration metadata is
 > [`packages/ui/docs/design-token-system.md`](./packages/ui/docs/design-token-system.md). Official Shadcn semantics
-> and approved Cherry Studio product semantics share one unprefixed public namespace. The operational variable
+> and approved Magic Box product semantics share one unprefixed public namespace. The operational variable
 > inventory and selection rules are in
 > [`packages/ui/docs/variable-catalog.md`](./packages/ui/docs/variable-catalog.md).
 
@@ -12,18 +12,18 @@
 
 > **Usage notation:** Tailwind examples use semantic utilities such as `bg-background` and `text-foreground`.
 > Authored CSS examples use the unprefixed public runtime contract directly, whether the role is official Shadcn
-> (`var(--background)`) or a Cherry Studio product extension (`var(--success)`). Shared `--cs-*` variables are
+> (`var(--background)`) or a Magic Box product extension (`var(--success)`). Shared `--cs-*` variables are
 > internal providers, while `--color-*` belongs to the generated Tailwind adapter and is not an authored CSS API.
 
 ## 1. Visual Theme & Atmosphere
 
-> **Source of truth:** foundation values live in `packages/ui/src/styles/tokens/`, controlled host-written inputs live in `packages/ui/src/styles/theme-input.css`, the official Shadcn contract lives in `packages/ui/src/styles/shadcn.css`, and Cherry Studio product semantics live in `packages/ui/src/styles/product.css`. `contract.css` composes those layers in order; Tailwind-facing aliases are generated in `theme.css`. Component, page, and App Shell implementation variables stay in their owning stylesheets and are not public theme roles. For actual values and stability, inspect the source plus `packages/ui/scripts/theme-contract.ts`.
+> **Source of truth:** foundation values live in `packages/ui/src/styles/tokens/`, controlled host-written inputs live in `packages/ui/src/styles/theme-input.css`, the official Shadcn contract lives in `packages/ui/src/styles/shadcn.css`, and Magic Box product semantics live in `packages/ui/src/styles/product.css`. `contract.css` composes those layers in order; Tailwind-facing aliases are generated in `theme.css`. Component, page, and App Shell implementation variables stay in their owning stylesheets and are not public theme roles. For actual values and stability, inspect the source plus `packages/ui/scripts/theme-contract.ts`.
 
-Cherry Studio is a shadcn/ui-based design system built for an AI conversation application. The design language follows a neutral-first approach — a restrained, systematic palette rooted in pure neutral grays where the interface itself recedes to let content take center stage. The aesthetic is utilitarian-modern: clean surfaces, subtle borders, and restrained use of the exported primary color for true primary actions, creating a tool that feels professional, focused, and endlessly customizable through its robust light/dark mode support.
+Magic Box is a shadcn/ui-based design system built for an AI conversation application. The design language follows a neutral-first approach — a restrained, systematic palette rooted in pure neutral grays where the interface itself recedes to let content take center stage. The aesthetic is utilitarian-modern: clean surfaces, subtle borders, and restrained use of the exported primary color for true primary actions, creating a tool that feels professional, focused, and endlessly customizable through its robust light/dark mode support.
 
 The typography system is single-track: `var(--font-family-body)` and `var(--font-family-heading)` currently resolve to the same primary UI font token. Code-rendering components own their mono font stack locally. This single-family approach reflects a product with a unified voice — coherent in conversation, precise in code.
 
-What makes Cherry Studio distinctive is its commitment to a calm UI foundation. Primary actions use `var(--primary)` as the strongest action color in the chrome, while neutral strong fills are used by shared buttons where that component defines the action hierarchy. New UI should avoid introducing a page-local chromatic brand hue. Other chromatic departures are reserved for semantic feedback: `var(--destructive)` for dangerous actions, `var(--success)` for positive states, `var(--warning)` for caution, `var(--info)` for informational surfaces. This creates an interface that feels like a high-quality writing tool — think iA Writer meets VS Code — where the user's content is usually the most colorful thing on screen.
+What makes Magic Box distinctive is its commitment to a calm UI foundation. Primary actions use `var(--primary)` as the strongest action color in the chrome, while neutral strong fills are used by shared buttons where that component defines the action hierarchy. New UI should avoid introducing a page-local chromatic brand hue. Other chromatic departures are reserved for semantic feedback: `var(--destructive)` for dangerous actions, `var(--success)` for positive states, `var(--warning)` for caution, `var(--info)` for informational surfaces. This creates an interface that feels like a high-quality writing tool — think iA Writer meets VS Code — where the user's content is usually the most colorful thing on screen.
 
 **Key Characteristics:**
 - Calm UI foundation: chrome stays mostly neutral; `var(--primary)` is reserved for true primary actions and selected states, while semantic accents carry feedback
@@ -697,7 +697,7 @@ Use Tailwind's numeric spacing scale, based on the `--spacing` 4px unit. Compone
 
 ### Border Radius Scale
 
-> ⚠️ **Cherry remaps the Tailwind default radius scale.** `rounded-md` resolves to 8px (Tailwind default: 6px), `rounded-lg` to 10px (default: 8px), `rounded-xl` to 14px (default: 12px), and `rounded-3xl` to 22px (default: 24px). When copying components from shadcn examples, Tailwind tutorials, or any third-party Tailwind library, expect a 2–4px visual difference until the radius is consciously chosen against the table below.
+> ⚠️ **Magic Box remaps the Tailwind default radius scale.** `rounded-md` resolves to 8px (Tailwind default: 6px), `rounded-lg` to 10px (default: 8px), `rounded-xl` to 14px (default: 12px), and `rounded-3xl` to 22px (default: 24px). When copying components from shadcn examples, Tailwind tutorials, or any third-party Tailwind library, expect a 2–4px visual difference until the radius is consciously chosen against the table below.
 
 > Defined in `tokens/radius.css`. Shadcn consumes `--radius`; generated Tailwind radius variables derive from it.
 
@@ -716,7 +716,7 @@ Use Tailwind's numeric spacing scale, based on the `--spacing` 4px unit. Compone
 
 ## 6. Depth & Elevation
 
-Cherry Studio uses a dual depth system: **surface color layering** for structural hierarchy and **box-shadows** for interactive feedback (hover states, floating elements).
+Magic Box uses a dual depth system: **surface color layering** for structural hierarchy and **box-shadows** for interactive feedback (hover states, floating elements).
 
 ### Surface Color Layers
 

@@ -1,5 +1,5 @@
 /**
- * Disk-space health of the volume that hosts Cherry Studio's user-data directory.
+ * Disk-space health of the volume that hosts Magic Box's user-data directory.
  *
  * Produced by the main-process StorageMonitorService and pushed to the main
  * window (renderer) so it can surface a low-disk warning. `low` means the free

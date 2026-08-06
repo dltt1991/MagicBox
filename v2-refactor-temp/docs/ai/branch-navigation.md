@@ -2,7 +2,7 @@
 
 ## Context
 
-Cherry's message history is a **DAG** (each message has at most one parent). When users edit-and-resend or regenerate, the affected message gets a sibling group. Users currently switch between siblings via `SiblingNavigator` (`< i/N >` arrows) — works fine when each sibling is a leaf (e.g. immediate post-multi-model selection) but breaks down semantically when each sibling has its own deep subtree (days of conversation, further regen forks).
+Magic Box's message history is a **DAG** (each message has at most one parent). When users edit-and-resend or regenerate, the affected message gets a sibling group. Users currently switch between siblings via `SiblingNavigator` (`< i/N >` arrows) — works fine when each sibling is a leaf (e.g. immediate post-multi-model selection) but breaks down semantically when each sibling has its own deep subtree (days of conversation, further regen forks).
 
 In the deep-fork case `<2/3>` understates the action: clicking that arrow doesn't toggle a reply, it teleports the user into a parallel conversation timeline whose `created_at DESC` leaf may be hours/days old. The current code is correct (DAG invariant preserved, no context contradictions), but the UI doesn't communicate the magnitude of the switch.
 
@@ -124,7 +124,7 @@ Each node card carries: role badge, model avatar (assistant only), preview (50 c
 1. **Tree default depth**: 3 levels covers "current turn + 2 ancestors of branch points" — enough for most cases. Should we let users persist their preferred default depth?
 2. **Multi-window**: opening the drawer in window A — does window B see it? Probably not (per-window UI state, persist cache scoped per window). Confirm with v2 cache convention.
 3. **Performance ceiling**: xyflow's native viewport culling handles ~1k nodes. Beyond that we'd progressive-load via the existing `depth` param on `getTree` — uncommon enough to defer to P2.
-4. **Mobile / narrow window**: drawer becomes full-screen below 800px breakpoint? Cherry's narrow-window behavior on other drawers should be matched.
+4. **Mobile / narrow window**: drawer becomes full-screen below 800px breakpoint? Magic Box's narrow-window behavior on other drawers should be matched.
 5. **Reading vs editing semantics**: clicking a non-leaf internal node — does it pin you there (so the next user message hangs off that node, creating a new branch), or does it scroll to that node within its branch's leaf path? V1 was the latter; V2 should probably offer both via modifier keys.
 
 ## Relationship to other open work

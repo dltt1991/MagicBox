@@ -12,10 +12,12 @@ import { v4 as uuidv4 } from 'uuid'
 
 import type { DbOrTx, DbType, ISeeder } from '../../types'
 
+export const MAGIC_ASSISTANT_AVATAR = '✨'
+
 const CHERRY_ASSISTANT_SEED = {
-  name: 'Cherry Assistant',
+  name: 'Magic Assistant',
   configuration: {
-    avatar: '🍒',
+    avatar: MAGIC_ASSISTANT_AVATAR,
     permission_mode: 'default',
     max_turns: 100,
     env_vars: {},
@@ -25,7 +27,7 @@ const CHERRY_ASSISTANT_SEED = {
 
 export class CherryAssistantSeeder implements ISeeder {
   readonly name = 'cherryAssistant'
-  readonly description = 'Insert the builtin Cherry Assistant agent for profiles with no prior agent-library history'
+  readonly description = 'Insert the builtin Magic Assistant agent for profiles with no prior agent-library history'
   readonly executionPolicy = 'run-on-change' as const
   // Deliberately manual, despite the seeding guide's checksum default: this seeder is
   // a one-time eligibility check and never updates existing rows. Preset content is
@@ -54,7 +56,7 @@ export class CherryAssistantSeeder implements ISeeder {
       })
 
       if (!row) {
-        throw new Error('insert succeeded but select returned no builtin Cherry Assistant row')
+        throw new Error('insert succeeded but select returned no builtin Magic Assistant row')
       }
 
       // One seeded session makes the agent visible in the Agents sidebar. This does
@@ -79,7 +81,7 @@ export class CherryAssistantSeeder implements ISeeder {
   private getNameForPreferredSystemLanguage(): string {
     try {
       const preferredLanguage = app.getPreferredSystemLanguages()[0]
-      return preferredLanguage?.toLowerCase().startsWith('zh') ? 'Cherry 助理' : CHERRY_ASSISTANT_SEED.name
+      return preferredLanguage?.toLowerCase().startsWith('zh') ? 'Magic 助理' : CHERRY_ASSISTANT_SEED.name
     } catch {
       return CHERRY_ASSISTANT_SEED.name
     }

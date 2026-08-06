@@ -217,6 +217,7 @@ export interface DirectoryListOptions {
   includeDirectories?: boolean
   maxEntries?: number
   searchPattern?: string
+  searchRequestId?: string
 }
 
 /** A listed directory entry with its kind, so callers don't need a follow-up `isDirectory` per path. */
