@@ -11,7 +11,7 @@ interface UseSortedSupportedProvidersOptions {
   reorderProviders: (providerIds: string[]) => Promise<void>
   onReorderError: (error: unknown) => void
   /**
-   * Synthetic, page-local entries (own login, Cherry gateway) prepended ahead of
+   * Synthetic, page-local entries (own login, Magic Box gateway) prepended ahead of
    * the real providers. They sort/reorder alongside real providers but bypass
    * `filterProviders`.
    */

@@ -19,7 +19,7 @@ beforeEach(() => {
   existing = {}
   writes = {}
   // Clearing still reads the on-disk configs renderer-side to strip the
-  // Cherry-managed keys; only the rewrite crosses to the main process.
+  // Magic Box-managed keys; only the rewrite crosses to the main process.
   Object.defineProperty(window, 'api', {
     configurable: true,
     value: {
@@ -110,7 +110,7 @@ describe('clearCliConfig', () => {
     })
   })
 
-  // The top-level model is only Cherry's when it addresses a cherry-* provider; a user's own
+  // The top-level model is only Magic Box's when it addresses a cherry-* provider; a user's own
   // selector pointing at their own provider must survive the clear.
   it('opencode: keeps a user-owned top-level model', async () => {
     existing['/resolved~/.config/opencode/opencode.json'] = JSON.stringify({
@@ -190,7 +190,7 @@ describe('clearCliConfig', () => {
     expect(mocks.request).not.toHaveBeenCalled()
   })
 
-  it('kimi: strips Cherry-managed entries when config exists', async () => {
+  it('kimi: strips Magic Box-managed entries when config exists', async () => {
     existing['/resolved~/.kimi-code/config.toml'] = [
       'default_model = "cherry-DeepSeek"',
       'default_permission_mode = "auto"',
@@ -224,7 +224,7 @@ describe('clearCliConfig', () => {
     expect(mocks.request).not.toHaveBeenCalled()
   })
 
-  // Cleared configs still hold non-Cherry secrets — they must be rewritten through the same
+  // Cleared configs still hold non-Magic Box secrets — they must be rewritten through the same
   // transactional main-process writer as applies (0600 + rollback are pinned in configWriter tests).
   it("rewrites all of a tool's files in one code_cli.write_config batch", async () => {
     existing['/resolved~/.codex/config.toml'] = 'model_provider = "cherry-deepseek"\nuser_key = "keep"'

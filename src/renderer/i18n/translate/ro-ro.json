@@ -33,7 +33,7 @@
     },
     "builtin": {
       "cherry_assistant": {
-        "description": "Consilier integrat Cherry Studio. Diagnostică probleme, ghidează operațiuni, colectează întrebări frecvente, trimite rapoarte de erori/cereri de funcționalități și caută/crează Abilități (Skills)"
+        "description": "Consilier integrat Magic Box. Diagnostică probleme, ghidează operațiuni, colectează întrebări frecvente, trimite rapoarte de erori/cereri de funcționalități și caută/crează Abilități (Skills)"
       }
     },
     "channels": {
@@ -1049,7 +1049,7 @@
     },
     "authHeaderText": "Utilizează în header-ul Authorization:",
     "configuration": "Configurare",
-    "description": "Expune capacitățile AI ale Cherry Studio prin API-uri HTTP compatibile cu OpenAI",
+    "description": "Expune capacitățile AI ale Magic Box prin API-uri HTTP compatibile cu OpenAI",
     "documentation": {
       "title": "Documentație API"
     },
@@ -2073,7 +2073,7 @@
     },
     "api_gateway": {
       "description": "Orice CLI, fiecare model",
-      "requires_running": "Păstrează Cherry Studio rulând după activare — CLI-ul extern se conectează la gateway-ul pe care îl găzduiește.",
+      "requires_running": "Păstrează Magic Box rulând după activare — CLI-ul extern se conectează la gateway-ul pe care îl găzduiește.",
       "title": "Gateway Unificat"
     },
     "apply_failed": "Nu s-a reușit scrierea configurației CLI în fișierul de sistem",
@@ -4583,12 +4583,12 @@
       "select_other_provider": "Selectați alt furnizor",
       "setup_hint": "Vă rugăm să configurați cel puțin un furnizor pentru cea mai bună experiență",
       "subtitle": "Conectați un furnizor pentru a vă activa stația de lucru AI all-in-one",
-      "title": "Bun venit la Cherry Studio"
+      "title": "Bun venit la Magic Box"
     }
   },
   "openclaw": {
     "checking_installation": "Verificare instalare OpenClaw...",
-    "description": "Integrează furnizorii Cherry Studio cu Gateway-ul OpenClaw pentru a permite agenților de codificare AI precum Claude Code, Qwen-Coder și alții.",
+    "description": "Integrează furnizorii Magic Box cu Gateway-ul OpenClaw pentru a permite agenților de codificare AI precum Claude Code, Qwen-Coder și alții.",
     "error": {
       "select_provider_model": "Vă rugăm să selectați mai întâi un furnizor și un model"
     },
@@ -5515,7 +5515,7 @@
           },
           "description": {
             "0": "Asistentul de selecție necesită <strong>Permisiune de accesibilitate</strong> pentru a funcționa corect.",
-            "1": "Te rugăm să faci clic pe \"<strong>Mergi la Setări</strong>\" și să apeși butonul \"<strong>Deschide setările de sistem</strong>\" în fereastra pop-up de solicitare a permisiunii care apare ulterior. Apoi găsește \"<strong>Cherry Studio</strong>\" în lista de aplicații și activează comutatorul de permisiune.",
+            "1": "Te rugăm să faci clic pe \"<strong>Mergi la Setări</strong>\" și să apeși butonul \"<strong>Deschide setările de sistem</strong>\" în fereastra pop-up de solicitare a permisiunii care apare ulterior. Apoi găsește \"<strong>Magic Box</strong>\" în lista de aplicații și activează comutatorul de permisiune.",
             "2": "După finalizarea setărilor, te rugăm să redeschizi asistentul de selecție."
           },
           "title": "Permisiune de accesibilitate"
@@ -5539,7 +5539,7 @@
         "wayland_checklist_subtitle": "Asigurați-vă că sunt îndeplinite următoarele condiții pentru a optimiza experiența Wayland:",
         "wayland_description": "Vă aflați într-o sesiune Wayland. Din cauza limitărilor sistemului, bara de instrumente poate apărea doar în centrul ecranului în loc să urmărească textul selectat pe unele medii desktop. Se recomandă să treceți la o sesiune X11 pentru o experiență completă.",
         "wayland_title": "Notificare sesiune Wayland",
-        "xwayland_fail": "Nu este activat, vă rugăm să lansați Cherry Studio cu steagul `--ozone-platform=x11`",
+        "xwayland_fail": "Nu este activat, vă rugăm să lansați Magic Box cu steagul `--ozone-platform=x11`",
         "xwayland_label": "Mod XWayland:",
         "xwayland_pass": "Activat"
       },
@@ -5780,7 +5780,7 @@
         "select": "Modifică directorul",
         "select_error": "Schimbarea directorului de date a eșuat",
         "select_error_in_app_path": "Noua cale este aceeași cu calea de instalare a aplicației, te rugăm să selectezi o altă cale",
-        "select_error_protected_path": "Calea selectată este protejată de sistemul de operare sau de Cherry Studio. Vă rugăm să alegeți un alt folder.",
+        "select_error_protected_path": "Calea selectată este protejată de sistemul de operare sau de Magic Box. Vă rugăm să alegeți un alt folder.",
         "select_error_root_path": "Noua cale nu poate fi calea rădăcină",
         "select_error_same_path": "Noua cale este aceeași cu vechea cale, te rugăm să selectezi o altă cale",
         "select_error_write_permission": "Noua cale nu are permisiuni de scriere",
@@ -6399,7 +6399,7 @@
       "remove": "Remove tool",
       "removeConfirmMessage": "Are you sure you want to remove \"{{name}}\"? The binary will be deleted.",
       "removeConfirmTitle": "Remove Tool",
-      "removeDefinitionOnlyConfirmMessage": "Cherry nu a putut curăța în siguranță \"{{name}}\". Eliminarea doar a definiției va ascunde cardul, dar va lăsa fișierele sale de backend instalate. Continuați?",
+      "removeDefinitionOnlyConfirmMessage": "Magic Box nu a putut curăța în siguranță \"{{name}}\". Eliminarea doar a definiției va ascunde cardul, dar va lăsa fișierele sale de backend instalate. Continuați?",
       "removeDefinitionOnlyConfirmTitle": "Elimină doar definiția?",
       "removeDefinitionOnlyDependents": "Instrumentele instalate depind de el: {{dependents}}.",
       "removeError": "Nu s-a putut elimina instrumentul",
@@ -6431,7 +6431,7 @@
         "uv": "Python package manager for MCP services and dependency installation."
       },
       "uninstall": "Dezinstalare",
-      "uninstallConfirmMessage": "Sigur doriți să dezinstalați \"{{name}}\"? Copia de backend a Cherry Studio va fi ștearsă.",
+      "uninstallConfirmMessage": "Sigur doriți să dezinstalați \"{{name}}\"? Copia de backend a Magic Box va fi ștearsă.",
       "uninstallConfirmTitle": "Instrument de dezinstalare",
       "uninstallFailed": "Nu s-a putut dezinstala instrumentul",
       "uninstallSuccess": "Instrument dezinstalat",

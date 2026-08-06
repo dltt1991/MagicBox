@@ -87,7 +87,7 @@ export function buildClaudeConfig(
  */
 function resolveCodexProviderDisplayName(providerName: string, remoteCompaction: boolean): string {
   if (remoteCompaction) return 'OpenAI'
-  return providerName === 'OpenAI' ? 'OpenAI (Cherry)' : providerName
+  return providerName === 'OpenAI' ? 'OpenAI (Magic Box)' : providerName
 }
 
 export function buildCodexConfig(

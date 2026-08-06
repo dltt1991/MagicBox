@@ -7,7 +7,7 @@ export const CLAUDE_MANAGED_PERMISSION_KEYS = ['defaultMode'] as const
 export const CLAUDE_MANAGED_ENV_KEYS = [
   'ANTHROPIC_BASE_URL',
   'ANTHROPIC_MODEL',
-  // Cherry writes ANTHROPIC_AUTH_TOKEN, never ANTHROPIC_API_KEY — but the key
+  // Magic Box writes ANTHROPIC_AUTH_TOKEN, never ANTHROPIC_API_KEY — but the key
   // stays managed so a stale/user-set API key gets scrubbed on apply. If both
   // are present Claude Code prefers ANTHROPIC_API_KEY, which would silently
   // shadow the injected token (#15089).

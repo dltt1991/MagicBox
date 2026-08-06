@@ -3,8 +3,8 @@ import { isWin } from '@main/core/platform'
 import path from 'path'
 
 /**
- * Layout and environment primitives for Cherry-managed binaries — where the
- * binaries live and what Cherry injects into a child process's env, independent
+ * Layout and environment primitives for Magic Box-managed binaries — where the
+ * binaries live and what Magic Box injects into a child process's env, independent
  * of how the base env is obtained. Two scenarios consume these: the **execution**
  * path (running installed binaries; see `shellEnv.ts`, which captures the user's
  * real shell env first) and the **install** path (the mise install subprocess;
@@ -38,7 +38,7 @@ export function dedupePathSegments(segments: string[]): string[] {
   return unique
 }
 
-/** Root dir for all Cherry-managed binary state (mise data, shims, isolated home). */
+/** Root dir for all Magic Box-managed binary state (mise data, shims, isolated home). */
 function binaryDataDir(): string {
   return application.getPath('feature.binary.data')
 }
@@ -49,7 +49,7 @@ export function getBinaryShimsDir(): string {
 }
 
 /**
- * Directories that hold Cherry-managed binaries, in resolution order:
+ * Directories that hold Magic Box-managed binaries, in resolution order:
  * mise shims first (user-installed wins), then `cherry.bin` (bundled fallback).
  *
  * Single source of truth for the binary path layout — `getBinaryPath()`
@@ -63,7 +63,7 @@ export function getBinarySearchDirs(): string[] {
 /**
  * Env injected into every process that *runs* a managed binary (the CLIs, the
  * mise shims, ripgrep, …). Carries only `MISE_*` so the shims resolve against
- * Cherry's isolated mise data dir.
+ * Magic Box's isolated mise data dir.
  *
  * Deliberately does NOT relocate `HOME`/`XDG_*`: the tools we launch
  * (claude/codex/gemini/qwen, the OpenClaw gateway) must read the user's real
@@ -85,7 +85,7 @@ export function getBinaryExecutionEnv(): Record<string, string> {
 }
 
 /**
- * `HOME`/`XDG_*` relocated into Cherry's isolated binary data dir. Used ONLY by
+ * `HOME`/`XDG_*` relocated into Magic Box's isolated binary data dir. Used ONLY by
  * the mise install subprocess (`BinaryManager.buildIsolatedEnv`) so mise and the
  * package managers it drives cannot read user-level config/creds
  * (`~/.npmrc`, `~/.netrc`, …). Never fold this into the shared execution env, or

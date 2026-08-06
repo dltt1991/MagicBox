@@ -16,7 +16,7 @@ const logger = loggerService.withContext('Utils:ProcessRunner')
 
 /**
  * Strip proxy-related variables from an environment map in place.
- * Used before spawning child processes that must not inherit Cherry's proxy
+ * Used before spawning child processes that must not inherit Magic Box's proxy
  * settings (e.g. Bun, which does not support HTTPS proxies).
  */
 export const removeEnvProxy = (env: Record<string, string>) => {

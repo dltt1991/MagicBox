@@ -14,14 +14,14 @@ describe('buildOpenCodeConfig', () => {
       },
       { apiKey: 'sk-test', baseUrl: 'https://api.example.com/v1', model: 'deepseek-chat' },
       {
-        providerHeaders: { 'X-Title': 'Cherry Studio', invalid: 42 }
+        providerHeaders: { 'X-Title': 'Magic Box', invalid: 42 }
       }
     )
 
     expect(result.provider['cherry-DeepSeek'].options).toEqual({
       apiKey: 'sk-test',
       baseURL: 'https://api.example.com/v1',
-      headers: { 'X-Title': 'Cherry Studio' }
+      headers: { 'X-Title': 'Magic Box' }
     })
   })
 

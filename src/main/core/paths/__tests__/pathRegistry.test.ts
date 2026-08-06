@@ -142,7 +142,7 @@ describe('pathRegistry.shouldAutoEnsure', () => {
     })
 
     it('returns false for the new external.obsidian.config_file key', () => {
-      // Obsidian's config file lives in a directory that Cherry must
+      // Obsidian's config file lives in a directory that Magic Box must
       // never create — Obsidian itself owns it. This is the canonical
       // case for the external.* prefix opt-out.
       expect(shouldAutoEnsure('external.obsidian.config_file')).toBe(false)
@@ -192,7 +192,7 @@ describe('pathRegistry.shouldAutoEnsure', () => {
     // app.* key that is not specifically listed must still auto-ensure.
     // Catches accidental over-matching of the NO_ENSURE table.
 
-    it('returns true for app.logs (Electron logs dir, Cherry-owned)', () => {
+    it('returns true for app.logs (Electron logs dir, Magic Box-owned)', () => {
       expect(shouldAutoEnsure('app.logs')).toBe(true)
     })
 

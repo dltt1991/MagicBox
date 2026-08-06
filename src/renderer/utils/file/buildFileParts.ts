@@ -4,7 +4,7 @@
  *
  * The composer holds lean `ComposerAttachment` descriptors; the v2 `FileEntry`
  * is created here, when the message is actually sent. Each attachment is
- * promoted to an internal `FileEntry` via `createInternalEntry` (Cherry copies
+ * promoted to an internal `FileEntry` via `createInternalEntry` (Magic Box copies
  * the bytes into its own storage); the resulting `fileEntryId` and the
  * composer's stable `fileTokenSourceId` live in `providerMetadata.cherry` so
  * downstream consumers can identify both the stored file and its composer
@@ -30,7 +30,7 @@ export function withComposerFilePartMeta(
 }
 
 /**
- * For each `ComposerAttachment`, create a v2 internal FileEntry (Cherry copies
+ * For each `ComposerAttachment`, create a v2 internal FileEntry (Magic Box copies
  * the bytes into its own storage) and return a `FileUIPart` that carries the new
  * `fileEntryId` plus a `file://` URL pointing at the freshly-copied physical file.
  *

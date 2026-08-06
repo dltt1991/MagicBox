@@ -1,6 +1,6 @@
 # V2 Refactor Temp Directory
 
-Working directory for the Cherry Studio v2 data and UI refactor. Holds shared tools, working notes, and other transient artifacts used during the refactor.
+Working directory for the Magic Box v2 data and UI refactor. Holds shared tools, working notes, and other transient artifacts used during the refactor.
 
 **Important**: This directory will be removed after the v2 refactor lands.
 

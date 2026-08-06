@@ -33,7 +33,7 @@
     },
     "builtin": {
       "cherry_assistant": {
-        "description": "Integrierter Cherry Studio Berater. Diagnose von Problemen, Anleitung bei Bedienung, Sammlung von FAQs, Einreichung von Fehlern/Feature-Anfragen sowie Suche/Erstellung von Skills"
+        "description": "Integrierter Magic Box Berater. Diagnose von Problemen, Anleitung bei Bedienung, Sammlung von FAQs, Einreichung von Fehlern/Feature-Anfragen sowie Suche/Erstellung von Skills"
       }
     },
     "channels": {
@@ -1049,7 +1049,7 @@
     },
     "authHeaderText": "Im Autorisierungs-Header verwenden:",
     "configuration": "Konfiguration",
-    "description": "Stellen Sie die KI-Funktionen von Cherry Studio über eine OpenAI-kompatible HTTP-API bereit",
+    "description": "Stellen Sie die KI-Funktionen von Magic Box über eine OpenAI-kompatible HTTP-API bereit",
     "documentation": {
       "title": "API-Dokumentation"
     },
@@ -2073,7 +2073,7 @@
     },
     "api_gateway": {
       "description": "Jede CLI, jedes Modell",
-      "requires_running": "Lassen Sie Cherry Studio nach der Aktivierung weiterlaufen — die externe CLI verbindet sich mit dem von ihr gehosteten Gateway.",
+      "requires_running": "Lassen Sie Magic Box nach der Aktivierung weiterlaufen — die externe CLI verbindet sich mit dem von ihr gehosteten Gateway.",
       "title": "Einheitliches Gateway"
     },
     "apply_failed": "Fehler beim Schreiben der CLI-Konfiguration in die Systemdatei",
@@ -4583,12 +4583,12 @@
       "select_other_provider": "Wählen Sie einen anderen Anbieter",
       "setup_hint": "Bitte konfigurieren Sie mindestens einen Anbieter für die beste Erfahrung.",
       "subtitle": "Verbinden Sie einen Anbieter, um Ihre All-in-One-KI-Workstation zu aktivieren",
-      "title": "Willkommen bei Cherry Studio"
+      "title": "Willkommen bei Magic Box"
     }
   },
   "openclaw": {
     "checking_installation": "Überprüfe OpenClaw-Installation...",
-    "description": "Integriere Cherry Studio-Anbieter mit OpenClaw Gateway, um KI-Coding-Agenten wie Claude Code, Qwen-Coder und weitere zu ermöglichen.",
+    "description": "Integriere Magic Box-Anbieter mit OpenClaw Gateway, um KI-Coding-Agenten wie Claude Code, Qwen-Coder und weitere zu ermöglichen.",
     "error": {
       "select_provider_model": "Bitte wählen Sie zuerst einen Anbieter und ein Modell aus."
     },
@@ -5515,7 +5515,7 @@
           },
           "description": {
             "0": "Der Textauswahl-Assistent benötigt <strong>Bedienungshilfen-Berechtigungen</strong>, um ordnungsgemäß zu funktionieren.",
-            "1": "Klicken Sie auf <strong>Zu Einstellungen</strong> und anschließend im Berechtigungsdialog auf <strong>Systemeinstellungen öffnen</strong>. Suchen Sie danach in der App-Liste <strong>Cherry Studio</strong> und aktivieren Sie den Schalter.",
+            "1": "Klicken Sie auf <strong>Zu Einstellungen</strong> und anschließend im Berechtigungsdialog auf <strong>Systemeinstellungen öffnen</strong>. Suchen Sie danach in der App-Liste <strong>Magic Box</strong> und aktivieren Sie den Schalter.",
             "2": "Nach Abschluss der Einrichtung Textauswahl-Assistent erneut aktivieren."
           },
           "title": "Bedienungshilfen-Berechtigung"
@@ -5539,7 +5539,7 @@
         "wayland_checklist_subtitle": "Stellen Sie sicher, dass die folgenden Bedingungen erfüllt sind, um das Wayland-Erlebnis zu optimieren:",
         "wayland_description": "Sie befinden sich in einer Wayland-Sitzung. Aufgrund von Systemeinschränkungen kann die Symbolleiste auf einigen Desktop-Umgebungen nur in der Bildschirmmitte erscheinen, anstatt dem ausgewählten Text zu folgen. Es wird empfohlen, zu einer X11-Sitzung zu wechseln, um die volle Funktionalität zu erhalten.",
         "wayland_title": "Wayland-Sitzungshinweis",
-        "xwayland_fail": "Nicht aktiviert, bitte starten Sie Cherry Studio mit dem Flag `--ozone-platform=x11`",
+        "xwayland_fail": "Nicht aktiviert, bitte starten Sie Magic Box mit dem Flag `--ozone-platform=x11`",
         "xwayland_label": "XWayland-Modus:",
         "xwayland_pass": "Aktiviert"
       },
@@ -5780,7 +5780,7 @@
         "select": "Verzeichnis ändern",
         "select_error": "Datenverzeichnis-Änderung fehlgeschlagen",
         "select_error_in_app_path": "Neuer Pfad identisch mit Installationspfad, bitte anderen wählen",
-        "select_error_protected_path": "Der ausgewählte Pfad ist durch das Betriebssystem oder Cherry Studio geschützt. Bitte wählen Sie einen anderen Ordner.",
+        "select_error_protected_path": "Der ausgewählte Pfad ist durch das Betriebssystem oder Magic Box geschützt. Bitte wählen Sie einen anderen Ordner.",
         "select_error_root_path": "Neuer Pfad darf nicht Root-Verzeichnis sein",
         "select_error_same_path": "Neuer Pfad identisch mit altem Pfad, bitte anderen wählen",
         "select_error_write_permission": "Neuer Pfad hat keine Schreibberechtigung",
@@ -6399,7 +6399,7 @@
       "remove": "Remove tool",
       "removeConfirmMessage": "Are you sure you want to remove \"{{name}}\"? The binary will be deleted.",
       "removeConfirmTitle": "Remove Tool",
-      "removeDefinitionOnlyConfirmMessage": "Cherry konnte \"{{name}}\" nicht sicher bereinigen. Wenn nur die Definition entfernt wird, wird die Karte ausgeblendet, aber ihre Backend-Dateien bleiben installiert. Fortfahren?",
+      "removeDefinitionOnlyConfirmMessage": "Magic Box konnte \"{{name}}\" nicht sicher bereinigen. Wenn nur die Definition entfernt wird, wird die Karte ausgeblendet, aber ihre Backend-Dateien bleiben installiert. Fortfahren?",
       "removeDefinitionOnlyConfirmTitle": "Nur Definition entfernen?",
       "removeDefinitionOnlyDependents": "Installierte Tools hängen davon ab: {{dependents}}.",
       "removeError": "Fehler beim Entfernen des Tools",
@@ -6431,7 +6431,7 @@
         "uv": "Python package manager for MCP services and dependency installation."
       },
       "uninstall": "Deinstallieren",
-      "uninstallConfirmMessage": "Sind Sie sicher, dass Sie \"{{name}}\" deinstallieren möchten? Die Backend-Kopie von Cherry Studio wird gelöscht.",
+      "uninstallConfirmMessage": "Sind Sie sicher, dass Sie \"{{name}}\" deinstallieren möchten? Die Backend-Kopie von Magic Box wird gelöscht.",
       "uninstallConfirmTitle": "Deinstallations-Tool",
       "uninstallFailed": "Fehler beim Deinstallieren des Tools",
       "uninstallSuccess": "Tool deinstalliert",

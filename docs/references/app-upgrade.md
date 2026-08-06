@@ -2,7 +2,7 @@
 
 ## Overview
 
-Cherry Studio clients check for updates through the managed release service at `https://releases.cherry-ai.com`. The client selects an update channel and sends application, client, platform, and region metadata. The release service owns target-version selection, regional mirrors, rollout policy, and required upgrade gateways.
+Magic Box clients check for updates through the managed release service at `https://releases.cherry-ai.com`. The client selects an update channel and sends application, client, platform, and region metadata. The release service owns target-version selection, regional mirrors, rollout policy, and required upgrade gateways.
 
 ## Update Feed Configuration
 
@@ -31,7 +31,7 @@ Before each update check, the client preserves existing updater headers and sets
 | `App-Version` | Installed version with a `v` prefix |
 | `OS` | `process.platform` value |
 | `X-Region` | `cn` for China, otherwise `global` |
-| `User-Agent` | Generated Cherry Studio user agent |
+| `User-Agent` | Generated Magic Box user agent |
 | `Cache-Control` | `no-cache` |
 
 The selected electron-updater channel determines whether the client requests the `latest`, `rc`, or `beta` manifest; no separate release-channel header is sent.

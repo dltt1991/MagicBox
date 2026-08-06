@@ -62,7 +62,7 @@ mount-time local date, otherwise choose the latest eligible date, and never mix 
 cannot be formed, publish metadata only and disclose that result in the UI only when the destination can still be
 proven safe. If destination or source identity cannot be established, saving fails without replacing the existing
 file. Metadata excludes failure stacks, paths, and run/process fields. Logs may be sensitive and must not be shared
-publicly or outside Cherry Studio support.
+publicly or outside Magic Box support.
 
 ## Version Compatibility Gate
 

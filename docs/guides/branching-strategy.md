@@ -1,6 +1,6 @@
 # 🌿 Branching Strategy
 
-Cherry Studio implements a structured branching strategy to maintain code quality and streamline the development process.
+Magic Box implements a structured branching strategy to maintain code quality and streamline the development process.
 
 > **Current model.** `main` is the default branch for active development — submit features, refactors, optimizations, and fixes for the current codebase here. The `v1` branch is the maintenance line for the shipped v1 release: its hotfixes and subsequent v1 releases go there via `hotfix/*`, targeting `v1` (not `main`). A v1 fix does not auto-carry to `main`; if the same bug exists on `main`, open a separate forward-port PR targeting `main`. (v1 and v2 code currently coexist on `main` — expect large, breaking changes.) The generic flow below predates this phase; where it conflicts, this note wins.
 
@@ -22,7 +22,7 @@ For details about the `testplan` branch used in the Test Plan, please refer to t
 
 ## Contributing Branches
 
-When contributing to Cherry Studio, please follow these guidelines:
+When contributing to Magic Box, please follow these guidelines:
 
 1. **Feature Branches:**
 

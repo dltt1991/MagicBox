@@ -361,7 +361,7 @@ export class FileMigrator extends BaseMigrator {
 
       // Sample physical files for internal entries. Missing physical files are
       // a real condition on v1 installs — users delete `~/.../Data/Files/*`
-      // outside Cherry, leaving dangling metadata. Surfacing it as a fatal
+      // outside Magic Box, leaving dangling metadata. Surfacing it as a fatal
       // validation error aborts the whole migration over data that the
       // user-triggered FS orphan sweep (`File_RunSweep`) can clean up later.
       // Record as a non-fatal warning so the migration log carries the

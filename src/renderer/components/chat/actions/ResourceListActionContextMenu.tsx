@@ -21,7 +21,7 @@ const EMPTY_EXTRA_ITEMS: readonly CommandContextMenuExtraItem[] = []
 /**
  * Resource-list (topics, agent sessions, …) row context menu, rendered through the
  * command system's CommandContextMenu so it honors the `menu.presentation_mode`
- * preference (Cherry vs Native). Actions map to extra items; an action's inline
+ * preference (Magic Box vs Native). Actions map to extra items; an action's inline
  * confirm becomes a `ConfirmActionPopup` that runs the action in-dialog (a native
  * OS menu cannot host an inline dialog).
  */
@@ -72,7 +72,7 @@ export function ResourceListActionContextMenu<T extends ResourceListItemBase, TA
 
   // Set the active context-menu item on the right-click itself, not via `onOpenChange`:
   // open-change does not include the clicked row, while this wrapper fires for both
-  // Cherry and native presentation modes.
+  // Magic Box and native presentation modes.
   const markActiveItem = useCallback(() => listActions.openContextMenu(getItemId(item)), [listActions, getItemId, item])
 
   return (

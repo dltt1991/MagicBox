@@ -1,5 +1,5 @@
 /**
- * Custom DataUIPart schemas for Cherry Studio.
+ * Custom DataUIPart schemas for Magic Box.
  *
  * These extend AI SDK's UIMessage.parts with application-specific
  * part types that have no built-in equivalent.
@@ -100,11 +100,11 @@ export interface CodePartData {
 }
 
 // ============================================================================
-// Cherry DataUIPart type map (for useChat dataPartSchemas)
+// Magic Box DataUIPart type map (for useChat dataPartSchemas)
 // ============================================================================
 
 /**
- * All custom DataUIPart types for Cherry Studio.
+ * All custom DataUIPart types for Magic Box.
  * Used with `useChat({ dataPartSchemas })` to enable type-safe custom parts.
  */
 export type CherryDataPartTypes = {
@@ -119,10 +119,10 @@ export type CherryDataPartTypes = {
 }
 
 // ============================================================================
-// Cherry per-part providerMetadata.cherry shapes
+// Magic Box per-part providerMetadata.cherry shapes
 // ============================================================================
 
-/** Cherry metadata on a TextUIPart. */
+/** Magic Box metadata on a TextUIPart. */
 export interface CherryTextMeta {
   /** Content references (citations, mentions). */
   references?: unknown[]
@@ -130,7 +130,7 @@ export interface CherryTextMeta {
   composer?: ComposerMessageSnapshot
 }
 
-/** Cherry metadata on a ReasoningUIPart. */
+/** Magic Box metadata on a ReasoningUIPart. */
 export interface CherryReasoningMeta {
   /** Thinking duration in ms. */
   thinkingMs?: number
@@ -138,7 +138,7 @@ export interface CherryReasoningMeta {
   startedAt?: number
 }
 
-/** Cherry metadata on a ToolUIPart / DynamicToolUIPart. */
+/** Magic Box metadata on a ToolUIPart / DynamicToolUIPart. */
 export interface CherryToolMeta {
   /** Approval bridge transport. */
   transport?: string
@@ -165,13 +165,13 @@ export interface DiagnosisResult {
   steps: DiagnosisStep[]
 }
 
-/** Cherry metadata on a data-error DataUIPart. */
+/** Magic Box metadata on a data-error DataUIPart. */
 export interface CherryErrorMeta {
   /** Persisted AI error diagnosis, rehydrated into the error-detail popup after close / reload. */
   diagnosis?: DiagnosisResult
 }
 
-/** Cherry metadata on a FileUIPart. */
+/** Magic Box metadata on a FileUIPart. */
 export interface CherryFileMeta {
   /**
    * FileEntryId for internal files (v1→v2 migrator preserves this from
@@ -369,7 +369,7 @@ export interface ComposerMessageSnapshot {
  * Read cherry meta with runtime validation. Returns `undefined` for missing,
  * malformed, or part types without a registered schema. Never throws — this
  * is a leaf util in `packages/shared`, so callers that need to surface
- * validation failures should `safeParse` the appropriate `Cherry*MetaSchema`
+ * validation failures should `safeParse` the appropriate `Magic Box*MetaSchema`
  * directly with their own logger.
  */
 export function readCherryMeta<P extends CherryMessagePart>(part: P): CherryMetaForPartType<P['type']> | undefined {

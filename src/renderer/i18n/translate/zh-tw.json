@@ -33,7 +33,7 @@
     },
     "builtin": {
       "cherry_assistant": {
-        "description": "Cherry Studio 內建使用顧問。診斷問題、引導操作、收錄 FAQ、提交 Bug/需求、搜尋和建立 Skills"
+        "description": "Magic Box 內建使用顧問。診斷問題、引導操作、收錄 FAQ、提交 Bug/需求、搜尋和建立 Skills"
       }
     },
     "channels": {
@@ -1049,7 +1049,7 @@
     },
     "authHeaderText": "在授權標頭中使用：",
     "configuration": "設定",
-    "description": "透過 OpenAI 和 Anthropic 相容的 HTTP API 公開 Cherry Studio 的 AI 功能",
+    "description": "透過 OpenAI 和 Anthropic 相容的 HTTP API 公開 Magic Box 的 AI 功能",
     "documentation": {
       "title": "API 文件"
     },
@@ -1398,8 +1398,8 @@
     },
     "deeply_thought": "已深度思考（用時 {{seconds}} 秒）",
     "default": {
-      "description": "你好，我是 Cherry 助手。你可以立即開始與我聊天",
-      "name": "Cherry 助手",
+      "description": "你好，我是 Magic Box 助手。你可以立即開始與我聊天",
+      "name": "Magic Box 助手",
       "topic": {
         "name": "預設對話"
       }
@@ -2073,7 +2073,7 @@
     },
     "api_gateway": {
       "description": "任意 CLI，暢用全部模型",
-      "requires_running": "啟用後請保持 Cherry Studio 執行，外部 CLI 才能連線到它託管的閘道。",
+      "requires_running": "啟用後請保持 Magic Box 執行，外部 CLI 才能連線到它託管的閘道。",
       "title": "統一網關"
     },
     "apply_failed": "寫入 CLI 設定到系統檔案失敗",
@@ -4583,12 +4583,12 @@
       "select_other_provider": "選擇其他供應商",
       "setup_hint": "請至少設定一個提供者以獲得最佳體驗",
       "subtitle": "連接服務商，開啟您的全能 AI 工作站",
-      "title": "歡迎來到 Cherry Studio"
+      "title": "歡迎來到 Magic Box"
     }
   },
   "openclaw": {
     "checking_installation": "正在檢查 OpenClaw 安裝狀態...",
-    "description": "使用 Cherry Studio 服務商為 OpenClaw 提供支援，OpenClaw 是您的個人 AI 助手，可在 WhatsApp、Telegram、Slack、Discord 等平台上使用。",
+    "description": "使用 Magic Box 服務商為 OpenClaw 提供支援，OpenClaw 是您的個人 AI 助手，可在 WhatsApp、Telegram、Slack、Discord 等平台上使用。",
     "error": {
       "select_provider_model": "請先選擇服務商和模型"
     },
@@ -4609,7 +4609,7 @@
     },
     "installed_at": "OpenClaw 安裝路徑",
     "migration": {
-      "description": "偵測到 PATH 中存在外部 OpenClaw 安裝，但 Cherry Studio 只使用受管理的 OpenClaw 二進位檔。請安裝受管理版本後繼續。",
+      "description": "偵測到 PATH 中存在外部 OpenClaw 安裝，但 Magic Box 只使用受管理的 OpenClaw 二進位檔。請安裝受管理版本後繼續。",
       "install_button": "重新安裝 OpenClaw",
       "title": "OpenClaw 需要更新"
     },
@@ -4626,7 +4626,7 @@
       "title": "模型設定"
     },
     "node_missing": {
-      "description": "OpenClaw 需要 Node.js/npm。請先安裝 Node.js，然後重新啟動 Cherry Studio。",
+      "description": "OpenClaw 需要 Node.js/npm。請先安裝 Node.js，然後重新啟動 Magic Box。",
       "download_button": "下載 Node.js",
       "hint": "macOS：brew install node | Windows：從 nodejs.org 下載 LTS 版本",
       "title": "需要 Node.js"
@@ -5515,7 +5515,7 @@
           },
           "description": {
             "0": "劃詞助手需「<strong>輔助使用權限</strong>」才能正常工作。",
-            "1": "請點選「<strong>前往設定</strong>」，並在稍後出現的權限請求對話框中點選「<strong>開啟系統設定</strong>」按鈕，接著在應用程式清單中找到「<strong>Cherry Studio</strong>」，並開啟權限開關。",
+            "1": "請點選「<strong>前往設定</strong>」，並在稍後出現的權限請求對話框中點選「<strong>開啟系統設定</strong>」按鈕，接著在應用程式清單中找到「<strong>Magic Box</strong>」，並開啟權限開關。",
             "2": "完成設定後，請再次開啟劃詞助手。"
           },
           "title": "輔助使用權限"
@@ -5539,7 +5539,7 @@
         "wayland_checklist_subtitle": "確認以下條件已滿足，以盡可能優化 Wayland 下的體驗：",
         "wayland_description": "目前為 Wayland 模式，受系統限制，部分桌面環境下工具列只能顯示在螢幕中央，無法跟隨選取文字定位。建議切換到 X11 模式以獲得完整體驗。",
         "wayland_title": "Wayland 模式提示",
-        "xwayland_fail": "未啟用，請使用 `--ozone-platform=x11` 參數啟動 Cherry Studio",
+        "xwayland_fail": "未啟用，請使用 `--ozone-platform=x11` 參數啟動 Magic Box",
         "xwayland_label": "XWayland 模式：",
         "xwayland_pass": "已啟用"
       },
@@ -5780,7 +5780,7 @@
         "select": "變更目錄",
         "select_error": "變更資料目錄失敗",
         "select_error_in_app_path": "新路徑與應用安裝路徑相同，請選擇其他路徑",
-        "select_error_protected_path": "所選路徑受作業系統或 Cherry Studio 保護，請選擇其他資料夾",
+        "select_error_protected_path": "所選路徑受作業系統或 Magic Box 保護，請選擇其他資料夾",
         "select_error_root_path": "新路徑不能是根路徑",
         "select_error_same_path": "新路徑與舊路徑相同，請選擇其他路徑",
         "select_error_write_permission": "新路徑沒有寫入權限",
@@ -6399,7 +6399,7 @@
       "remove": "移除工具",
       "removeConfirmMessage": "確定要移除「{{name}}」嗎？二進位檔案將會被刪除。",
       "removeConfirmTitle": "移除工具",
-      "removeDefinitionOnlyConfirmMessage": "Cherry 無法安全地清理「{{name}}」。僅移除其定義將會隱藏卡片，但保留其後端檔案已安裝。是否繼續？",
+      "removeDefinitionOnlyConfirmMessage": "Magic Box 無法安全地清理「{{name}}」。僅移除其定義將會隱藏卡片，但保留其後端檔案已安裝。是否繼續？",
       "removeDefinitionOnlyConfirmTitle": "僅移除定義？",
       "removeDefinitionOnlyDependents": "安裝的工具依賴於它：{{dependents}}。",
       "removeError": "移除工具失敗",
@@ -6431,7 +6431,7 @@
         "uv": "用於 MCP 服務與依賴安裝的 Python 套件管理工具。"
       },
       "uninstall": "解除安裝",
-      "uninstallConfirmMessage": "您確定要卸載「{{name}}」嗎？Cherry Studio 的後端副本將會被刪除。",
+      "uninstallConfirmMessage": "您確定要卸載「{{name}}」嗎？Magic Box 的後端副本將會被刪除。",
       "uninstallConfirmTitle": "解除安裝工具",
       "uninstallFailed": "無法解除安裝工具",
       "uninstallSuccess": "工具已卸載",

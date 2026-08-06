@@ -1,5 +1,5 @@
 /**
- * File-domain data types — the cross-process shapes for Cherry-managed files.
+ * File-domain data types — the cross-process shapes for Magic Box-managed files.
  *
  * Three cohesive sections, all keyed off `FileEntry`:
  * - **FileEntry** — the managed-file entity (this section).
@@ -12,16 +12,16 @@
  * ## FileEntry
  *
  * Zod schemas for runtime validation of FileEntry records.
- * FileEntry is a flat list of Cherry-managed files (no tree structure).
+ * FileEntry is a flat list of Magic Box-managed files (no tree structure).
  *
  * `FileEntry` is a **discriminated union on `origin`**: each variant declares
  * only the fields it owns, so consumers narrow naturally on `origin` instead
  * of dancing around nullable columns. The DB row layer keeps every column
  * physically (see "DB row vs Business Object" below).
  *
- * - `internal`: Cherry owns the content, stored at `{userData}/Data/Files/{id}.{ext}`.
+ * - `internal`: Magic Box owns the content, stored at `{userData}/Data/Files/{id}.{ext}`.
  *   `name` / `ext` / `size` are authoritative truth (kept in sync by atomic writes).
- * - `external`: Cherry only references a user-provided path (`externalPath`).
+ * - `external`: Magic Box only references a user-provided path (`externalPath`).
  *   `name` / `ext` are pure projections of `externalPath` (basename / extname) —
  *   stable as long as the reference itself is stable. The BO has **no `size`
  *   field** for external entries (consumers needing a live value call File IPC
@@ -47,7 +47,7 @@
  *
  * ## Why external has no `size`
  *
- * External files can change outside Cherry at any time (user edits, another app
+ * External files can change outside Magic Box at any time (user edits, another app
  * overwrites, the file gets moved). Storing a snapshot here would create two
  * classes of bugs: (a) callers silently consuming stale values, (b) "refresh"
  * operations that merely move the staleness window. Dropping `size` from the
@@ -210,7 +210,7 @@ const CommonEntryFields = {
 } as const
 
 /**
- * Internal entry — Cherry owns the content at `{userData}/Data/Files/{id}.{ext}`.
+ * Internal entry — Magic Box owns the content at `{userData}/Data/Files/{id}.{ext}`.
  *
  * Variant-only fields: `size` (authoritative byte count), `deletedAt`
  * (optional, present and non-null when entry is trashed). `externalPath`
@@ -222,7 +222,7 @@ export const InternalEntrySchema = z.strictObject({
   ...CommonEntryFields,
   origin: z.literal('internal'),
   /**
-   * File size in bytes. Internal files are written atomically by Cherry, so
+   * File size in bytes. Internal files are written atomically by Magic Box, so
    * this value is authoritative and kept in sync with the backing file on disk.
    */
   size: z.int().nonnegative(),
@@ -235,11 +235,11 @@ export const InternalEntrySchema = z.strictObject({
 })
 
 /**
- * External entry — Cherry references a user-provided path.
+ * External entry — Magic Box references a user-provided path.
  *
  * Variant-only field: `externalPath` (absolute, canonical). `size` and
  * `deletedAt` are absent on this variant — external files may change
- * outside Cherry at any time so no DB size snapshot is kept (live values
+ * outside Magic Box at any time so no DB size snapshot is kept (live values
  * come from File IPC `getMetadata`), and external entries cannot be
  * trashed (`fe_external_no_delete` CHECK). The DB row carries `size: null`
  * and `deletedAt: null` to satisfy the table schema; the BO dispatcher
@@ -305,7 +305,7 @@ export type DanglingState = z.infer<typeof DanglingStateSchema>
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * FileHandle — unified reference to any file accessible by Cherry.
+ * FileHandle — unified reference to any file accessible by Magic Box.
  *
  * A handle is a **call-site choice of reference form**, not a statement about
  * the file's ownership or registration status:

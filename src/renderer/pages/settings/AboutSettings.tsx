@@ -70,7 +70,7 @@ const AboutSettings: FC = () => {
 
   const mailto = async () => {
     const email = 'support@cherry-ai.com'
-    const subject = 'Cherry Studio Feedback'
+    const subject = 'Magic Box Feedback'
     const version = (await ipcApi.request('app.get_info')).version
     const platform = window.electron.process.platform
     const url = `mailto:${email}?subject=${subject}&body=%0A%0AVersion: ${version} | Platform: ${platform}`
@@ -209,7 +209,7 @@ const AboutSettings: FC = () => {
             </button>
 
             <div className="flex min-h-18 flex-col items-start justify-center">
-              <div className="mb-1 font-bold text-foreground text-lg">Cherry Studio</div>
+              <div className="mb-1 font-bold text-foreground text-lg">Magic Box</div>
               <div className="text-foreground-secondary text-sm">{t('settings.about.description')}</div>
               <button
                 type="button"

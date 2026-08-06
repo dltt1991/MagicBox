@@ -1,6 +1,6 @@
 # UI semantic contract compiler
 
-This directory owns Cherry Studio's build-time `data-ui` protocol.
+This directory owns Magic Box's build-time `data-ui` protocol.
 The normative consumer contract, stability tiers, maintained anchors, and Custom CSS rules live in
 [`docs/references/ui-semantic-contract.md`](../../docs/references/ui-semantic-contract.md).
 

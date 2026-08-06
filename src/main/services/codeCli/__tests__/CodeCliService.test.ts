@@ -520,7 +520,7 @@ describe('CodeCliService', () => {
       expect(binaryManagerMock.installByName).toHaveBeenCalledWith({ name: 'claude' })
     })
 
-    it('launches a managed npm CLI with Cherry shims first and no ambient MISE settings', async () => {
+    it('launches a managed npm CLI with Magic Box shims first and no ambient MISE settings', async () => {
       shellEnvMock.getRawShellEnv.mockResolvedValue({
         PATH: '/usr/local/$(touch /tmp/pwn):`whoami`:$HOME:/usr/bin',
         MISE_CONFIG_FILE: '/home/me/.config/mise/config.toml',
@@ -676,7 +676,7 @@ describe('CodeCliService', () => {
       // Regression (PR #16402 review): the launch env must carry the bundled
       // git dir at the very tail so a terminal-launched CLI resolves a bare
       // `git` on a machine without system git, while any real git ahead wins.
-      const gitDir = 'C:\\Cherry\\resources\\binaries\\win32-x64\\git\\cmd'
+      const gitDir = 'C:\\Magic Box\\resources\\binaries\\win32-x64\\git\\cmd'
       bundledGitMock.getBundledGitDir.mockReturnValue(gitDir)
       shellEnvMock.getRawShellEnv.mockResolvedValue({ Path: 'C:\\Windows\\System32' })
 
@@ -705,8 +705,8 @@ describe('CodeCliService', () => {
       }
     })
 
-    it('gives a system CLI only the git tail — no Cherry MISE_* redirection', async () => {
-      const gitDir = 'C:\\Cherry\\resources\\binaries\\win32-x64\\git\\cmd'
+    it('gives a system CLI only the git tail — no Magic Box MISE_* redirection', async () => {
+      const gitDir = 'C:\\Magic Box\\resources\\binaries\\win32-x64\\git\\cmd'
       bundledGitMock.getBundledGitDir.mockReturnValue(gitDir)
       shellEnvMock.getRawShellEnv.mockResolvedValue({
         Path: 'C:\\Windows\\System32',
@@ -730,7 +730,7 @@ describe('CodeCliService', () => {
         expect(result.success).toBe(true)
         const spawnEnv = (vi.mocked(spawn).mock.calls.at(-1)![2] as { env: Record<string, string> }).env
         expect(spawnEnv.Path.split(';').at(-1)).toBe(gitDir)
-        // The user's own mise settings pass through untouched; Cherry's isolated
+        // The user's own mise settings pass through untouched; Magic Box's isolated
         // MISE_DATA_DIR must never redirect a system CLI's shims.
         expect(spawnEnv.MISE_DATA_DIR).toBe('C:\\Users\\me\\mise-data')
       } finally {

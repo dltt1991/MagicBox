@@ -108,7 +108,7 @@ describe('canEditAssistantMessageParts', () => {
     {
       messageParts: parts({
         type: 'text',
-        text: 'answer with unknown Cherry metadata',
+        text: 'answer with unknown Magic Box metadata',
         providerMetadata: {
           cherry: { futureField: 'state-1' }
         }

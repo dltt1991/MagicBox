@@ -42,8 +42,8 @@ describe('privacy policy resource selection', () => {
   })
 
   it('builds a Windows-safe dark theme file URL', () => {
-    expect(buildPrivacyPolicyUrl('C:\\Program Files\\Cherry Studio\\resources', 'zh-TW', ThemeMode.dark)).toBe(
-      'file:///C:/Program%20Files/Cherry%20Studio/resources/cherry-studio/privacy-zh.html?theme=dark'
+    expect(buildPrivacyPolicyUrl('C:\\Program Files\\Magic Box\\resources', 'zh-TW', ThemeMode.dark)).toBe(
+      'file:///C:/Program%20Files/Magic%20Box/resources/cherry-studio/privacy-zh.html?theme=dark'
     )
   })
 })
@@ -53,7 +53,7 @@ describe('PrivacyPolicyDialog', () => {
     vi.clearAllMocks()
     mocks.language = 'en-US'
     mocks.theme = ThemeMode.light
-    mocks.ipcRequest.mockResolvedValue({ resourcesPath: '/Applications/Cherry Studio.app/Contents/Resources' })
+    mocks.ipcRequest.mockResolvedValue({ resourcesPath: '/Applications/Magic Box.app/Contents/Resources' })
   })
 
   it('loads the local policy with the active language and theme', async () => {
@@ -62,7 +62,7 @@ describe('PrivacyPolicyDialog', () => {
     await waitFor(() => {
       expect(screen.getByTitle('privacy_policy.title')).toHaveAttribute(
         'src',
-        'file:///Applications/Cherry%20Studio.app/Contents/Resources/cherry-studio/privacy-en.html?theme=light'
+        'file:///Applications/Magic%20Box.app/Contents/Resources/cherry-studio/privacy-en.html?theme=light'
       )
     })
     expect(mocks.ipcRequest).toHaveBeenCalledWith('app.get_info')

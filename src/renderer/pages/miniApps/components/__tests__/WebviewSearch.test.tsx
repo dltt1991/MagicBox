@@ -247,10 +247,10 @@ describe('WebviewSearch', () => {
     await openSearchOverlay()
 
     const input = screen.getByRole('textbox')
-    await user.type(input, 'Cherry')
+    await user.type(input, 'Magic Box')
 
     await waitFor(() => {
-      expect(findInPageMock).toHaveBeenCalledWith('Cherry', undefined)
+      expect(findInPageMock).toHaveBeenCalledWith('Magic Box', undefined)
     })
 
     await act(async () => {
@@ -269,13 +269,13 @@ describe('WebviewSearch', () => {
     })
     await user.click(nextButton)
     await waitFor(() => {
-      expect(findInPageMock).toHaveBeenLastCalledWith('Cherry', { forward: true, findNext: true })
+      expect(findInPageMock).toHaveBeenLastCalledWith('Magic Box', { forward: true, findNext: true })
     })
 
     const previousButton = screen.getByRole('button', { name: 'Previous match' })
     await user.click(previousButton)
     await waitFor(() => {
-      expect(findInPageMock).toHaveBeenLastCalledWith('Cherry', { forward: false, findNext: true })
+      expect(findInPageMock).toHaveBeenLastCalledWith('Magic Box', { forward: false, findNext: true })
     })
   })
 
@@ -299,22 +299,22 @@ describe('WebviewSearch', () => {
     })
 
     const input = screen.getByRole('textbox')
-    await user.type(input, 'Cherry')
+    await user.type(input, 'Magic Box')
 
     await waitFor(() => {
-      expect(findInPageMock).toHaveBeenCalledWith('Cherry', undefined)
+      expect(findInPageMock).toHaveBeenCalledWith('Magic Box', undefined)
     })
     findInPageMock.mockClear()
 
     invokeLatestShortcut({ webviewId: 1, key: 'enter', control: false, meta: false, shift: false, alt: false })
     await waitFor(() => {
-      expect(findInPageMock).toHaveBeenCalledWith('Cherry', { forward: true, findNext: true })
+      expect(findInPageMock).toHaveBeenCalledWith('Magic Box', { forward: true, findNext: true })
     })
 
     findInPageMock.mockClear()
     invokeLatestShortcut({ webviewId: 1, key: 'enter', control: false, meta: false, shift: true, alt: false })
     await waitFor(() => {
-      expect(findInPageMock).toHaveBeenCalledWith('Cherry', { forward: false, findNext: true })
+      expect(findInPageMock).toHaveBeenCalledWith('Magic Box', { forward: false, findNext: true })
     })
   })
 
@@ -327,7 +327,7 @@ describe('WebviewSearch', () => {
     await openSearchOverlay()
 
     const input = screen.getByRole('textbox')
-    await user.type(input, 'Cherry')
+    await user.type(input, 'Magic Box')
     await waitFor(() => {
       expect(findInPageMock).toHaveBeenCalled()
     })
@@ -354,7 +354,7 @@ describe('WebviewSearch', () => {
     await openSearchOverlay()
 
     const input = screen.getByRole('textbox')
-    await user.type(input, 'Cherry')
+    await user.type(input, 'Magic Box')
 
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalledWith('Error')

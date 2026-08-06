@@ -216,7 +216,7 @@ describe('EmojiPicker', () => {
     expect(screen.getByTestId('emoji-picker-categories')).toHaveTextContent('emoji_picker.categories.smileys_emotion')
   })
 
-  it('uses compact dimensions and Cherry theme variables', async () => {
+  it('uses compact dimensions and Magic Box theme variables', async () => {
     const { container } = await renderResolvedPicker()
 
     expect(container.firstElementChild).toHaveClass(
@@ -414,7 +414,7 @@ describe('EmojiPicker', () => {
     })
   })
 
-  it('uses Cherry recent emojis as the third-party picker suggested category', async () => {
+  it('uses Magic Box recent emojis as the third-party picker suggested category', async () => {
     const { MockUseCacheUtils } = await import('../../../../../tests/__mocks__/renderer/useCache')
     MockUseCacheUtils.setPersistCacheValue('ui.emoji.recently_used', ['🧠', '📁'])
 
@@ -426,7 +426,7 @@ describe('EmojiPicker', () => {
     expect(screen.getByRole('button', { name: '📁' })).toBeInTheDocument()
   })
 
-  it('calls onEmojiClick and updates Cherry recent emojis when an emoji is picked', async () => {
+  it('calls onEmojiClick and updates Magic Box recent emojis when an emoji is picked', async () => {
     const { MockUseCacheUtils } = await import('../../../../../tests/__mocks__/renderer/useCache')
     MockUseCacheUtils.setPersistCacheValue('ui.emoji.recently_used', ['🧠', '📁'])
 

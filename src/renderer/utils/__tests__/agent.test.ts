@@ -14,7 +14,7 @@ describe('agent utilities', () => {
     expect(getAgentAvatar('  🦞  ')).toBe('🦞')
   })
 
-  it('uses localized builtin Cherry Assistant description only when the stored description is empty', () => {
+  it('uses localized builtin Magic Box Assistant description only when the stored description is empty', () => {
     const t = (key: string) => `translated:${key}`
     expect(
       getAgentDescriptionForDisplay(

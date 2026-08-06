@@ -53,7 +53,7 @@ export interface FileTreeProps {
 
   /** Optional trailing slot per row - e.g. ContextMenu trigger, action buttons, badges. */
   renderRowExtras?: (node: FileTreeNode) => React.ReactNode
-  /** Optional command-system context menu items for the whole row (Cherry/Native presentation). */
+  /** Optional command-system context menu items for the whole row (Magic Box/Native presentation). */
   getMenuItems?: (node: FileTreeNode) => readonly CommandContextMenuExtraItem[]
 
   /** Override default folder/file icons. */

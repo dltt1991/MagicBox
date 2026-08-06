@@ -16,4 +16,4 @@ Users can create a support artifact without leaving the migration failure screen
 
 ## What the user should do
 
-Review the ZIP before sharing it because application logs may contain sensitive information, and share it only with the Cherry Studio support team.
+Review the ZIP before sharing it because application logs may contain sensitive information, and share it only with the Magic Box support team.

@@ -83,7 +83,7 @@ describe('emoji-picker-react controlled props patch', () => {
     expect(within(suggestedCategory).getByText('#️⃣')).toHaveAttribute('data-unified', '0023-fe0f-20e3')
   })
 
-  it('updates the controlled list when Cherry recent emojis change', async () => {
+  it('updates the controlled list when Magic Box recent emojis change', async () => {
     const picker = (suggestedEmojis: string[]) => (
       <EmojiPickerReact
         categories={[{ category: Categories.SUGGESTED, name: 'Recently Used' }]}

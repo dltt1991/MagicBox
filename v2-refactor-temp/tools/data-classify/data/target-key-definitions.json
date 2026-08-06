@@ -831,7 +831,7 @@
       "type": "PreferenceTypes.MenuPresentationMode",
       "defaultValue": "cherry",
       "status": "classified",
-      "description": "Global menu presentation mode: native system menus or Cherry custom menus"
+      "description": "Global menu presentation mode: native system menus or Magic Box custom menus"
     }
   ]
 }

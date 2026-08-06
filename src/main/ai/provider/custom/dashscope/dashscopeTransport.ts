@@ -85,7 +85,7 @@ export interface DashScopeProviderParams {
   addWatermark?: boolean
   thinkingMode?: boolean
   /** wan2.6-image mode toggle: true = text+image mixed output (default for
-   *  Cherry's generate tab — no input image required); false = edit mode
+   *  Magic Box's generate tab — no input image required); false = edit mode
    *  (1–4 input images required). Maps to `parameters.enable_interleave`. */
   enableInterleave?: boolean
   /** wan v2 1K / 2K / 4K resolution enum — maps to `parameters.size`. */

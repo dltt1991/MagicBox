@@ -8,7 +8,7 @@ export interface ClearCliConfigArgs {
   cliTool: string
 }
 
-/** Remove every Cherry-managed key from a CLI tool's config file, leaving user-owned keys intact. */
+/** Remove every Magic Box-managed key from a CLI tool's config file, leaving user-owned keys intact. */
 export async function clearCliConfig(args: ClearCliConfigArgs): Promise<void> {
   const { cliTool } = args
   if (!isFileConfiguredCli(cliTool)) return

@@ -178,7 +178,7 @@ describe('buildSystemPrompt — report_artifacts prompt', () => {
     expect(result as string).toContain(ARTIFACTS_MARKER)
   })
 
-  it('does not append it for the Cherry Assistant (parity with feat/chat-page)', async () => {
+  it('does not append it for the Magic Box Assistant (parity with feat/chat-page)', async () => {
     const agent = makeAgent({
       instructions: 'Assistant instructions.',
       configuration: { builtin_role: 'assistant' } as never
@@ -217,7 +217,7 @@ describe('buildSystemPrompt — bundled-runtime guidance', () => {
     expect(mockApplicationGet).not.toHaveBeenCalledWith('BinaryManager')
   })
 
-  it('does not inject the runtime block for the Cherry Assistant (it carries its own environment)', async () => {
+  it('does not inject the runtime block for the Magic Box Assistant (it carries its own environment)', async () => {
     const agent = makeAgent({
       instructions: 'Assistant instructions.',
       configuration: { builtin_role: 'assistant' } as never
@@ -227,7 +227,7 @@ describe('buildSystemPrompt — bundled-runtime guidance', () => {
   })
 })
 
-describe('buildSystemPrompt — builtin Cherry Assistant definition', () => {
+describe('buildSystemPrompt — builtin Magic Box Assistant definition', () => {
   beforeEach(() => {
     mockFindBySessionId.mockReturnValue(null)
   })
@@ -289,7 +289,7 @@ describe('buildSystemPrompt — builtin Cherry Assistant definition', () => {
 
     const result = await buildSystemPrompt(makeSession(), agent, '/tmp/cwd')
 
-    expect(result as string).toContain('You are Cherry Assistant, the built-in helper for Cherry Studio')
+    expect(result as string).toContain('You are Magic Box Assistant, the built-in helper for Magic Box')
   })
 
   it('applies the external channel security policy for linked assistant sessions', async () => {

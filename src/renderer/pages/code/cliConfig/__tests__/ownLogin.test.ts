@@ -11,7 +11,7 @@ import {
 
 describe('ownLogin builders', () => {
   describe('buildCodexOwnLoginConfig', () => {
-    it('strips the Cherry model/provider and applies only the tool params', () => {
+    it('strips the Magic Box model/provider and applies only the tool params', () => {
       const existing = {
         model: 'gpt-5-codex',
         model_provider: 'cherry-openai',
@@ -23,7 +23,7 @@ describe('ownLogin builders', () => {
       }
       const result = buildCodexOwnLoginConfig(existing, { permissionMode: 'workspace', reasoningEffort: 'low' })
 
-      // Cherry model + provider removed; the user's own provider entry survives.
+      // Magic Box model + provider removed; the user's own provider entry survives.
       expect(result.model).toBeUndefined()
       expect(result.model_provider).toBeUndefined()
       expect(result.model_providers).toEqual({ 'user-provider': { base_url: 'y' } })
@@ -31,7 +31,7 @@ describe('ownLogin builders', () => {
       expect(result.approval_policy).toBe('on-request')
       expect(result.sandbox_mode).toBe('workspace-write')
       expect(result.model_reasoning_effort).toBe('low')
-      // goalMode absent → Cherry-injected features.goals dropped.
+      // goalMode absent → Magic Box-injected features.goals dropped.
       expect(result.features).toBeUndefined()
       // Unrelated user keys preserved.
       expect(result.userKey).toBe('keep')
@@ -64,7 +64,7 @@ describe('ownLogin builders', () => {
   })
 
   describe('buildQwenOwnLoginConfig', () => {
-    it('strips the Cherry model/env/provider entries and applies the writable settings', () => {
+    it('strips the Magic Box model/env/provider entries and applies the writable settings', () => {
       const existing = {
         model: { name: 'qwen3-coder' },
         env: { CHERRY_QWEN_API_KEY: 'secret', USER_ENV: 'keep' },
@@ -94,7 +94,7 @@ describe('ownLogin builders', () => {
   })
 
   describe('buildKimiOwnLoginConfig', () => {
-    it('strips the Cherry provider/model tables and default_model, applies writable params', () => {
+    it('strips the Magic Box provider/model tables and default_model, applies writable params', () => {
       const existing = {
         default_model: 'cherry-kimi',
         providers: { 'cherry-kimi': { api_key: 'secret' }, 'user-provider': { api_key: 'keep' } },

@@ -459,7 +459,7 @@ export interface ExpandedDirectoryItem {
  * (the legacy vector DB's `source` column).
  *
  * Children carry the external `source` path and a **virtual** `relativePath` (their
- * own id): the file is never copied into the base (v1 never stored the folder inside Cherry, so
+ * own id): the file is never copied into the base (v1 never stored the folder inside Magic Box, so
  * there is nothing to copy) and the v1 `source` path is untrustworthy, so search uses the migrated
  * vectors directly and the child is never read from disk. Re-indexing such a child is rejected
  * because its source file no longer exists on disk (it would otherwise destroy the only copy of its

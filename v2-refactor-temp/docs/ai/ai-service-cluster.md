@@ -118,7 +118,7 @@ grace period). See [Stream Manager](./stream-manager-cluster.md).
   `ListModelsRequest`. All transport types are flat (no nested
   optionality), serialisable.
 - `types/merged.ts` — `AppProviderSettingsMap` merges core SDK
-  `CoreProviderSettingsMap` with Cherry's app-level extensions
+  `CoreProviderSettingsMap` with Magic Box's app-level extensions
   (claude-code, aihubmix, newapi). Provides the `AppProviderId` union
   via `StringKeys<...>`.
 
@@ -142,5 +142,5 @@ grace period). See [Stream Manager](./stream-manager-cluster.md).
 - The `Ai_ToolApproval_Respond` handler's "all decided?" check assumes
   the approval-requested parts live on the anchor message. If
   approvals ever land on non-anchor parts we'll revisit.
-- See memory [Cherry AI tools — open work items](../../../) for
+- See memory [Magic Box AI tools — open work items](../../../) for
   follow-up work on tool-loop refinement.

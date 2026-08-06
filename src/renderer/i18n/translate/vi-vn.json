@@ -33,7 +33,7 @@
     },
     "builtin": {
       "cherry_assistant": {
-        "description": "Cố vấn tích hợp Cherry Studio. Chẩn đoán sự cố, hướng dẫn thao tác, thu thập câu hỏi thường gặp, gửi báo cáo lỗi/yêu cầu tính năng, và tìm kiếm/tạo Kỹ năng"
+        "description": "Cố vấn tích hợp Magic Box. Chẩn đoán sự cố, hướng dẫn thao tác, thu thập câu hỏi thường gặp, gửi báo cáo lỗi/yêu cầu tính năng, và tìm kiếm/tạo Kỹ năng"
       }
     },
     "channels": {
@@ -1049,7 +1049,7 @@
     },
     "authHeaderText": "Sử dụng trong tiêu đề Ủy quyền:",
     "configuration": "Konfiguracja",
-    "description": "Phơi bày khả năng AI của Cherry Studio qua các API HTTP tương thích với OpenAI",
+    "description": "Phơi bày khả năng AI của Magic Box qua các API HTTP tương thích với OpenAI",
     "documentation": {
       "title": "API Documentación"
     },
@@ -2073,7 +2073,7 @@
     },
     "api_gateway": {
       "description": "Bất kỳ CLI nào, mọi mô hình",
-      "requires_running": "Giữ Cherry Studio chạy sau khi bật — CLI bên ngoài kết nối với cổng mà nó lưu trữ.",
+      "requires_running": "Giữ Magic Box chạy sau khi bật — CLI bên ngoài kết nối với cổng mà nó lưu trữ.",
       "title": "Cổng thống nhất"
     },
     "apply_failed": "Không thể ghi cấu hình CLI vào tệp hệ thống",
@@ -4583,12 +4583,12 @@
       "select_other_provider": "Chọn Nhà Cung Cấp Khác",
       "setup_hint": "Vui lòng cấu hình ít nhất một nhà cung cấp để có trải nghiệm tốt nhất",
       "subtitle": "Kết nối nhà cung cấp để khởi động trạm làm việc AI tất cả trong một",
-      "title": "Chào mừng bạn đến với Cherry Studio"
+      "title": "Chào mừng bạn đến với Magic Box"
     }
   },
   "openclaw": {
     "checking_installation": "Đang kiểm tra cài đặt OpenClaw...",
-    "description": "Sử dụng các nhà cung cấp Cherry Studio để cấp nguồn cho OpenClaw, trợ lý AI cá nhân của bạn hoạt động trên WhatsApp, Telegram, Slack, Discord và nhiều nền tảng khác.",
+    "description": "Sử dụng các nhà cung cấp Magic Box để cấp nguồn cho OpenClaw, trợ lý AI cá nhân của bạn hoạt động trên WhatsApp, Telegram, Slack, Discord và nhiều nền tảng khác.",
     "error": {
       "select_provider_model": "Vui lòng chọn nhà cung cấp và mô hình trước"
     },
@@ -5515,7 +5515,7 @@
           },
           "description": {
             "0": "Trợ lý Lựa chọn yêu cầu <strong>Quyền Trợ năng</strong> để hoạt động bình thường.",
-            "1": "Vui lòng nhấp vào \"<strong>Đi tới Cài đặt</strong>\" và nhấp vào nút \"<strong>Mở Cài đặt Hệ thống</strong>\" trong cửa sổ yêu cầu quyền xuất hiện sau đó. Sau đó, tìm \"<strong>Cherry Studio</strong>\" trong danh sách ứng dụng xuất hiện và bật công tắc quyền.",
+            "1": "Vui lòng nhấp vào \"<strong>Đi tới Cài đặt</strong>\" và nhấp vào nút \"<strong>Mở Cài đặt Hệ thống</strong>\" trong cửa sổ yêu cầu quyền xuất hiện sau đó. Sau đó, tìm \"<strong>Magic Box</strong>\" trong danh sách ứng dụng xuất hiện và bật công tắc quyền.",
             "2": "Sau khi hoàn tất cài đặt, vui lòng mở lại trợ lý lựa chọn."
           },
           "title": "Quyền truy cập"
@@ -5539,7 +5539,7 @@
         "wayland_checklist_subtitle": "Đảm bảo các điều kiện sau được thỏa mãn để tối ưu hóa trải nghiệm Wayland:",
         "wayland_description": "Bạn đang ở trong phiên Wayland. Do giới hạn của hệ thống, thanh công cụ có thể chỉ xuất hiện ở giữa màn hình thay vì theo văn bản được chọn trên một số môi trường máy tính để bàn. Khuyến nghị chuyển sang phiên X11 để có trải nghiệm đầy đủ.",
         "wayland_title": "Thông báo phiên Wayland",
-        "xwayland_fail": "Chưa được kích hoạt, vui lòng khởi chạy Cherry Studio với cờ `--ozone-platform=x11`",
+        "xwayland_fail": "Chưa được kích hoạt, vui lòng khởi chạy Magic Box với cờ `--ozone-platform=x11`",
         "xwayland_label": "Chế độ XWayland:",
         "xwayland_pass": "Đã bật"
       },
@@ -5780,7 +5780,7 @@
         "select": "Sửa đổi thư mục",
         "select_error": "Không thể thay đổi thư mục dữ liệu",
         "select_error_in_app_path": "Đường dẫn mới trùng với đường dẫn cài đặt ứng dụng, vui lòng chọn đường dẫn khác",
-        "select_error_protected_path": "Đường dẫn được chọn được bảo vệ bởi hệ điều hành hoặc Cherry Studio. Vui lòng chọn một thư mục khác.",
+        "select_error_protected_path": "Đường dẫn được chọn được bảo vệ bởi hệ điều hành hoặc Magic Box. Vui lòng chọn một thư mục khác.",
         "select_error_root_path": "Nouveau chemin ne peut pas être le chemin racine",
         "select_error_same_path": "Đường dẫn mới giống với đường dẫn cũ, vui lòng chọn đường dẫn khác",
         "select_error_write_permission": "Đường dẫn mới không có quyền ghi",
@@ -6399,7 +6399,7 @@
       "remove": "Remove tool",
       "removeConfirmMessage": "Are you sure you want to remove \"{{name}}\"? The binary will be deleted.",
       "removeConfirmTitle": "Remove Tool",
-      "removeDefinitionOnlyConfirmMessage": "Cherry không thể dọn dẹp an toàn \"{{name}}\". Việc chỉ xóa định nghĩa của nó sẽ ẩn thẻ nhưng vẫn để lại các tệp backend được cài đặt. Tiếp tục?",
+      "removeDefinitionOnlyConfirmMessage": "Magic Box không thể dọn dẹp an toàn \"{{name}}\". Việc chỉ xóa định nghĩa của nó sẽ ẩn thẻ nhưng vẫn để lại các tệp backend được cài đặt. Tiếp tục?",
       "removeDefinitionOnlyConfirmTitle": "Chỉ xóa định nghĩa?",
       "removeDefinitionOnlyDependents": "Các công cụ đã cài đặt phụ thuộc vào nó: {{dependents}}.",
       "removeError": "Không thể xóa công cụ",
@@ -6431,7 +6431,7 @@
         "uv": "Python package manager for MCP services and dependency installation."
       },
       "uninstall": "Gỡ cài đặt",
-      "uninstallConfirmMessage": "Bạn có chắc chắn muốn gỡ cài đặt \"{{name}}\"? Bản sao backend của Cherry Studio sẽ bị xóa.",
+      "uninstallConfirmMessage": "Bạn có chắc chắn muốn gỡ cài đặt \"{{name}}\"? Bản sao backend của Magic Box sẽ bị xóa.",
       "uninstallConfirmTitle": "Công cụ Gỡ cài đặt",
       "uninstallFailed": "Không thể gỡ cài đặt công cụ",
       "uninstallSuccess": "Công cụ đã được gỡ cài đặt",
@@ -6525,7 +6525,7 @@
       "common": {
         "menu": {
           "presentation_mode": {
-            "cherry": "Cherry",
+            "cherry": "Magic Box",
             "native": "Bản địa",
             "restart": {
               "content": "Thay đổi kiểu menu yêu cầu khởi động lại ứng dụng để có hiệu lực. Bạn có muốn khởi động lại ngay bây giờ không?",

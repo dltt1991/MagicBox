@@ -12,7 +12,7 @@ const logger = loggerService.withContext('ShellEnv')
 const SHELL_ENV_TIMEOUT_MS = 15_000
 
 /**
- * Ensures Cherry-managed tool directories are appended to the user's PATH while
+ * Ensures Magic Box-managed tool directories are appended to the user's PATH while
  * preserving the original key casing and avoiding duplicate segments.
  */
 const appendCherryToolDirsToPath = (env: Record<string, string>) => {

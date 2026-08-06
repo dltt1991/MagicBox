@@ -36,7 +36,7 @@ export const toCherryBuiltinRuntimeName = (toolName: string): string => `mcp__${
  * - generate_image calls a user-configured external provider (which may bill) and persists a
  *   FileEntry into the user's library, so — unlike the read-only lookups — an autonomous agent
  *   (including headless / channel turns) must not run it unattended;
- * - cli_install persists a definition and mutates Cherry's shared isolated mise environment.
+ * - cli_install persists a definition and mutates Magic Box's shared isolated mise environment.
  */
 export const CHERRY_BUILTIN_APPROVAL_REQUIRED_TOOL_NAMES: readonly string[] = [
   KB_MANAGE_TOOL_NAME,
@@ -67,7 +67,7 @@ export const CHERRY_BUILTIN_AUTO_APPROVED_TOOL_NAMES: readonly string[] = [
 ]
 
 /**
- * Assistant MCP tools safe to auto-approve for local Cherry Assistant sessions: `navigate` only,
+ * Assistant MCP tools safe to auto-approve for local Magic Box Assistant sessions: `navigate` only,
  * which emits a clickable link the user must click themselves. `diagnose` reads local machine data
  * (logs, source files, config, host info) and MUST go through per-call approval — the Assistant
  * also reads untrusted web/KB content, and auto-approved web_fetch would complete a prompt-injection

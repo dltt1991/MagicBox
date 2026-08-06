@@ -99,7 +99,7 @@ keeps only `ShortcutPreferenceKey` + `ResolvedShortcut`.
 | `CommandProvider` | one window‑level `keydown` dispatcher + the handler stack (`useCommandHandler`, `useCommandRuntime`) |
 | `ContextKeyProvider` | window‑local context keys (`useCommandContextKey`) |
 | `presentation.tsx` | `CommandShortcut`, `CommandTooltip`, `CommandButton`, `useResolvedCommand` |
-| `menus.tsx` | `CommandContextMenu` — renders Cherry UI or a native popup based on `menu.presentation_mode` |
+| `menus.tsx` | `CommandContextMenu` — renders Magic Box UI or a native popup based on `menu.presentation_mode` |
 
 Mount `<ContextKeyProvider><CommandProvider>` once per renderer window — every
 window root mounts it: `windows/main/MainApp.tsx` and `windows/subWindow/SubWindowApp.tsx`.

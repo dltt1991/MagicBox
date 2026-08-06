@@ -5,7 +5,7 @@ import { net } from 'electron'
 
 export const PADDLE_MAX_FILE_SIZE = 50 * MB
 
-/** Identifies Cherry Studio to the PaddleOCR API gateway (Client-Platform header). */
+/** Identifies Magic Box to the PaddleOCR API gateway (Client-Platform header). */
 export const PADDLE_CLIENT_PLATFORM = 'cherrystudio'
 
 type PaddleOcrClientLike = typeof PaddleOCRClientType

@@ -366,7 +366,7 @@ export class CodeCliService extends BaseService {
     const normal = input.mode === 'normal' ? input : null
     const isLoginFlow = input.mode === 'login-flow'
     const isProviderlessCli = cliTool === CodeCli.QODER_CLI || cliTool === CodeCli.GITHUB_COPILOT_CLI
-    // "Own login" run: the CLI uses its own stored account login, so no Cherry
+    // "Own login" run: the CLI uses its own stored account login, so no Magic Box
     // provider/model is injected (the renderer already cleared any prior config).
     // Gated to login-capable tools so a genuinely missing provider still errors.
     const isOwnLoginRun = input.mode === 'own-login' && LOGIN_CAPABLE_CLI_TOOLS.has(cliTool)
@@ -431,9 +431,9 @@ export class CodeCliService extends BaseService {
     const executablePath = availability.path
     const usesCherryExecutionEnv = availability.source !== 'system'
 
-    // Cherry's MISE_* variables are needed for currently available mise shims
-    // and bundled binaries. A system CLI receives no Cherry environment: adding
-    // it could redirect a user mise shim to Cherry's isolated data directory.
+    // Magic Box's MISE_* variables are needed for currently available mise shims
+    // and bundled binaries. A system CLI receives no Magic Box environment: adding
+    // it could redirect a user mise shim to Magic Box's isolated data directory.
     // The install request above is the only operation that declares ownership;
     // execution depends only on this live availability fact.
     const rawShellEnv = usesCherryExecutionEnv ? await getRawShellEnv() : undefined
@@ -594,9 +594,9 @@ export class CodeCliService extends BaseService {
         const batContent = [
           '@echo off',
           'chcp 65001 >nul 2>&1', // Switch to UTF-8 code page for international path support
-          `title ${cliTool} - Cherry Studio`,
+          `title ${cliTool} - Magic Box`,
           'echo ================================================',
-          'echo Cherry Studio CLI Tool Launcher',
+          'echo Magic Box CLI Tool Launcher',
           `echo Tool: ${CodeCliService.escapeBatchTextForEcho(cliTool)}`,
           `echo Directory: ${CodeCliService.escapeBatchTextForEcho(directory)}`,
           `echo Time: ${new Date().toLocaleString()}`,
@@ -756,7 +756,7 @@ export class CodeCliService extends BaseService {
     Object.assign(processEnv, env)
     // Bundled MinGit rides at the very tail of every Windows launch PATH so a
     // bare `git` resolves even with no system git, while any real git ahead
-    // still wins (#16402). The tail is the only Cherry addition a system CLI
+    // still wins (#16402). The tail is the only Magic Box addition a system CLI
     // receives — it must not reintroduce MISE_* redirection into the user's env.
     if (platform === 'win32') appendBundledGitPathTail(processEnv)
     removeEnvProxy(processEnv)

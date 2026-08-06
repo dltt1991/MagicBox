@@ -27,9 +27,9 @@
  * industry best practice. Mainstream approaches — Spring/Rails typed exception
  * hierarchies, Prisma's `error.code` switch, NestJS exception filters — each
  * make different trade-offs. This module's specific value is eliminating the
- * "forgot to rethrow" bug class at the type layer, which matters in Cherry
+ * "forgot to rethrow" bug class at the type layer, which matters in Magic Box
  * Studio's direct-db-access Service pattern where no IoC/AOP framework can
- * catch misses. If future Cherry Studio architecture adopts such a framework,
+ * catch misses. If future Magic Box architecture adopts such a framework,
  * revisit whether a typed exception hierarchy is a better fit.
  */
 

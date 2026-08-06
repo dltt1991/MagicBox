@@ -1,5 +1,5 @@
 /**
- * Entry creation — `createInternal` for Cherry-owned files and `ensureExternal`
+ * Entry creation — `createInternal` for Magic Box-owned files and `ensureExternal`
  * for user-provided absolute paths.
  *
  * Pure functions taking `FileManagerDeps` as the first argument. Each source
@@ -131,7 +131,7 @@ function urlTail(url: string): string {
 }
 
 /**
- * Create a Cherry-owned (internal) FileEntry. The physical file lives at
+ * Create a Magic Box-owned (internal) FileEntry. The physical file lives at
  * `{userData}/Data/Files/{newId}{.ext}`. DB-insert failure best-effort unlinks
  * the just-written physical file to avoid orphan blobs.
  */

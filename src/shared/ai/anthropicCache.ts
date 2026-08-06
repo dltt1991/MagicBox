@@ -1,6 +1,6 @@
 import type { Provider } from '@shared/data/types/provider'
 
-// This is Cherry's local marker-placement default, not Anthropic's model-specific minimum.
+// This is Magic Box's local marker-placement default, not Anthropic's model-specific minimum.
 // Anthropic owns the real cacheability rules and reports actual read/write usage; keeping
 // a local model threshold table here would go stale across new models and compatible gateways.
 export const ANTHROPIC_CACHE_DEFAULT_TOKEN_THRESHOLD = 1024

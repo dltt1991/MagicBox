@@ -4,7 +4,7 @@
  * top-level `finish` part; per-step `usage` chunks survive, modulo the
  * Vercel gateway shape bug handled by `gatewayUsageNormalizeFeature`.
  *
- * Projection (AI SDK `LanguageModelUsage` → Cherry `MessageStats`):
+ * Projection (AI SDK `LanguageModelUsage` → Magic Box `MessageStats`):
  *   inputTokens                         → promptTokens
  *   outputTokens                        → completionTokens
  *   outputTokenDetails.reasoningTokens  → thoughtsTokens

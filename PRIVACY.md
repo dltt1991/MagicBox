@@ -1,9 +1,9 @@
-# Cherry Studio Privacy Policy
+# Magic Box Privacy Policy
 
 Updated Date: May 31, 2026
 Effective Date: May 31, 2026
 
-Welcome to Cherry Studio (hereinafter referred to as "this Software" or "we"). We place a high priority on protecting your privacy. This Privacy Policy explains how we handle and protect your personal information and data. Please read and understand this policy carefully before using this Software.
+Welcome to Magic Box (hereinafter referred to as "this Software" or "we"). We place a high priority on protecting your privacy. This Privacy Policy explains how we handle and protect your personal information and data. Please read and understand this policy carefully before using this Software.
 
 ## I. Scope of Information We Collect
 
@@ -49,7 +49,7 @@ To maximize the protection of your privacy, we explicitly commit that we will no
 
 ## III. Local Storage and Data Interaction Explanation
 
-- Data localization: your API Keys, historical conversation records, and personal preference settings are all stored locally on your device. Cherry Studio does not provide cloud synchronization services and will not upload this data to our servers.
+- Data localization: your API Keys, historical conversation records, and personal preference settings are all stored locally on your device. Magic Box does not provide cloud synchronization services and will not upload this data to our servers.
 - Direct calls: this Software acts solely as a local tool providing interface calling functionality to third-party model services. Your terminal device establishes a direct network connection with the servers of the third-party model providers you configure, such as OpenAI or Anthropic. However, you shall not use this Software to produce, reproduce, publish, transmit, or disseminate any illegal or harmful information that violates the laws and regulations of the People's Republic of China and your country of residence, including but not limited to content endangering national security, harming national honor and interests, undermining ethnic unity, spreading rumors, disrupting social order, promoting obscenity, pornography, violence, or infringing upon the legitimate rights and interests of others.
 
 ## IV. Privacy Policy Statement Regarding Third-Party Model Service Providers
@@ -81,6 +81,6 @@ Please review such updates promptly. Your continued use of the Software after th
 
 ## VII. Contact Us
 
-If you have any questions regarding this Privacy Policy or Cherry Studio's privacy protection measures, please feel free to contact us.
+If you have any questions regarding this Privacy Policy or Magic Box's privacy protection measures, please feel free to contact us.
 
-Thank you for choosing and trusting Cherry Studio. We will continue to provide you with a safe and reliable product experience.
+Thank you for choosing and trusting Magic Box. We will continue to provide you with a safe and reliable product experience.

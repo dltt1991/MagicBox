@@ -58,7 +58,7 @@ SDK-specific settings shape:
 ### Provider extensions
 
 `provider/extensions.ts` registers every `@ai-sdk/*` package
-Cherry uses via `ProviderExtension.create(...)`. Each registration
+Magic Box uses via `ProviderExtension.create(...)`. Each registration
 declares:
 
 - `name`, `aliases`, `variants`

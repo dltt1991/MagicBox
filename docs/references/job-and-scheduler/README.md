@@ -1,6 +1,6 @@
 # Job & Scheduler
 
-Cherry Studio unified background job + time-scheduling system.
+Magic Box unified background job + time-scheduling system.
 
 | Doc | What it covers | Audience |
 |---|---|---|

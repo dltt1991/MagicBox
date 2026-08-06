@@ -1,5 +1,5 @@
 /**
- * Cherry Studio semantic contract.
+ * Magic Box semantic contract.
  *
  * Import order is architectural and must remain one-way:
  * foundation providers -> runtime inputs -> official Shadcn semantics -> product semantics.

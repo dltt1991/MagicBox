@@ -1,6 +1,6 @@
 # AI Reference
 
-This is the entry point for the AI pipeline in Cherry Studio v2 — the
+This is the entry point for the AI pipeline in Magic Box v2 — the
 main-process service that owns every LLM call (chat streams, agent loops,
 translate, summarisation) and the renderer-side transport that connects to it.
 

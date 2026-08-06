@@ -128,7 +128,7 @@ All three register through `ProviderExtension.create(...)` with their own
 ## Provider extensions
 
 `src/main/ai/provider/extensions.ts` registers every
-`@ai-sdk/*` package Cherry uses with `ProviderExtension.create`. Each
+`@ai-sdk/*` package Magic Box uses with `ProviderExtension.create`. Each
 extension declares:
 
 - `name` (the `AppProviderId` for the base)

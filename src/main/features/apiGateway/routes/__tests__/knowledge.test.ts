@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 /**
  * Exercises the knowledge routes through a wrapper app that includes the real
- * Cherry REST `restErrorHandler` (the dialect these endpoints use), so the full
+ * Magic Box REST `restErrorHandler` (the dialect these endpoints use), so the full
  * chain runs: v2 data services → route logic → response schemas → REST error
  * shaping (DataApiError → `{ error: { code, message } }` with its HTTP status).
  */
@@ -101,7 +101,7 @@ describe('knowledge routes (v2)', () => {
     })
     const { status, body } = await call('GET', '/knowledge-bases/nope')
     expect(status).toBe(404)
-    expect(body.type).toBeUndefined() // Cherry REST dialect: { error: { code, message } }
+    expect(body.type).toBeUndefined() // Magic Box REST dialect: { error: { code, message } }
     expect(body.error.code).toBe('NOT_FOUND')
   })
 

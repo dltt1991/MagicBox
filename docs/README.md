@@ -1,4 +1,4 @@
-# Cherry Studio Documentation
+# Magic Box Documentation
 
 ## Guides
 

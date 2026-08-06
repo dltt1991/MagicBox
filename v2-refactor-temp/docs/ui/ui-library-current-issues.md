@@ -1,4 +1,4 @@
-# Cherry Studio UI Library Issues Snapshot (2026-04-16)
+# Magic Box UI Library Issues Snapshot (2026-04-16)
 
 > 更新日期：2026-04-16
 > 范围：`packages/ui`

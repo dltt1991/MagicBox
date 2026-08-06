@@ -3,7 +3,7 @@
 /**
  * Data Inventory Extractor
  *
- * Extracts data inventory from Cherry Studio source code and manages
+ * Extracts data inventory from Magic Box source code and manages
  * incremental updates to classification.json with backup protection.
  *
  * Features:
@@ -76,7 +76,7 @@ class DataExtractor {
       metadata: {
         generatedAt: new Date().toISOString(),
         version: '2.0.0',
-        description: 'Cherry Studio data inventory'
+        description: 'Magic Box data inventory'
       },
       redux: await this.extractReduxData(),
       electronStore: await this.extractElectronStoreData(),

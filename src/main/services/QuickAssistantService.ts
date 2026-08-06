@@ -65,7 +65,7 @@ const MACOS_AUTO_FOCUS_VERSION = 26
 //   • `electron-panel-window` / `electron-nspanel`: native modules with
 //     `makeKeyWindow` that goes through Cocoa cleanly, but require platform-
 //     specific addons and one is archived since 2020.
-//   • app-level events (`app.on('browser-window-focus')`): catches Cherry-
+//   • app-level events (`app.on('browser-window-focus')`): catches Magic Box-
 //     internal focus changes only; misses external-app and desktop clicks.
 //   Polling reads `window.isFocused()` which delegates to `[NSWindow
 //   isKeyWindow]` — Cocoa's true state, untouched by Electron's broken

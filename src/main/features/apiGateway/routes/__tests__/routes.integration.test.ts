@@ -83,7 +83,7 @@ describe('API gateway routes (integration)', () => {
     it('GET / → 200 API info', async () => {
       const { status, body } = await read(await get(app, '/', {}))
       expect(status).toBe(200)
-      expect(body.name).toBe('Cherry Studio API')
+      expect(body.name).toBe('Magic Box API')
       expect(body.endpoints).toBeDefined()
     })
   })
@@ -107,16 +107,16 @@ describe('API gateway routes (integration)', () => {
   })
 
   describe('not found', () => {
-    it('unmatched route → 404 Cherry REST envelope (does not crash onError)', async () => {
+    it('unmatched route → 404 Magic Box REST envelope (does not crash onError)', async () => {
       const { status, body } = await read(await get(app, '/no-such-route', {}))
       expect(status).toBe(404)
-      // App-level fallback uses the Cherry REST dialect: { error: { code, message } }.
+      // App-level fallback uses the Magic Box REST dialect: { error: { code, message } }.
       expect(body.error.code).toBe('NOT_FOUND')
       expect(body.error.type).toBeUndefined()
     })
   })
 
-  describe("Cherry endpoints use Cherry's own REST error envelope", () => {
+  describe("Magic Box endpoints use Magic Box's own REST error envelope", () => {
     it('knowledge search missing `query` → 422 REST envelope (not OpenAI dialect)', async () => {
       const { status, body } = await read(await post(app, '/v1/knowledge-bases/search', {}))
       expect(status).toBe(422)
@@ -273,7 +273,7 @@ describe('API gateway routes (integration)', () => {
     })
 
     it('strips the gemini-cli sentinel suffix off the model before routing', async () => {
-      // Cherry hands gemini-cli the address with an `@cherry` suffix so its model
+      // Magic Box hands gemini-cli the address with an `@cherry` suffix so its model
       // normalization can't rewrite names ending in "flash"; the route must strip it.
       await read(
         await post(app, '/v1beta/models/618d8838:agent/deepseek-v4-flash@cherry:streamGenerateContent', geminiBody)

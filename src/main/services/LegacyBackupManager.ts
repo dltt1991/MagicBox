@@ -162,7 +162,7 @@ class BackupManager {
     return {
       version: 6,
       timestamp: Date.now(),
-      appName: 'Cherry Studio',
+      appName: 'Magic Box',
       appVersion: app.getVersion(),
       platform: process.platform,
       arch: process.arch
@@ -593,9 +593,9 @@ class BackupManager {
       const metadataPath = path.join(this.tempDir, 'metadata.json')
       const metadata = await fs.readJson(metadataPath)
 
-      // Validate appName to ensure backup is from Cherry Studio
-      if (metadata.appName !== 'Cherry Studio') {
-        throw new Error('This backup file is not from Cherry Studio and cannot be restored')
+      // Validate appName to ensure backup is from Magic Box
+      if (metadata.appName !== 'Magic Box') {
+        throw new Error('This backup file is not from Magic Box and cannot be restored')
       }
 
       // Warn about cross-platform restore

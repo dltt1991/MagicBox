@@ -111,11 +111,11 @@ function parseInstallUrl(value: string, setting: string): string | undefined {
   return url.toString().replace(/\/$/, '')
 }
 
-// Ambient PIP_INDEX_URL comes from the user's login shell, not Cherry's install
+// Ambient PIP_INDEX_URL comes from the user's login shell, not Magic Box's install
 // settings. A non-HTTP value there (e.g. a `file://` index) must not abort the
 // whole isolated-env build and brick every mise operation with a misleading
 // "pip index" error — it is left to pass through unchanged, exactly as an ambient
-// NPM_CONFIG_REGISTRY is. Only Cherry's own explicit setting is strictly
+// NPM_CONFIG_REGISTRY is. Only Magic Box's own explicit setting is strictly
 // validated (parseInstallUrl throws to surface the user's own misconfiguration).
 function parseAmbientUrl(value: string | undefined, setting: string): string | undefined {
   if (!value) return undefined
@@ -175,7 +175,7 @@ export type ManagedCliInventoryEntry = {
 type FixedToolDefinition = { name: string; tool: string }
 type MiseInstallEntry = { version?: string; active?: boolean; install_path?: string }
 
-// Code-owned catalog of the fixed tools Cherry ships: every Dependencies preset
+// Code-owned catalog of the fixed tools Magic Box ships: every Dependencies preset
 // executable and every Code CLI executable mapped to its canonical mise recipe.
 // Derived from the two preset sources so their names and recipes stay the single
 // source of truth. Fixed definitions carry no requestedVersion — a version pin is
@@ -336,7 +336,7 @@ export class BinaryManager extends BaseService {
   }
 
   /**
-   * Probe which tools resolve on the user's login-shell PATH outside Cherry's
+   * Probe which tools resolve on the user's login-shell PATH outside Magic Box's
    * managed and bundled directories.
    */
   private async probeSystem(names: string[]): Promise<Record<string, string>> {

@@ -43,7 +43,7 @@
  * ## External entries — no size snapshot
  *
  * External rows carry `size: null` by design — external files may change outside
- * Cherry at any time, so no DB snapshot is kept. `name` / `ext` are pure
+ * Magic Box at any time, so no DB snapshot is kept. `name` / `ext` are pure
  * projections of `externalPath` (basename / extname) and therefore stable as
  * long as the entry itself exists. Consumers needing a live `size` / `mtime`
  * call File IPC `getMetadata(id)` which performs a single `fs.stat`.

@@ -182,7 +182,7 @@ describe('round-trip', () => {
   })
 
   it('preserves a hand-written double-quoted backslash path across a parse→render rewrite', () => {
-    // Reviewer scenario: a user hand-writes KEY="C:\\path"; Cherry parses the file then rewrites it.
+    // Reviewer scenario: a user hand-writes KEY="C:\\path"; Magic Box parses the file then rewrites it.
     // The value the CLI tool (real dotenv) reads back must be identical before and after the rewrite.
     const handWritten = 'KEY="C:\\\\path"\n' // on disk: KEY="C:\\path"
     const original = parseWithRealDotenv(handWritten).KEY

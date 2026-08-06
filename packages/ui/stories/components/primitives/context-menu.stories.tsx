@@ -27,7 +27,7 @@ const meta: Meta<typeof ContextMenu> = {
     docs: {
       description: {
         component:
-          'A context menu component that displays a menu of actions when the user right-clicks. Based on Radix UI Context Menu primitive, styled to match the Cherry Studio design system.'
+          'A context menu component that displays a menu of actions when the user right-clicks. Based on Radix UI Context Menu primitive, styled to match the Magic Box design system.'
       }
     }
   },
@@ -413,7 +413,7 @@ export const AssistantMenu: Story = {
             Assistant Icon
           </ContextMenuSubTrigger>
           <ContextMenuSubContent>
-            <ContextMenuItem>🍒 Cherry</ContextMenuItem>
+            <ContextMenuItem>🍒 Magic Box</ContextMenuItem>
             <ContextMenuItem>🤖 Robot</ContextMenuItem>
             <ContextMenuItem>✨ Star</ContextMenuItem>
           </ContextMenuSubContent>

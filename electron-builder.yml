@@ -1,5 +1,5 @@
 appId: com.kangfenmao.CherryStudio
-productName: Cherry Studio
+productName: Magic Box
 electronLanguages:
   - zh-CN
   - zh-TW
@@ -14,7 +14,7 @@ directories:
   buildResources: build
 
 protocols:
-  - name: Cherry Studio
+  - name: Magic Box
     schemes:
       - cherrystudio
 files:
@@ -85,7 +85,7 @@ extraResources:
   - from: "packages/provider-registry/data"
     to: "provider-registry"
 win:
-  executableName: Cherry Studio
+  executableName: Magic Box
   artifactName: ${productName}-${version}-${arch}-setup.${ext}
   target:
     - target: nsis
@@ -131,7 +131,7 @@ linux:
   category: Utility
   desktop:
     entry:
-      Name: Cherry Studio
+      Name: Magic Box
       StartupWMClass: CherryStudio
   mimeTypes:
     - x-scheme-handler/cherrystudio
@@ -151,7 +151,7 @@ artifactBuildCompleted: scripts/artifact-build-completed.js
 releaseInfo:
   releaseNotes: |
     <!--LANG:en-->
-    Cherry Studio 2.0.0-beta.2 - Better Knowledge, Agents, Chat and UI
+    Magic Box 2.0.0-beta.2 - Better Knowledge, Agents, Chat and UI
 
     ✨ New Features
     - [Knowledge] Pick an embedding model — including the local one, downloadable right from the dialog — when creating a knowledge base; it stays optional, so without a model the base still uses keyword (BM25) search
@@ -163,7 +163,7 @@ releaseInfo:
     - [Tabs] Chrome-style close behavior: always-visible close button on the active tab, pinned tabs closable via right-click, smooth in-place closing, and closing the active tab activates its right neighbor
     - [Session List] Topic and agent session rows now show clearer running, error, completion and tool-approval states, and pending-approval badges clear the moment you respond
     - [Agent] Warmer in-progress wording in English and Simplified Chinese, plus a live scrolling preview of the latest reasoning on the collapsed thinking block
-    - [Agent] The built-in agent is now named "Cherry 助理" on Chinese-language systems
+    - [Agent] The built-in agent is now named "Magic Box 助理" on Chinese-language systems
     - [Agent] Claude SDK api_retry status is now surfaced as an ephemeral in-app status
     - [Trace] Span details now support text selection and one-click copying for the active input, output, or raw payload
     - [Library] Files, Notes and Knowledge Base now share a unified, softly illustrated empty state; the Knowledge Base keeps its navigator visible when empty with a clearer create flow
@@ -202,7 +202,7 @@ releaseInfo:
     - [Composer] Composer controls now wait for the editor to be ready, avoiding jank on first render
 
     <!--LANG:zh-CN-->
-    Cherry Studio 2.0.0-beta.2 - 知识库、智能体、聊天与界面改进
+    Magic Box 2.0.0-beta.2 - 知识库、智能体、聊天与界面改进
 
     ✨ 新功能
     - [知识库] 创建知识库时可以直接选择嵌入模型（包括本地模型，支持在弹窗中直接下载）；仍是可选的，不选则只用 BM25 关键词检索
@@ -214,7 +214,7 @@ releaseInfo:
     - [标签页] 采用 Chrome 风格的关闭行为：当前标签页常驻关闭按钮，固定标签页通过右键菜单关闭，关闭时平滑收缩不位移，关闭当前标签页后激活右侧标签页
     - [会话列表] 话题和智能体会话的运行、错误、完成和待审批状态更清晰，待审批徽标在你响应后立即消失
     - [智能体] 优化了英文和简体中文下智能体执行中的文案，并在折叠的思考块上加入了最新推理的滚动预览
-    - [智能体] 中文系统下内置智能体现在命名为「Cherry 助理」
+    - [智能体] 中文系统下内置智能体现在命名为「Magic Box 助理」
     - [智能体] Claude SDK 的 api_retry 状态现在会作为临时状态展示在应用内
     - [Trace] Span 详情支持选中文本，并一键复制当前的输入、输出或原始内容
     - [资源库] 文件、笔记和知识库现在使用统一的柔和插画空状态，知识库在空状态下保留导航栏并提供更清晰的创建入口

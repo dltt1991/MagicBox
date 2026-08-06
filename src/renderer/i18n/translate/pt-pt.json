@@ -33,7 +33,7 @@
     },
     "builtin": {
       "cherry_assistant": {
-        "description": "Assistente integrado do Cherry Studio. Diagnostique problemas, guie operações, colete FAQs, envie bugs/solicitações de recursos e pesquise/crie Habilidades"
+        "description": "Assistente integrado do Magic Box. Diagnostique problemas, guie operações, colete FAQs, envie bugs/solicitações de recursos e pesquise/crie Habilidades"
       }
     },
     "channels": {
@@ -1049,7 +1049,7 @@
     },
     "authHeaderText": "Usar no cabeçalho de autorização:",
     "configuration": "Configuração",
-    "description": "Expõe as capacidades de IA do Cherry Studio através de APIs HTTP compatíveis com OpenAI",
+    "description": "Expõe as capacidades de IA do Magic Box através de APIs HTTP compatíveis com OpenAI",
     "documentation": {
       "title": "Documentação API"
     },
@@ -2073,7 +2073,7 @@
     },
     "api_gateway": {
       "description": "Qualquer CLI, qualquer modelo",
-      "requires_running": "Mantenha o Cherry Studio em execução após ativar — a CLI externa conecta-se ao gateway que ele hospeda.",
+      "requires_running": "Mantenha o Magic Box em execução após ativar — a CLI externa conecta-se ao gateway que ele hospeda.",
       "title": "Gateway Unificado"
     },
     "apply_failed": "Falha ao escrever a configuração da CLI no arquivo do sistema",
@@ -4583,12 +4583,12 @@
       "select_other_provider": "Selecionar Outro Provedor",
       "setup_hint": "Por favor, configure pelo menos um provedor para a melhor experiência",
       "subtitle": "Ligue um fornecedor para ativar a sua estação de trabalho de IA tudo-em-um",
-      "title": "Bem-vindo ao Cherry Studio"
+      "title": "Bem-vindo ao Magic Box"
     }
   },
   "openclaw": {
     "checking_installation": "Verificando a instalação do OpenClaw...",
-    "description": "Integre provedores do Cherry Studio com o Gateway OpenClaw para habilitar agentes de codificação de IA como Claude Code, Qwen-Coder e muitos outros.",
+    "description": "Integre provedores do Magic Box com o Gateway OpenClaw para habilitar agentes de codificação de IA como Claude Code, Qwen-Coder e muitos outros.",
     "error": {
       "select_provider_model": "Por favor, selecione primeiro um provedor e um modelo."
     },
@@ -4626,7 +4626,7 @@
       "title": "Configuração do Modelo"
     },
     "node_missing": {
-      "description": "O OpenClaw requer Node.js/npm. Por favor, instale o Node.js primeiro e, em seguida, reinicie o Cherry Studio.",
+      "description": "O OpenClaw requer Node.js/npm. Por favor, instale o Node.js primeiro e, em seguida, reinicie o Magic Box.",
       "download_button": "Baixar Node.js",
       "hint": "macOS: brew install node | Windows: Baixe a versão LTS em nodejs.org",
       "title": "Node.js Necessário"
@@ -5515,7 +5515,7 @@
           },
           "description": {
             "0": "O Assistente de Seleção de Texto precisa da permissão de «<strong>Funcionalidades de Acesso</strong>» para funcionar corretamente.",
-            "1": "Clique em «<strong>Ir para Configurações</strong>» e, na janela pop-up de solicitação de permissão que aparecerá em seguida, clique no botão «<strong>Abrir Configurações do Sistema</strong>», depois localize «<strong>Cherry Studio</strong>» na lista de aplicativos e ative o interruptor de permissão.",
+            "1": "Clique em «<strong>Ir para Configurações</strong>» e, na janela pop-up de solicitação de permissão que aparecerá em seguida, clique no botão «<strong>Abrir Configurações do Sistema</strong>», depois localize «<strong>Magic Box</strong>» na lista de aplicativos e ative o interruptor de permissão.",
             "2": "Após concluir a configuração, ative novamente o Assistente de Seleção de Texto."
           },
           "title": "Permissão de Acessibilidade"
@@ -5539,7 +5539,7 @@
         "wayland_checklist_subtitle": "Certifique-se de que as seguintes condições sejam atendidas para otimizar a experiência com Wayland:",
         "wayland_description": "Você está em uma sessão Wayland. Devido a limitações do sistema, a barra de ferramentas pode aparecer apenas no centro da tela em vez de seguir o texto selecionado em alguns ambientes de desktop. Recomenda-se alternar para uma sessão X11 para a experiência completa.",
         "wayland_title": "Aviso de Sessão Wayland",
-        "xwayland_fail": "Não ativado, por favor inicie o Cherry Studio com a flag `--ozone-platform=x11`",
+        "xwayland_fail": "Não ativado, por favor inicie o Magic Box com a flag `--ozone-platform=x11`",
         "xwayland_label": "Modo XWayland:",
         "xwayland_pass": "Ativado"
       },
@@ -5780,7 +5780,7 @@
         "select": "Modificar Diretório",
         "select_error": "Falha ao alterar o diretório de dados",
         "select_error_in_app_path": "O novo caminho é igual ao diretório de instalação do aplicativo. Escolha outro caminho",
-        "select_error_protected_path": "O caminho selecionado está protegido pelo sistema operacional ou pelo Cherry Studio. Por favor, escolha outra pasta.",
+        "select_error_protected_path": "O caminho selecionado está protegido pelo sistema operacional ou pelo Magic Box. Por favor, escolha outra pasta.",
         "select_error_root_path": "O novo caminho não pode ser o diretório raiz",
         "select_error_same_path": "O novo caminho é igual ao caminho antigo. Escolha outro caminho",
         "select_error_write_permission": "O novo caminho não possui permissão de escrita",
@@ -6431,7 +6431,7 @@
         "uv": "Python package manager for MCP services and dependency installation."
       },
       "uninstall": "Desinstalar",
-      "uninstallConfirmMessage": "Tem certeza de que deseja desinstalar \"{{name}}\"? A cópia de backend do Cherry Studio será excluída.",
+      "uninstallConfirmMessage": "Tem certeza de que deseja desinstalar \"{{name}}\"? A cópia de backend do Magic Box será excluída.",
       "uninstallConfirmTitle": "Ferramenta de Desinstalação",
       "uninstallFailed": "Falha ao desinstalar ferramenta",
       "uninstallSuccess": "Ferramenta desinstalada",

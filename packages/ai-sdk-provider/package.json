@@ -1,9 +1,9 @@
 {
   "name": "@cherrystudio/ai-sdk-provider",
   "version": "0.1.6",
-  "description": "Cherry Studio AI SDK provider bundle with CherryIN routing.",
+  "description": "Magic Box AI SDK provider bundle with CherryIN routing.",
   "keywords": ["ai-sdk", "provider", "cherryin", "vercel-ai-sdk", "cherry-studio"],
-  "author": "Cherry Studio",
+  "author": "Magic Box",
   "license": "MIT",
   "homepage": "https://github.com/CherryHQ/cherry-studio",
   "repository": {

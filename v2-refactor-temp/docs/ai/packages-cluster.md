@@ -4,7 +4,7 @@
 
 | Package | Files | Role |
 |---|---|---|
-| `packages/aiCore/` | `core/providers/core/ProviderExtension.ts`, `core/runtime/types.ts` | Cherry's AI SDK wrapper — `ProviderExtension`, `RuntimeExecutor`, `PluginEngine`, `ExtensionRegistry`, `toolFactories` |
+| `packages/aiCore/` | `core/providers/core/ProviderExtension.ts`, `core/runtime/types.ts` | Magic Box's AI SDK wrapper — `ProviderExtension`, `RuntimeExecutor`, `PluginEngine`, `ExtensionRegistry`, `toolFactories` |
 | `packages/provider-registry/` | `data/providers.json`, `src/registry-utils.ts`, `src/registry-loader.ts`, `src/schemas/provider.ts`, `src/patterns/vendor-patterns.ts`, `src/index.ts` | Provider catalog (data) + utils that derive `adapterFamily` |
 | `packages/shared/aiCore/provider/utils/` | `api.ts`, `index.ts`, `types.ts` | Shared provider helpers consumed by both renderer (legacy paths) and Main |
 | `packages/shared/data/` | `api/schemas/providers.ts`, `types/provider.ts` | Provider + EndpointConfig schemas |
