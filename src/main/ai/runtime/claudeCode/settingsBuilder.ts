@@ -139,7 +139,7 @@ const DEFAULT_REQUESTED_OUTPUT_TOKENS = 32_000
  */
 const AUTO_COMPACT_TRIGGER_PCT = 80
 const MINIMAL_CHERRY_ASSISTANT_INSTRUCTIONS =
-  'Within Magic Box, serve as Magic Box Assistant, its built-in general-purpose Agent and onboarding guide. Help the user complete any request using the available tools.'
+  'Within Magic Box, serve as Magic Assistant, its built-in general-purpose Agent and onboarding guide. Help the user complete any request using the available tools.'
 const AGENT_INSTRUCTION_PRECEDENCE_PROMPT = `## Instruction Precedence
 
 When instructions conflict, apply them in this order:
@@ -463,7 +463,7 @@ export async function buildClaudeCodeSessionSettings(
     options?.linkedChannelSnapshot === undefined
       ? channelService.findBySessionId(session.id)
       : options.linkedChannelSnapshot
-  // Magic Box Assistant keeps its existing local-only support MCP behavior. Magic Box Support also
+  // Magic Assistant keeps its existing local-only support MCP behavior. Magic Box Support also
   // exposes product lookups outside local sessions; sensitive tools still require a responder.
   const assistantMcpEnabled =
     builtinRole === BUILTIN_AGENT_ROLE.SUPPORT ||
@@ -1279,7 +1279,7 @@ async function buildToolPermissions(
     }
   }
 
-  // Magic Box Assistant feedback skills submit through Bash, so the MCP-only approval list cannot
+  // Magic Assistant feedback skills submit through Bash, so the MCP-only approval list cannot
   // protect them when bypassPermissions skips canUseTool. Magic Box Support has a stricter role-level
   // Bash policy below.
   const assistantFeedbackSubmissionHook: HookCallback = async (input): Promise<HookJSONOutput> => {
@@ -1516,7 +1516,7 @@ export async function buildSystemPrompt(
     if (definition?.instructions) {
       instructions = definition.instructions
     } else if (isAssistant) {
-      logger.error('Builtin Magic Box Assistant definition missing; using minimal fallback instructions')
+      logger.error('Builtin Magic Assistant definition missing; using minimal fallback instructions')
       instructions = MINIMAL_CHERRY_ASSISTANT_INSTRUCTIONS
     }
   }
@@ -1657,7 +1657,7 @@ export function buildMcpServers(
     totalMcpServers: Object.keys(mcpList).length
   })
 
-  // 5. Product support tools. Magic Box Assistant receives these locally; Magic Box Support receives
+  // 5. Product support tools. Magic Assistant receives these locally; Magic Box Support receives
   // them in every session, with runtime policy denying sensitive unattended actions.
   if (assistantMcpEnabled) {
     const assistantServer = new AssistantServer(

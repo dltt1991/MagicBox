@@ -58,7 +58,7 @@ describe('CherryAssistantSeeder', () => {
     const [agent] = builtinAgents(dbh.db)
     expect(agent).toMatchObject({
       type: 'claude-code',
-      name: 'Magic Box Assistant',
+      name: 'Magic Assistant',
       description: '',
       instructions: '',
       model: null
@@ -98,7 +98,7 @@ describe('CherryAssistantSeeder', () => {
     expect(() => new CherryAssistantSeeder().run(dbh.db)).not.toThrow()
 
     const [agent] = builtinAgents(dbh.db)
-    expect(agent.name).toBe('Magic Box Assistant')
+    expect(agent.name).toBe('Magic Assistant')
   })
 
   it('preserves an existing permission mode when the seeder reruns', () => {
@@ -123,7 +123,7 @@ describe('CherryAssistantSeeder', () => {
     expect(journal?.value).toMatchObject({ version: '2' })
   })
 
-  it('adds Magic Box Assistant after a version 1 skip in an existing library and journals the rollout', () => {
+  it('adds Magic Assistant after a version 1 skip in an existing library and journals the rollout', () => {
     insertOrdinaryAgent()
     dbh.db
       .insert(appStateTable)
@@ -138,7 +138,7 @@ describe('CherryAssistantSeeder', () => {
     expect(journal?.value).toMatchObject({ version: new CherryAssistantSeeder().version })
   })
 
-  it('adds Magic Box Assistant when only soft-deleted ordinary agents exist', () => {
+  it('adds Magic Assistant when only soft-deleted ordinary agents exist', () => {
     const ordinaryAgentId = insertOrdinaryAgent()
     dbh.db
       .update(agentTable)
@@ -152,7 +152,7 @@ describe('CherryAssistantSeeder', () => {
     expect(builtinAgents(dbh.db)).toHaveLength(1)
   })
 
-  it('adds Magic Box Assistant when orphan sessions record prior library history', () => {
+  it('adds Magic Assistant when orphan sessions record prior library history', () => {
     const agentId = 'historical-agent'
     const sessionId = 'historical-session'
 
@@ -202,7 +202,7 @@ describe('CherryAssistantSeeder', () => {
     expect(journal?.value).toMatchObject({ version: new CherryAssistantSeeder().version })
   })
 
-  it('does not recreate a soft-deleted Magic Box Assistant during the library-wide rollout', () => {
+  it('does not recreate a soft-deleted Magic Assistant during the library-wide rollout', () => {
     const runner = new SeedRunner(dbh.db)
     new CherryAssistantSeeder().run(dbh.db)
     const [assistant] = builtinAgents(dbh.db)

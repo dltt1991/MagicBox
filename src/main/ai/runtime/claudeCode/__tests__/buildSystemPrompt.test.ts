@@ -339,7 +339,7 @@ describe('buildSystemPrompt — report_artifacts prompt', () => {
     expect(expectClaudeCodePreset(result)).toContain(ARTIFACTS_MARKER)
   })
 
-  it('appends it for the Magic Box Assistant like every other Agent', async () => {
+  it('appends it for the Magic Assistant like every other Agent', async () => {
     const agent = makeAgent({
       instructions: 'Assistant instructions.',
       configuration: { builtin_role: 'assistant' } as never
@@ -368,7 +368,7 @@ describe('buildSystemPrompt — runtime/CLI handbook', () => {
     expect(result).not.toContain('Install dependencies INTO the project (cwd) only')
   })
 
-  it('does not inject the handbook for the Magic Box Assistant', async () => {
+  it('does not inject the handbook for the Magic Assistant', async () => {
     const agent = makeAgent({
       instructions: 'Assistant instructions.',
       configuration: { builtin_role: 'assistant' } as never
@@ -380,7 +380,7 @@ describe('buildSystemPrompt — runtime/CLI handbook', () => {
   })
 })
 
-describe('buildSystemPrompt — builtin Magic Box Assistant definition', () => {
+describe('buildSystemPrompt — builtin Magic Assistant definition', () => {
   beforeEach(() => {
     mockFindBySessionId.mockReturnValue(null)
   })
@@ -396,7 +396,7 @@ describe('buildSystemPrompt — builtin Magic Box Assistant definition', () => {
     expect(result).toContain('SOUL_PROMPT')
     expect(result).toContain('Assistant instructions.')
     expect(result).toContain(ARTIFACTS_MARKER)
-    expect(result).not.toContain('Non-negotiable Magic Box Assistant contract')
+    expect(result).not.toContain('Non-negotiable Magic Assistant contract')
   })
 
   it('uses the bundled template when DB instructions are empty and resolves it on every build', async () => {
@@ -540,7 +540,7 @@ describe('buildSystemPrompt — builtin Magic Box Assistant definition', () => {
   })
 
   it('injects the bundled Assistant role exactly once', async () => {
-    const role = 'Within Magic Box, you serve as Magic Box Assistant, its built-in general-purpose Agent'
+    const role = 'Within Magic Box, you serve as Magic Assistant, its built-in general-purpose Agent'
     mockLoadBuiltinAgentDefinition.mockReturnValue({ instructions: role })
     mockBuildPrompt.mockResolvedValue({
       base: { kind: 'claude_code' },

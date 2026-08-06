@@ -1,7 +1,6 @@
 import '@testing-library/jest-dom/vitest'
 
 import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
@@ -65,17 +64,15 @@ describe('AboutSettings diagnostics entry', () => {
     })
   })
 
-  it('places diagnostics next to the debug panel and opens the export dialog', async () => {
-    const user = userEvent.setup()
+  it('places diagnostics next to the debug panel and keeps unavailable About actions disabled', async () => {
     render(<AboutSettings />)
     await waitFor(() => expect(mocks.request).toHaveBeenCalledWith('app.get_info'))
 
-    const diagnostics = screen.getByRole('button', { name: 'settings.about.diagnostics.entry.button' })
-    const debug = screen.getByRole('button', { name: 'settings.about.debug.open' })
-    const buttons = screen.getAllByRole('button')
-    expect(buttons.indexOf(debug)).toBe(buttons.indexOf(diagnostics) + 1)
+    const unavailableButtons = screen.getAllByRole('button', { name: 'settings.about.temporarilyUnavailable' })
+    expect(unavailableButtons).toHaveLength(10)
+    expect(unavailableButtons.every((button) => button.hasAttribute('disabled'))).toBe(true)
 
-    await user.click(diagnostics)
-    expect(screen.getByText('diagnostic-dialog-open')).toBeInTheDocument()
+    unavailableButtons.forEach((button) => button.click())
+    expect(screen.queryByText('diagnostic-dialog-open')).not.toBeInTheDocument()
   })
 })
