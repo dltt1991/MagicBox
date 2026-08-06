@@ -33,10 +33,10 @@
     },
     "builtin": {
       "cherry_assistant": {
-        "description": "Assistente integrado do Cherry Studio. Diagnostique problemas, guie operações, recolha FAQs, envie bugs/pedidos de recursos e pesquise/crie Competências"
+        "description": "Assistente integrado do Magic Box. Diagnostique problemas, guie operações, recolha FAQs, envie bugs/pedidos de recursos e pesquise/crie Competências"
       },
       "cherry_support": {
-        "description": "Agente de suporte oficial do Cherry Studio para configuração, diagnóstico, perguntas frequentes e feedback"
+        "description": "Agente de suporte oficial do Magic Box para configuração, diagnóstico, perguntas frequentes e feedback"
       }
     },
     "channels": {
@@ -1124,7 +1124,7 @@
     "authHeader": {
       "title": "Cabeçalho de autorização"
     },
-    "description": "Expõe as capacidades de IA do Cherry Studio através de APIs HTTP compatíveis com OpenAI",
+    "description": "Expõe as capacidades de IA do Magic Box através de APIs HTTP compatíveis com OpenAI",
     "documentation": {
       "title": "Documentação API"
     },
@@ -1473,7 +1473,7 @@
     "deeply_thought": "Profundamente pensado (demorou {{seconds}} segundos)",
     "default": {
       "description": "Olá, sou o assistente predefinido. Pode começar a conversar comigo agora.",
-      "name": "Assistente Cherry",
+      "name": "Assistente Magic Box",
       "topic": {
         "name": "Tópico Padrão"
       }
@@ -2156,7 +2156,7 @@
     },
     "api_gateway": {
       "description": "Qualquer CLI, qualquer modelo",
-      "requires_running": "Mantenha o Cherry Studio em execução após ativar — a CLI externa conecta-se ao gateway que ele hospeda.",
+      "requires_running": "Mantenha o Magic Box em execução após ativar — a CLI externa conecta-se ao gateway que ele hospeda.",
       "title": "Gateway Unificado"
     },
     "apply_failed": "Falha ao escrever a configuração da CLI no ficheiro do sistema",
@@ -2572,7 +2572,7 @@
       "503": "Serviço indisponível, por favor tente novamente mais tarde",
       "504": "Tempo de espera do gateway excedido, por favor tente novamente mais tarde"
     },
-    "image_unreadable_for_non_vision_model": "O modelo selecionado não suporta imagens, e o Cherry Studio não conseguiu extrair texto legível do anexo. Escolha um modelo com capacidade de visão ou remova a imagem e tente novamente.",
+    "image_unreadable_for_non_vision_model": "O modelo selecionado não suporta imagens, e o Magic Box não conseguiu extrair texto legível do anexo. Escolha um modelo com capacidade de visão ou remova a imagem e tente novamente.",
     "lastError": "Último erro",
     "maxEmbeddingsPerCall": "Máximo de embeddings por chamada",
     "message": "Mensagem de erro",
@@ -4789,12 +4789,12 @@
       "select_other_provider": "Selecionar Outro Fornecedor",
       "setup_hint": "Por favor, configure pelo menos um fornecedor para a melhor experiência",
       "subtitle": "Ligue um fornecedor para ativar a sua estação de trabalho de IA tudo-em-um",
-      "title": "Bem-vindo ao Cherry Studio"
+      "title": "Bem-vindo ao Magic Box"
     }
   },
   "openclaw": {
     "checking_installation": "A verificar a instalação do OpenClaw...",
-    "description": "Integre fornecedores do Cherry Studio com o Gateway OpenClaw para ativar agentes de codificação de IA como Claude Code, Qwen-Coder e muitos outros.",
+    "description": "Integre fornecedores do Magic Box com o Gateway OpenClaw para ativar agentes de codificação de IA como Claude Code, Qwen-Coder e muitos outros.",
     "error": {
       "select_provider_model": "Por favor, selecione primeiro um fornecedor e um modelo."
     },
@@ -5730,7 +5730,7 @@
           },
           "description": {
             "0": "O Assistente de Seleção de Texto precisa da permissão de «<strong>Funcionalidades de Acesso</strong>» para funcionar corretamente.",
-            "1": "Clique em «<strong>Ir para Configurações</strong>» e, na janela pop-up de pedido de permissão que aparecerá em seguida, clique no botão «<strong>Abrir Configurações do Sistema</strong>», depois localize «<strong>Cherry Studio</strong>» na lista de aplicações e ative o interruptor de permissão.",
+            "1": "Clique em «<strong>Ir para Configurações</strong>» e, na janela pop-up de pedido de permissão que aparecerá em seguida, clique no botão «<strong>Abrir Configurações do Sistema</strong>», depois localize «<strong>Magic Box</strong>» na lista de aplicações e ative o interruptor de permissão.",
             "2": "Após concluir a configuração, ative novamente o Assistente de Seleção de Texto."
           },
           "title": "Permissão de Acessibilidade"
@@ -5754,7 +5754,7 @@
         "wayland_checklist_subtitle": "Certifique-se de que as seguintes condições sejam atendidas para otimizar a experiência com Wayland:",
         "wayland_description": "Está numa sessão Wayland. Devido a limitações do sistema, em alguns ambientes de trabalho a barra de ferramentas poderá aparecer apenas no centro do ecrã, em vez de acompanhar o texto selecionado. Recomenda-se mudar para uma sessão X11 para obter a experiência completa.",
         "wayland_title": "Aviso de Sessão Wayland",
-        "xwayland_fail": "Não ativado, por favor inicie o Cherry Studio com a flag `--ozone-platform=x11`",
+        "xwayland_fail": "Não ativado, por favor inicie o Magic Box com a flag `--ozone-platform=x11`",
         "xwayland_label": "Modo XWayland:",
         "xwayland_pass": "Ativado"
       },
@@ -5951,12 +5951,12 @@
         "inspecting": "A preparar as informações disponíveis...",
         "limit": "Para manter o tamanho do ZIP controlado, os registos e os dados detalhados estão limitados a {{size}}. As informações mais recentes têm prioridade.",
         "mail": {
-          "body": "Agradeço a ajuda na investigação deste problema do Cherry Studio.\n\nID do pacote de diagnóstico: {{bundleId}}\nVersão: {{version}}\nPlataforma: {{platform}}\nPeríodo: {{range}}\nFicheiro: {{fileName}}\n\nAnexe o ficheiro ZIP a este e-mail. O pacote foi guardado localmente e não foi carregado automaticamente.",
-          "subject": "Diagnóstico do Cherry Studio {{bundleId}}"
+          "body": "Agradeço a ajuda na investigação deste problema do Magic Box.\n\nID do pacote de diagnóstico: {{bundleId}}\nVersão: {{version}}\nPlataforma: {{platform}}\nPeríodo: {{range}}\nFicheiro: {{fileName}}\n\nAnexe o ficheiro ZIP a este e-mail. O pacote foi guardado localmente e não foi carregado automaticamente.",
+          "subject": "Diagnóstico do Magic Box {{bundleId}}"
         },
         "privacy": {
           "consent": "Compreendo as informações acima e partilharei o ZIP apenas em privado com o suporte.",
-          "description": "Estes registos podem conter texto introduzido por si, localizações de ficheiros, conteúdo de pedidos e respostas e informações de ligação a serviços. O Cherry Studio não oculta nem carrega estes dados automaticamente. Partilhe o ZIP apenas com o suporte e nunca o publique no GitHub ou noutros sites públicos.",
+          "description": "Estes registos podem conter texto introduzido por si, localizações de ficheiros, conteúdo de pedidos e respostas e informações de ligação a serviços. O Magic Box não oculta nem carrega estes dados automaticamente. Partilhe o ZIP apenas com o suporte e nunca o publique no GitHub ou noutros sites públicos.",
           "title": "Antes de partilhar"
         },
         "range_title": "Período",
@@ -5997,13 +5997,13 @@
       },
       "feedback": {
         "agent": {
-          "description": "Converse com o Cherry Support para obter ajuda ou partilhar comentários.",
+          "description": "Converse com o Magic Box Support para obter ajuda ou partilhar comentários.",
           "title": "Utilizar agente"
         },
-        "agent_error": "Não foi possível abrir o Cherry Support para feedback. Por favor, tente novamente.",
+        "agent_error": "Não foi possível abrir o Magic Box Support para feedback. Por favor, tente novamente.",
         "button": "Comentários",
         "dialog": {
-          "description": "Escolha como partilhar feedback e ajude-nos a melhorar o Cherry Studio.",
+          "description": "Escolha como partilhar feedback e ajude-nos a melhorar o Magic Box.",
           "title": "Escolha um canal de feedback"
         },
         "github": {
@@ -6083,9 +6083,9 @@
         "path_changed_without_copy": "O caminho foi alterado com sucesso",
         "restart_notice": "A aplicação pode reiniciar várias vezes para aplicar as alterações",
         "select": "Modificar Pasta",
-        "select_error": "A pasta selecionada poderá estar a ser utilizada por outra instância do Cherry Studio. Feche as outras instâncias e tente novamente. Se não houver nenhuma em execução, elimine os ficheiros SingletonLock e SingletonSocket antigos dessa pasta.",
+        "select_error": "A pasta selecionada poderá estar a ser utilizada por outra instância do Magic Box. Feche as outras instâncias e tente novamente. Se não houver nenhuma em execução, elimine os ficheiros SingletonLock e SingletonSocket antigos dessa pasta.",
         "select_error_in_app_path": "O novo caminho é igual aa pasta de instalação da aplicação. Escolha outro caminho",
-        "select_error_protected_path": "O caminho selecionado está protegido pelo sistema operativo ou pelo Cherry Studio. Por favor, escolha outra pasta.",
+        "select_error_protected_path": "O caminho selecionado está protegido pelo sistema operativo ou pelo Magic Box. Por favor, escolha outra pasta.",
         "select_error_root_path": "O novo caminho não pode ser a pasta raiz",
         "select_error_same_path": "O novo caminho é igual ao caminho antigo. Escolha outro caminho",
         "select_error_write_permission": "O novo caminho não possui permissão de escrita",
@@ -6138,7 +6138,7 @@
         "title": "Limpar cache",
         "total_partial": "Tamanho contabilizado: {{size}}; alguns tamanhos são desconhecidos",
         "unavailable": "Não foi possível calcular",
-        "waiting_for_legacy_database": "A aguardar que a base de dados antiga seja libertada. Feche as outras janelas do Cherry Studio; a limpeza continuará quando as respetivas ligações forem fechadas."
+        "waiting_for_legacy_database": "A aguardar que a base de dados antiga seja libertada. Feche as outras janelas do Magic Box; a limpeza continuará quando as respetivas ligações forem fechadas."
       },
       "data": {
         "title": "Pasta de dados"
@@ -6759,9 +6759,9 @@
       "notInstalled": "Não instalado",
       "openBinariesDir": "Abrir a pasta dos binários",
       "remove": "Remover ferramenta",
-      "removeConfirmMessage": "Remover \"{{name}}\" do Cherry Studio? A respetiva definição portátil será eliminada. O Cherry também limpará qualquer cópia correspondente gerida pelo mise, caso exista. Os executáveis do sistema e os incluídos na aplicação nunca serão alterados.",
+      "removeConfirmMessage": "Remover \"{{name}}\" do Magic Box? A respetiva definição portátil será eliminada. O Magic Box também limpará qualquer cópia correspondente gerida pelo mise, caso exista. Os executáveis do sistema e os incluídos na aplicação nunca serão alterados.",
       "removeConfirmTitle": "Remover ferramenta",
-      "removeDefinitionOnlyConfirmMessage": "O Cherry não conseguiu limpar \"{{name}}\" em segurança: {{details}} Remover apenas a respetiva definição irá ocultar o cartão, mas manterá instalados os ficheiros de backend. Pretende continuar?",
+      "removeDefinitionOnlyConfirmMessage": "O Magic Box não conseguiu limpar \"{{name}}\" em segurança: {{details}} Remover apenas a respetiva definição irá ocultar o cartão, mas manterá instalados os ficheiros de backend. Pretende continuar?",
       "removeDefinitionOnlyConfirmTitle": "Remover Apenas a Definição?",
       "removeDefinitionOnlyDependents": "Ferramentas instaladas dependem dela: {{dependents}}.",
       "removeError": "Falha ao remover ferramenta",
@@ -6793,7 +6793,7 @@
         "uv": "Gestor de pacotes Python para serviços MCP e instalação de dependências."
       },
       "uninstall": "Desinstalar",
-      "uninstallConfirmMessage": "Tem a certeza de que pretende desinstalar \"{{name}}\"? A cópia de backend do Cherry Studio será eliminada.",
+      "uninstallConfirmMessage": "Tem a certeza de que pretende desinstalar \"{{name}}\"? A cópia de backend do Magic Box será eliminada.",
       "uninstallConfirmTitle": "Ferramenta de Desinstalação",
       "uninstallFailed": "Falha ao desinstalar ferramenta",
       "uninstallSuccess": "Ferramenta desinstalada",
@@ -6887,7 +6887,7 @@
       "common": {
         "menu": {
           "presentation_mode": {
-            "cherry": "Cherry",
+            "cherry": "Magic Box",
             "native": "Nativo",
             "restart": {
               "content": "Alterar o estilo do menu exige reiniciar a aplicação para que as alterações entrem em vigor. Deseja reiniciar agora?",

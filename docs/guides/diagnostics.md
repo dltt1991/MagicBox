@@ -20,13 +20,13 @@ Double-clicking from Finder / Dock / Start Menu does **not** pass shell env vars
 
 ```bash
 # macOS
-CS_DIAGNOSTICS=1 "/Applications/Cherry Studio.app/Contents/MacOS/Cherry Studio"
+CS_DIAGNOSTICS=1 "/Applications/Magic Box.app/Contents/MacOS/Magic Box"
 
 # Windows (PowerShell) — adjust the path to your install location
-$env:CS_DIAGNOSTICS=1; & "$env:LOCALAPPDATA\Programs\Cherry Studio\Cherry Studio.exe"
+$env:CS_DIAGNOSTICS=1; & "$env:LOCALAPPDATA\Programs\Magic Box\Magic Box.exe"
 
 # Linux (AppImage; or the installed binary, whose path varies by distro)
-CS_DIAGNOSTICS=1 "./Cherry Studio-<version>-<arch>.AppImage"
+CS_DIAGNOSTICS=1 "./Magic Box-<version>-<arch>.AppImage"
 ```
 
 ### Output

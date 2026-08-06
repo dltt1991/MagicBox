@@ -132,7 +132,7 @@ type CustomHeaderSource = string | Readonly<Record<string, string>> | undefined
 /**
  * Serialize headers in the newline-delimited format consumed by Claude Code's
  * `ANTHROPIC_CUSTOM_HEADERS`. Later sources win case-insensitively, so provider
- * settings override Cherry's app attribution and inherited agent/shell headers.
+ * settings override Magic Box's app attribution and inherited agent/shell headers.
  */
 function mergeAnthropicCustomHeaders(...sources: CustomHeaderSource[]): string | undefined {
   const headers = new Map<string, { name: string; value: string }>()
@@ -566,7 +566,7 @@ export async function buildClaudeCodeQueryRequestForAgentSession(
 
 /**
  * Claude Agent SDK always speaks the Anthropic-native reasoning dialect. When its route points at
- * Cherry's gateway, the gateway translates those native fields again for the target endpoint.
+ * Magic Box's gateway, the gateway translates those native fields again for the target endpoint.
  */
 function resolveClaudeCodeThinkingOptions(
   model: Model,

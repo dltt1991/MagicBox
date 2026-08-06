@@ -1,6 +1,6 @@
 # Data System Reference
 
-This is the main entry point for Cherry Studio's data management documentation. The application uses four data systems based on data characteristics and loading requirements.
+This is the main entry point for Magic Box's data management documentation. The application uses four data systems based on data characteristics and loading requirements.
 
 ## Quick Navigation
 

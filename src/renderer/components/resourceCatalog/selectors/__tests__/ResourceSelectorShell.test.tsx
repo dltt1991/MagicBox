@@ -797,12 +797,12 @@ describe('ResourceSelectorShell', () => {
         <ResourceSelectorShell
           trigger={<button type="button">Open</button>}
           items={[
-            { ...ITEMS[0], groupId: 'group-cherry', groupName: 'Cherry' },
+            { ...ITEMS[0], groupId: 'group-cherry', groupName: 'Magic Box' },
             { ...ITEMS[1], groupId: 'group-dev', groupName: 'DEV' },
-            { ...ITEMS[2], groupId: 'group-cherry', groupName: 'Cherry' }
+            { ...ITEMS[2], groupId: 'group-cherry', groupName: 'Magic Box' }
           ]}
           groups={[
-            { id: 'group-cherry', name: 'Cherry' },
+            { id: 'group-cherry', name: 'Magic Box' },
             { id: 'group-dev', name: 'DEV' }
           ]}
           pinnedIds={[]}
@@ -814,7 +814,7 @@ describe('ResourceSelectorShell', () => {
       )
       openPopover()
 
-      fireEvent.click(screen.getByRole('button', { name: 'Cherry' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Magic Box' }))
       expect(screen.queryByRole('option', { name: /Alpha/ })).toBeInTheDocument()
       expect(screen.queryByRole('option', { name: /Gamma/ })).toBeInTheDocument()
       expect(screen.queryByRole('option', { name: /Beta/ })).not.toBeInTheDocument()
@@ -827,9 +827,9 @@ describe('ResourceSelectorShell', () => {
 
     it('stops filtering when the selected group is removed', () => {
       const groupedItems = [
-        { ...ITEMS[0], groupId: 'group-cherry', groupName: 'Cherry' },
+        { ...ITEMS[0], groupId: 'group-cherry', groupName: 'Magic Box' },
         { ...ITEMS[1], groupId: 'group-dev', groupName: 'DEV' },
-        { ...ITEMS[2], groupId: 'group-cherry', groupName: 'Cherry' }
+        { ...ITEMS[2], groupId: 'group-cherry', groupName: 'Magic Box' }
       ]
       const commonProps = {
         trigger: <button type="button">Open</button>,
@@ -844,14 +844,14 @@ describe('ResourceSelectorShell', () => {
           {...commonProps}
           items={groupedItems}
           groups={[
-            { id: 'group-cherry', name: 'Cherry' },
+            { id: 'group-cherry', name: 'Magic Box' },
             { id: 'group-dev', name: 'DEV' }
           ]}
         />
       )
       openPopover()
 
-      fireEvent.click(screen.getByRole('button', { name: 'Cherry' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Magic Box' }))
       expect(screen.queryByRole('option', { name: /Beta/ })).not.toBeInTheDocument()
 
       rerender(<ResourceSelectorShell {...commonProps} items={groupedItems} groups={[]} />)

@@ -39,14 +39,14 @@ describe('MessageWebSearchToolTitle', () => {
             toolCallId: 'tool-call-1',
             tool: { id: 'web-search', name: 'web_search', type: 'builtin' },
             status: 'done',
-            arguments: { query: 'Cherry Studio' },
+            arguments: { query: 'Magic Box' },
             response: []
           } as NormalToolResponse
         }
       />
     )
 
-    expect(screen.getByText('Cherry Studio')).toBeInTheDocument()
+    expect(screen.getByText('Magic Box')).toBeInTheDocument()
     expect(screen.getByText('No search results found')).toBeInTheDocument()
     expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
@@ -60,10 +60,8 @@ describe('MessageWebSearchToolTitle', () => {
             toolCallId: 'tool-call-1',
             tool: { id: 'web-search', name: 'web_search', type: 'builtin' },
             status: 'done',
-            arguments: { query: 'Cherry Studio' },
-            response: [
-              { id: 1, title: 'Cherry Studio', url: 'https://www.cherry-ai.com/blog', content: 'Cherry Studio' }
-            ]
+            arguments: { query: 'Magic Box' },
+            response: [{ id: 1, title: 'Magic Box', url: 'https://www.cherry-ai.com/blog', content: 'Magic Box' }]
           } as NormalToolResponse
         }
       />
@@ -71,7 +69,7 @@ describe('MessageWebSearchToolTitle', () => {
 
     // Header shows the query + the result count (collapse body is not rendered yet).
     const header = screen.getByRole('button')
-    expect(within(header).getByText('Cherry Studio')).toBeInTheDocument()
+    expect(within(header).getByText('Magic Box')).toBeInTheDocument()
     expect(within(header).getByText('1 search results')).toBeInTheDocument()
 
     fireEvent.click(header)

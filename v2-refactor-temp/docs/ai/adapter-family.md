@@ -2,7 +2,7 @@
 
 ## What this fixes
 
-Cherry Studio routes every AI request to one of ~26 "adapters" — each adapter is an `@ai-sdk/*` package (`@ai-sdk/anthropic`, `@ai-sdk/openai`, `@ai-sdk/google-vertex`, …) that knows the request format, streaming codec, capability matrix, and per-vendor tools (`webSearch_20250305`, `googleSearch`, `responses` API …). Picking the wrong adapter means sending OpenAI-shape JSON to an Anthropic-protocol endpoint and getting nonsense back.
+Magic Box routes every AI request to one of ~26 "adapters" — each adapter is an `@ai-sdk/*` package (`@ai-sdk/anthropic`, `@ai-sdk/openai`, `@ai-sdk/google-vertex`, …) that knows the request format, streaming codec, capability matrix, and per-vendor tools (`webSearch_20250305`, `googleSearch`, `responses` API …). Picking the wrong adapter means sending OpenAI-shape JSON to an Anthropic-protocol endpoint and getting nonsense back.
 
 The v1 resolver picked an adapter by inferring from `provider.id`, `provider.type`, and the `apiHost` string. That worked when a provider had **one** API endpoint. It broke for **multi-endpoint relays**: MiniMax, Silicon, AiHubMix etc. expose both an openai-chat-completions URL **and** an anthropic-messages URL under the same `provider.id`. The same provider needs two different adapters depending on which URL the call is going to.
 

@@ -9,7 +9,7 @@ per turn, or Claude Code's SDK `query`.
 
 The boundary is:
 
-- `AgentSessionRuntimeService` owns Cherry's UI/session lifecycle.
+- `AgentSessionRuntimeService` owns Magic Box's UI/session lifecycle.
 - `AgentSessionRuntimeDriver` owns the concrete agent-session runtime lifecycle.
 
 Claude Code is the first driver. Its `query`, warm query, SDK input
@@ -234,7 +234,7 @@ running under the old policy.
 
 ## Internal Agent continuation normalization
 
-When a Cherry-internal Agent Session request enters the API gateway in Anthropic
+When a Magic Box-internal Agent Session request enters the API gateway in Anthropic
 Messages format and its converted UIMessage list ends with a text-only assistant
 attachment, the gateway appends an ephemeral user continuation after conversion.
 The Agent request itself proves that Claude Code's standard loop intends another

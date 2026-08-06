@@ -206,7 +206,7 @@ describe('buildSystemPrompt — current workspace', () => {
     expect(second).not.toContain('"/workspace/project-a"')
   })
 
-  it('replaces only the Claude Code base with system.md and retains Cherry context', async () => {
+  it('replaces only the Claude Code base with system.md and retains Magic Box context', async () => {
     mockBuildPrompt.mockResolvedValueOnce({
       base: { kind: 'custom', content: 'CUSTOM SYSTEM PROMPT' },
       context: 'SOUL_PROMPT'
@@ -227,7 +227,7 @@ describe('buildSystemPrompt — current workspace', () => {
     expect(result).not.toContain('## Available Runtimes')
   })
 
-  it('treats an empty system.md as a custom base and still retains Cherry context', async () => {
+  it('treats an empty system.md as a custom base and still retains Magic Box context', async () => {
     mockBuildPrompt.mockResolvedValueOnce({ base: { kind: 'custom', content: '' }, context: 'SOUL_PROMPT' })
 
     const result = await buildSystemPrompt(
@@ -339,7 +339,7 @@ describe('buildSystemPrompt — report_artifacts prompt', () => {
     expect(expectClaudeCodePreset(result)).toContain(ARTIFACTS_MARKER)
   })
 
-  it('appends it for the Cherry Assistant like every other Agent', async () => {
+  it('appends it for the Magic Box Assistant like every other Agent', async () => {
     const agent = makeAgent({
       instructions: 'Assistant instructions.',
       configuration: { builtin_role: 'assistant' } as never
@@ -368,7 +368,7 @@ describe('buildSystemPrompt — runtime/CLI handbook', () => {
     expect(result).not.toContain('Install dependencies INTO the project (cwd) only')
   })
 
-  it('does not inject the handbook for the Cherry Assistant', async () => {
+  it('does not inject the handbook for the Magic Box Assistant', async () => {
     const agent = makeAgent({
       instructions: 'Assistant instructions.',
       configuration: { builtin_role: 'assistant' } as never
@@ -380,7 +380,7 @@ describe('buildSystemPrompt — runtime/CLI handbook', () => {
   })
 })
 
-describe('buildSystemPrompt — builtin Cherry Assistant definition', () => {
+describe('buildSystemPrompt — builtin Magic Box Assistant definition', () => {
   beforeEach(() => {
     mockFindBySessionId.mockReturnValue(null)
   })
@@ -396,7 +396,7 @@ describe('buildSystemPrompt — builtin Cherry Assistant definition', () => {
     expect(result).toContain('SOUL_PROMPT')
     expect(result).toContain('Assistant instructions.')
     expect(result).toContain(ARTIFACTS_MARKER)
-    expect(result).not.toContain('Non-negotiable Cherry Assistant contract')
+    expect(result).not.toContain('Non-negotiable Magic Box Assistant contract')
   })
 
   it('uses the bundled template when DB instructions are empty and resolves it on every build', async () => {
@@ -413,7 +413,7 @@ describe('buildSystemPrompt — builtin Cherry Assistant definition', () => {
     expect(mockLoadBuiltinAgentDefinition).toHaveBeenCalledTimes(2)
   })
 
-  it('loads the bundled product feedback role for Cherry Support', async () => {
+  it('loads the bundled product feedback role for Magic Box Support', async () => {
     mockLoadBuiltinAgentDefinition.mockReturnValue({
       instructions: 'Answer questions, provide usage help, troubleshoot problems, and submit feedback.'
     })
@@ -540,7 +540,7 @@ describe('buildSystemPrompt — builtin Cherry Assistant definition', () => {
   })
 
   it('injects the bundled Assistant role exactly once', async () => {
-    const role = 'Within Cherry Studio, you serve as Cherry Assistant, its built-in general-purpose Agent'
+    const role = 'Within Magic Box, you serve as Magic Box Assistant, its built-in general-purpose Agent'
     mockLoadBuiltinAgentDefinition.mockReturnValue({ instructions: role })
     mockBuildPrompt.mockResolvedValue({
       base: { kind: 'claude_code' },

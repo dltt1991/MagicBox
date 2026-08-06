@@ -207,7 +207,7 @@ function resolveSpanModel(node: TraceNode): { id: string; name: string; provider
   const attrs = attrsOf(node)
   const name = node.modelName ?? str(attrs.modelName) ?? str(attrs['ai.model.id'])
   if (!name) return undefined
-  // Cherry's uniqueModelId (`provider::model`) lives on the turn span as `cs.model_id`.
+  // Magic Box's uniqueModelId (`provider::model`) lives on the turn span as `cs.model_id`.
   const uniqueId = attrs['cs.model_id']
   if (typeof uniqueId === 'string') {
     try {

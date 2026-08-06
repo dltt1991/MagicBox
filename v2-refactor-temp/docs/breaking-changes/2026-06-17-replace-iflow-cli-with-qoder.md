@@ -12,7 +12,7 @@ The **iFlow CLI** option was removed from Code Tools, and a new **Qoder CLI** op
 
 ## Why this matters to the user
 
-Users who previously selected iFlow CLI will no longer find it in the Code Tools CLI list, and its per-tool settings (model, environment variables, directories) are no longer shown. Qoder CLI appears as a new choice. Like GitHub Copilot CLI, Qoder CLI authenticates with its own Qoder account (via `/login`) instead of a Cherry Studio provider/model, so it does not require selecting a provider or model.
+Users who previously selected iFlow CLI will no longer find it in the Code Tools CLI list, and its per-tool settings (model, environment variables, directories) are no longer shown. Qoder CLI appears as a new choice. Like GitHub Copilot CLI, Qoder CLI authenticates with its own Qoder account (via `/login`) instead of a Magic Box provider/model, so it does not require selecting a provider or model.
 
 ## What the user should do
 
@@ -22,4 +22,4 @@ Switch to Qoder CLI or another supported Code CLI. iFlow CLI is discontinued ups
 
 - iFlow CLI npm package `@iflow-ai/iflow-cli` reached EOL 2026-04-17; the vendor's official migration path is Qoder.
 - Qoder CLI integration installs npm `@qodercn-ai/qoderclicn` (CN edition) and runs `qoderclicn`.
-- Qoder ships an ESM bundle that Bun cannot execute, so Cherry Studio launches it directly via its `#!/usr/bin/env node` shebang. **Qoder CLI therefore requires Node.js (>=20) on the user's PATH**, unlike the other CLIs that run on Cherry Studio's bundled Bun.
+- Qoder ships an ESM bundle that Bun cannot execute, so Magic Box launches it directly via its `#!/usr/bin/env node` shebang. **Qoder CLI therefore requires Node.js (>=20) on the user's PATH**, unlike the other CLIs that run on Magic Box's bundled Bun.

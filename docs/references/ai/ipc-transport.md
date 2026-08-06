@@ -41,7 +41,7 @@ Per-topic chunks arrive via `onStreamChunk` listeners filtered by
 | `submit-message` | Includes `userMessageParts` (the latest message) so Main persists it |
 | `regenerate-message` | Sends `parentAnchorId` only; Main re-runs from the existing parent |
 
-Cherry's transport never derives `continue-conversation` from
+Magic Box's transport never derives `continue-conversation` from
 message-state introspection. Approval-driven resumption goes through the
 explicit `Ai_ToolApproval_Respond` IPC handled by
 [`useToolApprovalBridge`](./tool-approval.md).

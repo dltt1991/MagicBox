@@ -1,5 +1,5 @@
 appId: com.kangfenmao.CherryStudio
-productName: Cherry Studio
+productName: Magic Box
 electronLanguages:
   - zh-CN
   - zh-TW
@@ -14,7 +14,7 @@ directories:
   buildResources: build
 
 protocols:
-  - name: Cherry Studio
+  - name: Magic Box
     schemes:
       - cherrystudio
 files:
@@ -87,7 +87,7 @@ extraResources:
   - from: "packages/provider-registry/data"
     to: "provider-registry"
 win:
-  executableName: Cherry Studio
+  executableName: Magic Box
   artifactName: ${productName}-${version}-${arch}-setup.${ext}
   extraResources:
     - from: "node_modules/@aiany/sqlite-vec-windows-${arch}/vec0.dll"
@@ -136,7 +136,7 @@ linux:
   category: Utility
   desktop:
     entry:
-      Name: Cherry Studio
+      Name: Magic Box
       StartupWMClass: CherryStudio
   mimeTypes:
     - x-scheme-handler/cherrystudio
@@ -156,14 +156,14 @@ artifactBuildCompleted: scripts/artifact-build-completed.js
 releaseInfo:
   releaseNotes: |
     <!--LANG:en-->
-    Cherry Studio 2.0.4 - New Features, Fixes, and Performance
+    Magic Box 2.0.4 - New Features, Fixes, and Performance
 
     ✨ New Features
     - [Composer] Tool permission requests in Agent sessions can now be approved with Enter or denied with Esc
     - [Context] Restored a "recent messages kept" context limit available globally in Settings → Model and per assistant, plus a new Context Management section exposing master switch, message limit, tool-output truncation threshold, auto-compress, and compression model
     - [Web Search] Add Querit fetchUrls capability. Querit.ai offers 1,000 free API requests for new users
     - [MCP Hub] MCP clients connecting to the local API gateway can now open a session to receive live tool-list updates and progress from long-running tools
-    - [MCP Hub] Restored the MCP-over-HTTP endpoints on the local API gateway so external tools can once again use Cherry Studio as a local MCP hub. Action required: clients written against the 1.9.x endpoints should stop unwrapping the `{ success, data }` envelope and stop relying on `Mcp-Session-Id` — the proxy is now stateless
+    - [MCP Hub] Restored the MCP-over-HTTP endpoints on the local API gateway so external tools can once again use Magic Box as a local MCP hub. Action required: clients written against the 1.9.x endpoints should stop unwrapping the `{ success, data }` envelope and stop relying on `Mcp-Session-Id` — the proxy is now stateless
     - [Agent] Agent conversations can now mention accessible workspace folders with @
     - [Agent] Add workspace deletion from the shared selector with an impact preview for sessions, agent channels, and scheduled tasks while preserving files on disk
     - [Models] Add configurable model pricing tiers based on input token count, with separate input, output, cache-read, and cache-write rates for each tier
@@ -214,8 +214,8 @@ releaseInfo:
     - [Code Viewer] Fix long unbreakable lines (base64, URLs, minified JSON) in chat code blocks and the trace call-chain detail view being clipped / not wrapping when auto-wrap is enabled. They now wrap correctly; disabling wrap still scrolls horizontally
     - [Sidebar] Preserved collapsed assistant folders in the classic conversation sidebar when switching between Chat and Work
     - [Backup] Fix automatic backups running again shortly after every app restart instead of respecting the configured interval
-    - [Shortcuts] Fix window-local zoom shortcuts being captured by Cherry Studio while it is unfocused
-    - [Agent] Fix Agent workspace file mentions so files in deeper nested folders can be found with @ search. Action required: when OCR cannot extract text from an image attached to a text-only model, Cherry Studio now stops before sending the request and asks you to choose a vision-capable model or remove the image
+    - [Shortcuts] Fix window-local zoom shortcuts being captured by Magic Box while it is unfocused
+    - [Agent] Fix Agent workspace file mentions so files in deeper nested folders can be found with @ search. Action required: when OCR cannot extract text from an image attached to a text-only model, Magic Box now stops before sending the request and asks you to choose a vision-capable model or remove the image
     - [Migration] Fix "No tool output found for tool call" when continuing a conversation migrated from v1 that used MCP tools
     - [Image Viewer] Fix rotation and flip not being baked into the saved image
     - [Thinking Block] Fix the "Auto-collapse thinking content" setting having no effect when disabled — turning it off now keeps thinking blocks expanded
@@ -228,14 +228,14 @@ releaseInfo:
     - [Chat] Fix renderer crashes ("app suddenly closes") during long fast streaming replies, caused by quadratic memory growth in stream handling and rendering. Very large streamed replies now render with bounded memory, and oversized single markdown blocks no longer fail to render
 
     <!--LANG:zh-CN-->
-    Cherry Studio 2.0.4 - 新功能、修复与性能优化
+    Magic Box 2.0.4 - 新功能、修复与性能优化
 
     ✨ 新功能
     - [输入框] Agent 会话中的工具权限请求现在可以用 Enter 同意、Esc 拒绝
     - [上下文] 恢复"保留最近 N 条消息"的上下文限制，可在设置 → 模型中全局配置或按助手覆盖；并在设置 → 模型中新增"上下文管理"区域，暴露主开关、消息数量、工具输出截断阈值、自动压缩与压缩模型等参数
     - [联网搜索] 新增 Querit fetchUrls 能力，Querit.ai 对新用户提供 1,000 次免费 API 请求
     - [MCP 中心] 连接到本地 API 网关的 MCP 客户端现在可以打开会话，接收工具列表的实时更新和长耗时工具的进度回调
-    - [MCP 中心] 恢复本地 API 网关上的 MCP-over-HTTP 端点，外部工具可以再次将 Cherry Studio 作为本地 MCP 中心。需要采取行动：基于 1.9.x 端点的客户端应停止解包 `{ success, data }` 信封并不再依赖 `Mcp-Session-Id`，代理现在为无状态
+    - [MCP 中心] 恢复本地 API 网关上的 MCP-over-HTTP 端点，外部工具可以再次将 Magic Box 作为本地 MCP 中心。需要采取行动：基于 1.9.x 端点的客户端应停止解包 `{ success, data }` 信封并不再依赖 `Mcp-Session-Id`，代理现在为无状态
     - [Agent] Agent 对话现在可以用 @ 提及可访问的工作区文件夹
     - [Agent] 新增从共享选择器中删除工作区的能力，并提供对会话、Agent 渠道和定时任务的影响预览，磁盘上的文件会被保留
     - [模型] 新增基于输入 token 数量的可配置模型价格分层，每层支持独立的输入、输出、缓存读、缓存写费率
@@ -286,8 +286,8 @@ releaseInfo:
     - [代码查看器] 修复对话代码块和追踪调用链详情中无法换行的长行（base64、URL、压缩 JSON）在开启自动换行时被裁剪的问题：现在可以正确换行；关闭换行时仍可横向滚动
     - [侧边栏] 在经典对话侧边栏中，切换 Chat 和 Work 时保留助手分组的折叠状态
     - [备份] 修复自动备份在每次应用重启后不久就再次运行、而不遵守配置间隔的问题
-    - [快捷键] 修复窗口级缩放快捷键在 Cherry Studio 未获焦点时仍被其捕获的问题
-    - [Agent] 修复 Agent 工作区文件提及，让更深层嵌套文件夹中的文件也能通过 @ 搜索找到。需要采取行动：当 OCR 无法从附加到纯文本模型的图像中提取文本时，Cherry Studio 现在会在发送请求前停止，并要求你选择支持视觉的模型或移除该图像
+    - [快捷键] 修复窗口级缩放快捷键在 Magic Box 未获焦点时仍被其捕获的问题
+    - [Agent] 修复 Agent 工作区文件提及，让更深层嵌套文件夹中的文件也能通过 @ 搜索找到。需要采取行动：当 OCR 无法从附加到纯文本模型的图像中提取文本时，Magic Box 现在会在发送请求前停止，并要求你选择支持视觉的模型或移除该图像
     - [迁移] 修复从 v1 迁移且使用了 MCP 工具的对话在继续时报 "No tool output found for tool call" 的问题
     - [图片查看器] 修复旋转和翻转未写入保存图像的问题
     - [思考块] 修复"自动折叠思考内容"设置在禁用时无效的问题 —— 关闭后思考块会保持展开

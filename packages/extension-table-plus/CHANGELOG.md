@@ -14,7 +14,7 @@
 
 ### Patch Changes
 
-- Forked from @tiptap/extension-table v3.0.9 with Cherry Studio specific enhancements
+- Forked from @tiptap/extension-table v3.0.9 with Magic Box specific enhancements
 
 ## Historical Changes
 

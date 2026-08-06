@@ -262,7 +262,7 @@ export class ProtocolService extends BaseService {
       }
 
       const desktopFileContent = `[Desktop Entry]
-Name=Cherry Studio
+Name=Magic Box
 Exec=${escapePathForExec(appPath)} %U
 Terminal=false
 Type=Application

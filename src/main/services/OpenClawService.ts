@@ -1002,7 +1002,7 @@ export class OpenClawService extends BaseService {
   }
 
   /**
-   * Sync Cherry Studio Provider configuration to OpenClaw
+   * Sync Magic Box Provider configuration to OpenClaw
    */
   public async syncConfig(uniqueModelId: UniqueModelId, port?: number): Promise<OperationResult> {
     try {
@@ -1239,8 +1239,8 @@ export class OpenClawService extends BaseService {
         apiKey = this.getNoKeyPlaceholder(provider) ?? 'no-key-required'
       }
 
-      // Remove inactive Cherry-generated providers. On the selected provider, retain only
-      // hand-edited fields supported by the live OpenClaw schema; Cherry-owned identity,
+      // Remove inactive Magic Box-generated providers. On the selected provider, retain only
+      // hand-edited fields supported by the live OpenClaw schema; Magic Box-owned identity,
       // endpoint, credential, and model-name fields are always regenerated below.
       const providerSchemaPath = ['models', 'providers', '*']
       const modelSchemaPath = [...providerSchemaPath, 'models', '[]']

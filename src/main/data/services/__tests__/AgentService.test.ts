@@ -238,7 +238,7 @@ describe('AgentService', () => {
   describe('ensureBuiltinAgent', () => {
     const defaults: Parameters<typeof agentService.ensureBuiltinAgent>[0] = {
       builtinRole: 'assistant',
-      name: 'Cherry Assistant',
+      name: 'Magic Box Assistant',
       preferredModelId: TEST_MODEL_ID,
       type: 'claude-code',
       configuration: {
@@ -279,7 +279,7 @@ describe('AgentService', () => {
 
       expect(second).toEqual(first)
       expect(first).toMatchObject({
-        name: 'Cherry Assistant',
+        name: 'Magic Box Assistant',
         model: TEST_MODEL_ID,
         configuration: {
           avatar: '🍒',
@@ -543,7 +543,7 @@ describe('AgentService', () => {
     })
 
     it('rejects updateAgent changing an existing builtin_role', async () => {
-      // Seed through the internal tx path, as the Cherry Assistant seeder does.
+      // Seed through the internal tx path, as the Magic Box Assistant seeder does.
       const agentId = 'agent_builtin_change'
       await insertAgent({ id: agentId, configuration: { builtin_role: 'assistant' } })
 
@@ -1477,7 +1477,7 @@ describe('AgentService', () => {
     it('searches the localized blank builtin description server-side and returns it for display', async () => {
       await insertAgent({
         id: 'agent_builtin_assistant',
-        name: 'Cherry Assistant',
+        name: 'Magic Box Assistant',
         description: '',
         configuration: { builtin_role: 'assistant' }
       })
@@ -1542,7 +1542,7 @@ describe('AgentService', () => {
     it('matches and displays the localized blank builtin description in global search', async () => {
       await insertAgent({
         id: 'agent_builtin_global_search',
-        name: 'Cherry Assistant',
+        name: 'Magic Box Assistant',
         description: '',
         configuration: { builtin_role: 'assistant' },
         updatedAt: 100
@@ -1552,15 +1552,15 @@ describe('AgentService', () => {
         expect.objectContaining({
           id: 'agent_builtin_global_search',
           subtitle:
-            'Built-in Cherry Studio advisor. Diagnose issues, guide operations, collect FAQs, submit bugs/feature requests, and search/create Skills'
+            'Built-in Magic Box advisor. Diagnose issues, guide operations, collect FAQs, submit bugs/feature requests, and search/create Skills'
         })
       ])
     })
 
-    it('matches and displays Cherry Support through its localized fallback description', async () => {
+    it('matches and displays Magic Box Support through its localized fallback description', async () => {
       await insertAgent({
         id: CHERRY_SUPPORT_AGENT_ID,
-        name: 'Cherry Support',
+        name: 'Magic Box Support',
         description: '',
         configuration: { builtin_role: 'support' },
         updatedAt: 100
@@ -1569,7 +1569,7 @@ describe('AgentService', () => {
       expect(agentService.search({ q: 'troubleshooting', limit: 5 })).toEqual([
         expect.objectContaining({
           id: CHERRY_SUPPORT_AGENT_ID,
-          subtitle: 'Official Cherry Studio support Agent for setup guidance, troubleshooting, FAQs, and feedback'
+          subtitle: 'Official Magic Box support Agent for setup guidance, troubleshooting, FAQs, and feedback'
         })
       ])
     })

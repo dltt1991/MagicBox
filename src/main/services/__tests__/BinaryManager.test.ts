@@ -137,7 +137,7 @@ describe('binary execution env split', () => {
     expect(env['XDG_CONFIG_HOME']).toBeUndefined()
     expect(env['XDG_CACHE_HOME']).toBeUndefined()
     expect(env['XDG_STATE_HOME']).toBeUndefined()
-    // Shims still resolve against Cherry's isolated mise data dir.
+    // Shims still resolve against Magic Box's isolated mise data dir.
     expect(env['MISE_DATA_DIR']).toBe('/mock/feature.binary.data')
   })
 

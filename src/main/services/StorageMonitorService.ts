@@ -31,7 +31,7 @@ export function intervalForFree(freeBytes: number): number {
 }
 
 /**
- * Monitors free disk space on the volume hosting Cherry Studio's user-data
+ * Monitors free disk space on the volume hosting Magic Box's user-data
  * directory (where the SQLite database lives) and warns the main window when it
  * runs low.
  *

@@ -1071,7 +1071,7 @@ IPC 批量方法内部 `Promise.all` 一次 RT 完成——效率等同旧方案
 | **路径字符串作为 key 的代码**（C5 F2）     | Obsidian dialog 等改为用 entry.id 作为 key，避免 path 字符串字面比较                                                                                                   |
 | **主 `readExternal` 的调用签名迁移**       | `readExternal` 可以临时保留（别名到 `read({ kind: 'path', path })`），逐步淘汰                                                                                         |
 | **历史 message block 里内嵌 FileMetadata** | ChatMigrator 抽取 `file.id` 建立 file_ref（`sourceType='chat_message'`）；新 message block JSON 只存 `fileEntryId`；渲染时查 FileEntry。**不需要 shim**，见 §2.6.10 Q3 |
-| **Drag-drop 出 Cherry 给 OS**              | Electron drag-drop 需要绝对路径；用 `entryToAbsolutePath(entry)` 获取                                                                                                  |
+| **Drag-drop 出 Magic Box 给 OS**              | Electron drag-drop 需要绝对路径；用 `entryToAbsolutePath(entry)` 获取                                                                                                  |
 
 #### 2.6.10 复杂度与执行时机
 

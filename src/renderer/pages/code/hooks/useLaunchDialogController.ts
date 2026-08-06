@@ -34,7 +34,7 @@ interface UseLaunchDialogControllerOptions {
   isOwnLoginSelected: boolean
   currentProviderConfig?: CliProviderConfig | null
   selectedTerminal?: string
-  /** Synthetic Cherry gateway bundle — used to re-verify/rebuild the gateway config before launch. */
+  /** Synthetic Magic Box gateway bundle — used to re-verify/rebuild the gateway config before launch. */
   apiGatewayProvider?: ApiGatewayProviderBundle | null
   /** Models currently available through the gateway, keyed by UniqueModelId. */
   gatewayModelsById: Map<UniqueModelId, Model>
@@ -91,7 +91,7 @@ export function useLaunchDialogController({
   // tools (qoder / copilot) launch with a directory only.
   const handleLaunch = useCallback(async () => {
     // Provider-less tools (qoder/copilot) and the virtual "own login" option both
-    // launch with a directory only — no Cherry provider/model is injected.
+    // launch with a directory only — no Magic Box provider/model is injected.
     const runWithoutProvider = PROVIDERLESS_CLI_TOOLS.has(selectedCliTool) || isOwnLoginSelected
     if (!directory || (!runWithoutProvider && !enabledProvider)) {
       toast.error(t('code.folder_placeholder'))

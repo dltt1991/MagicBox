@@ -14,7 +14,7 @@ import type { UniqueModelId } from '@shared/data/types/model'
 import type { PersistAssistantInput, PersistenceBackend } from '../../streamManager'
 
 export interface AgentSessionMessageBackendOptions {
-  /** Cherry Studio agent-session id. */
+  /** Magic Box agent-session id. */
   sessionId: string
   /** Existing assistant placeholder id to finalize. */
   assistantMessageId: string

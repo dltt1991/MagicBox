@@ -1,6 +1,6 @@
 /**
  * App-level provider type merge — combines `coreExtensions` with
- * Cherry's app extensions to produce the unified `AppProviderId`,
+ * Magic Box's app extensions to produce the unified `AppProviderId`,
  * `AppProviderSettingsMap`, and `appProviderIds` lookup.
  */
 

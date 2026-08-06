@@ -12,12 +12,12 @@
 
 FileManager provides file management capabilities for two origins; callers choose based on their own needs:
 
-- **`internal`**: Cherry owns the file content, stored at `{userData}/Data/Files/{id}.{ext}`. The caller hands the source content to FileManager, which copies it and takes over the lifecycle.
-- **`external`**: Cherry only records an absolute path reference on the user's side; does not copy content. File availability and content changes are determined by the user side.
+- **`internal`**: Magic Box owns the file content, stored at `{userData}/Data/Files/{id}.{ext}`. The caller hands the source content to FileManager, which copies it and takes over the lifecycle.
+- **`external`**: Magic Box only records an absolute path reference on the user's side; does not copy content. File availability and content changes are determined by the user side.
 
 **The caller decides the origin**; FileManager makes no assumptions about the business layer.
 
-**Best-effort semantics for external**: an external entry is a persistent record that "the caller expressed intent to reference this path at some point in time"—no guarantee the file remains stable, no guarantee content matches the reference-time content. Cherry does no bidirectional DB-FS sync, doesn't track external rename/move; external changes naturally surface as "reading new content next time" or "dangling".
+**Best-effort semantics for external**: an external entry is a persistent record that "the caller expressed intent to reference this path at some point in time"—no guarantee the file remains stable, no guarantee content matches the reference-time content. Magic Box does no bidirectional DB-FS sync, doesn't track external rename/move; external changes naturally surface as "reading new content next time" or "dangling".
 
 Data categories that do not enter FileManager (auto-derived data, logs, Agent workspace, OCR intermediates, MCP config, files self-managed by FS-first modules, etc.) are detailed in [architecture.md §1.3](./architecture.md#13-out-of-scope).
 
@@ -44,8 +44,8 @@ The `origin` field of each FileEntry defines **content ownership**:
 
 | origin | Physical location | Ownership | Mutability |
 |---|---|---|---|
-| `internal` | `{userData}/Data/Files/{id}.{ext}` | Fully owned by Cherry | Read-write |
-| `external` | Absolute path pointed to by `externalPath` | Owned by user, referenced by Cherry | **Changeable by explicit user action** (write / rename / permanentDelete apply, delegated to the FS primitives); Cherry does no automatic/watcher-driven modifications; **does not track external rename/move**—external changes cause the entry to naturally go dangling |
+| `internal` | `{userData}/Data/Files/{id}.{ext}` | Fully owned by Magic Box | Read-write |
+| `external` | Absolute path pointed to by `externalPath` | Owned by user, referenced by Magic Box | **Changeable by explicit user action** (write / rename / permanentDelete apply, delegated to the FS primitives); Magic Box does no automatic/watcher-driven modifications; **does not track external rename/move**—external changes cause the entry to naturally go dangling |
 
 **Path uniqueness**: at most one entry can exist whose `externalPath` agrees with another under case folding. Implemented via SQLite **functional unique index**:
 
@@ -191,7 +191,7 @@ Invariants:
 | `ext` | SoT | Pure projection of `externalPath` (extname) |
 | `size` | SoT (non-null, ≥ 0) | **Always `null`** — no DB snapshot; live value via `getMetadata` |
 | `externalPath` | NULL | Absolute path (the authoritative identity of external) |
-| `contentHash` | Detection substrate `{algo}:{hex}` (for example `xxh3-64:…`); maintained on every write; `null` means unknown, in-flight, or awaiting repair | **Always `null`** — content lives outside Cherry (`fe_contenthash_external_null` CHECK) |
+| `contentHash` | Detection substrate `{algo}:{hex}` (for example `xxh3-64:…`); maintained on every write; `null` means unknown, in-flight, or awaiting repair | **Always `null`** — content lives outside Magic Box (`fe_contenthash_external_null` CHECK) |
 
 For external entries the row stores only identity + stable projections. `name` / `ext` do not drift because `externalPath` is fixed for the lifetime of the entry (external rename by the user surfaces as a dangling entry, not an in-place rewrite of `name`). `size` / `mtime` are served live by File IPC `getMetadata(id)` on demand — see [§3 External Entry Liveness Model](#3-external-entry-liveness-model).
 
@@ -526,7 +526,7 @@ function resolvePhysicalPath(entry: FileEntry): string {
 
 **internal** physical paths are always flat: `{userData}/Data/Files/{uuid}.{ext}`, and do not change with the FileEntry's `name`. UUID naming makes internal files **invisible and not manually organizable by the user**—this is an intentional design choice.
 
-**external** physical paths are entirely determined by the user; Cherry does not touch them.
+**external** physical paths are entirely determined by the user; Magic Box does not touch them.
 
 ### 2.2 Physical Directory Structure
 
@@ -538,7 +538,7 @@ function resolvePhysicalPath(entry: FileEntry): string {
 └── {uuid-n}.tmp-{uuid}      ← Temporary files for atomic writes (abnormal residues cleaned by `runSweep`)
 ```
 
-Cherry creates no subdirectories under `{userData}/Data/Files/`. All internal files are stored flat.
+Magic Box creates no subdirectories under `{userData}/Data/Files/`. All internal files are stored flat.
 
 ### 2.3 Temporary File Handling
 
@@ -572,7 +572,7 @@ Making `size` unavailable on the row eliminates both: the renderer cannot read a
 
 **Paths that would otherwise need to refresh a snapshot**: `read` / `getVersion` / `getContentHash` on external still run `fs.stat` as part of their own work (and update DanglingCache as a side effect), but they do not write to the DB row — no `size` column exists to refresh.
 
-**Cherry does not track external rename**: after a user mv/rename outside of Cherry, the corresponding entry goes dangling. The user must re-@ inside Cherry to establish a new reference at the new path via `ensureExternalEntry(newPath)`.
+**Magic Box does not track external rename**: after a user mv/rename outside of Magic Box, the corresponding entry goes dangling. The user must re-@ inside Magic Box to establish a new reference at the new path via `ensureExternalEntry(newPath)`.
 
 ### 3.3 Dangling Model
 
@@ -645,7 +645,7 @@ writeIfUnchanged(id, data, expectedVersion: FileVersion): Promise<FileVersion>
 
 On conflict, `writeIfUnchanged` throws `StaleVersionError`, and the caller decides on UX after catching (dialog, three-way merge, keep both versions, etc.). Both entry and raw-path arms fully prepare the tmp payload first, then re-stat immediately before rename; an edit that lands while a large payload is being materialized is therefore detected before replacement.
 
-**Behavior on external**: write / writeIfUnchanged / createWriteStream / rename / permanentDelete **all apply**—Cherry supports user-explicitly-triggered external file modifications (editor save, UI rename, user-confirmed delete), delegated to the FS primitives at `@main/utils/file/fs` (atomic write / rename / remove). Cherry **does not** perform automatic / watcher-driven external file modifications.
+**Behavior on external**: write / writeIfUnchanged / createWriteStream / rename / permanentDelete **all apply**—Magic Box supports user-explicitly-triggered external file modifications (editor save, UI rename, user-confirmed delete), delegated to the FS primitives at `@main/utils/file/fs` (atomic write / rename / remove). Magic Box **does not** perform automatic / watcher-driven external file modifications.
 
 ### 4.4 LRU Version Cache
 
@@ -676,7 +676,7 @@ All writes (entry/internal to userData, entry/external to externalPath, path-han
 ```
 
 Key rules:
-- **fsync on by default**. Cherry's write frequency is user-action level, and fsync on SSD costs < 10ms
+- **fsync on by default**. Magic Box's write frequency is user-action level, and fsync on SSD costs < 10ms
 - **tmp must be in the same directory as target**. Cross-filesystem rename is not atomic
 - **tmp naming**: `{target}.tmp-{uuidv7}`—UUID avoids concurrent-write conflicts
 - **Crash residue**: FileManager's on-demand orphan sweep cleans up by `^.+\.tmp-<uuidv7>$`
@@ -713,11 +713,11 @@ All soft deletes are implemented via the `deletedAt` timestamp, without physical
 | `restore(id)` | None | **N/A** (no trashed external rows to restore) |
 | `permanentDelete(id)` | DB delete + best-effort `remove(physicalPath)` (`@main/utils/file/fs`) | **DB delete only — user's file is never modified** (matches `architecture.md §3.4`) |
 
-**trash / restore are internal-only.** External entries cannot be trashed by definition (`fe_external_no_delete` CHECK enforces this); the trash semantics make sense only for files Cherry owns.
+**trash / restore are internal-only.** External entries cannot be trashed by definition (`fe_external_no_delete` CHECK enforces this); the trash semantics make sense only for files Magic Box owns.
 
 **permanentDelete on internal**: DB row is removed first, then the physical file at `{userData}/Data/Files/{id}.{ext}` is best-effort unlinked. Unlink failures (ENOENT, insufficient permissions, etc.) are logged but do not block — the DB-row-gone outcome is what callers observe; any orphaned blob is later cleaned by the next user-triggered orphan sweep (§10).
 
-**permanentDelete on external**: DB row is removed; the user's file at `externalPath` is **never** modified — Cherry only owns the reference, not the content. This is the only safe contract: silently deleting user files from inside the app would violate the "best-effort external reference" semantics (§1.0.2 in `architecture.md`). Users who actually want the underlying file gone do so through their OS file manager.
+**permanentDelete on external**: DB row is removed; the user's file at `externalPath` is **never** modified — Magic Box only owns the reference, not the content. This is the only safe contract: silently deleting user files from inside the app would violate the "best-effort external reference" semantics (§1.0.2 in `architecture.md`). Users who actually want the underlying file gone do so through their OS file manager.
 
 ### 6.2 Auto Expiry (deferred — lands in Phase 2)
 
@@ -738,10 +738,10 @@ Query: `WHERE deletedAt < now() - retentionMs` → batch permanentDelete.
 | Scenario | Handling |
 |---|---|
 | unlink fails on permanentDelete internal (file already missing, permission issue) | Log warn; the DB row is already gone, so the failure surfaces only as an orphan blob that the next user-triggered orphan sweep will reclaim |
-| permanentDelete on external | DB-only by design; the user's file at `externalPath` is never touched — Cherry owns only the reference |
+| permanentDelete on external | DB-only by design; the user's file at `externalPath` is never touched — Magic Box owns only the reference |
 | `ensureExternalEntry(path)` when an entry for the same path already exists | Entry point first calls `AbsoluteFilePathSchema.parse(raw)`; upsert returns the existing row. External entries cannot be trashed, so there is no "restore" branch. |
 | **Two entries for the same file** | **Case** differences (macOS APFS, Windows NTFS): rejected at INSERT by the DB `lower()` functional unique index plus the `fs.realpath`-based reuse-or-throw probe in `ensureExternalEntry` (see §1.2 "Duplicate-entry detection on insert"). **Unicode (NFD ↔ NFC)** differences: deliberately **not** deduped — `externalPath` is stored byte-faithful, and the rare, cosmetic macOS case is accepted rather than break reachability on Linux (see §1.2 "Rejected: Unicode (NFC) normalization of `externalPath`"). |
-| External file at original path externally replaced with a different file | Cherry does not check content consistency (best-effort). `name` / `ext` on the row are derived from `externalPath` and do not change; `size` is always served live by `getMetadata`. DanglingCache flips to `'present'` on the next stat, so the UI just renders the new file under the existing reference. |
+| External file at original path externally replaced with a different file | Magic Box does not check content consistency (best-effort). `name` / `ext` on the row are derived from `externalPath` and do not change; `size` is always served live by `getMetadata`. DanglingCache flips to `'present'` on the next stat, so the UI just renders the new file under the existing reference. |
 | A trashed entry is permanently externally deleted and then restored | Appears dangling (DanglingCache returns missing on next check), UI shows failed style |
 | External write with permission error / disk full on target path | Throw without polluting DB; caller decides retry or user notification |
 
@@ -773,7 +773,7 @@ Layer 3 is not a generic persistent-source reconciler. Persistent association ro
 
 ### 7.1 No-Reference Entry Policy
 
-The default stance — *FileEntry is preserved even when no business refs point at it* — is chosen so the user never loses a file they (or Cherry) bothered to track merely because the original consumer got deleted. A UI surface may show an "unreferenced" marker for user-triggered cleanup.
+The default stance — *FileEntry is preserved even when no business refs point at it* — is chosen so the user never loses a file they (or Magic Box) bothered to track merely because the original consumer got deleted. A UI surface may show an "unreferenced" marker for user-triggered cleanup.
 
 Automatic deletion applies **only** to entries whose `cleanup_policy = 'delete_when_unreferenced'` (see [file-entry-cleanup.md](./file-entry-cleanup.md)); `manual` entries have no automatic deletion exceptions. Even an external `manual` entry that is currently missing and has zero refs is still a user-visible library record: it may represent a temporarily unmounted drive, a file the user wants to re-link later, or simply a stale record the user should remove explicitly. The file module may report these rows, but it must not delete them without an explicit user/caller action.
 
@@ -930,7 +930,7 @@ file_module **starts no watcher instances**. Whether to monitor external directo
 
 ### 9.1 Motivation
 
-Cherry needs to integrate with the Vercel AI SDK's file upload API. The SDK's `SharedV4ProviderReference` models "the same logical file may be uploaded to N providers, each with its own fileId".
+Magic Box needs to integrate with the Vercel AI SDK's file upload API. The SDK's `SharedV4ProviderReference` models "the same logical file may be uploaded to N providers, each with its own fileId".
 
 When it lands, a dedicated `file_upload` table tracks these uploads, decoupled from `fileEntry`.
 
@@ -1101,7 +1101,7 @@ function shouldAbort(
 - The service remains available — abort is a controlled outcome, not a failure; no `Error` is thrown into the `.catch()` handler.
 - The next sweep run re-evaluates the plan after the upstream issue is resolved.
 
-**Scope note**: the threshold defends against internal bugs, not user-side manipulation of `{userData}/Data/Files/`. Users are not expected or encouraged to edit the storage directory (all file operations should go through the in-app entry system). The threshold's job is to ensure "nothing Cherry itself does, internally, silently deletes the bulk of a user's library".
+**Scope note**: the threshold defends against internal bugs, not user-side manipulation of `{userData}/Data/Files/`. Users are not expected or encouraged to edit the storage directory (all file operations should go through the in-app entry system). The threshold's job is to ensure "nothing Magic Box itself does, internally, silently deletes the bulk of a user's library".
 
 ### 10.5 Observability
 
@@ -1287,7 +1287,7 @@ Because `externalPath` is stored **byte-faithful** (see §1.2 "Stored form"), th
 
 `check()` is the correctness baseline: it stats `entry.externalPath` (byte-faithful) directly, so an entry's dangling state is always *eventually* correct regardless of whether any watcher event matched — the watcher leg is an eager-update latency optimization on top of it, never a correctness dependency. On Linux the raw event byte-matches the stored key by construction; on macOS/Windows it matches when the path source and chokidar agree on Unicode form. If they ever diverge (unverified — same open question as §1.2 "Rejected"), the only effect is that a watcher event misses and the badge stays stale until the next `check()` — benign and self-healing. The platform-conditional fold that could bridge such a divergence, *if ever observed*, belongs on the reverse-index comparison key (`process.platform`-aware: NFC on darwin/win32, identity on linux) — never on the stored form.
 
-**Note**: watcher rename events **do not auto-update an external entry's externalPath**—Cherry does not track external rename. After a rename, the original entry goes dangling; the user must re-@ to establish a new reference.
+**Note**: watcher rename events **do not auto-update an external entry's externalPath**—Magic Box does not track external rename. After a rename, the original entry goes dangling; the user must re-@ to establish a new reference.
 
 ### 11.4 Reverse Index Maintenance
 
@@ -1338,7 +1338,7 @@ async function batchGetDanglingStates(ids: FileEntryId[]): Promise<Record<FileEn
 
 **Why no background sweep**: a periodic background re-validation across all cached entries was considered and rejected. See [§12 Key Design Decisions](#12-key-design-decisions). The short version: FS IO cost would scale with total entry count instead of query frequency, and deletion is never driven by dangling state (`manual` entries require explicit action; auto-policy cleanup keys on ref count), so stale presence state should be corrected at use/query time rather than by a hidden global scanner.
 
-**Known residual case — stale `'present'` with `refs > 0`**: if an external file is deleted outside Cherry, without any watcher or ops observation to signal it, and no UI ever queries `getDanglingState` for that entry, the cache stays `'present'` past TTL boundaries (first query after TTL will re-stat and fix). Business services that depend on referenced files MUST re-validate at use time (read will surface ENOENT anyway); DanglingCache is a UI/presence helper, not a correctness boundary.
+**Known residual case — stale `'present'` with `refs > 0`**: if an external file is deleted outside Magic Box, without any watcher or ops observation to signal it, and no UI ever queries `getDanglingState` for that entry, the cache stays `'present'` past TTL boundaries (first query after TTL will re-stat and fix). Business services that depend on referenced files MUST re-validate at use time (read will surface ENOENT anyway); DanglingCache is a UI/presence helper, not a correctness boundary.
 
 ### 11.7 Reactivity — Event Emission (deferred)
 
@@ -1391,7 +1391,7 @@ DanglingCache emits a structured `info`-level log record at a fixed cadence (eve
 - `cachedEntries > 50_000` → memory-budget anomaly; suggests either a runaway caller or a bug in `removeEntry` cleanup
 - `transitionsFired > 1000` within one 10-minute window → likely a watcher feedback loop or mass unmount event
 
-These thresholds are heuristic starting points — tune based on real-world telemetry once available. IPC latency is **not** instrumented here; `loggerService` is a log pipeline, not a metrics system, and Cherry has no telemetry backend. Per-IPC latency concerns should be diagnosed ad-hoc via `performance.now()` in the affected handler during investigation, not baked into a permanent counter.
+These thresholds are heuristic starting points — tune based on real-world telemetry once available. IPC latency is **not** instrumented here; `loggerService` is a log pipeline, not a metrics system, and Magic Box has no telemetry backend. Per-IPC latency concerns should be diagnosed ad-hoc via `performance.now()` in the affected handler during investigation, not baked into a permanent counter.
 
 ---
 
@@ -1401,18 +1401,18 @@ These thresholds are heuristic starting points — tune based on real-world tele
 |---|---|---|
 | **Tree vs flat** | Flat | FileEntry manages "user-submitted independent files"; directory organization is not a file_module responsibility |
 | **Mount abstraction** | Removed | All internal files live flat under `{userData}/Data/Files/` (via the `feature.files.data` path key); external is reached directly via `externalPath`; no mount needed |
-| **Origin two-state** | internal/external | Express "Cherry-owned" and "user-owned, Cherry-referenced" respectively; clear semantics |
-| **External read/write permissions** | Explicit user ops may change; Cherry doesn't auto-change | VS Code-style behavior model—change when told to; don't modify behind the scenes |
+| **Origin two-state** | internal/external | Express "Magic Box-owned" and "user-owned, Magic Box-referenced" respectively; clear semantics |
+| **External read/write permissions** | Explicit user ops may change; Magic Box doesn't auto-change | VS Code-style behavior model—change when told to; don't modify behind the scenes |
 | **External operation symmetry** | write/rename/permanentDelete all delegate to the FS primitives and take effect; trash/restore touch DB only | Soft delete preserves reversibility (doesn't touch FS); hard delete is the terminal action (really deletes FS) |
 | **External identity** | externalPath unique(where not trashed) | At most one active entry at a time for the same path; `ensureExternalEntry` upserts by path |
-| **Cherry tracks external rename** | Not tracked | Best-effort semantics; external rename → dangling → user re-@ |
+| **Magic Box tracks external rename** | Not tracked | Best-effort semantics; external rename → dangling → user re-@ |
 | **Snapshot vs realtime stat** | External row stores only identity + stable projections (`name` / `ext` from `externalPath`); live `size` / `mtime` via `getMetadata` on demand | Eliminates stale-snapshot bug class at the type level; cost of the extra `fs.stat` is explicit at the call site instead of hidden behind a DB field |
 | **Dangling state carrier** | In-memory singleton DanglingCache | Not in DB (avoids bidirectional DB-FS sync); three states `present/missing/unknown`; TTL-based lazy expiration (§11.6, 30 min); refreshed on query / FS observation / watcher; no periodic background sweep — IO cost scales with query frequency, not entry count |
 | **Dangling exposure method** | File IPC `getDanglingState` / `batchGetDanglingStates` (never DataApi) | DataApi is pure SQL; FS probe lives in IPC where side effects are expected; zero cost by default; parallel stat on demand |
 | **Watcher → DanglingCache wiring** | Factory auto-wires | Business modules unaware of DanglingCache; a single watcher instance serves business events + dangling tracking |
 | **Content hash algorithm** | XXH3-64 via native `@node-rs/xxhash`, stored as `{algo}:{hex}` | One implementation serves persisted dedup detection and on-demand OCC comparison. The native package avoids the previous WASM throughput ceiling and provides incremental XXH3-64 hashing; its XXH3-128 API is one-shot only, which would require buffering streamed files. The 64-bit value is a candidate signal, never an identity: collisions only produce a candidate that the consumer must verify, and the algorithm tag preserves an incremental upgrade path. |
 | **Does write carry version** | Split into write / writeIfUnchanged | Force the caller to explicitly choose; avoid silent degradation to blind write when version is forgotten |
-| **Atomic write fsync** | On by default | Correctness guarantee takes precedence over performance; Cherry is not a high-throughput scenario |
+| **Atomic write fsync** | On by default | Correctness guarantee takes precedence over performance; Magic Box is not a high-throughput scenario |
 | **Trash model** | deletedAt timestamp | parentId unchanged; naturally supports expiry; no system_trash entries |
 | **pending_fs_ops** | Removed | After extreme simplification, orphan sweep suffices to cover crashes |
 | **Startup dangling probe** | Removed | Changed to lazy + Promise.all; stat only when an IPC caller explicitly requests dangling state |

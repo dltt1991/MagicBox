@@ -47,7 +47,7 @@ describe('VersionStatusCard', () => {
     )
 
     expect(screen.getByText('settings.dependencies.source.system')).toHaveAttribute('title', '/usr/local/bin/claude')
-    // Cherry uses the system binary in place — never an uninstall, never a shadow copy.
+    // Magic Box uses the system binary in place — never an uninstall, never a shadow copy.
     expect(screen.queryByRole('button', { name: 'code.install' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'settings.dependencies.uninstall' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'code.launch.label' })).toBeEnabled()

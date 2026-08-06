@@ -154,7 +154,7 @@ export function buildApp({
     .get(
       '/',
       () => ({
-        name: 'Cherry Studio API',
+        name: 'Magic Box API',
         version: '1.0.0',
         endpoints: {
           health: 'GET /health',

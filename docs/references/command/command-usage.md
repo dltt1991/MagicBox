@@ -79,7 +79,7 @@ command system:
 - Use `shortcutCommand` on an extra item so the menu resolves the platform label
   and user preference; `shortcutLabel` is an escape hatch for non‑command shortcuts.
 
-The same resolved menu model renders through the native adapter or Cherry UI based
+The same resolved menu model renders through the native adapter or Magic Box UI based
 on `menu.presentation_mode`. `app.menu` and `tray.menu` always stay native (main
 process services).
 

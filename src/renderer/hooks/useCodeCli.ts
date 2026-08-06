@@ -130,7 +130,7 @@ export const useCodeCli = () => {
           const id = orderedIds[i]
           const existing = nextProviders[id]
           if (!existing) {
-            // The virtual own-login / Cherry-gateway entries have no real config; persist a
+            // The virtual own-login / Magic Box-gateway entries have no real config; persist a
             // placeholder so their drag position sticks. Real unconfigured providers are still
             // skipped (no empty configs).
             if (id === CLI_OWN_LOGIN_PROVIDER_ID || isApiGatewayProviderId(id)) {

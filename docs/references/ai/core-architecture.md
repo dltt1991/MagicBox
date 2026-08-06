@@ -1,6 +1,6 @@
 # Core Architecture
 
-End-to-end view of how a Cherry chat turn moves from user input to LLM
+End-to-end view of how a Magic Box chat turn moves from user input to LLM
 response and back to UI, with pointers to the focused references for
 each subsystem.
 

@@ -859,7 +859,7 @@ describe('ClaudeCodeStreamAdapter', () => {
 
   it('keeps JSON text MCP tool results parsed for dedicated tool cards', () => {
     const { adapter, parts } = createAdapter()
-    const results = [{ id: 1, title: 'Cherry Studio', url: 'https://example.com', content: 'result' }]
+    const results = [{ id: 1, title: 'Magic Box', url: 'https://example.com', content: 'result' }]
 
     adapter.handleMessage(
       streamEvent({
@@ -870,7 +870,7 @@ describe('ClaudeCodeStreamAdapter', () => {
           id: 'mcp-search',
           name: 'web_search',
           server_name: 'cherry-tools',
-          input: { query: 'Cherry Studio' }
+          input: { query: 'Magic Box' }
         }
       })
     )

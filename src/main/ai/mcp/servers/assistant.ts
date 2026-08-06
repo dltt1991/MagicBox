@@ -68,7 +68,7 @@ export function isAllowedAssistantNavigationPath(path: string, allowedRoutes: re
 const NAVIGATE_TOOL: Tool = {
   name: 'navigate',
   description:
-    'Create a clickable entry for a route returned by product_info. Use this in the same turn whenever answering where to find, open, configure, or use a Cherry Studio page or feature; written UI steps are not a substitute.',
+    'Create a clickable entry for a route returned by product_info. Use this in the same turn whenever answering where to find, open, configure, or use a Magic Box page or feature; written UI steps are not a substitute.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -89,7 +89,7 @@ const NAVIGATE_TOOL: Tool = {
 const DIAGNOSE_TOOL: Tool = {
   name: 'diagnose',
   description:
-    'Read Cherry Studio runtime state for troubleshooting. Use this to inspect app info, provider config, connectivity, logs, and MCP server status.',
+    'Read Magic Box runtime state for troubleshooting. Use this to inspect app info, provider config, connectivity, logs, and MCP server status.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -119,7 +119,7 @@ const DIAGNOSE_TOOL: Tool = {
 const PRODUCT_INFO_TOOL: Tool = {
   name: 'product_info',
   description:
-    'Read current Cherry Studio product facts from the installed package manifest. Request only the relevant section to keep context small.',
+    'Read current Magic Box product facts from the installed package manifest. Request only the relevant section to keep context small.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -139,7 +139,7 @@ const PRODUCT_INFO_TOOL: Tool = {
   }
 }
 
-// Whitelist of settings Cherry Assistant can write directly. Each entry binds
+// Whitelist of settings Magic Box Assistant can write directly. Each entry binds
 // a `setting` key to a value validator and an `apply` function that performs
 // the write. Settings not in this map are rejected — adding a new one
 // requires explicit code change so a destructive or sensitive setting can
@@ -166,7 +166,7 @@ const APPLY_SETTING_REGISTRY: Record<string, ApplySettingEntry> = {
 
 const CREATE_AGENT_TOOL: Tool = {
   name: 'create_agent',
-  description: `Create a new Cherry Studio Agent on behalf of the user. Use this when the user explicitly asks to create / build / make a new agent (e.g. "帮我建一个专门做 Python 代码 review 的 Agent"). MUST collect requirements via conversation first, then SHOW the proposed config to the user for confirmation, and only call this tool after explicit user agreement.
+  description: `Create a new Magic Box Agent on behalf of the user. Use this when the user explicitly asks to create / build / make a new agent (e.g. "帮我建一个专门做 Python 代码 review 的 Agent"). MUST collect requirements via conversation first, then SHOW the proposed config to the user for confirmation, and only call this tool after explicit user agreement.
 
 Safety rules:
 - type is fixed to 'claude-code' (channel-backed agents are out of scope here)
@@ -193,7 +193,7 @@ The tool returns the new agent id. After creation, query product_info and naviga
       model: {
         type: 'string',
         description:
-          'Optional model id in the form "providerId::modelId" (e.g. "cherryin::agent/glm-5.1", "anthropic::claude-sonnet"). When omitted, the new agent uses Cherry Assistant\'s current model.'
+          'Optional model id in the form "providerId::modelId" (e.g. "cherryin::agent/glm-5.1", "anthropic::claude-sonnet"). When omitted, the new agent uses Magic Box Assistant\'s current model.'
       }
     },
     required: ['name', 'instructions']
@@ -202,7 +202,7 @@ The tool returns the new agent id. After creation, query product_info and naviga
 
 const APPLY_SETTING_TOOL: Tool = {
   name: 'apply_setting',
-  description: `Apply a low-risk Cherry Studio setting change directly. Only the whitelist below is supported; destructive operations are never exposed here.
+  description: `Apply a low-risk Magic Box setting change directly. Only the whitelist below is supported; destructive operations are never exposed here.
 
 Supported settings:
 ${Object.values(APPLY_SETTING_REGISTRY)
@@ -483,7 +483,7 @@ class AssistantServer {
       modelService.getByKey(providerId, modelId)
     } catch (error) {
       if (isDataApiError(error) && error.code === DataApiErrorCode.NOT_FOUND) {
-        throw new McpError(ErrorCode.InvalidParams, `Model is not configured in Cherry Studio: ${parsedModel.data}`)
+        throw new McpError(ErrorCode.InvalidParams, `Model is not configured in Magic Box: ${parsedModel.data}`)
       }
       throw error
     }

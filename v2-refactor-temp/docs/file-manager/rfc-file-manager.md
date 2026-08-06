@@ -20,7 +20,7 @@
 本 RFC 聚焦**实现层面**：数据 Schema、API 契约、核心流程、迁移步骤、分阶段计划。核心取向：
 
 - **扁平 FileEntry + 多态 FileRef**——持久化层不引入目录树、不引入 mount 概念
-- **origin: `internal` / `external` 二态**——Cherry 拥有 vs 用户拥有
+- **origin: `internal` / `external` 二态**——Magic Box 拥有 vs 用户拥有
 - **无内容去重**——每个显式上传都是独立 FileEntry
 - **Notes / 其他 FS-first 业务解耦**——不强制镜像到 `file_entry`
 - **类型分层：引用 vs 数据形状**——`FileHandle` 是跨边界的多态引用层；`FileEntry`（managed）与 `FileInfo`（unmanaged）是两种"数据形状"。旧 `FileMetadata` 同时承担"DB 行"与"通用文件描述符"两个角色，v2 把这两个角色**显式拆分**：持久化角色 → `FileEntry`，描述符角色 → `FileInfo`。详见 [`architecture.md §2`](../../../docs/references/file/architecture.md#2-type-system-reference-vs-data-shape)
@@ -68,11 +68,11 @@
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | FileEntry 结构        | 扁平（无 `parentId`、无 mount）                                                                                         | 持久化层不做目录树；Notes 自治（问题 6/10）                                                      |
 | 主键策略              | UUID v7（`uuidPrimaryKeyOrdered`）；旧数据保留 v4                                                                       | 新 entry 时间有序；旧 v4 ID 跨表引用零翻译（migration-plan §2.9）                                |
-| `origin` 枚举         | `'internal' \| 'external'`                                                                                              | Cherry 拥有 vs 用户拥有；语义清晰                                                                |
+| `origin` 枚举         | `'internal' \| 'external'`                                                                                              | Magic Box 拥有 vs 用户拥有；语义清晰                                                                |
 | External path 唯一性  | Global unique index on `externalPath`（internal 行为 null，SQLite UNIQUE 视多个 NULL 互不冲突，天然只约束 external 行） | 同 path 全局最多一条；`ensureExternalEntry` 纯 upsert by path，无 "restore trashed" 分支         |
 | `size` 字段           | 必填（INTEGER NOT NULL）                                                                                                | 查询/排序需要；external 为最后观测的快照                                                         |
 | trash 语义            | `deletedAt` 时间戳；**仅对 internal 有效**，external 由 `fe_external_no_delete` CHECK 禁止 trashed                       | internal 保留软删可逆窗口；external 生命周期单向（Active → Deleted），重建成本为零所以不需要撤销 |
-| external 删除语义     | `permanentDelete` 只删 DB 行；物理文件不动（path-level `ops.remove` 独立提供）                                          | Cherry 不在 entry-level 自动 unlink 用户拥有的文件；用户有需要时走独立的 unmanaged 删除通道      |
+| external 删除语义     | `permanentDelete` 只删 DB 行；物理文件不动（path-level `ops.remove` 独立提供）                                          | Magic Box 不在 entry-level 自动 unlink 用户拥有的文件；用户有需要时走独立的 unmanaged 删除通道      |
 | `sourceType` / `role` | 应用层 Zod 验证 + 编译期 checker 注册                                                                                   | 新增 sourceType 无需 DB migration                                                                |
 | `file_ref` 防重       | UNIQUE(fileEntryId, sourceType, sourceId, role)                                                                         | 一个业务对象不会以同一角色重复引用同一文件                                                       |
 | DataApi 职责          | 只读 + 允许幂等副作用（SQL 聚合、`fs.stat`）                                                                            | 所有 mutation 走 File IPC                                                                        |
@@ -454,7 +454,7 @@ async function permanentDelete(handle: FileHandle): Promise<void> {
   const entry = await fileEntryService.getById(handle.entryId);
 
   if (entry.origin === "internal") {
-    // Cherry 拥有物理文件：unlink FS + 删 DB
+    // Magic Box 拥有物理文件：unlink FS + 删 DB
     await ops.remove(resolvePhysicalPath(entry)).catch(ignoreEnoent);
   }
   // external: entry-level 删除仅动 DB 行；不触碰用户的物理文件。
@@ -690,7 +690,7 @@ export interface FileSchemas {
 | ----------------------------- | ------------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | `select`                      | 对话框选项                            | `string \| string[] \| null` | Electron file/folder picker                                                                                                             |
 | `save`                        | `{ content, defaultPath?, filters? }` | `string \| null`             | Save dialog + 写文件                                                                                                                    |
-| `createInternalEntry`         | `CreateInternalEntryIpcParams`        | `FileEntry`                  | 新建 Cherry 拥有 entry，每次产生新 UUID，无冲突                                                                                         |
+| `createInternalEntry`         | `CreateInternalEntryIpcParams`        | `FileEntry`                  | 新建 Magic Box 拥有 entry，每次产生新 UUID，无冲突                                                                                         |
 | `ensureExternalEntry`         | `EnsureExternalEntryIpcParams`        | `FileEntry`                  | 按 `externalPath` 纯 upsert：reuse / insert；external 行 `size=null`，live 值用 `getMetadata`                                          |
 | `batchCreateInternalEntries`  | `CreateInternalEntryIpcParams[]`      | `BatchOperationResult`       | 批量新建 internal                                                                                                                       |
 | `batchEnsureExternalEntries`  | `EnsureExternalEntryIpcParams[]`      | `BatchOperationResult`       | 批量 upsert external（批内 path 重复会 coalesce）                                                                                       |
@@ -854,7 +854,7 @@ private transformFile(old: DexieFileMetadata): InsertFileEntry {
   const { name, ext } = splitName(old.origin_name || old.name)
   return {
     id: old.id, // 保留原 v4 ID（Schema 已放宽 z.uuid()）
-    origin: 'internal', // 旧数据全部视为 Cherry 管理
+    origin: 'internal', // 旧数据全部视为 Magic Box 管理
     name,
     ext: (old.ext ?? '').replace(/^\./, '') || null,
     size: old.size ?? 0,
@@ -869,7 +869,7 @@ private transformFile(old: DexieFileMetadata): InsertFileEntry {
 **关键要点**：
 
 - **ID 保留**：`FileMetadata.id → file_entry.id`（1:1），所有引用该 ID 的地方（message blocks `fileId`、knowledge items `content.id`、painting `files[*].id`）**零翻译**
-- **`origin='internal'`**：旧数据全部视为 Cherry 管理（旧架构无 external 概念）
+- **`origin='internal'`**：旧数据全部视为 Magic Box 管理（旧架构无 external 概念）
 - **物理文件不移动**：旧路径 `{userData}/Data/Files/{id}{ext}` 与新路径 `{userData}/files/{id}.{ext}` 可能存在微差（含点/不含点），在 `resolvePhysicalPath` / 启动期兼容逻辑内处理（详见 migration-plan §2.7.6）
 - **`ext` normalize**：去除前导点；无扩展名为 `null`
 

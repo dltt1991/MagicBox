@@ -139,7 +139,7 @@ export interface CliConfigAdapter {
     configBlob: Record<string, any>
   ): CliConfigFileDraft[]
   /**
-   * Build the rewrites that strip every Cherry-managed key from the on-disk
+   * Build the rewrites that strip every Magic Box-managed key from the on-disk
    * config file(s), leaving user keys intact. Files with nothing to rewrite are
    * omitted; the caller persists the entries via `code_cli.write_config`.
    */
@@ -170,7 +170,7 @@ function requireDraftValue(value: string | undefined, label: string): string {
 function providerNameFromKey(providerKey: string | undefined, label: string): string {
   const key = requireDraftValue(providerKey, label)
   if (!key.startsWith(CHERRY_PROVIDER_PREFIX)) {
-    throw new Error(`Cannot update CLI config draft: ${label} is not managed by Cherry Studio`)
+    throw new Error(`Cannot update CLI config draft: ${label} is not managed by Magic Box`)
   }
   return key.slice(CHERRY_PROVIDER_PREFIX.length)
 }

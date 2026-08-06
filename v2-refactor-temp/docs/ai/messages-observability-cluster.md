@@ -27,7 +27,7 @@ captures them into the dev-tools cache.
 
 ### `messageConverter.ts`
 
-Folds `CherryMessagePart[]` (Cherry's renderer-facing parts) into AI
+Folds `CherryMessagePart[]` (Magic Box's renderer-facing parts) into AI
 SDK's `ModelMessage[]`. Per-part routing:
 
 - `text` → `{ role, content: [{ type: 'text', text }] }`

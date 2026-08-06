@@ -157,7 +157,7 @@ describe('ProtocolService', () => {
 
   it('registers the packaged protocol handler without dev arguments', async () => {
     setDefaultApp(false)
-    process.argv = ['Cherry Studio.exe']
+    process.argv = ['Magic Box.exe']
 
     await (service as any).onInit()
 

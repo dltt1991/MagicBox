@@ -123,7 +123,7 @@ We considered BullMQ / bee-queue / better-queue / agenda / graphile-worker / bre
 - Race safety needs only one mutex pair (Layer 0 + Layer 1) around `count → claim`
 - No double-source-of-truth bookkeeping (PQueue + DB) and its sync discipline
 
-Throughput: ~200 dispatch/s at single-process better-sqlite3 throughput, well above Cherry Studio's largest scenario (1000+ knowledge bases, each with concurrency=5, never exceeds globalMaxConcurrency=50 simultaneous running jobs).
+Throughput: ~200 dispatch/s at single-process better-sqlite3 throughput, well above Magic Box's largest scenario (1000+ knowledge bases, each with concurrency=5, never exceeds globalMaxConcurrency=50 simultaneous running jobs).
 
 ## Strongly-typed JobRegistry
 

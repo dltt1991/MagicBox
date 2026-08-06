@@ -892,6 +892,19 @@
       "description": "Command shortcut: file_manager.open_terminal_here (unified command system)"
     },
     {
+      "targetKey": "shortcut.file_manager.search",
+      "type": "PreferenceTypes.PreferenceShortcutType",
+      "defaultValue": {
+        "binding": [
+          "CommandOrControl",
+          "F"
+        ],
+        "enabled": true
+      },
+      "status": "classified",
+      "description": "Command shortcut: file_manager.search (unified command system)"
+    },
+    {
       "targetKey": "shortcut.file_manager.select_all",
       "type": "PreferenceTypes.PreferenceShortcutType",
       "defaultValue": {
@@ -935,7 +948,7 @@
       "type": "PreferenceTypes.MenuPresentationMode",
       "defaultValue": "cherry",
       "status": "classified",
-      "description": "Global menu presentation mode: native system menus or Cherry custom menus"
+      "description": "Global menu presentation mode: native system menus or Magic Box custom menus"
     },
     {
       "targetKey": "feature.notes.line_breaks",

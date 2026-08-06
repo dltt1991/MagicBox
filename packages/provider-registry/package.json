@@ -16,7 +16,7 @@
     "generate": "tsx scripts/generate-catalog.ts --write && biome format --write data/models.json data/provider-models.json data/providers.json src/patterns/reasoning-families.gen.ts src/patterns/server-tool-models.gen.ts src/patterns/server-tool-constraints.gen.ts",
     "generate:check": "tsx scripts/generate-catalog.ts --report"
   },
-  "author": "Cherry Studio",
+  "author": "Magic Box",
   "license": "MIT",
   "files": [
     "dist/**/*",

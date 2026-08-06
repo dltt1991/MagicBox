@@ -25,7 +25,7 @@ const PROXY_ENV_KEYS = new Set([
   'GRPC_PROXY'
 ])
 
-/** Strip Cherry-managed proxy settings from an environment map in place. */
+/** Strip Magic Box-managed proxy settings from an environment map in place. */
 export const removeEnvProxy = (env: NodeJS.ProcessEnv) => {
   for (const key of Object.keys(env)) {
     if (PROXY_ENV_KEYS.has(key.toUpperCase())) {

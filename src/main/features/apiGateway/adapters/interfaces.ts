@@ -15,7 +15,7 @@ import type { ToolSet, UIMessageChunk } from 'ai'
 
 /**
  * Token usage carried on `message-metadata` UIMessageChunks emitted by main's
- * `AiService.streamText`: the nested `stats` snapshot (Cherry `MessageStats`,
+ * `AiService.streamText`: the nested `stats` snapshot (Magic Box `MessageStats`,
  * AI SDK v6 names) is the single carrier — the gateway SSE adapters read the
  * input/output totals from it, plus the reasoning breakdown for dialects that
  * expose one (Gemini's `usageMetadata.thoughtsTokenCount`).

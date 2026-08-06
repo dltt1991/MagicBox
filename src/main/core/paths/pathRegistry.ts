@@ -63,13 +63,13 @@ export function buildPathRegistry() {
     'cherry.bin': path.join(CHERRY_HOME, 'bin'),
     'cherry.config': path.join(CHERRY_HOME, 'config'),
 
-    // -- B. sys.* — OS directories (prefer app.* or cherry.* for Cherry-owned paths) --
+    // -- B. sys.* — OS directories (prefer app.* or cherry.* for Magic Box-owned paths) --
     'sys.home': sysHome,
-    'sys.temp': sysTemp, // OS-wide; prefer app.temp for Cherry-specific temp
+    'sys.temp': sysTemp, // OS-wide; prefer app.temp for Magic Box-specific temp
     'sys.downloads': getUserSystemPath('downloads', path.join(sysHome, 'Downloads')),
     'sys.documents': getUserSystemPath('documents', path.join(sysHome, 'Documents')),
     'sys.desktop': getUserSystemPath('desktop', path.join(sysHome, 'Desktop')),
-    'sys.appdata': app.getPath('appData'), // OS root; use app.userdata for Cherry-owned
+    'sys.appdata': app.getPath('appData'), // OS root; use app.userdata for Magic Box-owned
     'sys.appdata.autostart': path.join(app.getPath('appData'), 'autostart'), // Linux only
 
     // -- C. app.* — the Electron application itself --
@@ -86,8 +86,8 @@ export function buildPathRegistry() {
     'app.session.cache': path.join(appSession, 'Cache'), // Chromium cache Directory
     'app.session.webview': path.join(appSession, 'Partitions', 'webview'), // persist:webview Chromium partition
     'app.extra_resources': appExtraResources, // electron-builder extraResources output root
-    'app.temp': appTemp, // Cherry-specific temp under sys.temp
-    'app.userdata': appUserData, // Electron per-app data dir (Cherry-owned)
+    'app.temp': appTemp, // Magic Box-specific temp under sys.temp
+    'app.userdata': appUserData, // Electron per-app data dir (Magic Box-owned)
     'app.userdata.data': appUserDataData,
     'app.database.file': path.join(appUserDataData, 'cherrystudio.sqlite'),
     // Dev: relative to __dirname; packaged: shipped via extraResources
@@ -200,7 +200,7 @@ export function buildPathRegistry() {
     'v1.database.file': path.join(appUserData, 'cherrystudio.sqlite'),
     'v1.agents.claude': path.join(appUserData, '.claude'),
 
-    // -- F. external.* — third-party tool paths (Cherry reads/writes, does NOT own) --
+    // -- F. external.* — third-party tool paths (Magic Box reads/writes, does NOT own) --
     'external.openclaw.config': path.join(os.homedir(), '.openclaw'),
     // Nested ternary (not object literal) to satisfy file-level ESLint constraint
     'external.obsidian.config_file': isWin

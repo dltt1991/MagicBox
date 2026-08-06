@@ -3,7 +3,7 @@
  *
  * Official Shadcn variables remain unprefixed for ecosystem compatibility.
  * Foundation providers and controlled runtime inputs are imported before this
- * file. Cherry Studio product semantics are imported after it so they may
+ * file. Magic Box product semantics are imported after it so they may
  * intentionally follow official variables and third-party themes such as
  * TweakCN.
  */

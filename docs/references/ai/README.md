@@ -1,6 +1,6 @@
 # AI Reference
 
-This is the entry point for the AI pipeline in Cherry Studio v2 — the
+This is the entry point for the AI pipeline in Magic Box v2 — the
 main-process runtimes that own provider calls (AI SDK and direct Agent SDK),
 plus the renderer-side transport that connects to them.
 

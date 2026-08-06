@@ -36,4 +36,4 @@ Component-level change in `@cherrystudio/ui` (`packages/ui/src/components/compos
 External consumers that depended on the previous `items-center` default and
 want the v1 look back can wrap items in a fixed-width container or pass an
 explicit `className` override on the `Sortable` row. No code change is
-required inside the Cherry Studio app itself.
+required inside the Magic Box app itself.

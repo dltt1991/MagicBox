@@ -26,7 +26,7 @@ const runBaseSchema = z.object({
 })
 
 const codeCliRunInputSchema = z.discriminatedUnion('mode', [
-  // Launch with a Cherry-injected provider/model.
+  // Launch with a Magic Box-injected provider/model.
   runBaseSchema.extend({
     mode: z.literal('normal'),
     providerId: z.string().min(1),

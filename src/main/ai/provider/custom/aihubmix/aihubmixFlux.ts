@@ -25,7 +25,7 @@ import { createAbortError, fileToDataUrl, waitWithSignal } from '../transportUti
  *
  * Field sourcing — `aspect_ratio` and `seed` arrive positionally from AI
  * SDK; the rest (`safety_tolerance`) sits in `providerParams` keyed by
- * `safetyTolerance` (Cherry canonical) or `safety_tolerance` (already
+ * `safetyTolerance` (Magic Box canonical) or `safety_tolerance` (already
  * snake-cased by aihubmixImageModel's bag rename).
  */
 export interface AihubmixFluxTransportSettings {

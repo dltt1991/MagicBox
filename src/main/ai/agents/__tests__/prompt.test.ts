@@ -109,10 +109,10 @@ describe('PromptBuilder', () => {
 
     const { base, context: result } = await builder.buildPromptParts('/workspace')
 
-    // No system.md → keep the Claude Code preset as the base and append Cherry content;
+    // No system.md → keep the Claude Code preset as the base and append Magic Box content;
     // the old embedded "personal assistant" preamble must be gone.
     expect(base).toEqual({ kind: 'claude_code' })
-    expect(result).not.toContain('You are a personal assistant running inside Cherry Studio')
+    expect(result).not.toContain('You are a personal assistant running inside Magic Box')
     expect(result).toContain('## Memories')
     expect(result).toContain('`/workspace/SOUL.md`')
   })
@@ -154,7 +154,7 @@ describe('PromptBuilder', () => {
     expect(result).toContain('## Memories')
   })
 
-  it('treats an empty system.md as an explicit custom base while retaining Cherry context', async () => {
+  it('treats an empty system.md as an explicit custom base while retaining Magic Box context', async () => {
     setupFiles({ '/workspace/system.md': '' })
 
     const { base, context } = await builder.buildPromptParts('/workspace')
@@ -241,13 +241,13 @@ Always cite primary sources.`
 
   it('includes memory/FACT.md in memories section', async () => {
     setupFiles({
-      '/workspace/memory/FACT.md': '# Active Projects\n\n- Cherry Studio'
+      '/workspace/memory/FACT.md': '# Active Projects\n\n- Magic Box'
     })
 
     const { context: result } = await builder.buildPromptParts('/workspace')
 
     expect(result).toContain('<facts>')
-    expect(result).toContain('Cherry Studio')
+    expect(result).toContain('Magic Box')
     expect(result).toContain('</facts>')
     expect(result).toContain('WHAT you know')
   })
@@ -256,7 +256,7 @@ Always cite primary sources.`
     setupFiles({
       '/workspace/soul.md': 'Be concise.',
       '/workspace/user.md': 'Name: V',
-      '/workspace/memory/FACT.md': 'Project: Cherry Studio'
+      '/workspace/memory/FACT.md': 'Project: Magic Box'
     })
 
     const { context: result } = await builder.buildPromptParts('/workspace')
@@ -272,7 +272,7 @@ Always cite primary sources.`
     setupFiles({
       '/workspace/SOUL.md': 'Be concise.',
       '/workspace/USER.md': 'Name: V',
-      '/workspace/memory/FACT.md': 'Project: Cherry Studio'
+      '/workspace/memory/FACT.md': 'Project: Magic Box'
     })
 
     const result = await builder.buildMemoriesSection('/workspace')
@@ -280,12 +280,12 @@ Always cite primary sources.`
     expect(result).toContain('## Memories')
     expect(result).toContain('Be concise.')
     expect(result).toContain('Name: V')
-    expect(result).toContain('Project: Cherry Studio')
-    expect(result).not.toContain('You are a personal assistant running inside Cherry Studio')
+    expect(result).toContain('Project: Magic Box')
+    expect(result).not.toContain('You are a personal assistant running inside Magic Box')
     expect(result).not.toContain('## Autonomy Tools')
   })
 
-  it('keeps system.md as the base while building memories as Cherry context', async () => {
+  it('keeps system.md as the base while building memories as Magic Box context', async () => {
     setupFiles({
       '/workspace/system.md': 'You are CustomBot.',
       '/workspace/soul.md': 'Sharp and efficient.'

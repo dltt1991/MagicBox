@@ -1,9 +1,9 @@
 /**
  * Shared helpers for a creator's `fetchModels()` — built on `@ai-sdk/provider-utils`. The connection
  * host comes from the typed `src/providers` registry (the single source of truth for endpoints): a
- * first-party creator passes its Cherry provider id and we reuse that provider's `baseUrl` — no duplicated
+ * first-party creator passes its Magic Box provider id and we reuse that provider's `baseUrl` — no duplicated
  * URLs. Reading the source (not the generated `data/providers.json`) keeps the generator buildable from
- * a clean checkout where `data/` hasn't been generated yet. Creators with no Cherry provider pass a full
+ * a clean checkout where `data/` hasn't been generated yet. Creators with no Magic Box provider pass a full
  * `https://…` base instead. Runs at generation time only.
  */
 import { createJsonResponseHandler, createStatusCodeErrorResponseHandler, getFromApi } from '@ai-sdk/provider-utils'
@@ -20,7 +20,7 @@ function requireKey(env: string): string {
   return k
 }
 
-/** Resolve a connection host: a full `https://…` base, or a Cherry provider id → its baseUrl. */
+/** Resolve a connection host: a full `https://…` base, or a Magic Box provider id → its baseUrl. */
 function hostBase(providerOrUrl: string): string {
   if (/^https?:\/\//.test(providerOrUrl)) return providerOrUrl.replace(/\/+$/, '')
   const ec = PROVIDERS.find((p) => p.id === providerOrUrl)?.endpointConfigs ?? {}
@@ -55,7 +55,7 @@ export async function listModels<T>(opts: {
 
 const OPENAI_SHAPE = z.object({ data: z.array(z.object({ id: z.string() })) })
 
-/** OpenAI-compatible `GET {base}/models`. `providerOrUrl` = a Cherry provider id or a full base. */
+/** OpenAI-compatible `GET {base}/models`. `providerOrUrl` = a Magic Box provider id or a full base. */
 export function openaiCompatible(providerOrUrl: string, keyEnv: string) {
   return () =>
     listModels({

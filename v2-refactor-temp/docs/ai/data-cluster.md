@@ -28,7 +28,7 @@ The AI pipeline refactor exposed three v1 data-layer constraints:
    it. There was no row identity for "this directory" — renaming,
    reordering, or reusing a directory across agents meant duplicating
    the string.
-3. **Agent session messages stored `blocks: MessageBlock[]`** — Cherry
+3. **Agent session messages stored `blocks: MessageBlock[]`** — Magic Box
    v1's custom block model. AI SDK v6 produces `UIMessage.parts`
    directly. Continuing to convert one to the other on every read /
    write meant maintaining a translation layer that has zero v2-side

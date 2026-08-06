@@ -34,13 +34,13 @@ application.getPath('invalid.key')
 | `cherry.*` | Generic infra under `~/.cherrystudio` | `cherry.home`, `cherry.bin` |
 | `sys.*` | OS-managed directories | `sys.home`, `sys.temp`, `sys.downloads` |
 | `app.*` | Electron app: install dir, userData, database, logs, temp root | `app.userdata`, `app.database.file` |
-| `feature.*` | Cherry-owned feature data (grouped by feature) | `feature.files.data`, `feature.mcp.oauth` |
+| `feature.*` | Magic Box-owned feature data (grouped by feature) | `feature.files.data`, `feature.mcp.oauth` |
 | `v1.*` | Old-version paths retained only for cleanup | `v1.trace`, `v1.cli.install` |
-| `external.*` | Third-party paths (Cherry reads/writes, does NOT own) | `external.openclaw.config` |
+| `external.*` | Third-party paths (Magic Box reads/writes, does NOT own) | `external.openclaw.config` |
 
 **Default to `feature.*` for active data.** Use `v1.*` only for old-version cleanup targets. The other scopes are effectively closed.
-`feature.*` → Cherry creates/manages/may delete. `v1.*` → Cherry never creates and may only inspect/delete during
-explicit cleanup. `external.*` → Cherry MUST NOT delete.
+`feature.*` → Magic Box creates/manages/may delete. `v1.*` → Magic Box never creates and may only inspect/delete during
+explicit cleanup. `external.*` → Magic Box MUST NOT delete.
 
 ## Key Naming Convention
 
@@ -78,7 +78,7 @@ database-only operation cannot create files. Two entry forms:
 Add a key to NO_ENSURE only if the target is **read-only in production**,
 **owned by a third party**, or has an explicit owner that performs validated
 materialization separately from path resolution, or is a **cleanup-only legacy
-target that Cherry must never recreate**.
+target that Magic Box must never recreate**.
 Type-checked via `satisfies` — typos and stale references fail at compile time.
 
 ## The `.` Separator Is Semantic, Not Physical

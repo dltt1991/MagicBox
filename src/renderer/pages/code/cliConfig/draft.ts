@@ -46,7 +46,7 @@ async function resolveContext(args: CliConfigWriteArgs): Promise<ResolvedCliConf
   }
   const { providerId, modelId: model } = parseUniqueModelId(args.modelId)
 
-  // Cherry gateway: resolve against the synthetic gateway provider + gateway key instead of the
+  // Magic Box gateway: resolve against the synthetic gateway provider + gateway key instead of the
   // real provider, and write the gateway-addressed model id ("providerId:apiModelId"). The real
   // provider key is never fetched, so it can't land in the CLI config file. Model metadata is still
   // read by the real model id (for contextWindow etc.); a failed read degrades to the raw model id.
@@ -199,7 +199,7 @@ export function isOwnLoginConfigurable(cliTool: string): boolean {
  * Build the tool-param config file for an "own login" selection: the user's tool
  * params (permission mode / effort / toggles) with no credentials or model, so
  * the CLI keeps using its own stored account login. The per-tool builders strip
- * every Cherry-managed credential/model/provider key and re-apply only the tool
+ * every Magic Box-managed credential/model/provider key and re-apply only the tool
  * params. Credential-only side files (Codex `auth.json`, Gemini `.env`) carry no
  * tool params and are scrubbed by `clearCliConfig` on select, not here.
  */

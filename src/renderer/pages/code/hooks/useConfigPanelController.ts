@@ -39,7 +39,7 @@ interface UseConfigPanelControllerOptions {
   setCurrentProvider: (providerId: string | null) => Promise<void>
   setCurrentCliConfigConnection: (connection: CliConfigConnection | null) => void
   makeModelFilter: (providerId: string) => (model: Model) => boolean
-  /** Synthetic Cherry gateway bundle (null when the gateway config is unavailable). */
+  /** Synthetic Magic Box gateway bundle (null when the gateway config is unavailable). */
   apiGatewayProvider?: ApiGatewayProviderBundle | null
   gatewayModelsById?: Map<UniqueModelId, Model>
   /** True while either query backing `gatewayModelsById` is still in flight. */
@@ -227,7 +227,7 @@ export function useConfigPanelController({
       inFlightToolsRef.current.add(selectedCliTool)
       void (async () => {
         // Virtual "own login" entry: the CLI falls back to its own stored login. Always scrub the
-        // Cherry-managed credentials/model first (this also clears credential-only side files like
+        // Magic Box-managed credentials/model first (this also clears credential-only side files like
         // Codex auth.json / Gemini .env), then — for configurable tools on select — layer the saved
         // tool params back on. Finally mark the reserved id current (or clear it when re-toggled).
         if (provider.id === CLI_OWN_LOGIN_PROVIDER_ID) {

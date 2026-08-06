@@ -33,10 +33,10 @@
     },
     "builtin": {
       "cherry_assistant": {
-        "description": "内蔵のCherry Studioアドバイザー。問題の診断、操作ガイド、FAQの収集、バグ/機能リクエストの提出、およびスキルの検索/作成を行います。"
+        "description": "内蔵のMagic Boxアドバイザー。問題の診断、操作ガイド、FAQの収集、バグ/機能リクエストの提出、およびスキルの検索/作成を行います。"
       },
       "cherry_support": {
-        "description": "設定案内、トラブル診断、FAQ、フィードバックに対応する Cherry Studio 公式サポート Agent"
+        "description": "設定案内、トラブル診断、FAQ、フィードバックに対応する Magic Box 公式サポート Agent"
       }
     },
     "channels": {
@@ -1124,7 +1124,7 @@
     "authHeader": {
       "title": "認証ヘッダー"
     },
-    "description": "OpenAI 互換の HTTP API を通じて Cherry Studio の AI 機能を公開します",
+    "description": "OpenAI 互換の HTTP API を通じて Magic Box の AI 機能を公開します",
     "documentation": {
       "title": "API ドキュメント"
     },
@@ -1473,7 +1473,7 @@
     "deeply_thought": "深く考えています（{{seconds}} 秒）",
     "default": {
       "description": "こんにちは、私はデフォルトのアシスタントです。すぐにチャットを始められます。",
-      "name": "Cherry アシスタント",
+      "name": "Magic Box アシスタント",
       "topic": {
         "name": "デフォルトトピック"
       }
@@ -2156,7 +2156,7 @@
     },
     "api_gateway": {
       "description": "あらゆるCLI、すべてのモデル",
-      "requires_running": "有効化後、Cherry Studio を実行し続けてください — 外部 CLI は、Cherry Studio がホストするゲートウェイに接続します。",
+      "requires_running": "有効化後、Magic Box を実行し続けてください — 外部 CLI は、Magic Box がホストするゲートウェイに接続します。",
       "title": "統合ゲートウェイ"
     },
     "apply_failed": "システムファイルへのCLI設定の書き込みに失敗しました",
@@ -2572,7 +2572,7 @@
       "503": "サービスが利用できません。後でもう一度試してください",
       "504": "ゲートウェイタイムアウトが発生しました。後でもう一度試してください"
     },
-    "image_unreadable_for_non_vision_model": "選択されたモデルは画像に対応しておらず、Cherry Studioは添付ファイルから読み取り可能なテキストを抽出できませんでした。画像対応モデルを選択するか、画像を削除して再試行してください。",
+    "image_unreadable_for_non_vision_model": "選択されたモデルは画像に対応しておらず、Magic Boxは添付ファイルから読み取り可能なテキストを抽出できませんでした。画像対応モデルを選択するか、画像を削除して再試行してください。",
     "lastError": "最後のエラー",
     "maxEmbeddingsPerCall": "1回の呼び出しでの最大埋め込み数",
     "message": "エラーメッセージ",
@@ -4789,12 +4789,12 @@
       "select_other_provider": "他のプロバイダーを選択",
       "setup_hint": "ベストな体験のために、少なくとも1つのプロバイダーを設定してください",
       "subtitle": "プロバイダーに接続して、オールインワンAIワークステーションを始めましょう",
-      "title": "Cherry Studioへようこそ"
+      "title": "Magic Boxへようこそ"
     }
   },
   "openclaw": {
     "checking_installation": "OpenClawのインストールを確認しています...",
-    "description": "Cherry Studio プロバイダーを OpenClaw Gateway と統合し、Claude Code、Qwen-Coder などの AI コーディングエージェントを有効にします。",
+    "description": "Magic Box プロバイダーを OpenClaw Gateway と統合し、Claude Code、Qwen-Coder などの AI コーディングエージェントを有効にします。",
     "error": {
       "select_provider_model": "プロバイダーとモデルをまず選択してください"
     },
@@ -5730,7 +5730,7 @@
           },
           "description": {
             "0": "テキスト選択ツールは、<strong>アクセシビリティー権限</strong>が必要です。",
-            "1": "「<strong>設定に移動</strong>」をクリックし、後で表示される権限要求ポップアップで「<strong>システム設定を開く</strong>」ボタンをクリックします。その後、表示されるアプリケーションリストで「<strong>Cherry Studio</strong>」を見つけ、権限スイッチをオンにしてください。",
+            "1": "「<strong>設定に移動</strong>」をクリックし、後で表示される権限要求ポップアップで「<strong>システム設定を開く</strong>」ボタンをクリックします。その後、表示されるアプリケーションリストで「<strong>Magic Box</strong>」を見つけ、権限スイッチをオンにしてください。",
             "2": "設定が完了したら、テキスト選択ツールを再起動してください。"
           },
           "title": "アクセシビリティー権限"
@@ -5754,7 +5754,7 @@
         "wayland_checklist_subtitle": "Wayland エクスペリエンスを最適化するために、次の条件が満たされていることを確認してください：",
         "wayland_description": "Waylandセッションで実行中です。システムの制約により、一部のデスクトップ環境ではツールバーが選択したテキストに追随せず、画面中央にのみ表示される場合があります。完全な体験のためにはX11セッションへの切り替えを推奨します。",
         "wayland_title": "Waylandセッション通知",
-        "xwayland_fail": "有効ではありません。`--ozone-platform=x11` フラグを付けて Cherry Studio を起動してください。",
+        "xwayland_fail": "有効ではありません。`--ozone-platform=x11` フラグを付けて Magic Box を起動してください。",
         "xwayland_label": "XWaylandモード:",
         "xwayland_pass": "有効"
       },
@@ -5951,12 +5951,12 @@
         "inspecting": "利用可能な情報を準備しています...",
         "limit": "ZIP ファイルが大きくなりすぎないよう、ログと詳細な記録は {{size}} までに制限されます。新しい情報が優先して保持されます。",
         "mail": {
-          "body": "この Cherry Studio の問題について調査をお願いします。\n\n診断バンドル ID: {{bundleId}}\nバージョン: {{version}}\nプラットフォーム: {{platform}}\n対象期間: {{range}}\nファイル: {{fileName}}\n\nこのメールに ZIP ファイルを添付してください。バンドルはローカルに保存され、自動ではアップロードされていません。",
-          "subject": "Cherry Studio 診断バンドル {{bundleId}}"
+          "body": "この Magic Box の問題について調査をお願いします。\n\n診断バンドル ID: {{bundleId}}\nバージョン: {{version}}\nプラットフォーム: {{platform}}\n対象期間: {{range}}\nファイル: {{fileName}}\n\nこのメールに ZIP ファイルを添付してください。バンドルはローカルに保存され、自動ではアップロードされていません。",
+          "subject": "Magic Box 診断バンドル {{bundleId}}"
         },
         "privacy": {
           "consent": "上記の内容を理解し、ZIP ファイルをサポート担当者にのみ非公開で共有します。",
-          "description": "これらの記録には、入力した内容、ファイルの場所、リクエストとレスポンスの内容、サービスへの接続情報が含まれる場合があります。Cherry Studio はこれらを自動的にマスキングしたり、アップロードしたりしません。ZIP ファイルはサポート担当者にのみ共有し、GitHub などの公開サイトには絶対に投稿しないでください。",
+          "description": "これらの記録には、入力した内容、ファイルの場所、リクエストとレスポンスの内容、サービスへの接続情報が含まれる場合があります。Magic Box はこれらを自動的にマスキングしたり、アップロードしたりしません。ZIP ファイルはサポート担当者にのみ共有し、GitHub などの公開サイトには絶対に投稿しないでください。",
           "title": "共有する前に"
         },
         "range_title": "対象期間",
@@ -5997,13 +5997,13 @@
       },
       "feedback": {
         "agent": {
-          "description": "Cherry Support とチャットして、ヘルプを受けたりフィードバックを共有したりできます。",
+          "description": "Magic Box Support とチャットして、ヘルプを受けたりフィードバックを共有したりできます。",
           "title": "エージェントを使用する"
         },
-        "agent_error": "フィードバック用の Cherry Support を開けません。もう一度お試しください。",
+        "agent_error": "フィードバック用の Magic Box Support を開けません。もう一度お試しください。",
         "button": "フィードバック",
         "dialog": {
-          "description": "フィードバックの共有方法を選択して、Cherry Studioの改善にご協力ください。",
+          "description": "フィードバックの共有方法を選択して、Magic Boxの改善にご協力ください。",
           "title": "フィードバックチャンネルを選択してください"
         },
         "github": {
@@ -6083,9 +6083,9 @@
         "path_changed_without_copy": "パスが変更されました。",
         "restart_notice": "変更を適用するには、アプリを再起動する必要があります。",
         "select": "フォルダーを変更",
-        "select_error": "選択したフォルダーは、別の Cherry Studio インスタンスで使用されている可能性があります。他のインスタンスを終了してから、もう一度お試しください。どのインスタンスも実行されていない場合は、そのフォルダーに残っている SingletonLock と SingletonSocket ファイルを削除してください。",
+        "select_error": "選択したフォルダーは、別の Magic Box インスタンスで使用されている可能性があります。他のインスタンスを終了してから、もう一度お試しください。どのインスタンスも実行されていない場合は、そのフォルダーに残っている SingletonLock と SingletonSocket ファイルを削除してください。",
         "select_error_in_app_path": "新しいパスはアプリのインストールパスと同じです。別のパスを選択してください",
-        "select_error_protected_path": "選択されたパスは、オペレーティングシステムまたはCherry Studioによって保護されています。別のフォルダーを選択してください。",
+        "select_error_protected_path": "選択されたパスは、オペレーティングシステムまたはMagic Boxによって保護されています。別のフォルダーを選択してください。",
         "select_error_root_path": "新しいパスはルートパスにできません",
         "select_error_same_path": "新しいパスは元のパスと同じです。別のパスを選択してください",
         "select_error_write_permission": "新しいパスに書き込み権限がありません",
@@ -6138,7 +6138,7 @@
         "title": "キャッシュをクリア",
         "total_partial": "{{size}} を集計済み（一部のサイズは不明）",
         "unavailable": "計算できません",
-        "waiting_for_legacy_database": "古いデータベースが解放されるのを待っています。他の Cherry Studio ウィンドウを閉じてください。接続が閉じられるとクリーンアップが続行されます。"
+        "waiting_for_legacy_database": "古いデータベースが解放されるのを待っています。他の Magic Box ウィンドウを閉じてください。接続が閉じられるとクリーンアップが続行されます。"
       },
       "data": {
         "title": "データフォルダー"
@@ -6759,9 +6759,9 @@
       "notInstalled": "インストールされていません",
       "openBinariesDir": "バイナリのフォルダーを開く",
       "remove": "ツールを削除",
-      "removeConfirmMessage": "Cherry Studio から「{{name}}」を削除しますか？ポータブルツールの定義が削除されます。Cherry Studio が管理する mise の同一コピーが存在する場合は、それも削除されます。システムやアプリに内蔵された実行ファイルは変更されません。",
+      "removeConfirmMessage": "Magic Box から「{{name}}」を削除しますか？ポータブルツールの定義が削除されます。Magic Box が管理する mise の同一コピーが存在する場合は、それも削除されます。システムやアプリに内蔵された実行ファイルは変更されません。",
       "removeConfirmTitle": "ツールを削除",
-      "removeDefinitionOnlyConfirmMessage": "Cherry Studio は「{{name}}」を安全に削除できませんでした: {{details}} 定義のみを削除するとカードは非表示になりますが、バックエンドファイルはインストールされたままになります。続行しますか？",
+      "removeDefinitionOnlyConfirmMessage": "Magic Box は「{{name}}」を安全に削除できませんでした: {{details}} 定義のみを削除するとカードは非表示になりますが、バックエンドファイルはインストールされたままになります。続行しますか？",
       "removeDefinitionOnlyConfirmTitle": "定義のみを削除しますか？",
       "removeDefinitionOnlyDependents": "インストール済みツールが依存しています: {{dependents}}。",
       "removeError": "ツールの削除に失敗しました",
@@ -6793,7 +6793,7 @@
         "uv": "MCP サービスと依存関係のインストールに使用する Python パッケージマネージャーです。"
       },
       "uninstall": "アンインストール",
-      "uninstallConfirmMessage": "\"{{name}}\"をアンインストールしてもよろしいですか？Cherry Studioのバックエンドコピーが削除されます。",
+      "uninstallConfirmMessage": "\"{{name}}\"をアンインストールしてもよろしいですか？Magic Boxのバックエンドコピーが削除されます。",
       "uninstallConfirmTitle": "アンインストールツール",
       "uninstallFailed": "ツールのアンインストールに失敗しました",
       "uninstallSuccess": "ツールをアンインストールしました",

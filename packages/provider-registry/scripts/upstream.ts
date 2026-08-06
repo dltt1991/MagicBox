@@ -1,5 +1,5 @@
 /**
- * Parse upstream catalog entries (models.dev / OpenRouter) into Cherry metadata, with zod.
+ * Parse upstream catalog entries (models.dev / OpenRouter) into Magic Box metadata, with zod.
  *
  * Why zod: the upstream shapes are loose and change over time. A schema validates each entry
  * (a drifted/garbage entry is skipped, not crashed) and keeps the mapping declarative and typed,

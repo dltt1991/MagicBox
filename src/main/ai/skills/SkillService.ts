@@ -417,7 +417,7 @@ export class SkillService {
    * live under `.claude/skills/`. Those entries can be real directories or
    * user-created symlinks to directories.
    *
-   * Cherry-managed skills also appear under `.claude/skills/` as app-owned mirror
+   * Magic Box-managed skills also appear under `.claude/skills/` as app-owned mirror
    * entries when enabled for Claude SDK discovery, but their source of truth is
    * `agent_global_skill` and they are rendered by `list({ agentId })`. Keep
    * them out of this local-only list.
@@ -1489,7 +1489,7 @@ export class SkillService {
         await fs.promises.writeFile(path.join(destPath, BUILTIN_VERSION_FILE), appVersion, 'utf-8')
       }
 
-      // Builtin contentHash is the trusted full-directory hash (excluding Cherry's version marker),
+      // Builtin contentHash is the trusted full-directory hash (excluding Magic Box's version marker),
       // unlike authored skills whose hash tracks SKILL.md metadata changes.
       if (existing && !filesUpdated && existing.contentHash === sourceHash) return false
 

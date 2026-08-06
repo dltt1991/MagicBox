@@ -61,7 +61,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /**
- * Composer rebuilds text parts instead of patching them in place. A valid Cherry composer
+ * Composer rebuilds text parts instead of patching them in place. A valid Magic Box composer
  * snapshot on a single text part can be rebuilt from the edited draft, and empty references carry
  * no content. Every other metadata field is opaque state that cannot be safely attached to changed
  * text (for example, Gemini thought signatures), so editing must be rejected instead of dropping it.

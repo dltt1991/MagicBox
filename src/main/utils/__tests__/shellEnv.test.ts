@@ -189,7 +189,7 @@ describe('shellEnv – Windows registry PATH', () => {
     expect(env.Path).toContain('C:\\PlainPath')
   })
 
-  // -- Cherry Studio tool directories appended ------------------------------
+  // -- Magic Box tool directories appended ------------------------------
 
   it('should preserve the unmodified user environment for system tools', async () => {
     process.env.MISE_DATA_DIR = 'C:\\Users\\TestUser\\mise-data'
@@ -203,7 +203,7 @@ describe('shellEnv – Windows registry PATH', () => {
     expect(env.Path).not.toContain('.cherrystudio')
   })
 
-  it('should append Cherry Studio tool directories to PATH', async () => {
+  it('should append Magic Box tool directories to PATH', async () => {
     mockRegistryPaths({ system: 'C:\\Windows' })
 
     const env = await refreshShellEnv()
@@ -226,7 +226,7 @@ describe('shellEnv – Windows registry PATH', () => {
   })
 
   it('appends the bundled MinGit dir to the PATH tail as a last-resort git', async () => {
-    const bundledGitDir = 'C:\\Cherry\\resources\\binaries\\win32-x64\\git\\cmd'
+    const bundledGitDir = 'C:\\Magic Box\\resources\\binaries\\win32-x64\\git\\cmd'
     vi.mocked(getBundledGitDir).mockReturnValue(bundledGitDir)
     mockRegistryPaths({ system: 'C:\\Git\\cmd;C:\\Windows' })
 

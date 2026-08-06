@@ -1,11 +1,11 @@
 # API Gateway Reference
 
-The **API Gateway** exposes Cherry Studio's AI capabilities over a local HTTP
+The **API Gateway** exposes Magic Box's AI capabilities over a local HTTP
 server that speaks the **OpenAI** and **Anthropic** wire protocols, plus a few
-Cherry-specific REST endpoints (models, knowledge bases). Any OpenAI- or
+Magic Box-specific REST endpoints (models, knowledge bases). Any OpenAI- or
 Anthropic-compatible client (SDKs, Claude Code, `curl`, …) can point at
 `http://127.0.0.1:23333` and drive whatever provider/model the desktop app has
-configured — Cherry becomes a universal translation gateway in front of every
+configured — Magic Box becomes a universal translation gateway in front of every
 provider it knows.
 
 Internally each request is routed through main's `AiStreamManager` as an equal,
@@ -90,9 +90,9 @@ none of the public routes above.
 | `POST /v1/chat/completions` | OpenAI Chat | `openai` → `openai` |
 | `POST /v1/responses` | OpenAI Responses | `openai-responses` → `openai-responses` |
 | `GET /v1/models` | OpenAI list | `{ object:'list', data:[…] }`, ids are `providerId:modelId` (offset/limit) |
-| `GET /v1/knowledge-bases` | Cherry REST | list (offset/limit) |
-| `POST /v1/knowledge-bases/search` | Cherry REST | semantic search across bases |
-| `GET /v1/knowledge-bases/:id` | Cherry REST | single base |
+| `GET /v1/knowledge-bases` | Magic Box REST | list (offset/limit) |
+| `POST /v1/knowledge-bases/search` | Magic Box REST | semantic search across bases |
+| `GET /v1/knowledge-bases/:id` | Magic Box REST | single base |
 
 The model in every chat/messages/responses body is `"<providerId>:<modelId>"`
 (split on the **first** `:`), e.g. `anthropic:claude-sonnet-4-6`.
@@ -133,7 +133,7 @@ All three streaming endpoints are thin route wrappers that call
 6. **Drive the stream.** With `streamId = "gateway-<uuid>"`, call
    `AiStreamManager.streamPrompt({ streamId, uniqueModelId, messages, listener,
    callOverrides, contextOwner: 'caller', idleTimeoutMs })`. Caller ownership
-   keeps externally managed history out of Cherry's context-build and in-loop
+   keeps externally managed history out of Magic Box's context-build and in-loop
    compaction middleware. This uses the **`promptStreamLifecycle`** — no status
    broadcast, no attach/reconnect, no persistence; the stream evicts immediately
    at terminal.
@@ -303,7 +303,7 @@ request **path**, so every endpoint speaks its caller's dialect:
 |---|---|---|
 | `/v1/messages` | Anthropic `{ type:'error', error:{ type, message } }` | `anthropicErrorHandler` |
 | `/v1/chat`, `/v1/responses` | OpenAI `{ error:{ message, type, code } }` | `openaiErrorHandler` |
-| everything else | Cherry REST `{ error:{ code, message, details? } }` | `restErrorHandler` |
+| everything else | Magic Box REST `{ error:{ code, message, details? } }` | `restErrorHandler` |
 
 `DataApiError`s (from the data-layer services backing models/knowledge) carry
 their own `status`/`code` and are mapped straight into the selected envelope.
@@ -323,7 +323,7 @@ streaming `buildStreamErrorFrame`.
   status, and not attachable. It shares the exact same `AiStreamManager` engine
   as the renderer and IM channels.
 - **Caller-owned history.** Gateway clients own their context. The gateway sets
-  `contextOwner: 'caller'`, so Cherry does not truncate tool results, prune or
+  `contextOwner: 'caller'`, so Magic Box does not truncate tool results, prune or
   window messages, or run summary compaction. Protocol conversion and provider
   serialization still run normally.
 - **Assistant-agnostic.** No assistant/topic context. Sampling, client tools,

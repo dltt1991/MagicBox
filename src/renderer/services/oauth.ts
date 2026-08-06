@@ -143,7 +143,7 @@ export const oauthWithPPIO = async (setKey) => {
 }
 
 export const oauthWith302AI = async (setKey) => {
-  const authUrl = 'https://dash.302.ai/sso/login?app=cherry-ai.com&name=Cherry%20Studio'
+  const authUrl = 'https://dash.302.ai/sso/login?app=cherry-ai.com&name=Magic%20Box'
 
   const popup = window.open(
     authUrl,

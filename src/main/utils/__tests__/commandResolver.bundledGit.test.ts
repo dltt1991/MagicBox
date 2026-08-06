@@ -20,9 +20,9 @@ vi.mock('../bundledGit', () => ({
   getBundledGitPath: vi.fn(() => null)
 }))
 
-const BUNDLED_GIT = 'C:\\Cherry\\resources\\binaries\\win32-x64\\git\\cmd\\git.exe'
+const BUNDLED_GIT = 'C:\\Magic Box\\resources\\binaries\\win32-x64\\git\\cmd\\git.exe'
 const UNICODE_BUNDLED_GIT =
-  'D:\\常用软件\\Cherry Studio\\resources\\app.asar.unpacked\\resources\\binaries\\win32-x64\\git\\cmd\\git.exe'
+  'D:\\常用软件\\Magic Box\\resources\\app.asar.unpacked\\resources\\binaries\\win32-x64\\git\\cmd\\git.exe'
 const MISE_SHIM = 'C:\\mise\\shims\\git.cmd'
 const SYSTEM_GIT = 'C:\\Git\\cmd\\git.exe'
 const originalProgramFiles = process.env.ProgramFiles
@@ -52,7 +52,7 @@ describe('findExecutableInEnv – bundled MinGit resolver ordering', () => {
     vi.mocked(path.win32.isAbsolute).mockImplementation((p) => /^[A-Z]:/i.test(p))
     Object.defineProperty(path.win32, 'sep', { value: '\\', writable: true })
     vi.spyOn(process, 'cwd').mockReturnValue('C:\\cwd')
-    vi.mocked(getShellEnv).mockResolvedValue({ Path: 'C:\\Windows;C:\\mise\\shims;C:\\Cherry\\git\\cmd' })
+    vi.mocked(getShellEnv).mockResolvedValue({ Path: 'C:\\Windows;C:\\mise\\shims;C:\\Magic Box\\git\\cmd' })
     vi.mocked(which).mockReset()
     vi.mocked(which.sync).mockReset()
 
@@ -112,7 +112,7 @@ describe('findExecutableInEnv – bundled MinGit resolver ordering', () => {
     await expect(findExecutableInEnv('git')).resolves.toBe(BUNDLED_GIT)
   })
 
-  it('uses the original bundled git path when Cherry Studio is installed under a Unicode directory', async () => {
+  it('uses the original bundled git path when Magic Box is installed under a Unicode directory', async () => {
     const bundledGitDir = path.dirname(UNICODE_BUNDLED_GIT)
     const shellEnv = { Path: `C:\\Windows;${bundledGitDir}` }
     vi.mocked(getShellEnv).mockResolvedValue(shellEnv)

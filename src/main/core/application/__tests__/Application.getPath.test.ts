@@ -34,12 +34,12 @@ vi.mock('@main/core/paths/pathRegistry', async () => {
     ...actual,
     buildPathRegistry: () =>
       Object.freeze({
-        // Cherry-owned directories (eligible for auto-ensure)
+        // Magic Box-owned directories (eligible for auto-ensure)
         'feature.files.data': '/mock/userData/Data/Files',
         'feature.notes.data': '/mock/userData/Data/Notes',
         'feature.agents.system_workspaces': '/mock/userData/Data/Agents/system',
         'cherry.bin': '/mock/home/.cherrystudio/bin',
-        // Cherry-owned files (auto-ensure dirname only)
+        // Magic Box-owned files (auto-ensure dirname only)
         'feature.copilot.token_file': '/mock/home/.cherrystudio/config/.copilot_token',
         'app.database.file': '/mock/userData/Data/cherrystudio.sqlite',
         // NO_ENSURE — exact key entries (build artifacts)

@@ -1,7 +1,7 @@
 /**
- * Builds ClaudeCodeSettings from Cherry Studio's agent session configuration.
+ * Builds ClaudeCodeSettings from Magic Box's agent session configuration.
  *
- * Maps Cherry Studio's internal data model (agent sessions, providers, MCP servers,
+ * Maps Magic Box's internal data model (agent sessions, providers, MCP servers,
  * tool permissions, prompt builder) to ai-sdk-provider-claude-code's ClaudeCodeSettings.
  *
  * Usage:
@@ -139,7 +139,7 @@ const DEFAULT_REQUESTED_OUTPUT_TOKENS = 32_000
  */
 const AUTO_COMPACT_TRIGGER_PCT = 80
 const MINIMAL_CHERRY_ASSISTANT_INSTRUCTIONS =
-  'Within Cherry Studio, serve as Cherry Assistant, its built-in general-purpose Agent and onboarding guide. Help the user complete any request using the available tools.'
+  'Within Magic Box, serve as Magic Box Assistant, its built-in general-purpose Agent and onboarding guide. Help the user complete any request using the available tools.'
 const AGENT_INSTRUCTION_PRECEDENCE_PROMPT = `## Instruction Precedence
 
 When instructions conflict, apply them in this order:
@@ -437,7 +437,7 @@ export type LinkedChannelSnapshot = Pick<AgentChannelEntity, 'id'> | null
 // ── Main builder ────────────────────────────────────────────────────
 
 /**
- * Build session-level ClaudeCodeSettings from Cherry Studio's agent session.
+ * Build session-level ClaudeCodeSettings from Magic Box's agent session.
  */
 export async function buildClaudeCodeSessionSettings(
   session: AgentSessionEntity,
@@ -463,7 +463,7 @@ export async function buildClaudeCodeSessionSettings(
     options?.linkedChannelSnapshot === undefined
       ? channelService.findBySessionId(session.id)
       : options.linkedChannelSnapshot
-  // Cherry Assistant keeps its existing local-only support MCP behavior. Cherry Support also
+  // Magic Box Assistant keeps its existing local-only support MCP behavior. Magic Box Support also
   // exposes product lookups outside local sessions; sensitive tools still require a responder.
   const assistantMcpEnabled =
     builtinRole === BUILTIN_AGENT_ROLE.SUPPORT ||
@@ -613,12 +613,12 @@ export async function buildClaudeCodeSessionSettings(
     env,
     pathToClaudeCodeExecutable: resolveClaudeExecutablePath(),
     systemPrompt,
-    // Support loads only Cherry-owned plugin configuration. AGENTS.md context is injected above
+    // Support loads only Magic Box-owned plugin configuration. AGENTS.md context is injected above
     // by AgentsMdLoader, so disabling filesystem settings does not remove workspace instructions.
     settingSources: isSupport ? [] : getSettingSources(provider),
     settings: {
       autoCompactEnabled: true,
-      // Cherry owns persistent Agent memory through SOUL/USER/FACT/JOURNAL and agent-memory.
+      // Magic Box owns persistent Agent memory through SOUL/USER/FACT/JOURNAL and agent-memory.
       // Disable Claude Code's separate auto-memory store so the preset does not introduce a
       // second, conflicting memory contract.
       autoMemoryEnabled: false,
@@ -897,10 +897,10 @@ async function buildEnvironment(provider: Provider, agent: AgentEntity): Promise
   // Authorization / x-api-key), and a directly-supplied OAuth token. The
   // warm-query builder already skips injecting the API key for this provider.
   // The Agent SDK only falls through to macOS Keychain lookup when CLAUDE_CONFIG_DIR
-  // is absent; Cherry's isolated agent config dir would otherwise mask a valid
+  // is absent; Magic Box's isolated agent config dir would otherwise mask a valid
   // CLI login. Elsewhere credentials live in <CLAUDE_CONFIG_DIR>/.credentials.json,
   // so point at the user's real config dir (their shell's CLAUDE_CONFIG_DIR, or
-  // ~/.claude) rather than Cherry's relocated agent config.
+  // ~/.claude) rather than Magic Box's relocated agent config.
   if (isExternalCliProvider(provider)) {
     delete env.ANTHROPIC_API_KEY
     delete env.ANTHROPIC_AUTH_TOKEN
@@ -920,7 +920,7 @@ async function buildEnvironment(provider: Provider, agent: AgentEntity): Promise
 /**
  * Compute the SDK `Options.skills` whitelist for a session.
  *
- * Cherry Support is intentionally limited to canonical names from its bundled
+ * Magic Box Support is intentionally limited to canonical names from its bundled
  * plugin. Plugin qualification prevents project or managed skills with the
  * same unqualified name from satisfying the SDK filter. Other agents merge
  * the sources below.
@@ -1200,7 +1200,7 @@ async function buildToolPermissions(
         hookEventName: 'PreToolUse',
         permissionDecision: 'deny',
         permissionDecisionReason:
-          'Headless channel or scheduled turns cannot mutate agent configuration. Ask the user to make this change in Cherry Studio.'
+          'Headless channel or scheduled turns cannot mutate agent configuration. Ask the user to make this change in Magic Box.'
       }
     }
   }
@@ -1279,8 +1279,8 @@ async function buildToolPermissions(
     }
   }
 
-  // Cherry Assistant feedback skills submit through Bash, so the MCP-only approval list cannot
-  // protect them when bypassPermissions skips canUseTool. Cherry Support has a stricter role-level
+  // Magic Box Assistant feedback skills submit through Bash, so the MCP-only approval list cannot
+  // protect them when bypassPermissions skips canUseTool. Magic Box Support has a stricter role-level
   // Bash policy below.
   const assistantFeedbackSubmissionHook: HookCallback = async (input): Promise<HookJSONOutput> => {
     if (!isAssistantBuiltinAgent || !input || input.hook_event_name !== 'PreToolUse') return {}
@@ -1302,7 +1302,7 @@ async function buildToolPermissions(
           hookEventName: 'PreToolUse',
           permissionDecision: 'deny',
           permissionDecisionReason:
-            'Headless channel or scheduled turns cannot submit Cherry Studio feedback. Keep only a sanitized local feedback draft for an interactive user to review and submit.'
+            'Headless channel or scheduled turns cannot submit Magic Box feedback. Keep only a sanitized local feedback draft for an interactive user to review and submit.'
         }
       }
     }
@@ -1310,7 +1310,7 @@ async function buildToolPermissions(
       hookSpecificOutput: {
         hookEventName: 'PreToolUse',
         permissionDecision: 'ask',
-        permissionDecisionReason: 'Submitting Cherry Studio feedback externally requires live per-call user approval.'
+        permissionDecisionReason: 'Submitting Magic Box feedback externally requires live per-call user approval.'
       }
     }
   }
@@ -1332,7 +1332,7 @@ async function buildToolPermissions(
           hookEventName: 'PreToolUse',
           permissionDecision: 'deny',
           permissionDecisionReason:
-            'Headless channel or scheduled turns cannot run shell commands for Cherry Support. Keep only a sanitized local draft using the structured file tools.'
+            'Headless channel or scheduled turns cannot run shell commands for Magic Box Support. Keep only a sanitized local draft using the structured file tools.'
         }
       }
     }
@@ -1340,7 +1340,7 @@ async function buildToolPermissions(
       hookSpecificOutput: {
         hookEventName: 'PreToolUse',
         permissionDecision: 'ask',
-        permissionDecisionReason: 'Cherry Support shell commands require live per-call user approval.'
+        permissionDecisionReason: 'Magic Box Support shell commands require live per-call user approval.'
       }
     }
   }
@@ -1516,7 +1516,7 @@ export async function buildSystemPrompt(
     if (definition?.instructions) {
       instructions = definition.instructions
     } else if (isAssistant) {
-      logger.error('Builtin Cherry Assistant definition missing; using minimal fallback instructions')
+      logger.error('Builtin Magic Box Assistant definition missing; using minimal fallback instructions')
       instructions = MINIMAL_CHERRY_ASSISTANT_INSTRUCTIONS
     }
   }
@@ -1556,7 +1556,7 @@ export async function buildSystemPrompt(
     ? `\n\n${buildAgentInstructionsSection(resolvedInstructions)}`
     : ''
   // The Claude Code preset owns its dynamic cwd/git context. A custom base replaces that
-  // preset only, so Cherry restores the workspace contract in its always-appended context.
+  // preset only, so Magic Box restores the workspace contract in its always-appended context.
   const workspaceContextBlock =
     promptParts.base.kind === 'custom'
       ? `\n\n${[
@@ -1567,7 +1567,7 @@ export async function buildSystemPrompt(
       : ''
   const cherryContext = `${precedenceBlock}${promptParts.context}${agentsMdBlock}${agentInstructionsBlock}${workspaceContextBlock}${channelSecurityBlock}${citationsBlock}${artifactsBlock}\n\n${langInstruction}`
 
-  // The workspace chooses only the base. Cherry-owned context survives either path.
+  // The workspace chooses only the base. Magic Box-owned context survives either path.
   if (promptParts.base.kind === 'claude_code') {
     return { type: 'preset', preset: 'claude_code', append: cherryContext }
   }
@@ -1602,7 +1602,7 @@ export function buildMcpServers(
     }
   }
 
-  // 3. Cherry tools — builtin lookups plus the agent autonomy tools (cron / notify / config),
+  // 3. Magic Box tools — builtin lookups plus the agent autonomy tools (cron / notify / config),
   // which register only because the agent context is passed. Use `agent.id` instead of
   // `session.agentId` so TS can see the value is non-null after the upstream
   // orphan check in buildClaudeCodeSessionSettings.
@@ -1657,7 +1657,7 @@ export function buildMcpServers(
     totalMcpServers: Object.keys(mcpList).length
   })
 
-  // 5. Product support tools. Cherry Assistant receives these locally; Cherry Support receives
+  // 5. Product support tools. Magic Box Assistant receives these locally; Magic Box Support receives
   // them in every session, with runtime policy denying sensitive unattended actions.
   if (assistantMcpEnabled) {
     const assistantServer = new AssistantServer(
@@ -1820,7 +1820,7 @@ export function adjustAllowedToolsForMcp(assistantMcpEnabled: boolean, disallowe
 }
 
 function getSettingSources(provider: Provider): Array<'user' | 'project' | 'local'> {
-  // Managed skills are mirrored under Cherry's isolated CLAUDE_CONFIG_DIR/skills, which Claude Code loads from the
+  // Managed skills are mirrored under Magic Box's isolated CLAUDE_CONFIG_DIR/skills, which Claude Code loads from the
   // user source. Login providers point CLAUDE_CONFIG_DIR at the user's real CLI config, so keep that source isolated.
   return isExternalCliProvider(provider) ? ['project', 'local'] : ['user', 'project', 'local']
 }

@@ -1,6 +1,6 @@
 # Fuzzy Search for Directory Listings
 
-Cherry Studio exposes directory listing and fuzzy search through
+Magic Box exposes directory listing and fuzzy search through
 `listDirectory()` and `listDirectoryEntries()` in
 `src/main/services/file/tree/search.ts`. Both functions run in the main process;
 renderers receive bounded results instead of building their own filesystem

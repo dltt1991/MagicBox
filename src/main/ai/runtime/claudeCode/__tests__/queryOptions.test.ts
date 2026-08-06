@@ -4,7 +4,7 @@ const { spawnClaudeCodeProcess } = await import('../ClaudeCodeProcessManager')
 const { createClaudeCodeQueryOptions } = await import('../queryOptions')
 
 describe('createClaudeCodeQueryOptions', () => {
-  it('strips Cherry-only runtime settings before passing options to the SDK', () => {
+  it('strips Magic Box-only runtime settings before passing options to the SDK', () => {
     const ignoredSpawn = vi.fn()
     const opts = createClaudeCodeQueryOptions({
       modelId: 'sonnet',

@@ -118,7 +118,7 @@ export class ChatgptImporter implements ConversationImporter {
   }
 
   /**
-   * Map ChatGPT role to Cherry Studio role
+   * Map ChatGPT role to Magic Box role
    */
   private mapRole(chatgptRole: ChatGPTMessage['author']['role']): ImportMessageNode['role'] {
     if (chatgptRole === 'user') return 'user'

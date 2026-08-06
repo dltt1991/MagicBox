@@ -8,7 +8,7 @@ const logger = loggerService.withContext('devtools')
 
 /**
  * Install the development-only DevTools extensions (React DevTools + the
- * bundled Cherry DevTools panels) into the default session.
+ * bundled Magic Box DevTools panels) into the default session.
  *
  * Must be called after the `app` `ready` event, and — per Electron's contract —
  * ideally before the first page loads so the extensions attach to it. Callers

@@ -33,10 +33,10 @@
     },
     "builtin": {
       "cherry_assistant": {
-        "description": "Consilier integrat Cherry Studio. Diagnostică probleme, ghidează operațiuni, colectează întrebări frecvente, trimite rapoarte de erori/cereri de funcționalități și caută/crează Abilități (Skills)"
+        "description": "Consilier integrat Magic Box. Diagnostică probleme, ghidează operațiuni, colectează întrebări frecvente, trimite rapoarte de erori/cereri de funcționalități și caută/crează Abilități (Skills)"
       },
       "cherry_support": {
-        "description": "Agent oficial de asistență Cherry Studio pentru configurare, diagnosticare, întrebări frecvente și feedback"
+        "description": "Agent oficial de asistență Magic Box pentru configurare, diagnosticare, întrebări frecvente și feedback"
       }
     },
     "channels": {
@@ -1124,7 +1124,7 @@
     "authHeader": {
       "title": "Header de autorizare"
     },
-    "description": "Expune capacitățile AI ale Cherry Studio prin API-uri HTTP compatibile cu OpenAI",
+    "description": "Expune capacitățile AI ale Magic Box prin API-uri HTTP compatibile cu OpenAI",
     "documentation": {
       "title": "Documentație API"
     },
@@ -1473,7 +1473,7 @@
     "deeply_thought": "Gândit profund ({{seconds}} secunde)",
     "default": {
       "description": "Salut, sunt Asistentul Implicit. Poți începe să discuți cu mine imediat",
-      "name": "Asistent Cherry",
+      "name": "Asistent Magic Box",
       "topic": {
         "name": "Subiect implicit"
       }
@@ -2156,7 +2156,7 @@
     },
     "api_gateway": {
       "description": "Orice CLI, fiecare model",
-      "requires_running": "Păstrează Cherry Studio rulând după activare — CLI-ul extern se conectează la gateway-ul pe care îl găzduiește.",
+      "requires_running": "Păstrează Magic Box rulând după activare — CLI-ul extern se conectează la gateway-ul pe care îl găzduiește.",
       "title": "Gateway Unificat"
     },
     "apply_failed": "Nu s-a reușit scrierea configurației CLI în fișierul de sistem",
@@ -2572,7 +2572,7 @@
       "503": "Serviciu indisponibil. Te rugăm să încerci din nou mai târziu",
       "504": "Expirare gateway. Te rugăm să încerci din nou mai târziu"
     },
-    "image_unreadable_for_non_vision_model": "Modelul selectat nu suportă imagini, iar Cherry Studio nu a putut extrage text lizibil din atașament. Alegeți un model care suportă imagini sau eliminați imaginea și încercați din nou.",
+    "image_unreadable_for_non_vision_model": "Modelul selectat nu suportă imagini, iar Magic Box nu a putut extrage text lizibil din atașament. Alegeți un model care suportă imagini sau eliminați imaginea și încercați din nou.",
     "lastError": "Ultima eroare",
     "maxEmbeddingsPerCall": "Max Embeddings per apel",
     "message": "Mesaj de eroare",
@@ -4789,12 +4789,12 @@
       "select_other_provider": "Selectează alt furnizor",
       "setup_hint": "Poți schimba furnizorii oricând în Setări",
       "subtitle": "Conectează un furnizor pentru a debloca stația de lucru AI multifuncțională",
-      "title": "Bun venit la Cherry Studio"
+      "title": "Bun venit la Magic Box"
     }
   },
   "openclaw": {
     "checking_installation": "Verificare instalare OpenClaw...",
-    "description": "Integrează furnizorii Cherry Studio cu Gateway-ul OpenClaw pentru a permite agenților de codificare AI precum Claude Code, Qwen-Coder și alții.",
+    "description": "Integrează furnizorii Magic Box cu Gateway-ul OpenClaw pentru a permite agenților de codificare AI precum Claude Code, Qwen-Coder și alții.",
     "error": {
       "select_provider_model": "Selectează mai întâi un furnizor și un model"
     },
@@ -5730,7 +5730,7 @@
           },
           "description": {
             "0": "Asistentul de selecție necesită <strong>Permisiune de accesibilitate</strong> pentru a funcționa corect.",
-            "1": "Te rugăm să faci clic pe \"<strong>Mergi la Setări</strong>\" și să apeși butonul \"<strong>Deschide setările de sistem</strong>\" în fereastra pop-up de solicitare a permisiunii care apare ulterior. Apoi găsește \"<strong>Cherry Studio</strong>\" în lista de aplicații și activează comutatorul de permisiune.",
+            "1": "Te rugăm să faci clic pe \"<strong>Mergi la Setări</strong>\" și să apeși butonul \"<strong>Deschide setările de sistem</strong>\" în fereastra pop-up de solicitare a permisiunii care apare ulterior. Apoi găsește \"<strong>Magic Box</strong>\" în lista de aplicații și activează comutatorul de permisiune.",
             "2": "După finalizarea setărilor, te rugăm să redeschizi asistentul de selecție."
           },
           "title": "Permisiune de accesibilitate"
@@ -5754,7 +5754,7 @@
         "wayland_checklist_subtitle": "Asigură-te că sunt îndeplinite următoarele condiții pentru a optimiza experiența Wayland:",
         "wayland_description": "Te afli într-o sesiune Wayland. Din cauza limitărilor sistemului, în unele medii desktop bara de instrumente poate apărea numai în centrul ecranului, în loc să urmărească textul selectat. Treci la o sesiune X11 pentru experiența completă.",
         "wayland_title": "Notificare sesiune Wayland",
-        "xwayland_fail": "Nu este activat. Pornește Cherry Studio cu opțiunea `--ozone-platform=x11`.",
+        "xwayland_fail": "Nu este activat. Pornește Magic Box cu opțiunea `--ozone-platform=x11`.",
         "xwayland_label": "Mod XWayland:",
         "xwayland_pass": "Activat"
       },
@@ -5951,12 +5951,12 @@
         "inspecting": "Se pregătesc informațiile disponibile...",
         "limit": "Pentru ca arhiva ZIP să rămână ușor de gestionat, jurnalele și înregistrările detaliate sunt limitate la {{size}}. Informațiile mai recente sunt păstrate cu prioritate.",
         "mail": {
-          "body": "Ajută-ne să investigăm această problemă Cherry Studio.\n\nID pachet de diagnosticare: {{bundleId}}\nVersiune: {{version}}\nPlatformă: {{platform}}\nInterval de timp: {{range}}\nFișier: {{fileName}}\n\nAtașează arhiva ZIP la acest e-mail. Pachetul a fost salvat local și nu a fost încărcat automat.",
-          "subject": "Diagnosticare Cherry Studio {{bundleId}}"
+          "body": "Ajută-ne să investigăm această problemă Magic Box.\n\nID pachet de diagnosticare: {{bundleId}}\nVersiune: {{version}}\nPlatformă: {{platform}}\nInterval de timp: {{range}}\nFișier: {{fileName}}\n\nAtașează arhiva ZIP la acest e-mail. Pachetul a fost salvat local și nu a fost încărcat automat.",
+          "subject": "Diagnosticare Magic Box {{bundleId}}"
         },
         "privacy": {
           "consent": "Înțeleg informațiile de mai sus și voi partaja arhiva ZIP numai în privat cu echipa de asistență.",
-          "description": "Aceste înregistrări pot conține informații introduse de tine, locații de fișiere, conținutul solicitărilor și răspunsurilor și informații despre conexiunile la servicii. Cherry Studio nu le anonimizează și nu le încarcă automat. Partajează arhiva ZIP numai cu echipa de asistență și nu o publica niciodată pe GitHub sau pe alte site-uri publice.",
+          "description": "Aceste înregistrări pot conține informații introduse de tine, locații de fișiere, conținutul solicitărilor și răspunsurilor și informații despre conexiunile la servicii. Magic Box nu le anonimizează și nu le încarcă automat. Partajează arhiva ZIP numai cu echipa de asistență și nu o publica niciodată pe GitHub sau pe alte site-uri publice.",
           "title": "Înainte de partajare"
         },
         "range_title": "Interval de timp",
@@ -5997,13 +5997,13 @@
       },
       "feedback": {
         "agent": {
-          "description": "Discută cu Cherry Support pentru ajutor sau pentru a împărtăși feedback-ul tău.",
+          "description": "Discută cu Magic Box Support pentru ajutor sau pentru a împărtăși feedback-ul tău.",
           "title": "Folosește agentul"
         },
-        "agent_error": "Nu se poate deschide Cherry Support pentru feedback. Încearcă din nou.",
+        "agent_error": "Nu se poate deschide Magic Box Support pentru feedback. Încearcă din nou.",
         "button": "Feedback",
         "dialog": {
-          "description": "Alege cum să partajezi feedback-ul și ajută-ne să facem Cherry Studio mai bun.",
+          "description": "Alege cum să partajezi feedback-ul și ajută-ne să facem Magic Box mai bun.",
           "title": "Alege un canal de feedback"
         },
         "github": {
@@ -6083,9 +6083,9 @@
         "path_changed_without_copy": "Calea a fost schimbată cu succes",
         "restart_notice": "Aplicația poate necesita repornirea de mai multe ori pentru a aplica modificările",
         "select": "Modifică directorul",
-        "select_error": "Directorul selectat poate fi utilizat de o altă instanță Cherry Studio. Închide celelalte instanțe și încearcă din nou. Dacă nu rulează nicio altă instanță, elimină fișierele SingletonLock și SingletonSocket învechite din acel director.",
+        "select_error": "Directorul selectat poate fi utilizat de o altă instanță Magic Box. Închide celelalte instanțe și încearcă din nou. Dacă nu rulează nicio altă instanță, elimină fișierele SingletonLock și SingletonSocket învechite din acel director.",
         "select_error_in_app_path": "Noua cale este aceeași cu calea de instalare a aplicației, te rugăm să selectezi o altă cale",
-        "select_error_protected_path": "Calea selectată este protejată de sistemul de operare sau de Cherry Studio. Alege un alt director.",
+        "select_error_protected_path": "Calea selectată este protejată de sistemul de operare sau de Magic Box. Alege un alt director.",
         "select_error_root_path": "Noua cale nu poate fi calea rădăcină",
         "select_error_same_path": "Noua cale este aceeași cu vechea cale, te rugăm să selectezi o altă cale",
         "select_error_write_permission": "Noua cale nu are permisiuni de scriere",
@@ -6138,7 +6138,7 @@
         "title": "Golește memoria cache",
         "total_partial": "Dimensiune calculată: {{size}}; unele dimensiuni sunt necunoscute",
         "unavailable": "Nu se poate calcula",
-        "waiting_for_legacy_database": "Se așteaptă eliberarea bazei de date vechi. Închideți celelalte ferestre Cherry Studio; curățarea va continua după închiderea conexiunilor acestora."
+        "waiting_for_legacy_database": "Se așteaptă eliberarea bazei de date vechi. Închideți celelalte ferestre Magic Box; curățarea va continua după închiderea conexiunilor acestora."
       },
       "data": {
         "title": "Director de date"
@@ -6759,14 +6759,14 @@
       "notInstalled": "Neinstalat",
       "openBinariesDir": "Deschide directorul fișierelor binare",
       "remove": "Elimină instrumentul",
-      "removeConfirmMessage": "Elimini „{{name}}” din Cherry Studio? Definiția sa portabilă va fi ștearsă. Cherry va curăța și o copie exactă gestionată de mise, dacă există. Executabilele de sistem și cele incluse nu sunt modificate niciodată.",
+      "removeConfirmMessage": "Elimini „{{name}}” din Magic Box? Definiția sa portabilă va fi ștearsă. Magic Box va curăța și o copie exactă gestionată de mise, dacă există. Executabilele de sistem și cele incluse nu sunt modificate niciodată.",
       "removeConfirmTitle": "Elimină instrumentul",
-      "removeDefinitionOnlyConfirmMessage": "Cherry nu a putut curăța în siguranță „{{name}}”: {{details}} Eliminarea doar a definiției va ascunde cardul, dar va lăsa fișierele backend instalate. Continui?",
+      "removeDefinitionOnlyConfirmMessage": "Magic Box nu a putut curăța în siguranță „{{name}}”: {{details}} Eliminarea doar a definiției va ascunde cardul, dar va lăsa fișierele backend instalate. Continui?",
       "removeDefinitionOnlyConfirmTitle": "Elimină doar definiția?",
       "removeDefinitionOnlyDependents": "Instrumentele instalate depind de el: {{dependents}}.",
       "removeError": "Nu s-a putut elimina instrumentul",
       "removeErrorHint": "Comanda de curățare a eșuat. Copiază jurnalul de mai jos pentru a depana problema sau pentru a-l partaja în căutare de ajutor.",
-      "removeRuntimeConfirmMessage": "Elimini „{{name}}” din Cherry Studio? Cherry va curăța numai o copie exactă gestionată de mise. Mediile de execuție de sistem și cele incluse nu sunt modificate niciodată. Instrumentele npm sau pip instalate pot bloca eliminarea dacă depind de acest mediu de execuție.",
+      "removeRuntimeConfirmMessage": "Elimini „{{name}}” din Magic Box? Magic Box va curăța numai o copie exactă gestionată de mise. Mediile de execuție de sistem și cele incluse nu sunt modificate niciodată. Instrumentele npm sau pip instalate pot bloca eliminarea dacă depind de acest mediu de execuție.",
       "runtimeDependency": "Timp de execuție",
       "runtimeDependencyHint": "Timp de execuție pentru instrumentele npm/pip",
       "searchFailed": "Căutarea a eșuat; verifică jurnalele",
@@ -6793,7 +6793,7 @@
         "uv": "Manager de pachete Python pentru servicii MCP și instalarea dependențelor."
       },
       "uninstall": "Dezinstalare",
-      "uninstallConfirmMessage": "Ești sigur că vrei să dezinstalezi „{{name}}”? Copia backend a Cherry Studio va fi ștearsă.",
+      "uninstallConfirmMessage": "Ești sigur că vrei să dezinstalezi „{{name}}”? Copia backend a Magic Box va fi ștearsă.",
       "uninstallConfirmTitle": "Instrument de dezinstalare",
       "uninstallFailed": "Nu s-a putut dezinstala instrumentul",
       "uninstallSuccess": "Instrument dezinstalat",

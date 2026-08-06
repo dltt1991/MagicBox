@@ -13,7 +13,7 @@ export interface ApprovalGateOptions {
 
 /**
  * Whether `tool` would require user approval before executing — the gate the AI SDK enforces
- * natively for tools it dispatches itself (`needsApproval`). Cherry must evaluate it explicitly
+ * natively for tools it dispatches itself (`needsApproval`). Magic Box must evaluate it explicitly
  * wherever a registry tool runs OUTSIDE that native dispatch (the `tool_invoke` / `tool_exec`
  * meta-tools and defer-exposition), otherwise a deferred tool slips past the approval card.
  *

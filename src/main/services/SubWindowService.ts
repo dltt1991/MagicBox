@@ -164,7 +164,7 @@ export class SubWindowService extends BaseService {
     // Deliberately omit `backgroundColor` on macOS — an undefined value can still overwrite
     // the vibrancy-enabled default through the options merge path.
     const options: Partial<WindowOptions> = {
-      title: title || 'Cherry Studio Tab',
+      title: title || 'Magic Box Tab',
       darkTheme: dark,
       ...(!isMac && { backgroundColor: dark ? '#181818' : '#FFFFFF' }),
       ...(isLinux && { icon: linuxIcon }),

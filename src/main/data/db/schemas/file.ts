@@ -10,16 +10,16 @@ import { createUpdateDeleteTimestamps, uuidPrimaryKeyOrdered } from './_columnHe
  */
 
 /**
- * File entry table — all files managed by Cherry.
+ * File entry table — all files managed by Magic Box.
  *
  * Flat list; no tree structure, no mount concept.
  *
- * - origin='internal': Cherry owns the content, stored at `{userData}/Data/Files/{id}.{ext}`.
+ * - origin='internal': Magic Box owns the content, stored at `{userData}/Data/Files/{id}.{ext}`.
  *   `name` / `ext` / `size` are authoritative (kept in sync by atomic writes).
- * - origin='external': Cherry only references the user-provided path.
+ * - origin='external': Magic Box only references the user-provided path.
  *   `name` / `ext` are pure projections of `externalPath` (basename / extname).
  *   `size` is NOT stored for external — external files can change outside
- *   Cherry at any time, so a DB snapshot would inevitably drift. Consumers
+ *   Magic Box at any time, so a DB snapshot would inevitably drift. Consumers
  *   needing a live value call File IPC `getMetadata(id)` which runs `fs.stat`.
  */
 export const fileEntryTable = sqliteTable(
@@ -112,7 +112,7 @@ export const fileEntryTable = sqliteTable(
     // External removal is always immediate via permanentDelete (DB-only; the
     // physical file is left untouched, path-level @main/utils/file/fs.remove is a separate call).
     check('fe_external_no_delete', sql`${t.origin} != 'external' OR ${t.deletedAt} IS NULL`),
-    // Cherry does not own external content, so its hash cannot be kept current.
+    // Magic Box does not own external content, so its hash cannot be kept current.
     check('fe_contenthash_external_null', sql`${t.origin} != 'external' OR ${t.contentHash} IS NULL`),
     // Size semantics are origin-dependent: internal rows carry an authoritative
     // byte count (non-null, ≥ 0); external rows must leave size NULL and read

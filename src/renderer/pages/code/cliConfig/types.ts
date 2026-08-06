@@ -19,7 +19,7 @@ export interface CliConfigConnection {
 }
 
 /**
- * Cherry-gateway resolution override. When present, config resolution uses the synthetic
+ * Magic Box-gateway resolution override. When present, config resolution uses the synthetic
  * gateway provider (endpointConfigs → local gateway URL) + this key instead of the real
  * provider parsed from `modelId`, and writes the gateway-addressed model id — so the real
  * provider key never lands in the CLI config file.
@@ -38,7 +38,7 @@ export interface CliConfigWriteArgs {
   configBlob?: Record<string, unknown>
   /** Claude Code only: whether to write env.ANTHROPIC_MODEL. */
   writePrimaryModel?: boolean
-  /** Present when the selected provider is the Cherry gateway (see {@link CliConfigGatewayContext}). */
+  /** Present when the selected provider is the Magic Box gateway (see {@link CliConfigGatewayContext}). */
   gateway?: CliConfigGatewayContext
 }
 

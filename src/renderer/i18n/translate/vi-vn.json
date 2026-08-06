@@ -33,10 +33,10 @@
     },
     "builtin": {
       "cherry_assistant": {
-        "description": "Cố vấn tích hợp Cherry Studio. Chẩn đoán sự cố, hướng dẫn thao tác, thu thập câu hỏi thường gặp, gửi báo cáo lỗi/yêu cầu tính năng, và tìm kiếm/tạo Kỹ năng"
+        "description": "Cố vấn tích hợp Magic Box. Chẩn đoán sự cố, hướng dẫn thao tác, thu thập câu hỏi thường gặp, gửi báo cáo lỗi/yêu cầu tính năng, và tìm kiếm/tạo Kỹ năng"
       },
       "cherry_support": {
-        "description": "Agent hỗ trợ chính thức của Cherry Studio cho hướng dẫn cấu hình, chẩn đoán, FAQ và phản hồi"
+        "description": "Agent hỗ trợ chính thức của Magic Box cho hướng dẫn cấu hình, chẩn đoán, FAQ và phản hồi"
       }
     },
     "channels": {
@@ -1124,7 +1124,7 @@
     "authHeader": {
       "title": "Tiêu đề ủy quyền"
     },
-    "description": "Phơi bày khả năng AI của Cherry Studio qua các API HTTP tương thích với OpenAI",
+    "description": "Phơi bày khả năng AI của Magic Box qua các API HTTP tương thích với OpenAI",
     "documentation": {
       "title": "Tài liệu API"
     },
@@ -1473,7 +1473,7 @@
     "deeply_thought": "Suy nghĩ sâu ({{seconds}} giây)",
     "default": {
       "description": "Xin chào, tôi là Trợ lý Mặc định. Bạn có thể bắt đầu trò chuyện với tôi ngay bây giờ",
-      "name": "Trợ lý Cherry",
+      "name": "Trợ lý Magic Box",
       "topic": {
         "name": "Chủ đề Mặc định"
       }
@@ -2156,7 +2156,7 @@
     },
     "api_gateway": {
       "description": "Bất kỳ CLI nào, mọi mô hình",
-      "requires_running": "Giữ Cherry Studio chạy sau khi bật — CLI bên ngoài kết nối với cổng mà nó lưu trữ.",
+      "requires_running": "Giữ Magic Box chạy sau khi bật — CLI bên ngoài kết nối với cổng mà nó lưu trữ.",
       "title": "Cổng thống nhất"
     },
     "apply_failed": "Không thể ghi cấu hình CLI vào tệp hệ thống",
@@ -2572,7 +2572,7 @@
       "503": "Dịch vụ không khả dụng. Vui lòng thử lại sau.",
       "504": "Quá thời gian chờ của cổng. Vui lòng thử lại sau."
     },
-    "image_unreadable_for_non_vision_model": "Mô hình đã chọn không hỗ trợ hình ảnh, và Cherry Studio không thể trích xuất văn bản có thể đọc được từ tệp đính kèm. Hãy chọn mô hình có khả năng xử lý hình ảnh hoặc xóa hình ảnh rồi thử lại.",
+    "image_unreadable_for_non_vision_model": "Mô hình đã chọn không hỗ trợ hình ảnh, và Magic Box không thể trích xuất văn bản có thể đọc được từ tệp đính kèm. Hãy chọn mô hình có khả năng xử lý hình ảnh hoặc xóa hình ảnh rồi thử lại.",
     "lastError": "Lỗi Cuối Cùng",
     "maxEmbeddingsPerCall": "Số lượng nhúng tối đa mỗi lần gọi",
     "message": "Thông báo lỗi",
@@ -4789,12 +4789,12 @@
       "select_other_provider": "Chọn Nhà Cung Cấp Khác",
       "setup_hint": "Vui lòng cấu hình ít nhất một nhà cung cấp để có trải nghiệm tốt nhất",
       "subtitle": "Kết nối nhà cung cấp để khởi động trạm làm việc AI tất cả trong một",
-      "title": "Chào mừng bạn đến với Cherry Studio"
+      "title": "Chào mừng bạn đến với Magic Box"
     }
   },
   "openclaw": {
     "checking_installation": "Đang kiểm tra cài đặt OpenClaw...",
-    "description": "Sử dụng các nhà cung cấp Cherry Studio để cấp nguồn cho OpenClaw, trợ lý AI cá nhân của bạn hoạt động trên WhatsApp, Telegram, Slack, Discord và nhiều nền tảng khác.",
+    "description": "Sử dụng các nhà cung cấp Magic Box để cấp nguồn cho OpenClaw, trợ lý AI cá nhân của bạn hoạt động trên WhatsApp, Telegram, Slack, Discord và nhiều nền tảng khác.",
     "error": {
       "select_provider_model": "Vui lòng chọn nhà cung cấp và mô hình trước"
     },
@@ -5730,7 +5730,7 @@
           },
           "description": {
             "0": "Trợ lý Lựa chọn yêu cầu <strong>Quyền Trợ năng</strong> để hoạt động bình thường.",
-            "1": "Vui lòng nhấp vào \"<strong>Đi tới Cài đặt</strong>\" và nhấp vào nút \"<strong>Mở Cài đặt Hệ thống</strong>\" trong cửa sổ yêu cầu quyền xuất hiện sau đó. Sau đó, tìm \"<strong>Cherry Studio</strong>\" trong danh sách ứng dụng xuất hiện và bật công tắc quyền.",
+            "1": "Vui lòng nhấp vào \"<strong>Đi tới Cài đặt</strong>\" và nhấp vào nút \"<strong>Mở Cài đặt Hệ thống</strong>\" trong cửa sổ yêu cầu quyền xuất hiện sau đó. Sau đó, tìm \"<strong>Magic Box</strong>\" trong danh sách ứng dụng xuất hiện và bật công tắc quyền.",
             "2": "Sau khi hoàn tất cài đặt, vui lòng mở lại trợ lý lựa chọn."
           },
           "title": "Quyền truy cập"
@@ -5754,7 +5754,7 @@
         "wayland_checklist_subtitle": "Đảm bảo các điều kiện sau được thỏa mãn để tối ưu hóa trải nghiệm Wayland:",
         "wayland_description": "Bạn đang ở trong phiên Wayland. Do giới hạn của hệ thống, thanh công cụ có thể chỉ xuất hiện ở giữa màn hình thay vì theo văn bản được chọn trên một số môi trường máy tính để bàn. Khuyến nghị chuyển sang phiên X11 để có trải nghiệm đầy đủ.",
         "wayland_title": "Thông báo phiên Wayland",
-        "xwayland_fail": "Chưa được kích hoạt, vui lòng khởi chạy Cherry Studio với cờ `--ozone-platform=x11`",
+        "xwayland_fail": "Chưa được kích hoạt, vui lòng khởi chạy Magic Box với cờ `--ozone-platform=x11`",
         "xwayland_label": "Chế độ XWayland:",
         "xwayland_pass": "Đã bật"
       },
@@ -5951,12 +5951,12 @@
         "inspecting": "Đang chuẩn bị thông tin có thể xuất...",
         "limit": "Để giữ dung lượng ZIP ở mức phù hợp, nhật ký và bản ghi chi tiết được giới hạn ở {{size}}. Thông tin mới hơn được ưu tiên giữ lại.",
         "mail": {
-          "body": "Vui lòng hỗ trợ điều tra sự cố Cherry Studio này.\n\nID gói chẩn đoán: {{bundleId}}\nPhiên bản: {{version}}\nNền tảng: {{platform}}\nKhoảng thời gian: {{range}}\nTệp: {{fileName}}\n\nVui lòng đính kèm tệp ZIP vào email này. Gói chẩn đoán chỉ được lưu trên máy và không được tự động tải lên.",
-          "subject": "Chẩn đoán Cherry Studio {{bundleId}}"
+          "body": "Vui lòng hỗ trợ điều tra sự cố Magic Box này.\n\nID gói chẩn đoán: {{bundleId}}\nPhiên bản: {{version}}\nNền tảng: {{platform}}\nKhoảng thời gian: {{range}}\nTệp: {{fileName}}\n\nVui lòng đính kèm tệp ZIP vào email này. Gói chẩn đoán chỉ được lưu trên máy và không được tự động tải lên.",
+          "subject": "Chẩn đoán Magic Box {{bundleId}}"
         },
         "privacy": {
           "consent": "Tôi hiểu thông tin trên và sẽ chỉ chia sẻ riêng tệp ZIP với bộ phận hỗ trợ.",
-          "description": "Các bản ghi này có thể chứa nội dung bạn đã nhập, vị trí tệp, nội dung yêu cầu và phản hồi, cũng như thông tin kết nối dịch vụ. Cherry Studio không tự động che dữ liệu nhạy cảm hoặc tải các bản ghi lên. Chỉ chia sẻ riêng tệp ZIP với bộ phận hỗ trợ và tuyệt đối không đăng lên GitHub hay trang web công khai khác.",
+          "description": "Các bản ghi này có thể chứa nội dung bạn đã nhập, vị trí tệp, nội dung yêu cầu và phản hồi, cũng như thông tin kết nối dịch vụ. Magic Box không tự động che dữ liệu nhạy cảm hoặc tải các bản ghi lên. Chỉ chia sẻ riêng tệp ZIP với bộ phận hỗ trợ và tuyệt đối không đăng lên GitHub hay trang web công khai khác.",
           "title": "Trước khi chia sẻ"
         },
         "range_title": "Khoảng thời gian",
@@ -5997,13 +5997,13 @@
       },
       "feedback": {
         "agent": {
-          "description": "Trò chuyện với Cherry Support để nhận trợ giúp hoặc chia sẻ phản hồi.",
+          "description": "Trò chuyện với Magic Box Support để nhận trợ giúp hoặc chia sẻ phản hồi.",
           "title": "Sử dụng Agent"
         },
-        "agent_error": "Không thể mở Cherry Support để gửi phản hồi. Vui lòng thử lại.",
+        "agent_error": "Không thể mở Magic Box Support để gửi phản hồi. Vui lòng thử lại.",
         "button": "Phản hồi",
         "dialog": {
-          "description": "Chọn cách chia sẻ phản hồi và giúp chúng tôi cải thiện Cherry Studio tốt hơn.",
+          "description": "Chọn cách chia sẻ phản hồi và giúp chúng tôi cải thiện Magic Box tốt hơn.",
           "title": "Chọn kênh phản hồi"
         },
         "github": {
@@ -6083,9 +6083,9 @@
         "path_changed_without_copy": "Đường dẫn đã được thay đổi thành công",
         "restart_notice": "Ứng dụng có thể cần khởi động lại nhiều lần để áp dụng các thay đổi",
         "select": "Sửa đổi thư mục",
-        "select_error": "Thư mục đã chọn có thể đang được một phiên bản Cherry Studio khác sử dụng. Hãy đóng các phiên bản khác rồi thử lại. Nếu không có phiên bản nào đang chạy, hãy xóa các tệp SingletonLock và SingletonSocket cũ khỏi thư mục đó.",
+        "select_error": "Thư mục đã chọn có thể đang được một phiên bản Magic Box khác sử dụng. Hãy đóng các phiên bản khác rồi thử lại. Nếu không có phiên bản nào đang chạy, hãy xóa các tệp SingletonLock và SingletonSocket cũ khỏi thư mục đó.",
         "select_error_in_app_path": "Đường dẫn mới trùng với đường dẫn cài đặt ứng dụng, vui lòng chọn đường dẫn khác",
-        "select_error_protected_path": "Đường dẫn được chọn được bảo vệ bởi hệ điều hành hoặc Cherry Studio. Vui lòng chọn một thư mục khác.",
+        "select_error_protected_path": "Đường dẫn được chọn được bảo vệ bởi hệ điều hành hoặc Magic Box. Vui lòng chọn một thư mục khác.",
         "select_error_root_path": "Đường dẫn mới không được là thư mục gốc",
         "select_error_same_path": "Đường dẫn mới giống với đường dẫn cũ, vui lòng chọn đường dẫn khác",
         "select_error_write_permission": "Đường dẫn mới không có quyền ghi",
@@ -6138,7 +6138,7 @@
         "title": "Xóa bộ nhớ đệm",
         "total_partial": "Đã tính {{size}}; chưa xác định được một số kích thước",
         "unavailable": "Không thể tính",
-        "waiting_for_legacy_database": "Đang chờ cơ sở dữ liệu cũ được giải phóng. Hãy đóng các cửa sổ Cherry Studio khác; quá trình dọn dẹp sẽ tiếp tục sau khi các kết nối của chúng đóng."
+        "waiting_for_legacy_database": "Đang chờ cơ sở dữ liệu cũ được giải phóng. Hãy đóng các cửa sổ Magic Box khác; quá trình dọn dẹp sẽ tiếp tục sau khi các kết nối của chúng đóng."
       },
       "data": {
         "title": "Thư mục dữ liệu"
@@ -6759,14 +6759,14 @@
       "notInstalled": "Chưa cài đặt",
       "openBinariesDir": "Mở thư mục tệp thực thi",
       "remove": "Xóa công cụ",
-      "removeConfirmMessage": "Xóa \"{{name}}\" khỏi Cherry Studio? Định nghĩa di động của công cụ sẽ bị xóa. Cherry cũng sẽ dọn dẹp bản sao chính xác do mise quản lý nếu có. Các tệp thực thi của hệ thống và tệp đi kèm ứng dụng sẽ không bị thay đổi.",
+      "removeConfirmMessage": "Xóa \"{{name}}\" khỏi Magic Box? Định nghĩa di động của công cụ sẽ bị xóa. Magic Box cũng sẽ dọn dẹp bản sao chính xác do mise quản lý nếu có. Các tệp thực thi của hệ thống và tệp đi kèm ứng dụng sẽ không bị thay đổi.",
       "removeConfirmTitle": "Xóa công cụ",
-      "removeDefinitionOnlyConfirmMessage": "Cherry không thể dọn dẹp \"{{name}}\" một cách an toàn: {{details}} Nếu chỉ xóa định nghĩa, thẻ công cụ sẽ bị ẩn nhưng các tệp backend đã cài đặt vẫn còn. Tiếp tục?",
+      "removeDefinitionOnlyConfirmMessage": "Magic Box không thể dọn dẹp \"{{name}}\" một cách an toàn: {{details}} Nếu chỉ xóa định nghĩa, thẻ công cụ sẽ bị ẩn nhưng các tệp backend đã cài đặt vẫn còn. Tiếp tục?",
       "removeDefinitionOnlyConfirmTitle": "Chỉ xóa định nghĩa?",
       "removeDefinitionOnlyDependents": "Các công cụ đã cài đặt phụ thuộc vào nó: {{dependents}}.",
       "removeError": "Không thể xóa công cụ",
       "removeErrorHint": "Lệnh dọn dẹp đã thất bại. Sao chép nhật ký bên dưới để khắc phục sự cố hoặc chia sẻ nó để được trợ giúp.",
-      "removeRuntimeConfirmMessage": "Xóa \"{{name}}\" khỏi Cherry Studio? Cherry chỉ dọn dẹp bản sao chính xác do mise quản lý. Runtime hệ thống và runtime đi kèm ứng dụng sẽ không bị thay đổi. Các công cụ npm hoặc pip đã cài đặt có thể chặn thao tác xóa nếu phụ thuộc vào runtime này.",
+      "removeRuntimeConfirmMessage": "Xóa \"{{name}}\" khỏi Magic Box? Magic Box chỉ dọn dẹp bản sao chính xác do mise quản lý. Runtime hệ thống và runtime đi kèm ứng dụng sẽ không bị thay đổi. Các công cụ npm hoặc pip đã cài đặt có thể chặn thao tác xóa nếu phụ thuộc vào runtime này.",
       "runtimeDependency": "Thời gian chạy",
       "runtimeDependencyHint": "Thời gian chạy cho các công cụ npm/pip",
       "searchFailed": "Tìm kiếm thất bại, hãy kiểm tra nhật ký",
@@ -6793,7 +6793,7 @@
         "uv": "Trình quản lý gói Python cho dịch vụ MCP và cài đặt phần phụ thuộc."
       },
       "uninstall": "Gỡ cài đặt",
-      "uninstallConfirmMessage": "Bạn có chắc chắn muốn gỡ cài đặt \"{{name}}\"? Bản sao backend của Cherry Studio sẽ bị xóa.",
+      "uninstallConfirmMessage": "Bạn có chắc chắn muốn gỡ cài đặt \"{{name}}\"? Bản sao backend của Magic Box sẽ bị xóa.",
       "uninstallConfirmTitle": "Gỡ cài đặt công cụ",
       "uninstallFailed": "Không thể gỡ cài đặt công cụ",
       "uninstallSuccess": "Công cụ đã được gỡ cài đặt",
@@ -6887,7 +6887,7 @@
       "common": {
         "menu": {
           "presentation_mode": {
-            "cherry": "Cherry",
+            "cherry": "Magic Box",
             "native": "Bản địa",
             "restart": {
               "content": "Thay đổi kiểu menu yêu cầu khởi động lại ứng dụng để có hiệu lực. Bạn có muốn khởi động lại ngay bây giờ không?",

@@ -52,7 +52,7 @@ export type ClaudeCodeSettings = Omit<Options, 'model' | 'abortController' | 'pr
   warmQueryKey?: string
   /**
    * Live policy resolver snapshot used by runtime policy updates. This is
-   * internal to Cherry and not passed to the Claude Agent SDK.
+   * internal to Magic Box and not passed to the Claude Agent SDK.
    */
   toolPolicySnapshot?: ClaudeAgentToolPolicySnapshot
   /**

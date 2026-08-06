@@ -47,7 +47,7 @@ const RULES: Array<{ test: (seg: string) => boolean; reason: string }> = [
     reason: 'uv pip install --system'
   },
   {
-    // BinaryManager is the sole owner of Cherry's isolated mise state.
+    // BinaryManager is the sole owner of Magic Box's isolated mise state.
     test: (s) =>
       /\bmise\s+(?:(?:use|install|uninstall|remove|rm|prune|upgrade|update|reshim|trust|untrust)\b|plugins?\s+(?:install|uninstall|update)\b|settings?\s+(?:set|unset)\b)/.test(
         s

@@ -53,7 +53,7 @@ export class Application {
 
   /**
    * Cache of PathKeys whose directory has already been auto-ensured.
-   * Each Cherry-owned key is `mkdirSync`'d at most once per process —
+   * Each Magic Box-owned key is `mkdirSync`'d at most once per process —
    * subsequent `getPath()` calls hit this Set and return immediately.
    *
    * NOT cleared on shutdown (paths remain valid for cleanup code that
@@ -299,7 +299,7 @@ export class Application {
     const result = await dialog.showMessageBox({
       type: 'error',
       title: 'Unable to Start',
-      message: `Cherry Studio could not start because ${error.serviceName} failed to initialize.`,
+      message: `Magic Box could not start because ${error.serviceName} failed to initialize.`,
       detail:
         'Try restarting the application. If the problem persists, check the application logs for detailed error information.',
       buttons: ['Exit', 'Restart'],

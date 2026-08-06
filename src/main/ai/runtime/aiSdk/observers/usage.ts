@@ -4,7 +4,7 @@
  * top-level `finish` part; per-step `usage` chunks survive, modulo the
  * Vercel gateway shape bug handled by `gatewayUsageNormalizeFeature`.
  *
- * Projection (AI SDK v6 `LanguageModelUsage` → Cherry `MessageStats`): names
+ * Projection (AI SDK v6 `LanguageModelUsage` → Magic Box `MessageStats`): names
  * line up 1:1, so the snapshot is a near-copy:
  *   inputTokens / outputTokens / totalTokens               → same
  *   inputTokenDetails{noCache,cacheRead,cacheWrite}Tokens   → same

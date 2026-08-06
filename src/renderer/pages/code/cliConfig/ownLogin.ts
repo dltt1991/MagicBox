@@ -18,7 +18,7 @@ import {
 /**
  * "Own login" config builders for the tool-param file of each login-capable CLI.
  *
- * Each strips every Cherry-managed credential / model / provider key (mirroring
+ * Each strips every Magic Box-managed credential / model / provider key (mirroring
  * `clearCliConfig`) and re-applies only the model-independent tool params from
  * the already-sanitized blob, so the CLI keeps using its own stored account
  * login. Credential-only side files (Codex `auth.json`, Gemini `.env`) carry no

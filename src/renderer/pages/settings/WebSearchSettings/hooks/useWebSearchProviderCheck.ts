@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 
 const logger = loggerService.withContext('useWebSearchProviderCheck')
 
-const WEB_SEARCH_CHECK_KEYWORD = 'Cherry Studio'
+const WEB_SEARCH_CHECK_KEYWORD = 'Magic Box'
 const WEB_SEARCH_CHECK_URL = 'https://example.com'
 
 type UseWebSearchProviderCheckOptions = {

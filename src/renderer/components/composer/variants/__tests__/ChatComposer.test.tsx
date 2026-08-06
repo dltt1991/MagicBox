@@ -3696,7 +3696,7 @@ describe('ChatComposer', () => {
     )
   })
 
-  it('preserves Cherry file metadata when resending an edited message with an existing attachment', async () => {
+  it('preserves Magic Box file metadata when resending an edited message with an existing attachment', async () => {
     const editMessage = vi.fn().mockResolvedValue(undefined)
     const resend = vi.fn().mockResolvedValue(undefined)
     const forkAndResend = vi.fn().mockResolvedValue(undefined)

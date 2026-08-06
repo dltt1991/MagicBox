@@ -22,7 +22,7 @@ A v1 agent-deletion hook for tearing down a Claw MCP server (`cleanupClawServer`
 
 ## Why this matters to the user
 
-Any external client or agent that talked to Cherry Studio's MCP servers over HTTP — listing MCP servers, fetching their tools, or connecting to the Claw agent's MCP transport — will get a 404 against the v2 gateway. In-app MCP usage (MCP servers consumed inside Cherry Studio's own AI runtime) is unaffected; only the HTTP-exposed surface for external agents was removed.
+Any external client or agent that talked to Magic Box's MCP servers over HTTP — listing MCP servers, fetching their tools, or connecting to the Claw agent's MCP transport — will get a 404 against the v2 gateway. In-app MCP usage (MCP servers consumed inside Magic Box's own AI runtime) is unaffected; only the HTTP-exposed surface for external agents was removed.
 
 ## What the user should do
 

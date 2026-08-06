@@ -10,7 +10,7 @@ const meta: Meta<typeof EmptyState> = {
     docs: {
       description: {
         component:
-          'A centered placeholder for empty lists, search results, and onboarding slots. Ships with presets for common Cherry Studio domains and accepts custom icons, copy, and actions.'
+          'A centered placeholder for empty lists, search results, and onboarding slots. Ships with presets for common Magic Box domains and accepts custom icons, copy, and actions.'
       }
     }
   },

@@ -33,10 +33,10 @@
     },
     "builtin": {
       "cherry_assistant": {
-        "description": "Cherry Studio 內建顧問，可診斷問題、引導操作、彙整 FAQ、提交錯誤或功能需求，以及搜尋或建立 Skill。"
+        "description": "Magic Box 內建顧問，可診斷問題、引導操作、彙整 FAQ、提交錯誤或功能需求，以及搜尋或建立 Skill。"
       },
       "cherry_support": {
-        "description": "Cherry Studio 官方支援 Agent，提供設定引導、問題診斷、FAQ 與意見回饋"
+        "description": "Magic Box 官方支援 Agent，提供設定引導、問題診斷、FAQ 與意見回饋"
       }
     },
     "channels": {
@@ -1124,7 +1124,7 @@
     "authHeader": {
       "title": "授權標頭"
     },
-    "description": "透過 OpenAI 和 Anthropic 相容的 HTTP API 公開 Cherry Studio 的 AI 功能",
+    "description": "透過 OpenAI 和 Anthropic 相容的 HTTP API 公開 Magic Box 的 AI 功能",
     "documentation": {
       "title": "API 說明文件"
     },
@@ -1472,8 +1472,8 @@
     },
     "deeply_thought": "已深度思考（用時 {{seconds}} 秒）",
     "default": {
-      "description": "你好，我是 Cherry 助理。你可以立即開始與我聊天",
-      "name": "Cherry 助理",
+      "description": "你好，我是 Magic Box 助理。你可以立即開始與我聊天",
+      "name": "Magic Box 助理",
       "topic": {
         "name": "預設對話"
       }
@@ -2156,7 +2156,7 @@
     },
     "api_gateway": {
       "description": "任意 CLI，暢用全部模型",
-      "requires_running": "啟用後請保持 Cherry Studio 執行，外部 CLI 才能連線到它託管的閘道。",
+      "requires_running": "啟用後請保持 Magic Box 執行，外部 CLI 才能連線到它託管的閘道。",
       "title": "統一網關"
     },
     "apply_failed": "寫入 CLI 設定到系統檔案失敗",
@@ -2572,7 +2572,7 @@
       "503": "服務無法使用，請稍後再試",
       "504": "閘道器逾時，請稍後再試"
     },
-    "image_unreadable_for_non_vision_model": "所選模型不支援圖片，且 Cherry Studio 無法從附件中擷取可讀文字。請選擇支援視覺的模型，或移除圖片後再試一次。",
+    "image_unreadable_for_non_vision_model": "所選模型不支援圖片，且 Magic Box 無法從附件中擷取可讀文字。請選擇支援視覺的模型，或移除圖片後再試一次。",
     "lastError": "最後錯誤",
     "maxEmbeddingsPerCall": "每次呼叫的最大嵌入",
     "message": "錯誤訊息",
@@ -4789,12 +4789,12 @@
       "select_other_provider": "選擇其他供應商",
       "setup_hint": "您可以隨時在設定中變更供應商",
       "subtitle": "連接供應商，開啟您的全能 AI 工作站",
-      "title": "歡迎來到 Cherry Studio"
+      "title": "歡迎來到 Magic Box"
     }
   },
   "openclaw": {
     "checking_installation": "正在檢查 OpenClaw 安裝狀態...",
-    "description": "使用 Cherry Studio 供應商為 OpenClaw 提供支援，OpenClaw 是您的個人 AI 助理，可在 WhatsApp、Telegram、Slack、Discord 等平台上使用。",
+    "description": "使用 Magic Box 供應商為 OpenClaw 提供支援，OpenClaw 是您的個人 AI 助理，可在 WhatsApp、Telegram、Slack、Discord 等平台上使用。",
     "error": {
       "select_provider_model": "請先選擇供應商和模型"
     },
@@ -4815,7 +4815,7 @@
     },
     "installed_at": "OpenClaw 安裝路徑",
     "migration": {
-      "description": "偵測到 PATH 中存在外部 OpenClaw 安裝，但 Cherry Studio 只使用受管理的 OpenClaw 二進位檔。請安裝受管理版本後繼續。",
+      "description": "偵測到 PATH 中存在外部 OpenClaw 安裝，但 Magic Box 只使用受管理的 OpenClaw 二進位檔。請安裝受管理版本後繼續。",
       "install_button": "重新安裝 OpenClaw",
       "title": "OpenClaw 需要更新"
     },
@@ -5730,7 +5730,7 @@
           },
           "description": {
             "0": "選取文字助理需「<strong>輔助使用權限</strong>」才能正常工作。",
-            "1": "請點選「<strong>前往設定</strong>」，並在稍後出現的權限請求對話框中點選「<strong>開啟系統設定</strong>」按鈕，接著在應用程式清單中找到「<strong>Cherry Studio</strong>」，並開啟權限開關。",
+            "1": "請點選「<strong>前往設定</strong>」，並在稍後出現的權限請求對話框中點選「<strong>開啟系統設定</strong>」按鈕，接著在應用程式清單中找到「<strong>Magic Box</strong>」，並開啟權限開關。",
             "2": "完成設定後，請再次開啟選取文字助理。"
           },
           "title": "輔助使用權限"
@@ -5754,7 +5754,7 @@
         "wayland_checklist_subtitle": "確認以下條件已滿足，以盡可能最佳化 Wayland 下的體驗：",
         "wayland_description": "目前為 Wayland 模式，受系統限制，部分桌面環境下工具列只能顯示在螢幕中央，無法跟隨選取文字定位。建議切換到 X11 模式以獲得完整體驗。",
         "wayland_title": "Wayland 模式提示",
-        "xwayland_fail": "未啟用，請使用 `--ozone-platform=x11` 參數啟動 Cherry Studio",
+        "xwayland_fail": "未啟用，請使用 `--ozone-platform=x11` 參數啟動 Magic Box",
         "xwayland_label": "XWayland 模式：",
         "xwayland_pass": "已啟用"
       },
@@ -5951,12 +5951,12 @@
         "inspecting": "正在準備可匯出的資訊…",
         "limit": "為避免 ZIP 檔過大，記錄與詳細活動資料最多收集 {{size}}，並優先保留較新的資料。",
         "mail": {
-          "body": "請協助調查此 Cherry Studio 問題。\n\n診斷包 ID：{{bundleId}}\n版本：{{version}}\n平台：{{platform}}\n時間範圍：{{range}}\n檔案：{{fileName}}\n\n請將 ZIP 檔附加到這封電子郵件。診斷包僅儲存在本機，並未自動上傳。",
-          "subject": "Cherry Studio 診斷包 {{bundleId}}"
+          "body": "請協助調查此 Magic Box 問題。\n\n診斷包 ID：{{bundleId}}\n版本：{{version}}\n平台：{{platform}}\n時間範圍：{{range}}\n檔案：{{fileName}}\n\n請將 ZIP 檔附加到這封電子郵件。診斷包僅儲存在本機，並未自動上傳。",
+          "subject": "Magic Box 診斷包 {{bundleId}}"
         },
         "privacy": {
           "consent": "我瞭解上述資訊，並只會私下將 ZIP 檔分享給支援人員。",
-          "description": "這些記錄可能包含您輸入的內容、檔案位置、請求與回應內容，以及服務連線資訊。Cherry Studio 不會自動對這些資料去識別化或上傳。請只私下將 ZIP 檔傳送給支援人員，切勿發佈到 GitHub 或其他公開網站。",
+          "description": "這些記錄可能包含您輸入的內容、檔案位置、請求與回應內容，以及服務連線資訊。Magic Box 不會自動對這些資料去識別化或上傳。請只私下將 ZIP 檔傳送給支援人員，切勿發佈到 GitHub 或其他公開網站。",
           "title": "分享前請確認"
         },
         "range_title": "時間範圍",
@@ -5997,13 +5997,13 @@
       },
       "feedback": {
         "agent": {
-          "description": "與 Cherry 支援對話，取得使用協助或提交回饋。",
+          "description": "與 Magic Box 支援對話，取得使用協助或提交回饋。",
           "title": "使用 Agent"
         },
-        "agent_error": "無法開啟 Cherry 支援以提供意見回饋。請再試一次。",
+        "agent_error": "無法開啟 Magic Box 支援以提供意見回饋。請再試一次。",
         "button": "回饋",
         "dialog": {
-          "description": "選擇分享回饋的方式，幫助我們讓 Cherry Studio 變得更好。",
+          "description": "選擇分享回饋的方式，幫助我們讓 Magic Box 變得更好。",
           "title": "選擇回饋管道"
         },
         "github": {
@@ -6083,9 +6083,9 @@
         "path_changed_without_copy": "路徑已變更成功",
         "restart_notice": "變更資料目錄後可能需要重新啟動應用程式才能生效",
         "select": "變更目錄",
-        "select_error": "所選資料目錄可能正由另一個 Cherry Studio 執行個體使用。請關閉其他執行個體後再試一次。若沒有其他執行個體正在執行，請從該目錄移除過期的 SingletonLock 與 SingletonSocket 檔案。",
+        "select_error": "所選資料目錄可能正由另一個 Magic Box 執行個體使用。請關閉其他執行個體後再試一次。若沒有其他執行個體正在執行，請從該目錄移除過期的 SingletonLock 與 SingletonSocket 檔案。",
         "select_error_in_app_path": "新路徑與應用程式安裝路徑相同，請選擇其他路徑",
-        "select_error_protected_path": "所選路徑受作業系統或 Cherry Studio 保護，請選擇其他資料夾",
+        "select_error_protected_path": "所選路徑受作業系統或 Magic Box 保護，請選擇其他資料夾",
         "select_error_root_path": "新路徑不能是根路徑",
         "select_error_same_path": "新路徑與舊路徑相同，請選擇其他路徑",
         "select_error_write_permission": "新路徑沒有寫入權限",
@@ -6138,7 +6138,7 @@
         "title": "清除快取",
         "total_partial": "已統計 {{size}}，部分大小未知",
         "unavailable": "無法統計",
-        "waiting_for_legacy_database": "正在等待舊版資料庫釋放。請關閉其他 Cherry Studio 視窗，連線關閉後將繼續清理。"
+        "waiting_for_legacy_database": "正在等待舊版資料庫釋放。請關閉其他 Magic Box 視窗，連線關閉後將繼續清理。"
       },
       "data": {
         "title": "資料目錄"
@@ -6759,14 +6759,14 @@
       "notInstalled": "未安裝",
       "openBinariesDir": "開啟二進位檔案目錄",
       "remove": "移除工具",
-      "removeConfirmMessage": "要從 Cherry Studio 移除「{{name}}」嗎？其可攜式定義將被刪除。如有完全相符且由 mise 管理的複本，Cherry 也會一併清理；系統與內建執行檔絕不會變更。",
+      "removeConfirmMessage": "要從 Magic Box 移除「{{name}}」嗎？其可攜式定義將被刪除。如有完全相符且由 mise 管理的複本，Magic Box 也會一併清理；系統與內建執行檔絕不會變更。",
       "removeConfirmTitle": "移除工具",
-      "removeDefinitionOnlyConfirmMessage": "Cherry 無法安全清理「{{name}}」：{{details}} 僅移除定義會隱藏此卡片，但後端檔案仍會保留在系統中。是否繼續？",
+      "removeDefinitionOnlyConfirmMessage": "Magic Box 無法安全清理「{{name}}」：{{details}} 僅移除定義會隱藏此卡片，但後端檔案仍會保留在系統中。是否繼續？",
       "removeDefinitionOnlyConfirmTitle": "僅移除定義？",
       "removeDefinitionOnlyDependents": "已安裝的工具相依於此項目：{{dependents}}。",
       "removeError": "移除工具失敗",
       "removeErrorHint": "清理命令失敗。複製以下記錄以進行疑難排解或分享以尋求協助。",
-      "removeRuntimeConfirmMessage": "要從 Cherry Studio 移除「{{name}}」嗎？Cherry 只會清理完全相符且由 mise 管理的複本，絕不會變更系統或內建執行階段。如已安裝的 npm 或 pip 工具相依於此執行階段，可能會阻止移除。",
+      "removeRuntimeConfirmMessage": "要從 Magic Box 移除「{{name}}」嗎？Magic Box 只會清理完全相符且由 mise 管理的複本，絕不會變更系統或內建執行階段。如已安裝的 npm 或 pip 工具相依於此執行階段，可能會阻止移除。",
       "runtimeDependency": "執行階段相依性",
       "runtimeDependencyHint": "npm/pip 工具使用的執行時",
       "searchFailed": "搜尋失敗，請檢視記錄",
@@ -6793,7 +6793,7 @@
         "uv": "用於 MCP 服務與相依套件安裝的 Python 套件管理工具。"
       },
       "uninstall": "解除安裝",
-      "uninstallConfirmMessage": "確定要解除安裝「{{name}}」嗎？Cherry Studio 的後端複本將被刪除。",
+      "uninstallConfirmMessage": "確定要解除安裝「{{name}}」嗎？Magic Box 的後端複本將被刪除。",
       "uninstallConfirmTitle": "解除安裝工具",
       "uninstallFailed": "無法解除安裝工具",
       "uninstallSuccess": "工具已卸載",

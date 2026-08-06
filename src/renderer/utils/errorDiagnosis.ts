@@ -62,7 +62,7 @@ function buildContextHint(errorInfo: Record<string, unknown>, context?: Diagnosi
   // a refused request out of the invalid-key bucket.
   if (status === 401 || msg.includes('api_key') || msg.includes('unauthorized')) {
     const provider = errorInfo.provider || context?.providerName || 'the provider'
-    return `## Context\nThe user is calling ${provider} API and got an authentication error. Cherry Studio lets users configure API keys per provider in provider settings.\n`
+    return `## Context\nThe user is calling ${provider} API and got an authentication error. Magic Box lets users configure API keys per provider in provider settings.\n`
   }
 
   // Explicit billing signals win over the HTTP 429 rate-limit default.
@@ -123,7 +123,7 @@ function buildContextHint(errorInfo: Record<string, unknown>, context?: Diagnosi
     msg.includes('proxy') ||
     msg.includes('certificate')
   ) {
-    return `## Context\nNetwork or proxy error. Cherry Studio supports HTTP/SOCKS proxy configuration in system settings. The user may be behind a firewall or using a custom API endpoint.\n`
+    return `## Context\nNetwork or proxy error. Magic Box supports HTTP/SOCKS proxy configuration in system settings. The user may be behind a firewall or using a custom API endpoint.\n`
   }
 
   // Knowledge base
@@ -132,7 +132,7 @@ function buildContextHint(errorInfo: Record<string, unknown>, context?: Diagnosi
   }
 
   // Generic
-  return `## Context\nCherry Studio is an AI chat app connecting to LLM providers (OpenAI, Anthropic, Google, Ollama, etc.) with API keys. Error occurred during ${source || 'chat'}.\n`
+  return `## Context\nMagic Box is an AI chat app connecting to LLM providers (OpenAI, Anthropic, Google, Ollama, etc.) with API keys. Error occurred during ${source || 'chat'}.\n`
 }
 
 function parseResponse(raw: string): DiagnosisResult {
@@ -222,7 +222,7 @@ export async function diagnoseError(
   // Build context hint based on error source
   const contextHint = buildContextHint(errorInfo, context)
 
-  const prompt = `You are an error diagnosis assistant for Cherry Studio, an AI chat desktop app.
+  const prompt = `You are an error diagnosis assistant for Magic Box, an AI chat desktop app.
 Analyze the error and return a JSON diagnosis in ${language}.
 
 ${contextHint}
@@ -268,7 +268,7 @@ Output: {"summary":"OpenAI account balance is exhausted","category":"quota","exp
  * Returns a one-line summary in the user's language, or empty string on failure.
  */
 export async function classifyErrorByAI(error: SerializedError, language: string): Promise<string> {
-  const prompt = `You are an error diagnosis assistant for Cherry Studio. Summarize this error in one sentence (max 30 words) in ${language}. Return ONLY the summary text, no JSON, no markdown, no quotes.`
+  const prompt = `You are an error diagnosis assistant for Magic Box. Summarize this error in one sentence (max 30 words) in ${language}. Return ONLY the summary text, no JSON, no markdown, no quotes.`
   const content = `Error: ${error.name}: ${error.message}`
 
   try {

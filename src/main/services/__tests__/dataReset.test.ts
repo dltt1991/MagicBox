@@ -59,7 +59,7 @@ type FsControl = {
 let fsCtl: FsControl
 
 const DEFAULT_LISTING = [
-  // Cherry user state
+  // Magic Box user state
   'cherrystudio.sqlite',
   'cherrystudio.sqlite-wal',
   'cherrystudio.sqlite-shm',

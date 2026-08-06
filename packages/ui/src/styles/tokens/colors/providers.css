@@ -5,7 +5,7 @@
  * (`shadcn.css` / `product.css`). These are providers, not the public API:
  * components consume the unprefixed contract, never these `--cs-*` names.
  *
- * The canonical Cherry Studio feedback contract lives here alongside the other
+ * The canonical Magic Box feedback contract lives here alongside the other
  * providers. The frozen legacy status palette it currently draws from stays in
  * `status-legacy.css` (shrink-only compatibility).
  */
@@ -73,7 +73,7 @@
   --cs-sidebar-border: oklch(0.922 0 0);
   --cs-sidebar-ring: oklch(0.708 0 0);
 
-  /* Canonical Cherry Studio feedback contract.
+  /* Canonical Magic Box feedback contract.
    * Base intents are defined above; subtle/border pairs draw from the frozen
    * legacy status palette in status-legacy.css during migration. */
   --cs-error: var(--cs-error-base);
@@ -153,7 +153,7 @@
   --cs-sidebar-border: oklch(0.269 0 0);
   --cs-sidebar-ring: oklch(0.439 0 0);
 
-  /* Canonical Cherry Studio feedback contract */
+  /* Canonical Magic Box feedback contract */
   --cs-success-subtle-foreground: var(--cs-green-100);
   --cs-success-border: var(--cs-green-700);
 

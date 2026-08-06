@@ -585,7 +585,7 @@ Processor 内部错误应尽量包含明确上下文，但不要把 secret、API
    - 未来如果多个 processor 都需要外部进程生命周期管理，再迁入统一 process management。
 3. `open-mineru`
    - 暂时不建 runtime service。
-   - 当前只调用已经运行的本地 HTTP service；除非未来由 Cherry 负责启动 / 停止 OpenMinerU 服务本身。
+   - 当前只调用已经运行的本地 HTTP service；除非未来由 Magic Box 负责启动 / 停止 OpenMinerU 服务本身。
 4. `mineru`、`doc2x`、`paddleocr`、`mistral`
    - 暂时不建 runtime service。
    - 它们是远程 API processor。
