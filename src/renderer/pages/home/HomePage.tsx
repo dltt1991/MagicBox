@@ -20,7 +20,6 @@ import {
 import HistoryRecordsView from '@renderer/components/history/HistoryRecordsView'
 import { ConversationResourceView } from '@renderer/components/resourceCatalog/conversation'
 import { usePersistCache } from '@renderer/data/hooks/useCache'
-import { useCommandHandler } from '@renderer/hooks/command'
 import { useAssistantTopicsSource } from '@renderer/hooks/resourceViewSources'
 import { useCurrentTabId, useIsActiveTab, useTabSelfVisuals } from '@renderer/hooks/tab'
 import { useAssistants } from '@renderer/hooks/useAssistant'
@@ -406,7 +405,6 @@ const HomePage: FC = () => {
   }, [activeTopic, isMessageOnlyView])
 
   const [topicPaneUserOpenIntentSeq, setTopicPaneUserOpenIntentSeq] = useState(0)
-  useCommandHandler('app.sidebar.toggle', toggleShellPane)
 
   const setActiveTopicAndCloseResourceView = useCallback(
     (topic: Topic) => {

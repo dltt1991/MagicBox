@@ -81,6 +81,8 @@ vi.mock('react-i18next', () => ({
       ({
         'globalSearch.open': 'Open global search',
         'settings.about.updateAvailable': 'Found new version',
+        'navbar.hide_sidebar': 'Hide Sidebar',
+        'navbar.pin_sidebar': 'Pin Sidebar',
         'settings.title': 'Settings'
       })[key] ?? key
   })
@@ -222,5 +224,24 @@ describe('ShellTabBarActions', () => {
     expect(screen.getByRole('button', { name: /settings/i })).toHaveClass('justify-start', 'text-foreground')
     expect(screen.getByRole('button', { name: /settings/i })).not.toHaveClass('text-muted-foreground')
     expect(screen.getByRole('button', { name: /settings/i })).toHaveTextContent('Settings')
+  })
+
+  it('labels the hidden sidebar toggle as a pin action', async () => {
+    const user = userEvent.setup()
+    const onSidebarToggle = vi.fn()
+
+    render(
+      <SidebarShellActions
+        layout="full"
+        sidebarHidden
+        onSidebarToggle={onSidebarToggle}
+        onSettingsClick={mocks.openSettingsTab}
+      />
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Pin Sidebar' }))
+
+    expect(onSidebarToggle).toHaveBeenCalledTimes(1)
+    expect(screen.queryByRole('button', { name: 'Show Sidebar' })).not.toBeInTheDocument()
   })
 })

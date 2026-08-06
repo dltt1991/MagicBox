@@ -14,6 +14,8 @@ import { SidebarTooltip } from './Tooltip'
 import type { ResolvedSidebarEntry, SidebarActiveState, SidebarUser } from './types'
 import { useSidebarResize } from './useSidebarResize'
 
+const HIDDEN_SIDEBAR_HOVER_REVEAL_DELAY = 700
+
 export interface SidebarProps {
   width: number
   setWidth: (width: number) => void
@@ -181,7 +183,7 @@ export function Sidebar({
             hoverTimeout.current = setTimeout(() => {
               hoverTimeout.current = null
               onHoverChange?.(true)
-            }, 200)
+            }, HIDDEN_SIDEBAR_HOVER_REVEAL_DELAY)
           }}
           onMouseLeave={() => {
             clearHoverDismiss()

@@ -4575,6 +4575,7 @@
   "navbar": {
     "expand": "Expand Dialog",
     "hide_sidebar": "Hide Sidebar",
+    "pin_sidebar": "Pin Sidebar",
     "show_sidebar": "Show Sidebar",
     "window": {
       "close": "Close",

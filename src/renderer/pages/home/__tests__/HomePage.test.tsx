@@ -1618,23 +1618,12 @@ describe('HomePage', () => {
     expect(screen.getByTestId('active-topic-assistant')).toHaveTextContent('assistant-default')
   })
 
-  it('toggles the left sidebar off with the left sidebar shortcut', () => {
+  it('leaves the app sidebar shortcut to the app shell', () => {
     homeMocks.preferenceValues.set('topic.tab.show', true)
 
     render(<HomePage />)
 
-    const shortcutHandler = vi
-      .mocked(useCommandHandler)
-      .mock.calls.filter(([command]) => command === 'app.sidebar.toggle')
-      .at(-1)?.[1]
-
-    expect(shortcutHandler).toBeDefined()
-
-    act(() => {
-      void shortcutHandler?.()
-    })
-
-    expect(homeMocks.setShowSidebar).toHaveBeenCalledWith(false)
+    expect(vi.mocked(useCommandHandler).mock.calls.some(([command]) => command === 'app.sidebar.toggle')).toBe(false)
   })
 
   it('keeps detached topic sidebar state local, default-closed, and fixed on the left', () => {
@@ -1665,14 +1654,7 @@ describe('HomePage', () => {
     expect(screen.getByTestId('active-topic')).toHaveTextContent('topic-next')
     expect(screen.getByTestId('pane-open')).toHaveTextContent('true')
 
-    const shortcutHandler = vi
-      .mocked(useCommandHandler)
-      .mock.calls.filter(([command]) => command === 'app.sidebar.toggle')
-      .at(-1)?.[1]
-
-    act(() => {
-      void shortcutHandler?.()
-    })
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle sidebar' }))
 
     expect(screen.getByTestId('pane-open')).toHaveTextContent('false')
     expect(homeMocks.setShowSidebar).not.toHaveBeenCalled()

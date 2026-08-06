@@ -2220,14 +2220,7 @@ describe('AgentPage', () => {
     await waitFor(() => expect(agentPageMocks.activeSessionOptions?.activeSessionId).toBe('session-next'))
     expect(screen.getByTestId('pane-open')).toHaveTextContent('true')
 
-    const shortcutHandler = vi
-      .mocked(useCommandHandler)
-      .mock.calls.filter(([command]) => command === 'app.sidebar.toggle')
-      .at(-1)?.[1]
-
-    act(() => {
-      void shortcutHandler?.()
-    })
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle sidebar' }))
 
     expect(screen.getByTestId('pane-open')).toHaveTextContent('false')
     expect(agentPageMocks.setShowSidebar).not.toHaveBeenCalled()
