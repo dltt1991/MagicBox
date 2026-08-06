@@ -1,4 +1,5 @@
 import type { ISeeder } from '../types'
+import { BuiltinAgentAvatarRefreshSeeder } from './seeders/builtinAgentAvatarRefreshSeeder'
 import { CherryAiDefaultModelSeeder } from './seeders/cherryaiDefaultModelSeeder'
 import { CherryAssistantSeeder } from './seeders/cherryAssistantSeeder'
 import { DefaultAssistantSeeder } from './seeders/defaultAssistantSeeder'
@@ -20,6 +21,7 @@ import { TranslateLanguageSeeder } from './seeders/translateLanguageSeeder'
 export const seeders: ISeeder[] = [
   new CherryAiDefaultModelSeeder(),
   new CherryAssistantSeeder(),
+  new BuiltinAgentAvatarRefreshSeeder(),
   new DefaultAssistantSeeder(),
   new PreferenceSeeder(),
   new TranslateLanguageSeeder(),

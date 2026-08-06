@@ -12,10 +12,12 @@ import { v4 as uuidv4 } from 'uuid'
 
 import type { DbOrTx, DbType, ISeeder } from '../../types'
 
+export const MAGIC_ASSISTANT_AVATAR = '✨'
+
 const CHERRY_ASSISTANT_SEED = {
   name: 'Magic Assistant',
   configuration: {
-    avatar: '🍒',
+    avatar: MAGIC_ASSISTANT_AVATAR,
     permission_mode: 'default',
     max_turns: 100,
     env_vars: {},
