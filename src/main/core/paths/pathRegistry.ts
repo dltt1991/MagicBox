@@ -2,7 +2,7 @@
  * Path registry — single source of truth for all main-process paths.
  * See `./README.md` for naming conventions and namespace taxonomy.
  *
- * Default to `feature.*` for new keys; cherry/sys/app are effectively closed.
+ * Default to `feature.*` for active data; `v1.*` is cleanup-only.
  *
  * **File constraint**: No object literals besides the registry itself — the
  * ESLint rule `data-schema-key/valid-key` validates every string-keyed property.
@@ -87,6 +87,7 @@ export function buildPathRegistry() {
     'app.crash_dumps': app.getPath('crashDumps'),
     'app.session': appSession,
     'app.session.cache': path.join(appSession, 'Cache'), // Chromium cache Directory
+    'app.session.webview': path.join(appSession, 'Partitions', 'webview'), // persist:webview Chromium partition
     'app.extra_resources': appExtraResources, // electron-builder extraResources output root
     'app.temp': appTemp, // Magic Box-specific temp under sys.temp
     'app.userdata': appUserData, // Electron per-app data dir (Magic Box-owned)
@@ -130,7 +131,7 @@ export function buildPathRegistry() {
     'feature.copilot.token_file': path.join(CHERRY_HOME, 'config', '.copilot_token'),
 
     // Trace
-    'feature.trace': path.join(CHERRY_HOME, 'trace'),
+    'feature.trace': path.join(appUserDataRuntime, 'trace'),
 
     // OVMS (OpenVINO Model Server)
     'feature.ovms': path.join(CHERRY_HOME, 'ovms'),
@@ -184,9 +185,6 @@ export function buildPathRegistry() {
     // Protocol deep-link (Linux .desktop entry for cherrystudio:// scheme)
     'feature.protocol.desktop_entries': path.join(os.homedir(), '.local', 'share', 'applications'),
 
-    // CLI tools (code-cli) bun global install root ($BUN_INSTALL/install/global)
-    'feature.cli.install_global': path.join(CHERRY_HOME, 'install', 'global'),
-
     // Feature-owned temp dirs (all under app.temp)
     'feature.backup.temp': path.join(appTemp, 'backup'),
     'feature.cli.temp': path.join(appTemp, 'cli'),
@@ -199,7 +197,13 @@ export function buildPathRegistry() {
     // unique sub-directory under here.
     'feature.files.tempcopy.temp': path.join(appTemp, 'files-tempcopy'),
 
-    // -- E. external.* — third-party tool paths (Magic Box reads/writes, does NOT own) --
+    // -- E. v1.* — old-version data, cleanup-only and never auto-created --
+    'v1.trace': path.join(CHERRY_HOME, 'trace'),
+    'v1.cli.install': path.join(CHERRY_HOME, 'install'),
+    'v1.database.file': path.join(appUserData, 'cherrystudio.sqlite'),
+    'v1.agents.claude': path.join(appUserData, '.claude'),
+
+    // -- F. external.* — third-party tool paths (Magic Box reads/writes, does NOT own) --
     'external.openclaw.config': path.join(os.homedir(), '.openclaw'),
     // Nested ternary (not object literal) to satisfy file-level ESLint constraint
     'external.obsidian.config_file': isWin
@@ -237,6 +241,7 @@ const NO_ENSURE = [
   // Namespace prefixes
   'sys.',
   'external.',
+  'v1.',
   // Individual read-only keys (build artifacts)
   'app.root',
   'app.install',
@@ -245,6 +250,7 @@ const NO_ENSURE = [
   'app.root.resources',
   'app.root.resources.scripts',
   'app.root.resources.binaries',
+  'app.session.webview',
   'app.database.migrations',
   'feature.provider_registry.data',
   'feature.agents.builtin',

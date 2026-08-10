@@ -13,13 +13,13 @@ import {
   showInFolder as showPathInFolder,
   writeIfUnchangedByPath
 } from '@main/services/file'
-import { StaleVersionError } from '@main/services/file'
+import { DirectoryTreeStoppedError, StaleVersionError } from '@main/services/file'
 import { PathStaleVersionError } from '@main/utils/file'
 import type { FileHandle } from '@shared/data/types/file'
 import { fileErrorCodes } from '@shared/ipc/errors/file'
 import { IpcError } from '@shared/ipc/errors/IpcError'
 import type { fileRequestSchemas } from '@shared/ipc/schemas/file'
-import type { IpcHandlersFor } from '@shared/ipc/types'
+import type { IpcHandlersFor, WindowId } from '@shared/ipc/types'
 import { type AbsoluteFilePath, AbsoluteFilePathSchema } from '@shared/types/file'
 import { shell } from 'electron'
 
@@ -161,6 +161,22 @@ async function pastePath(input: {
 }
 
 /**
+ * The caller window's WebContents — the directory tree addresses its mutation
+ * stream by it (class-B topic stream, see the schema's `FileEventSchemas`).
+ * A tree whose owner is not a managed window could never receive a push, so
+ * `file.tree.create` refuses instead of leaking a watcher nobody reads.
+ */
+function senderWebContents(senderId: WindowId | null): Electron.WebContents | undefined {
+  return senderId == null ? undefined : application.get('WindowManager').getWindow(senderId)?.webContents
+}
+
+function requireSenderWebContents(senderId: WindowId | null): Electron.WebContents {
+  const wc = senderWebContents(senderId)
+  if (!wc) throw new Error('file.tree.create requires a managed window sender')
+  return wc
+}
+
+/**
  * Thin adapters for FileManager-backed file routes. Pure SQL file-entry reads stay
  * on DataApi; these handlers cover live FS metadata and user-triggered mutations.
  */
@@ -289,5 +305,31 @@ export const fileHandlers: IpcHandlersFor<typeof fileRequestSchemas> = {
   },
   'file.path_paste': async (input) => {
     return pastePath(input)
+  },
+  'file.tree.create': async ({ rootPath, options }, { senderId }) => {
+    try {
+      return await application.get('DirectoryTreeManager').create(requireSenderWebContents(senderId), rootPath, options)
+    } catch (error) {
+      // Shutdown-in-flight, not a failure the user should be toasted about — carry a
+      // domain code so the renderer can stay quiet (`error.name` does not survive IpcApi).
+      if (error instanceof DirectoryTreeStoppedError) {
+        throw new IpcError(fileErrorCodes.DIRECTORY_TREE_STOPPED, error.message)
+      }
+      throw error
+    }
+  },
+  // Follow-up operations carry the caller's identity: the manager refuses a treeId
+  // that belongs to another window, so ownership never rests on the id's secrecy.
+  'file.tree.activate': async ({ treeId, revision }, { senderId }) => {
+    const owner = senderWebContents(senderId)
+    return owner ? application.get('DirectoryTreeManager').activateTree(treeId, revision, owner.id) : false
+  },
+  'file.tree.dispose': async ({ treeId }, { senderId }) => {
+    const owner = senderWebContents(senderId)
+    if (owner) application.get('DirectoryTreeManager').dispose(treeId, owner.id)
+  },
+  'file.tree.rename': async ({ treeId, oldPath, newName }, { senderId }) => {
+    const owner = senderWebContents(senderId)
+    return owner ? application.get('DirectoryTreeManager').rename(treeId, oldPath, newName, owner.id) : false
   }
 }
