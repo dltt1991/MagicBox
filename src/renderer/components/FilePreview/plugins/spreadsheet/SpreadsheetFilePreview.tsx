@@ -2,7 +2,6 @@ import { EmptyState } from '@cherrystudio/ui'
 import type * as XLSX from '@e965/xlsx'
 import { loggerService } from '@logger'
 import { getFilePreviewExtension } from '@renderer/utils/filePreview'
-import { createFilePathHandle } from '@shared/utils/file'
 import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle'
 import FileWarning from 'lucide-react/dist/esm/icons/file-warning'
 import LoaderCircle from 'lucide-react/dist/esm/icons/loader-circle'
@@ -152,7 +151,7 @@ function SpreadsheetErrorState() {
   )
 }
 
-export default function SpreadsheetFilePreview({ filePath, fileName, refreshKey }: FilePreviewPluginProps) {
+export default function SpreadsheetFilePreview({ filePath, fileName, metadata, refreshKey }: FilePreviewPluginProps) {
   const { t } = useTranslation()
   const [data, setData] = useState<SpreadsheetData | null>(null)
   const [error, setError] = useState<Error | null>(null)
@@ -168,7 +167,6 @@ export default function SpreadsheetFilePreview({ filePath, fileName, refreshKey 
     void (async () => {
       try {
         const extension = getFilePreviewExtension(filePath)
-        const metadata = await window.api.file.getMetadata(createFilePathHandle(filePath))
         if (cancelled) return
         if (extension !== 'csv') assertSourceSize(metadata.size)
 
@@ -199,7 +197,7 @@ export default function SpreadsheetFilePreview({ filePath, fileName, refreshKey 
     return () => {
       cancelled = true
     }
-  }, [fileName, filePath, refreshKey])
+  }, [fileName, filePath, metadata.size, refreshKey])
 
   return (
     <FilePreviewLayout.Frame>

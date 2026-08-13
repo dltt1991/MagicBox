@@ -17,7 +17,6 @@ const mocks = vi.hoisted(() => ({
   ipcRequest: vi.fn(),
   safeOpen: vi.fn(),
   toastError: vi.fn(),
-  isDirectory: vi.fn(),
   listDirectoryEntries: vi.fn(),
   cancelDirectorySearch: vi.fn(),
   resolvePath: vi.fn(),
@@ -509,16 +508,23 @@ beforeEach(() => {
   mocks.ensureSession.mockReset()
   mocks.ipcRequest.mockReset()
   mocks.safeOpen.mockResolvedValue(undefined)
-  mocks.isDirectory.mockResolvedValue(false)
   mocks.listDirectoryEntries.mockReset()
   mocks.cancelDirectorySearch.mockReset()
   mocks.cancelDirectorySearch.mockResolvedValue(undefined)
-  mocks.listDirectoryEntries.mockResolvedValue([
-    { path: '/workspace/docs', isDirectory: true },
-    { path: '/workspace/docs/guide.md', isDirectory: false },
-    { path: '/workspace/src/index.ts', isDirectory: false },
-    { path: '/workspace/package.json', isDirectory: false }
-  ])
+  mocks.listDirectoryEntries.mockImplementation(
+    (path: string, options?: { maxDepth?: number; maxEntries?: number }) => {
+      if (options?.maxDepth === 1 && options.maxEntries === 1) {
+        return path.endsWith('-dir') ? Promise.resolve([]) : Promise.reject(new Error('not a directory'))
+      }
+
+      return Promise.resolve([
+        { path: '/workspace/docs', isDirectory: true },
+        { path: '/workspace/docs/guide.md', isDirectory: false },
+        { path: '/workspace/src/index.ts', isDirectory: false },
+        { path: '/workspace/package.json', isDirectory: false }
+      ])
+    }
+  )
   mocks.resolvePath.mockResolvedValue('/Users/alice')
   mocks.clipboardWriteText.mockReset()
   Object.defineProperty(navigator, 'clipboard', {
@@ -529,7 +535,6 @@ beforeEach(() => {
   mocks.confirm.mockReset()
   mocks.confirm.mockReturnValue(true)
   mocks.prompt.mockReset()
-  window.api.file.isDirectory = mocks.isDirectory
   window.api.file.listDirectoryEntries = mocks.listDirectoryEntries
   window.api.file.cancelDirectorySearch = mocks.cancelDirectorySearch
   window.api.resolvePath = mocks.resolvePath
@@ -1534,7 +1539,6 @@ describe('TerminalPage', () => {
 
   it('selects directory paths activated from terminal output without replacing the active preview', async () => {
     const user = userEvent.setup()
-    mocks.isDirectory.mockImplementation((path: string) => Promise.resolve(path.endsWith('-dir')))
 
     render(<TerminalPage />)
 
@@ -1548,7 +1552,6 @@ describe('TerminalPage', () => {
 
   it('sets an activated directory outside the current workspace as the workspace root', async () => {
     const user = userEvent.setup()
-    mocks.isDirectory.mockResolvedValue(true)
 
     render(<TerminalPage />)
 
