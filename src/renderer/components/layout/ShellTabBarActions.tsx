@@ -10,6 +10,7 @@ import { CircleArrowUp, PanelLeftClose, PanelLeftOpen, Search, Settings } from '
 import { useTranslation } from 'react-i18next'
 
 import { WindowControls } from '../WindowControls'
+import { HelpMenu } from './HelpMenu'
 
 const logger = loggerService.withContext('ShellTabBarActions')
 
@@ -92,12 +93,16 @@ export function SidebarShellActions({
   layout,
   sidebarHidden = false,
   onSidebarToggle,
-  onSettingsClick
+  onFeedbackClick,
+  onSettingsClick,
+  onOverlayOpenChange
 }: {
   layout: SidebarVisibleLayout
   sidebarHidden?: boolean
   onSidebarToggle?: () => void
+  onFeedbackClick: () => void
   onSettingsClick: () => void
+  onOverlayOpenChange?: (open: boolean) => void
 }) {
   const { t } = useTranslation()
   const sidebarToggleLabel = t(sidebarHidden ? 'navbar.pin_sidebar' : 'navbar.hide_sidebar')
@@ -120,6 +125,7 @@ export function SidebarShellActions({
           </CommandTooltip>
         )}
 
+        <HelpMenu layout={layout} onFeedbackClick={onFeedbackClick} onOverlayOpenChange={onOverlayOpenChange} />
         <CommandTooltip command="app.settings.open" label={t('settings.title')} placement="right" delay={800}>
           <Button
             type="button"
@@ -149,6 +155,7 @@ export function SidebarShellActions({
         </Button>
       )}
 
+      <HelpMenu layout={layout} onFeedbackClick={onFeedbackClick} onOverlayOpenChange={onOverlayOpenChange} />
       <Button
         type="button"
         variant="ghost"

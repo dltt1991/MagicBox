@@ -74,6 +74,10 @@ vi.mock('@renderer/components/IndicatorLight', () => ({
   default: () => <span data-testid="indicator-light" />
 }))
 
+vi.mock('@renderer/components/feedback/FeedbackDialog', () => ({
+  FeedbackDialog: () => null
+}))
+
 vi.mock('@renderer/components/UpdateDialogPopup', () => ({
   default: { show: vi.fn() }
 }))
@@ -102,6 +106,10 @@ vi.mock('@renderer/hooks/useAppUpdateState', () => ({
 
 vi.mock('@renderer/hooks/useMiniAppPopup', () => ({
   useMiniAppPopup: () => ({ openSmartMiniApp: openSmartMiniAppMock })
+}))
+
+vi.mock('@renderer/hooks/useOpenReleaseNotes', () => ({
+  useOpenReleaseNotes: () => vi.fn()
 }))
 
 vi.mock('@renderer/hooks/useTheme', () => ({

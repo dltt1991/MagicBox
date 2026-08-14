@@ -59,6 +59,8 @@ export function Sidebar({
   const { sidebarRef, startResizing } = useSidebarResize(width, setWidth, onResizePreview)
   const hoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [contextMenuOpen, setContextMenuOpen] = useState(false)
+  const contextMenuOpenRef = useRef(false)
+  const footerOverlayOpenRef = useRef(false)
   const floatingPointerInsideRef = useRef(false)
   const layout = getSidebarLayout(width)
   const showFooter = Boolean(extensionsLabel || user || onExtensionsClick || actions)
@@ -95,6 +97,7 @@ export function Sidebar({
 
   const handleContextMenuOpenChange = useCallback(
     (open: boolean) => {
+      contextMenuOpenRef.current = open
       setContextMenuOpen(open)
 
       if (open) {
@@ -102,7 +105,23 @@ export function Sidebar({
         return
       }
 
-      if (isFloating && !floatingPointerInsideRef.current) {
+      if (isFloating && !floatingPointerInsideRef.current && !footerOverlayOpenRef.current) {
+        scheduleHoverDismiss()
+      }
+    },
+    [clearHoverDismiss, isFloating, scheduleHoverDismiss]
+  )
+
+  const handleFooterOverlayOpenChange = useCallback(
+    (open: boolean) => {
+      footerOverlayOpenRef.current = open
+
+      if (open) {
+        clearHoverDismiss()
+        return
+      }
+
+      if (isFloating && !floatingPointerInsideRef.current && !contextMenuOpenRef.current) {
         scheduleHoverDismiss()
       }
     },
@@ -115,7 +134,13 @@ export function Sidebar({
     onReorder: onEntriesReorder,
     onContextMenuOpenChange: handleContextMenuOpenChange
   }
-  const footerProps = { user, actions, extensionsLabel, onExtensionsClick }
+  const footerProps = {
+    user,
+    actions,
+    extensionsLabel,
+    onExtensionsClick,
+    onOverlayOpenChange: handleFooterOverlayOpenChange
+  }
   const windowDragClassName = contextMenuOpen ? '[-webkit-app-region:no-drag]' : '[-webkit-app-region:drag]'
 
   // --- Floating sidebar ---
@@ -131,7 +156,7 @@ export function Sidebar({
           onClick={(event) => event.stopPropagation()}
           onMouseLeave={() => {
             floatingPointerInsideRef.current = false
-            if (!contextMenuOpen) {
+            if (!contextMenuOpenRef.current && !footerOverlayOpenRef.current) {
               scheduleHoverDismiss()
             }
           }}
