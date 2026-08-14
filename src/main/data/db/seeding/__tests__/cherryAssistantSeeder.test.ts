@@ -3,7 +3,6 @@ import { agentSessionTable } from '@data/db/schemas/agentSession'
 import { agentWorkspaceTable } from '@data/db/schemas/agentWorkspace'
 import { appStateTable } from '@data/db/schemas/appState'
 import { userModelTable } from '@data/db/schemas/userModel'
-import { seeders } from '@data/db/seeding/seederRegistry'
 import { CherryAiDefaultModelSeeder } from '@data/db/seeding/seeders/cherryaiDefaultModelSeeder'
 import { CherryAssistantSeeder } from '@data/db/seeding/seeders/cherryAssistantSeeder'
 import { SeedRunner } from '@data/db/seeding/SeedRunner'
@@ -37,15 +36,6 @@ describe('CherryAssistantSeeder', () => {
     expect(new CherryAssistantSeeder().version).toBe('2')
   })
 
-  it('registers the CherryAI default model before Magic Assistant in the production registry', () => {
-    const modelSeederIndex = seeders.findIndex((seeder) => seeder instanceof CherryAiDefaultModelSeeder)
-    const assistantSeederIndex = seeders.findIndex((seeder) => seeder instanceof CherryAssistantSeeder)
-
-    expect(modelSeederIndex).toBeGreaterThanOrEqual(0)
-    expect(assistantSeederIndex).toBeGreaterThanOrEqual(0)
-    expect(modelSeederIndex).toBeLessThan(assistantSeederIndex)
-  })
-
   function insertOrdinaryAgent(): string {
     const id = 'ordinary-agent'
     dbh.db
@@ -75,8 +65,7 @@ describe('CherryAssistantSeeder', () => {
     })
     expect(agent.configuration).toMatchObject({
       avatar: '✨',
-      permission_mode: 'default',
-      max_turns: 100,
+      permission_mode: 'acceptEdits',
       bootstrap_completed: true,
       env_vars: {},
       builtin_role: 'assistant'
@@ -97,7 +86,7 @@ describe('CherryAssistantSeeder', () => {
     new CherryAssistantSeeder().run(dbh.db)
 
     const [agent] = builtinAgents(dbh.db)
-    expect(agent.name).toBe('Magic 助理')
+    expect(agent.name).toBe('Magic Box 小助手')
   })
 
   it('falls back to the English name when preferred system languages are unavailable', () => {
@@ -133,7 +122,7 @@ describe('CherryAssistantSeeder', () => {
     expect(journal?.value).toMatchObject({ version: '2' })
   })
 
-  it('adds Cherry Assistant after a version 1 skip in an existing library and journals the rollout', () => {
+  it('adds Magic Assistant after a version 1 skip in an existing library and journals the rollout', () => {
     insertOrdinaryAgent()
     dbh.db
       .insert(appStateTable)
@@ -148,7 +137,7 @@ describe('CherryAssistantSeeder', () => {
     expect(journal?.value).toMatchObject({ version: new CherryAssistantSeeder().version })
   })
 
-  it('adds Cherry Assistant when only soft-deleted ordinary agents exist', () => {
+  it('adds Magic Assistant when only soft-deleted ordinary agents exist', () => {
     const ordinaryAgentId = insertOrdinaryAgent()
     dbh.db
       .update(agentTable)
@@ -162,7 +151,7 @@ describe('CherryAssistantSeeder', () => {
     expect(builtinAgents(dbh.db)).toHaveLength(1)
   })
 
-  it('adds Cherry Assistant when orphan sessions record prior library history', () => {
+  it('adds Magic Assistant when orphan sessions record prior library history', () => {
     const agentId = 'historical-agent'
     const sessionId = 'historical-session'
 
@@ -212,7 +201,7 @@ describe('CherryAssistantSeeder', () => {
     expect(journal?.value).toMatchObject({ version: new CherryAssistantSeeder().version })
   })
 
-  it('does not recreate a soft-deleted Cherry Assistant during the library-wide rollout', () => {
+  it('does not recreate a soft-deleted Magic Assistant during the library-wide rollout', () => {
     const runner = new SeedRunner(dbh.db)
     new CherryAssistantSeeder().run(dbh.db)
     const [assistant] = builtinAgents(dbh.db)

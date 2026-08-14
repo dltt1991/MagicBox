@@ -554,7 +554,7 @@ describe('OpenClawService gateway status state machine', () => {
       expect((thrown as Error).message).not.toContain('stderr-secret')
     })
 
-    it('classifies a rejected Cherry-managed provider field as binary incompatibility', async () => {
+    it('classifies a rejected Magic Box-managed provider field as binary incompatibility', async () => {
       validateConfigSpy.mockResolvedValueOnce({
         valid: false,
         issues: [
@@ -593,7 +593,7 @@ describe('OpenClawService gateway status state machine', () => {
           )
         ).rejects.toMatchObject({
           kind: 'external_config_invalid',
-          message: expect.stringContaining("outside Cherry Studio's managed provider section")
+          message: expect.stringContaining("outside Magic Box's managed provider section")
         })
       }
     )
@@ -1474,7 +1474,7 @@ describe('OpenClawService gateway status state machine', () => {
       expect(written.update.checkOnStart).toBe(true)
     })
 
-    it('removes stale Cherry providers while preserving supported hand edits on the selected provider', async () => {
+    it('removes stale Magic Box providers while preserving supported hand edits on the selected provider', async () => {
       fs.writeFileSync(
         path.join(configDir, 'openclaw.json'),
         JSON.stringify({
@@ -1820,7 +1820,7 @@ describe('OpenClawService gateway status state machine', () => {
         const result = await service.syncProviderConfig(legacyProvider, legacyModel)
 
         expect(result.success).toBe(false)
-        expect('message' in result && result.message).toContain("outside Cherry Studio's managed provider section")
+        expect('message' in result && result.message).toContain("outside Magic Box's managed provider section")
         expect((service as any).gatewayAuthToken).toBe(initialToken)
         expect(fs.readFileSync(configPath, 'utf-8')).toBe(original)
         const candidatePath = validateConfigSpy.mock.calls[0][1] as string
@@ -1879,7 +1879,7 @@ describe('OpenClawService gateway status state machine', () => {
       expect(message).toContain('and 2 more')
     })
 
-    it('classifies rejected Cherry-generated fields as binary incompatibility without changing the formal file', async () => {
+    it('classifies rejected Magic Box-generated fields as binary incompatibility without changing the formal file', async () => {
       const configPath = path.join(configDir, 'openclaw.json')
       const original = '{"tools":{"web":{"search":{"enabled":true}}}}'
       fs.writeFileSync(configPath, original, 'utf-8')

@@ -1238,8 +1238,8 @@ export class OpenClawService extends BaseService {
         apiKey = this.getNoKeyPlaceholder(provider) ?? 'no-key-required'
       }
 
-      // Remove inactive Cherry-generated providers. On the selected provider, retain only
-      // hand-edited fields supported by the live OpenClaw schema; Cherry-owned identity,
+      // Remove inactive Magic Box-generated providers. On the selected provider, retain only
+      // hand-edited fields supported by the live OpenClaw schema; Magic Box-owned identity,
       // endpoint, credential, and model-name fields are always regenerated below.
       const providerSchemaPath = ['models', 'providers', '*']
       const modelSchemaPath = [...providerSchemaPath, 'models', '[]']

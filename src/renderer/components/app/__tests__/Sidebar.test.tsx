@@ -147,16 +147,29 @@ vi.mock('../../icons/SvgIcon', () => ({
   OpenClawSidebarIcon: () => null
 }))
 
+vi.mock('../../feedback/FeedbackDialog', () => ({
+  default: ({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) => (
+    <div data-testid="feedback-shell" data-open={open}>
+      {open ? <div role="dialog">feedback-dialog</div> : null}
+      <button type="button" onClick={() => onOpenChange(false)}>
+        close-feedback
+      </button>
+    </div>
+  )
+}))
+
 vi.mock('../../layout/ShellTabBarActions', () => ({
   SidebarShellActions: ({
     layout,
     sidebarHidden,
     onSidebarToggle,
+    onFeedbackClick,
     onSettingsClick
   }: {
     layout: string
     sidebarHidden?: boolean
     onSidebarToggle?: () => void
+    onFeedbackClick: () => void
     onSettingsClick: () => void
   }) => (
     <>
@@ -164,6 +177,7 @@ vi.mock('../../layout/ShellTabBarActions', () => ({
         {sidebarHidden ? 'pin' : 'hide'}
       </button>
       <button type="button" data-testid={`sidebar-shell-actions-${layout}`} onClick={onSettingsClick} />
+      <button type="button" data-testid={`sidebar-feedback-${layout}`} onClick={onFeedbackClick} />
     </>
   )
 }))
@@ -213,7 +227,7 @@ vi.mock('../../Sidebar', async () => {
       title?: string
       logo?: ReactNode
       user?: unknown
-      actions?: ReactNode | ((layout: 'icon' | 'full') => ReactNode)
+      actions?: ReactNode | ((layout: 'icon' | 'full', onOverlayOpenChange?: (open: boolean) => void) => ReactNode)
       width?: number
       onResizePreview?: (width: number | null) => void
       onDismiss?: () => void
@@ -309,7 +323,6 @@ vi.mock('react-i18next', () => ({
 }))
 
 import { useCommandHandler } from '@renderer/hooks/command'
-import { resolveSidebarAppTabEntryUrl } from '@renderer/utils/sidebar'
 
 import Sidebar from '../Sidebar'
 
@@ -433,43 +446,24 @@ describe('app Sidebar', () => {
     expect(mocks.setSidebarWidth).toHaveBeenCalledWith(50)
   })
 
-  it('derives conversation detach URLs from instance metadata', () => {
-    expect(
-      resolveSidebarAppTabEntryUrl({
-        url: '/app/chat?topicId=entry-topic',
-        metadata: { instanceAppId: 'assistants', instanceKey: 'current-topic' }
-      })
-    ).toBe('/app/chat?topicId=current-topic')
-    expect(
-      resolveSidebarAppTabEntryUrl({
-        url: '/app/agents?sessionId=entry-session',
-        metadata: { instanceAppId: 'agents', instanceKey: 'current-session' }
-      })
-    ).toBe('/app/agents?sessionId=current-session')
-  })
+  it('keeps feedback mounted when the floating sidebar closes', async () => {
+    const user = userEvent.setup()
+    mocks.sidebarWidth = 0
+    render(<Sidebar />)
 
-  it('uses the conversation base route when instance metadata represents a draft', () => {
-    expect(
-      resolveSidebarAppTabEntryUrl({
-        url: '/app/chat?topicId=previous-topic',
-        metadata: { instanceAppId: 'assistants' }
-      })
-    ).toBe('/app/chat')
-    expect(
-      resolveSidebarAppTabEntryUrl({
-        url: '/app/agents?sessionId=previous-session',
-        metadata: { instanceAppId: 'agents' }
-      })
-    ).toBe('/app/agents')
-  })
+    await user.click(screen.getByRole('button', { name: 'reveal' }))
+    const floatingSidebar = screen.getByTestId('floating-sidebar')
+    await user.click(within(floatingSidebar).getByTestId('sidebar-feedback-full'))
 
-  it('keeps a message-only detach URL when there is no normal instance key', () => {
-    expect(
-      resolveSidebarAppTabEntryUrl({
-        url: '/app/chat?topicId=t-1&view=message',
-        metadata: { instanceAppId: 'assistants', instanceKey: 'stale-topic' }
-      })
-    ).toBe('/app/chat?topicId=t-1&view=message')
+    expect(await screen.findByRole('dialog')).toHaveTextContent('feedback-dialog')
+
+    await user.click(within(floatingSidebar).getByRole('button', { name: 'dismiss' }))
+
+    expect(screen.queryByTestId('floating-sidebar')).not.toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toHaveTextContent('feedback-dialog')
+
+    await user.click(screen.getByRole('button', { name: 'close-feedback' }))
+    expect(screen.getByTestId('feedback-shell')).toHaveAttribute('data-open', 'false')
   })
 
   it('renders sidebar menu items in visible preference order', () => {
@@ -668,6 +662,33 @@ describe('app Sidebar', () => {
       icon: 'calculator-logo',
       metadata: undefined
     })
+    expect(mocks.openTab).not.toHaveBeenCalled()
+  })
+
+  it('switches to an existing mini app tab without replacing the active tab', async () => {
+    const user = userEvent.setup()
+    configureMiniApps(['calculator'])
+    mocks.activeTab = {
+      id: 'chat',
+      type: 'route',
+      url: '/app/chat?topicId=t-1',
+      title: 'Topic'
+    }
+    mocks.tabs = [
+      mocks.activeTab,
+      {
+        id: 'calculator-tab',
+        type: 'route',
+        url: '/app/mini-app/calculator',
+        title: 'Calculator'
+      }
+    ]
+
+    render(<Sidebar />)
+    await user.click(screen.getByRole('button', { name: 'Calculator' }))
+
+    expect(mocks.setActiveTab).toHaveBeenCalledWith('calculator-tab')
+    expect(mocks.updateTab).not.toHaveBeenCalled()
     expect(mocks.openTab).not.toHaveBeenCalled()
   })
 

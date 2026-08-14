@@ -2,8 +2,7 @@
 
 `FilePreview` is the canonical read-only preview host for local files. Callers provide a file path and decide where the preview appears. The host validates the path target and selects the preview strategy; the matching plugin owns file I/O, format rendering, toolbar controls, and format-specific state.
 
-The built-in plugins currently support images, PDF, Word (`.docx`), PowerPoint (`.pptx`), spreadsheets
-(`.xlsx`, `.csv`), Markdown, and text/source files.
+The built-in plugins currently support HTML, images (`.jpg`, `.jpeg`, `.png`, `.gif`, `.bmp`, `.webp`, `.avif`, `.ico`, `.svg` — SVG renders via `<img>`, which never executes embedded scripts), PDF, Word (`.docx`), PowerPoint (`.pptx`), spreadsheets (`.csv`, `.tsv`, `.xlsx`), Markdown (`.md`, `.markdown`, `.mdx`), and text/source files. Files outside the text extension whitelist still use the text plugin when content sniffing identifies them as text.
 
 ## Path Contract
 

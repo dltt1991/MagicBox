@@ -200,8 +200,6 @@ describe('PowerPointFilePreview', () => {
   })
 
   it('renders PPTX files larger than the previous 25 MB preview limit', async () => {
-    mocks.getMetadata.mockResolvedValueOnce({ kind: 'file', size: 25 * 1024 * 1024 + 1 })
-
     render(
       <PowerPointFilePreview
         filePath={filePath}

@@ -45,6 +45,14 @@ describe('buildPathRegistry', () => {
     expect(registry['feature.agents.claude.skills']).toBe(path.join(claudeRoot, 'skills'))
   })
 
+  it('keeps pi runtime state under the Agents data directory', () => {
+    const registry = buildPathRegistry()
+    const piRoot = path.join('/mock/userData', 'Data', 'Agents', '.pi')
+
+    expect(registry['feature.agents.pi.root']).toBe(piRoot)
+    expect(registry['feature.agents.pi.sessions']).toBe(path.join(piRoot, 'sessions'))
+  })
+
   it('keeps the isolated mise tree under the userData toolchain', () => {
     const registry = buildPathRegistry()
     const miseRoot = path.join('/mock/userData', 'Toolchain', 'mise')
@@ -94,12 +102,25 @@ describe('buildPathRegistry', () => {
     expect(registry['sys.desktop']).toBe('/mock/desktop')
   })
 
-  it('registers the Cherry Assistant product manifest inside bundled resources', () => {
+  it('registers the Magic Box Assistant product manifest inside bundled resources', () => {
     const registry = buildPathRegistry()
 
     expect(registry['feature.agents.assistant.manifest.file']).toBe(
       '/mock/app/resources/builtin-agents/cherry-assistant/product-manifest.json'
     )
+  })
+
+  it('uses the shared user-owned DeepSeek Harness home', () => {
+    const registry = buildPathRegistry()
+    expect(registry['external.deepseek_harness.config']).toBe(path.join(os.homedir(), '.dsh'))
+  })
+
+  it('isolates the managed DeepSeek Harness workspace from the user home', () => {
+    const registry = buildPathRegistry()
+    expect(registry['feature.deepseek_harness.workspace']).toBe(
+      path.join('/mock/userData', 'Data', 'DeepSeekHarness', 'Workspace')
+    )
+    expect(shouldAutoEnsure('feature.deepseek_harness.workspace')).toBe(true)
   })
 })
 
@@ -257,7 +278,7 @@ describe('pathRegistry.shouldAutoEnsure', () => {
       expect(shouldAutoEnsure('app.database.migrations')).toBe(false)
     })
 
-    it('returns false for the bundled Cherry Assistant product manifest', () => {
+    it('returns false for the bundled Magic Box Assistant product manifest', () => {
       expect(shouldAutoEnsure('feature.agents.assistant.manifest.file')).toBe(false)
     })
 

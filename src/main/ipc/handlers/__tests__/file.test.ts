@@ -7,35 +7,33 @@ const {
   appGetMock,
   assertOutsideManagedStorageMutationMock,
   copyMock,
-  mkdirMock,
   getMetadataByPathMock,
+  mkdirMock,
   openMock,
-  readChunkByPathMock,
   readByPathMock,
+  readChunkByPathMock,
   renamePathMock,
   rmMock,
   safeOpenMock,
-  statMock,
   showPathInFolderMock,
+  statMock,
   trashItemMock,
-  writeFileMock,
   writeIfUnchangedByPathMock
 } = vi.hoisted(() => ({
   appGetMock: vi.fn(),
   assertOutsideManagedStorageMutationMock: vi.fn(),
   copyMock: vi.fn(),
-  mkdirMock: vi.fn(),
   getMetadataByPathMock: vi.fn(),
+  mkdirMock: vi.fn(),
   openMock: vi.fn(),
-  readChunkByPathMock: vi.fn(),
   readByPathMock: vi.fn(),
+  readChunkByPathMock: vi.fn(),
   renamePathMock: vi.fn(),
   rmMock: vi.fn(),
   safeOpenMock: vi.fn(),
-  statMock: vi.fn(),
   showPathInFolderMock: vi.fn(),
+  statMock: vi.fn(),
   trashItemMock: vi.fn(),
-  writeFileMock: vi.fn(),
   writeIfUnchangedByPathMock: vi.fn()
 }))
 vi.mock('@application', () => ({ application: { get: appGetMock } }))
@@ -46,8 +44,7 @@ vi.mock('node:fs/promises', () => ({
   open: openMock,
   rename: renamePathMock,
   rm: rmMock,
-  stat: statMock,
-  writeFile: writeFileMock
+  stat: statMock
 }))
 vi.mock('@main/services/file', async () => {
   // dispatchHandle is exercised for real so these tests cover handle routing.
@@ -148,8 +145,8 @@ beforeEach(() => {
 })
 
 const ctx = { senderId: null }
-const missingPathError = () => Object.assign(new Error('missing'), { code: 'ENOENT' })
 const windowCtx = { senderId: 'win-1' }
+const missingPathError = () => Object.assign(new Error('missing'), { code: 'ENOENT' })
 
 describe('fileHandlers', () => {
   it('does not expose the pure-SQL content-hash lookup through IpcApi', () => {

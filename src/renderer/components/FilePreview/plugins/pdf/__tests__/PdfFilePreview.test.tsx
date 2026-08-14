@@ -395,11 +395,7 @@ describe('PdfFilePreview', () => {
     act(() => mocks.rangeTransportInstances[0].fail(new Error('range read failed')))
 
     expect(await screen.findByRole('alert')).toHaveTextContent('file_preview.load_error.title')
-    await waitFor(() =>
-      expect(mocks.loadingTaskDestroy.mock.calls.length + mocks.pdfDocument.destroy.mock.calls.length).toBeGreaterThan(
-        0
-      )
-    )
+    expect(mocks.loadingTaskDestroy).not.toHaveBeenCalled()
     expect(loggerError).toHaveBeenCalledWith(
       `Failed to load PDF preview: ${filePath}`,
       expect.objectContaining({ message: 'range read failed' })
@@ -418,11 +414,7 @@ describe('PdfFilePreview', () => {
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('file_preview.pdf.too_large.title')
     expect(alert).toHaveTextContent('file_preview.pdf.too_large.description')
-    await waitFor(() =>
-      expect(mocks.loadingTaskDestroy.mock.calls.length + mocks.pdfDocument.destroy.mock.calls.length).toBeGreaterThan(
-        0
-      )
-    )
+    expect(mocks.loadingTaskDestroy).not.toHaveBeenCalled()
     expect(loggerWarn).toHaveBeenCalledWith(
       'PDF preview exceeded the safe assembled range limit',
       expect.objectContaining({
@@ -465,6 +457,7 @@ describe('PdfFilePreview', () => {
     await act(flushPdfEffects)
 
     expect(mocks.loadingTaskDestroy).not.toHaveBeenCalled()
+    expect(mocks.rangeTransportInstances[0].abort).toHaveBeenCalled()
     expect(mocks.pdfDocument.destroy).toHaveBeenCalled()
     expect(abortSignal.aborted).toBe(true)
     expect(mocks.pdfViewerSetDocument).toHaveBeenCalledWith(null)
@@ -489,7 +482,7 @@ describe('PdfFilePreview', () => {
 
     mocks.pdfViewerFirstPagePromise = Promise.resolve()
     view.rerender(<PdfFilePreview filePath={filePath} fileName="paper.pdf" metadata={{ size: 1024 }} refreshKey={1} />)
-    await waitFor(() => expect(mocks.getDocument).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(mocks.rangeTransportInstances).toHaveLength(2))
 
     await act(async () => {
       rejectFirstPage(new Error("Cannot read properties of null (reading 'sendWithPromise')"))

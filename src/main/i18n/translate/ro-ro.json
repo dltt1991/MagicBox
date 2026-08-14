@@ -2,7 +2,10 @@
   "agent": {
     "builtin": {
       "cherry_assistant": {
-        "description": "Consilier integrat Cherry Studio. Diagnostichează probleme, oferă îndrumări, colectează întrebări frecvente, trimite rapoarte de erori și solicitări de funcții și caută sau creează abilități"
+        "description": "Consilier integrat Magic Box. Diagnostichează probleme, oferă îndrumări, colectează întrebări frecvente, trimite rapoarte de erori și solicitări de funcții și caută sau creează abilități"
+      },
+      "cherry_support": {
+        "description": "Agent oficial de asistență Magic Box pentru configurare, diagnosticare, întrebări frecvente și feedback"
       }
     },
     "session": {
@@ -15,24 +18,27 @@
   },
   "apiGateway": {
     "docs": {
-      "description": "API HTTP Cherry Studio compatibil cu OpenAI, Anthropic și Gemini, plus endpoint-urile proprii Cherry (modele, baze de cunoștințe)",
+      "description": "API HTTP Magic Box compatibil cu OpenAI, Anthropic și Gemini, plus endpoint-urile proprii Magic Box (modele, baze de cunoștințe)",
       "language_switcher_label": "Limba documentației",
       "operations": {
         "chat_completions": "Creează o completare de conversație. Corpurile cererii și răspunsului respectă formatul OpenAI Chat Completions; cu `stream: true` rezultatul este transmis incremental.",
         "count_tokens": "Estimează câte tokenuri de intrare consumă un set de mesaje în format Anthropic.",
         "generate_content": "Generează conținut prin metoda `generateContent` a Gemini. Corpurile cererii și răspunsului respectă formatul API-ului Gemini; `streamGenerateContent` este servit pe aceeași cale.",
         "get_knowledge_base": "Obține o bază de cunoștințe după ID.",
+        "get_mcp_server": "Obține detaliile unui server MCP și lista sa de instrumente.",
         "health": "Starea serviciului, ora curentă și versiunea. Nu necesită autentificare.",
         "info": "Numele și versiunea API-ului, precum și principalele endpoint-uri. Nu necesită autentificare.",
-        "list_knowledge_bases": "Listează bazele de cunoștințe disponibile în această instanță Cherry Studio.",
+        "list_knowledge_bases": "Listează bazele de cunoștințe disponibile în această instanță Magic Box.",
+        "list_mcp_servers": "Listează serverele MCP activate în Magic Box, fiecare cu URL-ul de conectare.",
         "list_models": "Listează modelele disponibile prin acest gateway, în formatul models al OpenAI.",
+        "mcp_proxy": "Punct final Model Context Protocol pentru un server MCP (Streamable HTTP). Indică acest URL în orice client MCP pentru a utiliza serverul prin Magic Box.",
         "messages": "Creează un mesaj. Corpurile cererii și răspunsului respectă formatul Anthropic Messages; cu `stream: true` rezultatul este transmis incremental.",
         "responses": "Creează un răspuns. Corpurile cererii și răspunsului respectă formatul OpenAI Responses.",
         "search_knowledge_bases": "Caută în una sau mai multe baze de cunoștințe și returnează fragmentele de document potrivite."
       },
       "tags": {
         "anthropic": "Endpoint-uri compatibile cu Anthropic. Îndreaptă URL-ul de bază al unui SDK Anthropic către acest gateway pentru a le folosi.",
-        "cherry": "Endpoint-urile proprii Cherry Studio: baze de cunoștințe, informații despre serviciu și verificare de stare.",
+        "cherry": "Endpoint-urile proprii Magic Box: baze de cunoștințe, informații despre serviciu și verificare de stare.",
         "gemini": "Endpoint-uri compatibile cu Gemini, servite sub `/v1beta`, ca în API-ul original.",
         "openai": "Endpoint-uri compatibile cu OpenAI. Îndreaptă URL-ul de bază al unui SDK OpenAI către acest gateway pentru a le folosi."
       }
@@ -101,12 +107,18 @@
     "select_folder": "Selectează directorul",
     "word_document": "Document Word"
   },
+  "file_processing": {
+    "errors": {
+      "document_size_limit_exceeded": "Serviciul curent de analiză a documentelor necesită fișiere mai mici de {{maxSize}}. Comprimă sau împarte acest fișier, apoi adaugă-l din nou.",
+      "pdf_page_limit_exceeded": "Acest PDF depășește limita de {{maxPages}} pagini pentru serviciul curent de analiză a documentelor. Împarte manual PDF-ul, apoi adaugă-l din nou."
+    }
+  },
   "openclaw": {
     "errors": {
-      "binary_incompatible": "Fișierul binar OpenClaw utilizat de Cherry Studio este incompatibil cu configurația generată. Actualizează OpenClaw.{{details}}",
-      "external_config_invalid": "OpenClaw a respins o configurație din afara secțiunii de furnizori gestionate de Cherry Studio. Corectează configurația respectivă sau actualizează OpenClaw.{{details}}",
+      "binary_incompatible": "Fișierul binar OpenClaw utilizat de Magic Box este incompatibil cu configurația generată. Actualizează OpenClaw.{{details}}",
+      "external_config_invalid": "OpenClaw a respins o configurație din afara secțiunii de furnizori gestionate de Magic Box. Corectează configurația respectivă sau actualizează OpenClaw.{{details}}",
       "more_issues": "și alte {{count}} probleme",
-      "preflight_failed": "Cherry Studio nu a putut valida configurația OpenClaw."
+      "preflight_failed": "Magic Box nu a putut valida configurația OpenClaw."
     }
   },
   "paintings": {
@@ -120,7 +132,7 @@
     "mcp": {
       "oauth": {
         "callback": {
-          "message": "Poți închide această pagină și te poți întoarce la Cherry Studio",
+          "message": "Poți închide această pagină și te poți întoarce la Magic Box",
           "title": "Autentificare reușită"
         }
       }

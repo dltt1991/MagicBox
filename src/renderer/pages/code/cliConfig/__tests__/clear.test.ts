@@ -294,7 +294,7 @@ describe('clearCliConfig', () => {
     })
   })
 
-  it('pi: strips Cherry-managed providers and defaults while preserving user config', async () => {
+  it('pi: strips Magic Box-managed providers and defaults while preserving user config', async () => {
     existing['/resolved~/.pi/agent/models.json'] = JSON.stringify({
       userTop: 'keep',
       providers: {

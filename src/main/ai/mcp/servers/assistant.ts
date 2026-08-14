@@ -67,7 +67,8 @@ export function isAllowedAssistantNavigationPath(path: string, allowedRoutes: re
 
 const NAVIGATE_TOOL: Tool = {
   name: 'navigate',
-  description: 'Navigate Magic Box to a specific page. Refer to the route table in your skills for available paths.',
+  description:
+    'Create a clickable entry for a route returned by product_info. Use this in the same turn whenever answering where to find, open, configure, or use a Magic Box page or feature; written UI steps are not a substitute.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -118,7 +119,7 @@ const DIAGNOSE_TOOL: Tool = {
 const PRODUCT_INFO_TOOL: Tool = {
   name: 'product_info',
   description:
-    'Read current Cherry Studio product facts from the installed package manifest. Request only the relevant section to keep context small.',
+    'Read current Magic Box product facts from the installed package manifest. Request only the relevant section to keep context small.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -138,7 +139,7 @@ const PRODUCT_INFO_TOOL: Tool = {
   }
 }
 
-// Whitelist of settings Cherry Assistant can write directly. Each entry binds
+// Whitelist of settings Magic Box Assistant can write directly. Each entry binds
 // a `setting` key to a value validator and an `apply` function that performs
 // the write. Settings not in this map are rejected — adding a new one
 // requires explicit code change so a destructive or sensitive setting can
@@ -165,7 +166,7 @@ const APPLY_SETTING_REGISTRY: Record<string, ApplySettingEntry> = {
 
 const CREATE_AGENT_TOOL: Tool = {
   name: 'create_agent',
-  description: `Create a new Cherry Studio Agent on behalf of the user. Use this when the user explicitly asks to create / build / make a new agent (e.g. "帮我建一个专门做 Python 代码 review 的 Agent"). MUST collect requirements via conversation first, then SHOW the proposed config to the user for confirmation, and only call this tool after explicit user agreement.
+  description: `Create a new Magic Box Agent on behalf of the user. Use this when the user explicitly asks to create / build / make a new agent (e.g. "帮我建一个专门做 Python 代码 review 的 Agent"). MUST collect requirements via conversation first, then SHOW the proposed config to the user for confirmation, and only call this tool after explicit user agreement.
 
 Safety rules:
 - type is fixed to 'claude-code' (channel-backed agents are out of scope here)
@@ -192,7 +193,7 @@ The tool returns the new agent id. After creation, query product_info and naviga
       model: {
         type: 'string',
         description:
-          'Optional model id in the form "providerId::modelId" (e.g. "cherryin::agent/glm-5.1", "anthropic::claude-sonnet"). When omitted, the new agent uses Cherry Assistant\'s current model.'
+          'Optional model id in the form "providerId::modelId" (e.g. "cherryin::agent/glm-5.1", "anthropic::claude-sonnet"). When omitted, the new agent uses Magic Box Assistant\'s current model.'
       }
     },
     required: ['name', 'instructions']
@@ -201,7 +202,7 @@ The tool returns the new agent id. After creation, query product_info and naviga
 
 const APPLY_SETTING_TOOL: Tool = {
   name: 'apply_setting',
-  description: `Apply a low-risk Cherry Studio setting change directly. Only the whitelist below is supported; destructive operations are never exposed here.
+  description: `Apply a low-risk Magic Box setting change directly. Only the whitelist below is supported; destructive operations are never exposed here.
 
 Supported settings:
 ${Object.values(APPLY_SETTING_REGISTRY)
@@ -224,6 +225,24 @@ ${Object.values(APPLY_SETTING_REGISTRY)
   }
 }
 
+const ASSISTANT_TOOLS = {
+  navigate: NAVIGATE_TOOL,
+  diagnose: DIAGNOSE_TOOL,
+  product_info: PRODUCT_INFO_TOOL,
+  apply_setting: APPLY_SETTING_TOOL,
+  create_agent: CREATE_AGENT_TOOL
+} as const
+
+export type AssistantToolName = keyof typeof ASSISTANT_TOOLS
+
+/** Product-support capabilities intentionally exclude creation of arbitrary Agents. */
+export const SUPPORT_ASSISTANT_TOOL_NAMES: readonly AssistantToolName[] = [
+  'navigate',
+  'diagnose',
+  'product_info',
+  'apply_setting'
+]
+
 // Health check cache: { providerId -> { result, timestamp } }
 const healthCache = new Map<string, { result: unknown; timestamp: number }>()
 const HEALTH_CACHE_TTL = 30_000 // 30 seconds
@@ -231,7 +250,13 @@ const HEALTH_CACHE_TTL = 30_000 // 30 seconds
 class AssistantServer {
   public mcpServer: McpServer
 
-  constructor(private readonly defaultModel?: UniqueModelId) {
+  private readonly enabledToolNames: ReadonlySet<AssistantToolName>
+
+  constructor(
+    private readonly defaultModel?: UniqueModelId,
+    enabledToolNames: readonly AssistantToolName[] = Object.keys(ASSISTANT_TOOLS) as AssistantToolName[]
+  ) {
+    this.enabledToolNames = new Set(enabledToolNames)
     this.mcpServer = new McpServer(
       {
         name: 'assistant',
@@ -248,7 +273,7 @@ class AssistantServer {
 
   private setupHandlers() {
     this.mcpServer.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: [NAVIGATE_TOOL, DIAGNOSE_TOOL, PRODUCT_INFO_TOOL, APPLY_SETTING_TOOL, CREATE_AGENT_TOOL]
+      tools: Array.from(this.enabledToolNames, (name) => ASSISTANT_TOOLS[name])
     }))
 
     this.mcpServer.server.setRequestHandler(CallToolRequestSchema, async (request) => {
@@ -256,6 +281,9 @@ class AssistantServer {
       const args = request.params.arguments ?? {}
 
       try {
+        if (!this.enabledToolNames.has(toolName as AssistantToolName)) {
+          throw new McpError(ErrorCode.MethodNotFound, `Unknown tool: ${toolName}`)
+        }
         switch (toolName) {
           case 'navigate':
             return await this.navigate(args as Record<string, string | Record<string, string> | undefined>)
@@ -455,7 +483,7 @@ class AssistantServer {
       modelService.getByKey(providerId, modelId)
     } catch (error) {
       if (isDataApiError(error) && error.code === DataApiErrorCode.NOT_FOUND) {
-        throw new McpError(ErrorCode.InvalidParams, `Model is not configured in Cherry Studio: ${parsedModel.data}`)
+        throw new McpError(ErrorCode.InvalidParams, `Model is not configured in Magic Box: ${parsedModel.data}`)
       }
       throw error
     }
@@ -469,7 +497,6 @@ class AssistantServer {
         model: parsedModel.data,
         configuration: {
           permission_mode: 'default',
-          max_turns: 100,
           env_vars: {}
         }
       })
@@ -884,7 +911,7 @@ class AssistantServer {
         proxy: proxy ? redactUrlToOrigin(proxy) : proxy,
         zoomFactor: preferenceService.get('app.zoom_factor'),
         defaultModel: this.describeModelId(preferenceService.get('chat.default_model_id')),
-        topicNamingModel: this.describeModelId(preferenceService.get('topic.naming.model_id')),
+        quickModel: this.describeModelId(preferenceService.get('feature.quick_assistant.model_id')),
         tray: preferenceService.get('app.tray.enabled'),
         trayOnClose: preferenceService.get('app.tray.on_close'),
         launchToTray: preferenceService.get('app.tray.on_launch'),

@@ -75,7 +75,10 @@ export const COMMAND_DEFINITIONS = [
     scope: 'main',
     keybinding: {
       defaultBinding: ['CommandOrControl', '='],
-      additionalBindings: [['CommandOrControl', 'numadd']],
+      additionalBindings: [
+        ['CommandOrControl', 'Shift', '='],
+        ['CommandOrControl', 'numadd']
+      ],
       editable: false
     }
   }),
@@ -210,6 +213,25 @@ export const COMMAND_DEFINITIONS = [
     scope: 'renderer',
     keybinding: {
       defaultBinding: ['CommandOrControl', ']']
+    }
+  }),
+  defineCommand({
+    id: 'tab.next',
+    titleKey: 'settings.shortcuts.next_tab',
+    categoryKey: 'settings.shortcuts.general',
+    scope: 'renderer',
+    keybinding: {
+      // macOS reserves Cmd+Tab for the system app switcher.
+      defaultBinding: { default: ['CommandOrControl', 'Tab'], darwin: ['Ctrl', 'Tab'] }
+    }
+  }),
+  defineCommand({
+    id: 'tab.prev',
+    titleKey: 'settings.shortcuts.prev_tab',
+    categoryKey: 'settings.shortcuts.general',
+    scope: 'renderer',
+    keybinding: {
+      defaultBinding: { default: ['CommandOrControl', 'Shift', 'Tab'], darwin: ['Ctrl', 'Shift', 'Tab'] }
     }
   }),
   defineCommand({

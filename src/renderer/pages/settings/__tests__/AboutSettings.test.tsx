@@ -74,16 +74,20 @@ vi.mock('@renderer/components/IndicatorLight', () => ({
   default: () => <span data-testid="indicator-light" />
 }))
 
-vi.mock('../FeedbackDialog', () => ({
+vi.mock('@renderer/components/feedback/FeedbackDialog', () => ({
   FeedbackDialog: () => null
+}))
+
+vi.mock('@renderer/components/UpdateDialogPopup', () => ({
+  default: { show: vi.fn() }
 }))
 
 vi.mock('../AboutSettings/DiagnosticBundleDialog', () => ({
   default: () => null
 }))
 
-vi.mock('@renderer/components/UpdateDialogPopup', () => ({
-  default: { show: vi.fn() }
+vi.mock('../FeedbackDialog', () => ({
+  FeedbackDialog: () => null
 }))
 
 vi.mock('@renderer/hooks/useAppUpdateState', () => ({
@@ -104,6 +108,10 @@ vi.mock('@renderer/hooks/useMiniAppPopup', () => ({
   useMiniAppPopup: () => ({ openSmartMiniApp: openSmartMiniAppMock })
 }))
 
+vi.mock('@renderer/hooks/useOpenReleaseNotes', () => ({
+  useOpenReleaseNotes: () => vi.fn()
+}))
+
 vi.mock('@renderer/hooks/useTheme', () => ({
   useTheme: () => ({ theme: 'light' })
 }))
@@ -119,7 +127,6 @@ vi.mock('@renderer/ipc', () => ({
 vi.mock('react-i18next', () => ({
   initReactI18next: { type: '3rdParty', init: vi.fn() },
   useTranslation: () => ({
-    i18n: { language: 'zh-CN', resolvedLanguage: 'zh-CN' },
     t: (key: string) =>
       ({
         'docs.title': '文档',
@@ -171,7 +178,7 @@ describe('AboutSettings', () => {
     await screen.findByText('Magic Box')
 
     const unavailableButtons = screen.getAllByRole('button', { name: '暂不可用' })
-    expect(unavailableButtons).toHaveLength(9)
+    expect(unavailableButtons).toHaveLength(10)
     expect(unavailableButtons.every((button) => button.hasAttribute('disabled'))).toBe(true)
 
     for (const button of unavailableButtons) {

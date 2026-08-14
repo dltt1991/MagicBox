@@ -14,11 +14,11 @@ import type { Provider } from '@shared/data/types/provider'
 import type { ToolSet, UIMessageChunk } from 'ai'
 
 /**
- * Token usage projection carried on `message-metadata` UIMessageChunks emitted
- * by main's `AiService.streamText`. Mirrors the Magic Box `MessageStats` projection
- * (`promptTokens` = input, `completionTokens` = output, `thoughtsTokens` =
- * reasoning). There is no raw input/output token field and no cache-token
- * breakdown on this channel.
+ * Token usage carried on `message-metadata` UIMessageChunks emitted by main's
+ * `AiService.streamText`: the nested `stats` snapshot (Magic Box `MessageStats`,
+ * AI SDK v6 names) is the single carrier — the gateway SSE adapters read the
+ * input/output totals from it, plus the reasoning breakdown for dialects that
+ * expose one (Gemini's `usageMetadata.thoughtsTokenCount`).
  */
 export interface GatewayUsageMetadata {
   stats?: {
@@ -138,6 +138,9 @@ export interface IMessageConverter<TInputParams = unknown> {
 
   /** Restore a provider-safe tool name before returning a tool call to the API client. */
   toClientToolName?(toolName: string): string
+
+  /** Wire-safe (normalized) name for a client tool name; identity when already compatible. */
+  toProviderToolName?(toolName: string): string
 
   /**
    * Extract stream/generation options from input params

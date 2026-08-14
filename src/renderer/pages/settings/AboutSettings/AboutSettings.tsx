@@ -10,6 +10,7 @@ import {
 } from '@cherrystudio/ui'
 import { usePreference } from '@data/hooks/usePreference'
 import AppLogo from '@renderer/assets/images/logo.png'
+import { FeedbackDialog } from '@renderer/components/feedback/FeedbackDialog'
 import LogoAvatar from '@renderer/components/icons/LogoAvatar'
 import IndicatorLight from '@renderer/components/IndicatorLight'
 import { ReleaseNotes } from '@renderer/components/ReleaseNotes'
@@ -22,13 +23,13 @@ import {
 } from '@renderer/components/SettingsPrimitives'
 import UpdateDialogPopup from '@renderer/components/UpdateDialogPopup'
 import { useAppUpdateState } from '@renderer/hooks/useAppUpdateState'
-import { useMiniAppPopup } from '@renderer/hooks/useMiniAppPopup'
+import { useOpenReleaseNotes } from '@renderer/hooks/useOpenReleaseNotes'
 import { useTheme } from '@renderer/hooks/useTheme'
 import i18n from '@renderer/i18n/resolver'
 import { ipcApi } from '@renderer/ipc'
 import { toast } from '@renderer/services/toast'
 import { cn } from '@renderer/utils/style'
-import { ThemeMode, UpgradeChannel } from '@shared/data/preference/preferenceTypes'
+import { UpgradeChannel } from '@shared/data/preference/preferenceTypes'
 import { debounce } from 'es-toolkit/compat'
 import {
   BadgeQuestionMark,
@@ -46,7 +47,6 @@ import type { FC, ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { FeedbackDialog } from '../FeedbackDialog'
 import DiagnosticBundleDialog from './DiagnosticBundleDialog'
 
 const ABOUT_FEATURES_AVAILABLE = false
@@ -62,7 +62,7 @@ const AboutSettings: FC = () => {
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const { t } = useTranslation()
   const { theme } = useTheme()
-  const { openSmartMiniApp } = useMiniAppPopup()
+  const showReleases = useOpenReleaseNotes()
 
   const { appUpdateState, updateAppUpdateState } = useAppUpdateState()
 
@@ -111,16 +111,6 @@ const AboutSettings: FC = () => {
 
   const showEnterprise = async () => {
     onOpenWebsite('https://enterprise.cherry-ai.com')
-  }
-
-  const showReleases = async () => {
-    const { appPath } = await ipcApi.request('app.get_info')
-    openSmartMiniApp({
-      appId: 'cherrystudio-releases',
-      name: t('settings.about.releases.title'),
-      url: `file://${appPath}/resources/cherry-studio/releases.html?theme=${theme === ThemeMode.dark ? 'dark' : 'light'}`,
-      logo: AppLogo
-    })
   }
 
   const currentChannelByVersion =
@@ -214,6 +204,7 @@ const AboutSettings: FC = () => {
           <span className="font-semibold text-[15px]">{t('settings.about.title')}</span>
           <button
             type="button"
+            aria-label={t('settings.about.repository')}
             disabled={aboutActionsDisabled}
             onClick={() => onOpenWebsite('https://github.com/CherryHQ/cherry-studio')}
             className="inline-flex items-center justify-center rounded-md p-1 text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent">
@@ -227,10 +218,11 @@ const AboutSettings: FC = () => {
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <button
               type="button"
+              aria-label="Magic Box"
               disabled={aboutActionsDisabled}
               onClick={() => onOpenWebsite('https://github.com/CherryHQ/cherry-studio')}
               className="relative cursor-pointer disabled:cursor-not-allowed disabled:opacity-40">
-              {appUpdateState.downloadProgress > 0 && (
+              {appUpdateState.downloading && appUpdateState.downloadProgress > 0 && (
                 <div className="-top-0.5 -left-0.5 pointer-events-none absolute">
                   <CircularProgress
                     value={appUpdateState.downloadProgress}
@@ -247,9 +239,10 @@ const AboutSettings: FC = () => {
 
             <div className="flex min-h-18 flex-col items-start justify-center">
               <div className="mb-1 font-bold text-foreground text-lg">Magic Box</div>
-              <div className="text-foreground-secondary text-sm">{t('settings.about.description')}</div>
+              <div className="text-muted-foreground text-sm">{t('settings.about.description')}</div>
               <button
                 type="button"
+                aria-label={t('settings.about.releases.title')}
                 disabled={aboutActionsDisabled}
                 onClick={() => onOpenWebsite('https://github.com/CherryHQ/cherry-studio/releases')}
                 className="mt-1.5 disabled:cursor-not-allowed disabled:opacity-40">
@@ -298,22 +291,10 @@ const AboutSettings: FC = () => {
             </SettingRow>
 
             <Divider className="my-3" />
-            <SettingRow className="gap-3">
-              <SettingRowTitle>{t('settings.general.test_plan.title')}</SettingRowTitle>
-              <Tooltip content={t('settings.general.test_plan.tooltip')}>
-                <Switch
-                  checked={testPlan}
-                  disabled={aboutActionsDisabled}
-                  onCheckedChange={(v) => handleSetTestPlan(v)}
-                />
-              </Tooltip>
-            </SettingRow>
-
-            {testPlan && (
-              <>
-                <Divider className="my-1.5" />
-                <SettingRow className="items-center gap-3">
-                  <SettingRowTitle>{t('settings.general.test_plan.version_options')}</SettingRowTitle>
+            <SettingRow className="flex-nowrap gap-6">
+              <div className="flex min-w-0 flex-1 items-center justify-between gap-6">
+                <SettingRowTitle>{t('settings.general.test_plan.title')}</SettingRowTitle>
+                {testPlan && (
                   <SegmentedControl<UpgradeChannel>
                     value={getTestChannel()}
                     onValueChange={handleTestChannelChange}
@@ -328,9 +309,19 @@ const AboutSettings: FC = () => {
                     }))}
                     size="sm"
                   />
-                </SettingRow>
-              </>
-            )}
+                )}
+              </div>
+              <Tooltip
+                content={t('settings.general.test_plan.tooltip')}
+                classNames={{ placeholder: 'inline-flex items-center' }}>
+                <Switch
+                  className="shrink-0"
+                  checked={testPlan}
+                  disabled={aboutActionsDisabled}
+                  onCheckedChange={(v) => handleSetTestPlan(v)}
+                />
+              </Tooltip>
+            </SettingRow>
           </>
         )}
       </SettingGroup>
@@ -382,7 +373,7 @@ const AboutSettings: FC = () => {
           icon={<MessageSquareText className="size-4.5" />}
           title={t('settings.about.feedback.title')}
           actionLabel={t('settings.about.feedback.button')}
-          onAction={() => onOpenWebsite('https://github.com/CherryHQ/cherry-studio/issues/new/choose')}
+          onAction={() => setFeedbackOpen(true)}
           disabled={aboutActionsDisabled}
           disabledActionLabel={unavailableLabel}
         />
@@ -419,6 +410,8 @@ const AboutSettings: FC = () => {
           title={t('settings.about.diagnostics.entry.title')}
           actionLabel={t('settings.about.diagnostics.entry.button')}
           onAction={() => setIsDiagnosticDialogOpen(true)}
+          disabled={aboutActionsDisabled}
+          disabledActionLabel={unavailableLabel}
         />
         <Divider className="my-3" />
         <AboutActionRow

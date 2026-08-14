@@ -351,9 +351,9 @@ export function runDataReset(): void {
         logger.error('v1 remigration cleanup failed — keeping the marker and refusing to boot', { failures })
         showDataResetError(
           'Migration Reset Failed',
-          'Cherry Studio could not safely remove the current v2 data required to rerun migration. ' +
+          'Magic Box could not safely remove the current v2 data required to rerun migration. ' +
             'The app will quit and keep the pending request so the cleanup can retry on the next launch.\n\n' +
-            'Please check disk space, file permissions, and antivirus locks, then start Cherry Studio again.'
+            'Please check disk space, file permissions, and antivirus locks, then start Magic Box again.'
         )
         return
       }

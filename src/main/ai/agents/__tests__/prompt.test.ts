@@ -23,7 +23,6 @@ import { PromptBuilder } from '../prompt'
 
 const baseConfig: AgentConfiguration = {
   permission_mode: 'bypassPermissions',
-  max_turns: 100,
   env_vars: {}
 }
 
@@ -109,8 +108,10 @@ describe('PromptBuilder', () => {
 
     const { base, context: result } = await builder.buildPromptParts('/workspace')
 
-    expect(base).toEqual({ kind: 'claude_code' })
-    expect(result).toContain('## Bootstrap Mode')
+    // No system.md → keep the runtime-native prompt as the base and append Magic Box content;
+    // the old embedded "personal assistant" preamble must be gone.
+    expect(base).toEqual({ kind: 'native' })
+    expect(result).not.toContain('You are a personal assistant running inside Magic Box')
     expect(result).toContain('## Memories')
     expect(result).toContain('`/workspace/SOUL.md`')
   })
@@ -149,7 +150,40 @@ describe('PromptBuilder', () => {
 
     expect(base).toEqual({ kind: 'custom', content: 'You are CustomBot, a specialized assistant.' })
     expect(result).not.toContain('You are CustomBot')
-    expect(result).not.toContain('You are a personal assistant running inside Magic Box')
+    expect(result).toContain('## Memories')
+  })
+
+  it('treats an empty system.md as an explicit custom base while retaining Magic Box context', async () => {
+    setupFiles({ '/workspace/system.md': '' })
+
+    const { base, context } = await builder.buildPromptParts('/workspace')
+
+    expect(base).toEqual({ kind: 'custom', content: '' })
+    expect(context).toContain('## Memories')
+  })
+
+  it('fails prompt construction when an explicit system.md cannot be opened', async () => {
+    setupFiles({ '/workspace/system.md': 'Custom base' })
+    mockedOpen.mockRejectedValueOnce(Object.assign(new Error('EACCES'), { code: 'EACCES' }))
+
+    await expect(builder.buildPromptParts('/workspace')).rejects.toThrow(
+      'Failed to read required agent prompt file: /workspace/system.md'
+    )
+  })
+
+  it('fails prompt construction when an explicit system.md cannot be read', async () => {
+    setupFiles({ '/workspace/system.md': 'Custom base' })
+    mockedOpen.mockResolvedValueOnce({
+      stat: async () => ({ mtimeMs: 1000, isFile: () => true }),
+      readFile: async () => {
+        throw Object.assign(new Error('EIO'), { code: 'EIO' })
+      },
+      close: async () => undefined
+    } as any)
+
+    await expect(builder.buildPromptParts('/workspace')).rejects.toThrow(
+      'Failed to read required agent prompt file: /workspace/system.md'
+    )
   })
 
   it('includes soul.md in memories section', async () => {
@@ -237,7 +271,7 @@ Always cite primary sources.`
     setupFiles({
       '/workspace/SOUL.md': 'Be concise.',
       '/workspace/USER.md': 'Name: V',
-      '/workspace/memory/FACT.md': 'Project: Cherry Studio'
+      '/workspace/memory/FACT.md': 'Project: Magic Box'
     })
 
     const result = await builder.buildMemoriesSection('/workspace')
@@ -245,12 +279,12 @@ Always cite primary sources.`
     expect(result).toContain('## Memories')
     expect(result).toContain('Be concise.')
     expect(result).toContain('Name: V')
-    expect(result).toContain('Project: Cherry Studio')
-    expect(result).not.toContain('You are a personal assistant running inside Cherry Studio')
+    expect(result).toContain('Project: Magic Box')
+    expect(result).not.toContain('You are a personal assistant running inside Magic Box')
     expect(result).not.toContain('## Autonomy Tools')
   })
 
-  it('keeps system.md as the base while building memories as Cherry context', async () => {
+  it('keeps system.md as the base while building memories as Magic Box context', async () => {
     setupFiles({
       '/workspace/system.md': 'You are CustomBot.',
       '/workspace/soul.md': 'Sharp and efficient.'

@@ -49,7 +49,7 @@ export const DOC_TAGS = {
   openai: 'OpenAI API',
   anthropic: 'Anthropic API',
   gemini: 'Gemini API',
-  cherry: 'Cherry Studio'
+  cherry: 'Magic Box'
 } as const
 
 /**
@@ -63,10 +63,13 @@ export const DOC_DESCRIPTIONS = {
   count_tokens: 'apiGateway.docs.operations.count_tokens',
   generate_content: 'apiGateway.docs.operations.generate_content',
   get_knowledge_base: 'apiGateway.docs.operations.get_knowledge_base',
+  get_mcp_server: 'apiGateway.docs.operations.get_mcp_server',
   health: 'apiGateway.docs.operations.health',
   info: 'apiGateway.docs.operations.info',
   list_knowledge_bases: 'apiGateway.docs.operations.list_knowledge_bases',
+  list_mcp_servers: 'apiGateway.docs.operations.list_mcp_servers',
   list_models: 'apiGateway.docs.operations.list_models',
+  mcp_proxy: 'apiGateway.docs.operations.mcp_proxy',
   messages: 'apiGateway.docs.operations.messages',
   responses: 'apiGateway.docs.operations.responses',
   search_knowledge_bases: 'apiGateway.docs.operations.search_knowledge_bases'
@@ -86,10 +89,13 @@ function docDescriptions(lang: LanguageVarious): Record<DocDescriptionSlot, stri
     count_tokens: t('apiGateway.docs.operations.count_tokens', undefined, lang),
     generate_content: t('apiGateway.docs.operations.generate_content', undefined, lang),
     get_knowledge_base: t('apiGateway.docs.operations.get_knowledge_base', undefined, lang),
+    get_mcp_server: t('apiGateway.docs.operations.get_mcp_server', undefined, lang),
     health: t('apiGateway.docs.operations.health', undefined, lang),
     info: t('apiGateway.docs.operations.info', undefined, lang),
     list_knowledge_bases: t('apiGateway.docs.operations.list_knowledge_bases', undefined, lang),
+    list_mcp_servers: t('apiGateway.docs.operations.list_mcp_servers', undefined, lang),
     list_models: t('apiGateway.docs.operations.list_models', undefined, lang),
+    mcp_proxy: t('apiGateway.docs.operations.mcp_proxy', undefined, lang),
     messages: t('apiGateway.docs.operations.messages', undefined, lang),
     responses: t('apiGateway.docs.operations.responses', undefined, lang),
     search_knowledge_bases: t('apiGateway.docs.operations.search_knowledge_bases', undefined, lang)
@@ -139,7 +145,7 @@ export function buildOpenApiDocument(app: AnyElysia, lang: LanguageVarious, serv
   return {
     openapi: '3.0.3',
     info: {
-      title: 'Cherry Studio API',
+      title: 'Magic Box API',
       version: '1.0.0',
       description: t('apiGateway.docs.description', undefined, lang)
     },
@@ -262,7 +268,7 @@ const DOCS_CSS = `<style>
 export function renderDocsPage(lang: LanguageVarious, specUrl: string): string {
   const html = ScalarRender(
     {
-      title: 'Cherry Studio API',
+      title: 'Magic Box API',
       version: '1.0.0',
       description: t('apiGateway.docs.description', undefined, lang)
     },

@@ -7,9 +7,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 // Mock path module to normalize all paths to POSIX format for cross-platform consistency
 // This ensures path operations work the same way regardless of the actual OS
-vi.mock('path', async () => {
+async function posixPathModule() {
   const actual: typeof PathModule = await vi.importActual('path')
-  return {
+  const mocked = {
     ...actual,
     sep: '/', // Always use forward slash for consistency
     delimiter: ':',
@@ -39,7 +39,14 @@ vi.mock('path', async () => {
     posix: actual.posix,
     win32: actual.win32
   }
-})
+  // `default` for the modules that default-import it (legacyFile.ts), named for the rest.
+  return { ...mocked, default: mocked }
+}
+
+// `node:path` is a distinct module id to vitest, and resolveAndValidatePath reaches
+// path through it — mock both or Windows keeps its drive letters.
+vi.mock('path', posixPathModule)
+vi.mock('node:path', posixPathModule)
 
 // Use vi.hoisted to define mocks that are available during hoisting
 const {
@@ -327,7 +334,7 @@ describe('BackupManager direct v2 data compatibility', () => {
   let backupManager: BackupManager
   const metadata = {
     version: 7,
-    appName: 'Cherry Studio',
+    appName: 'Magic Box',
     appVersion: '2.0.0',
     timestamp: 1,
     platform: process.platform,
@@ -1160,10 +1167,10 @@ describe('BackupManager direct v2 data compatibility', () => {
   })
 
   it('rejects a v1 version 6 archive before staging any resources', async () => {
-    vi.mocked(fs.readJson).mockResolvedValue({ version: 6, appName: 'Cherry Studio' } as never)
+    vi.mocked(fs.readJson).mockResolvedValue({ version: 6, appName: 'Magic Box' } as never)
 
     await expect((backupManager as any).restoreDirect('/extract')).rejects.toThrow(
-      'Unsupported backup version 6. Cherry Studio v2 can only restore backup version 7.'
+      'Unsupported backup version 6. Magic Box v2 can only restore backup version 7.'
     )
 
     expect(fs.copy).not.toHaveBeenCalled()

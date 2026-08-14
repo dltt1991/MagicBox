@@ -124,28 +124,32 @@ const pathPasteResultSchema = z.discriminatedUnion('status', [
   })
 ])
 
-// TODO(file-ipc): Unify these schemas with the branded transport types in
-// `src/shared/types/file/ipc.ts`. `AbsoluteFilePath`, `Base64String`, and `UrlString` are
-// TS-only aliases while their runtime schemas live elsewhere, so a successful
-// Zod parse still cannot prove `CreateInternalEntryIpcParams` without an `as`
-// cast in the handler. Keeping the type and schema definitions separate risks
-// future drift; refactor them to share one source of truth before migrating the
-// remaining File IPC surface.
+// Fields common to every create-entry source. `cleanupPolicy` is required at
+// all creation surfaces (file-entry-cleanup.md §4.1) — written once here, not
+// per union branch. `.extend()` keeps the branches strict.
+const createInternalEntryBaseSchema = z.strictObject({ cleanupPolicy: CleanupPolicySchema })
+
+// TODO(file-ipc): Unify these schemas with the transport types in
+// `src/shared/types/file/ipc.ts`, which still hand-mirror this union. Every
+// branch's payload schema now carries its transport type (`AbsoluteFilePath`,
+// `UrlString`, `Base64String`), so the two can finally be collapsed onto one
+// source of truth; see the matching TODO there for what remains to check.
+//
+// Exported: the legacy single-create channel (`File_CreateInternalEntry`,
+// registered in FileManager) parses with this same schema — one source of truth.
 export const createInternalEntryInputSchema = z.discriminatedUnion('source', [
-  z.strictObject({ source: z.literal('path'), path: AbsoluteFilePathSchema, cleanupPolicy: CleanupPolicySchema }),
-  z.strictObject({ source: z.literal('url'), url: UrlStringSchema, cleanupPolicy: CleanupPolicySchema }),
-  z.strictObject({
+  createInternalEntryBaseSchema.extend({ source: z.literal('path'), path: AbsoluteFilePathSchema }),
+  createInternalEntryBaseSchema.extend({ source: z.literal('url'), url: UrlStringSchema }),
+  createInternalEntryBaseSchema.extend({
     source: z.literal('base64'),
     data: Base64StringSchema,
-    name: SafeNameSchema.optional(),
-    cleanupPolicy: CleanupPolicySchema
+    name: SafeNameSchema.optional()
   }),
-  z.strictObject({
+  createInternalEntryBaseSchema.extend({
     source: z.literal('bytes'),
     data: uint8ArraySchema,
     name: SafeNameSchema,
-    ext: SafeExtSchema.nullable(),
-    cleanupPolicy: CleanupPolicySchema
+    ext: SafeExtSchema.nullable()
   })
 ])
 

@@ -53,7 +53,6 @@ import WebDav from './WebDav'
 
 const logger = loggerService.withContext('BackupManager')
 const DIRECT_BACKUP_VERSION = 7
-const SUPPORTED_DIRECT_BACKUP_APP_NAMES = new Set(['Magic Box', 'Cherry Studio'])
 const QUIESCE_TIMEOUT_MS = 30_000
 const REMOTE_UPLOAD_IDLE_TIMEOUT_MS = 5 * 60_000
 const STALE_TEMP_ARTIFACT_AGE_MS = 24 * 60 * 60 * 1000
@@ -876,9 +875,7 @@ class BackupManager {
       onProgress({ stage: 'extracted', progress: 20, total: 100 })
 
       if (!(await fs.pathExists(path.join(extractionDir, 'metadata.json')))) {
-        throw new Error(
-          `Unsupported v1 backup. Cherry Studio v2 can only restore backup version ${DIRECT_BACKUP_VERSION}.`
-        )
+        throw new Error(`Unsupported v1 backup. Magic Box v2 can only restore backup version ${DIRECT_BACKUP_VERSION}.`)
       }
 
       await this.restoreDirect(extractionDir)
@@ -905,13 +902,13 @@ class BackupManager {
 
     const existingJournal = readRestoreJournal()
     if (existingJournal.kind === 'corrupt') {
-      throw new Error('A corrupt restore journal already exists. Restart Cherry Studio before trying again.')
+      throw new Error('A corrupt restore journal already exists. Restart Magic Box before trying again.')
     }
     if (
       existingJournal.kind === 'ok' &&
       (existingJournal.journal.state === 'staged' || existingJournal.journal.state === 'promoting')
     ) {
-      throw new Error('Another restore is already pending. Restart Cherry Studio before trying again.')
+      throw new Error('Another restore is already pending. Restart Magic Box before trying again.')
     }
 
     // No restore is pending: terminal journals have already released their
@@ -924,12 +921,6 @@ class BackupManager {
       const metadata = await this.readDirectBackupMetadata(extractionDir)
       const isSlimBackup = !metadata.resources.indexedDB && !metadata.resources.localStorage
 
-      // New backups use Magic Box; existing users may still restore older Cherry Studio v2 backups.
-      if (!SUPPORTED_DIRECT_BACKUP_APP_NAMES.has(metadata.appName)) {
-        throw new Error('This backup file is not from Magic Box and cannot be restored')
-      }
-
-      // Warn about cross-platform restore
       if (metadata.platform && metadata.platform !== process.platform) {
         logger.warn(
           `[restoreDirect] Cross-platform restore: backup from ${metadata.platform}, current is ${process.platform}`
@@ -1096,12 +1087,12 @@ class BackupManager {
   private async readDirectBackupMetadata(extractionDir: string): Promise<DirectBackupMetadata> {
     const raw = (await fs.readJson(path.join(extractionDir, 'metadata.json'))) as Record<string, unknown>
 
-    if (!raw || typeof raw !== 'object' || !SUPPORTED_DIRECT_BACKUP_APP_NAMES.has(String(raw.appName))) {
+    if (!raw || typeof raw !== 'object' || raw.appName !== 'Magic Box') {
       throw new Error('This backup file is not from Magic Box and cannot be restored')
     }
     if (raw.version !== DIRECT_BACKUP_VERSION) {
       throw new Error(
-        `Unsupported backup version ${String(raw.version)}. Cherry Studio v2 can only restore backup version ${DIRECT_BACKUP_VERSION}.`
+        `Unsupported backup version ${String(raw.version)}. Magic Box v2 can only restore backup version ${DIRECT_BACKUP_VERSION}.`
       )
     }
 

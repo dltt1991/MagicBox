@@ -65,17 +65,17 @@ type CacheEntry = {
  * How the agent's base system prompt should be established, decided from the
  * workspace alone and kept free of any SDK type:
  *
- * - `claude_code` — no workspace `system.md`; the runtime uses the SDK preset.
- * - `custom` — an explicit workspace `system.md` replaces only that base preset.
+ * - `native` — no workspace `system.md`; the runtime uses its native base prompt.
+ * - `custom` — an explicit workspace `system.md` replaces only that native base.
  *
- * Cherry-owned context remains separate and is appended in either case.
+ * Magic Box-owned context remains separate and is appended in either case.
  */
-export type AgentPromptBase = { kind: 'claude_code' } | { kind: 'custom'; content: string }
+export type AgentPromptBase = { kind: 'native' } | { kind: 'custom'; content: string }
 
 export interface AgentPromptParts {
   base: AgentPromptBase
   /**
-   * Cherry-owned bootstrap/persona/memory context. The runtime appends it after
+   * Magic Box-owned bootstrap/persona/memory context. The runtime appends it after
    * either base; it never contains or synthesizes the base prompt itself.
    */
   context: string
@@ -104,11 +104,11 @@ ${sections}`
 }
 
 /**
- * PromptBuilder assembles the Cherry-owned system prompt for CherryStudio agents.
+ * PromptBuilder assembles the Magic Box-owned system prompt for CherryStudio agents.
  *
  * {@link buildPromptParts} — returns {@link AgentPromptParts} describing
  * whether the base should be the SDK preset or an explicit `system.md`, plus
- * separate Cherry-owned context (bootstrap instructions when needed, and the
+ * separate Magic Box-owned context (bootstrap instructions when needed, and the
  * agent data files SOUL.md / USER.md / FACT.md). Tool-usage guidance (autonomy, memory, web) is not
  * injected here — it ships lazily via the default-enabled `cherry-tool-guide`
  * builtin skill.
@@ -131,11 +131,11 @@ export class PromptBuilder {
     const contextParts: string[] = []
 
     // File presence is the explicit choice: even an empty system.md replaces only
-    // the SDK base preset, while Cherry-owned context remains appended separately.
+    // the SDK base preset, while Magic Box-owned context remains appended separately.
     const systemPath = await resolveFile(workspacePath, 'system.md', true)
     const base: AgentPromptBase = systemPath
       ? { kind: 'custom', content: await this.readCachedFile(systemPath, path.dirname(systemPath), true) }
-      : { kind: 'claude_code' }
+      : { kind: 'native' }
 
     // Bootstrap detection: inject bootstrap instructions if not completed
     const needsBootstrap = await this.shouldRunBootstrap(agentDataPath, config, hasUserInstructions)

@@ -16,9 +16,7 @@ is translated back into the caller's dialect by the adapter system.
 > **Naming.** The code, IPC, preload, hook, and UI all use the
 > **`apiGateway`** name. The persisted **preference / shared-cache** namespace
 > is **`feature.api_gateway.*`** — same feature, two names. (`api_gateway` is the
-> current namespace token; it replaced the retired `csaas` alias.) The legacy v1
-> Redux layer (`apiServer.*`) is deprecated and reaches v2 only through the
-> migrators; do not add fallbacks for it.
+> current namespace token; it replaced the retired `csaas` alias.)
 
 ## Where the code lives
 
@@ -86,7 +84,7 @@ none of the public routes above.
 | Method & path | Dialect | In → out format |
 |---|---|---|
 | `POST /v1/messages` | Anthropic | `anthropic` → `anthropic` |
-| `POST /v1/messages/count_tokens` | Anthropic | local token estimate (`tokenx`), no stream |
+| `POST /v1/messages/count_tokens` | Anthropic | token estimate over the converted request; anthropic-dialect endpoints forward it to the provider's own `count_tokens` (via the app proxy/auth), other dialects stay local; no stream |
 | `POST /v1/chat/completions` | OpenAI Chat | `openai` → `openai` |
 | `POST /v1/responses` | OpenAI Responses | `openai-responses` → `openai-responses` |
 | `GET /v1/models` | OpenAI list | `{ object:'list', data:[…] }`, ids are `providerId:modelId` (offset/limit) |
@@ -133,7 +131,7 @@ All three streaming endpoints are thin route wrappers that call
 6. **Drive the stream.** With `streamId = "gateway-<uuid>"`, call
    `AiStreamManager.streamPrompt({ streamId, uniqueModelId, messages, listener,
    callOverrides, contextOwner: 'caller', idleTimeoutMs })`. Caller ownership
-   keeps externally managed history out of Cherry's context-build and in-loop
+   keeps externally managed history out of Magic Box's context-build and in-loop
    compaction middleware. This uses the **`promptStreamLifecycle`** — no status
    broadcast, no attach/reconnect, no persistence; the stream evicts immediately
    at terminal.
@@ -323,7 +321,7 @@ streaming `buildStreamErrorFrame`.
   status, and not attachable. It shares the exact same `AiStreamManager` engine
   as the renderer and IM channels.
 - **Caller-owned history.** Gateway clients own their context. The gateway sets
-  `contextOwner: 'caller'`, so Cherry does not truncate tool results, prune or
+  `contextOwner: 'caller'`, so Magic Box does not truncate tool results, prune or
   window messages, or run summary compaction. Protocol conversion and provider
   serialization still run normally.
 - **Assistant-agnostic.** No assistant/topic context. Sampling, client tools,

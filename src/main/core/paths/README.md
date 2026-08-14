@@ -78,7 +78,7 @@ database-only operation cannot create files. Two entry forms:
 Add a key to NO_ENSURE only if the target is **read-only in production**,
 **owned by a third party**, or has an explicit owner that performs validated
 materialization separately from path resolution, or is a **cleanup-only legacy
-target that Cherry must never recreate**.
+target that Magic Box must never recreate**.
 Type-checked via `satisfies` — typos and stale references fail at compile time.
 
 ## The `.` Separator Is Semantic, Not Physical

@@ -10,7 +10,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const mocks = vi.hoisted(() => ({
   fsRead: vi.fn(),
   fsReadText: vi.fn(),
-  getMetadata: vi.fn(),
   loggerError: vi.fn(),
   readWorkbook: vi.fn(),
   sheetToJson: vi.fn()
@@ -53,7 +52,6 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.fsRead.mockResolvedValue(new Uint8Array([80, 75, 3, 4]))
   mocks.fsReadText.mockResolvedValue('Name,Amount\nAlpha,12\n"Beta, B",0\n')
-  mocks.getMetadata.mockResolvedValue({ kind: 'file', size: 1024 })
   mocks.readWorkbook.mockReturnValue({
     SheetNames: ['Q1'],
     Sheets: { Q1: {} }
@@ -65,7 +63,7 @@ beforeEach(() => {
   ])
   Object.defineProperty(window, 'api', {
     configurable: true,
-    value: { fs: { read: mocks.fsRead, readText: mocks.fsReadText }, file: { getMetadata: mocks.getMetadata } }
+    value: { fs: { read: mocks.fsRead, readText: mocks.fsReadText } }
   })
 })
 
@@ -104,7 +102,6 @@ describe('SpreadsheetFilePreview', () => {
 
   it('does not reject oversized CSV files before reading text', async () => {
     const csvPath = '/tmp/workbook/large.csv' as AbsoluteFilePath
-    mocks.getMetadata.mockResolvedValueOnce({ kind: 'file', size: 25 * 1024 * 1024 + 1 })
 
     render(
       <SpreadsheetFilePreview

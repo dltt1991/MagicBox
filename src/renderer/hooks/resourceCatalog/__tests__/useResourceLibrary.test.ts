@@ -170,9 +170,8 @@ describe('useResourceLibrary', () => {
     mocks.useAgentList.mockReturnValue(
       listResult([
         {
-          id: 'agent-1',
+          ...agentListItem,
           name: 'Magic Assistant',
-          description: '',
           configuration: { builtin_role: 'assistant' },
           model: null
         }
@@ -189,9 +188,8 @@ describe('useResourceLibrary', () => {
     mocks.useAgentList.mockReturnValue(
       listResult([
         {
-          id: 'agent-1',
+          ...agentListItem,
           name: 'Magic Assistant',
-          description: '',
           configuration: { builtin_role: 'assistant' },
           model: null
         }

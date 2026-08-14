@@ -277,6 +277,7 @@ export const CODE_CLI_IDS = Object.values(CodeCli) as unknown as readonly [
   'openai-codex',
   'opencode',
   'openclaw',
+  'deepseek-harness',
   'gemini-cli',
   'qwen-code',
   'kimi-code',
@@ -340,6 +341,7 @@ export type FileProcessorFeature = (typeof FILE_PROCESSOR_FEATURES)[number]
 export const FILE_PROCESSOR_IDS = [
   'tesseract',
   'system',
+  'local-document',
   'paddleocr',
   'local-paddleocr',
   'ovocr',

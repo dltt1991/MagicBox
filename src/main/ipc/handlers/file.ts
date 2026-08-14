@@ -303,9 +303,7 @@ export const fileHandlers: IpcHandlersFor<typeof fileRequestSchemas> = {
   'file.path_trash': async ({ path }) => {
     await shell.trashItem(path)
   },
-  'file.path_paste': async (input) => {
-    return pastePath(input)
-  },
+  'file.path_paste': async (input) => pastePath(input),
   'file.tree.create': async ({ rootPath, options }, { senderId }) => {
     try {
       return await application.get('DirectoryTreeManager').create(requireSenderWebContents(senderId), rootPath, options)

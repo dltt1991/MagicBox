@@ -4,13 +4,21 @@
  * top-level `finish` part; per-step `usage` chunks survive, modulo the
  * Vercel gateway shape bug handled by `gatewayUsageNormalizeFeature`.
  *
- * Projection (AI SDK `LanguageModelUsage` → Magic Box `MessageStats`):
- *   inputTokens                         → promptTokens
- *   outputTokens                        → completionTokens
- *   outputTokenDetails.reasoningTokens  → thoughtsTokens
- *   inputTokenDetails.noCacheTokens      → noCacheTokens
- *   inputTokenDetails.cacheReadTokens    → cacheReadTokens
- *   inputTokenDetails.cacheWriteTokens   → cacheWriteTokens
+ * Projection (AI SDK v6 `LanguageModelUsage` → Magic Box `MessageStats`): names
+ * line up 1:1, so the snapshot is a near-copy:
+ *   inputTokens / outputTokens / totalTokens               → same
+ *   inputTokenDetails{noCache,cacheRead,cacheWrite}Tokens   → same
+ *   outputTokenDetails{text,reasoning}Tokens                → same
+ *
+ * This metadata is primarily a stream/UI view. Persistent usage and cost are
+ * materialized from per-invocation `ai_usage_record` rows; message persistence
+ * keeps only the message-owned `contextTokens` compaction anchor.
+ *
+ * A FULL cumulative snapshot is emitted every step: the AI SDK deep-merges
+ * `message-metadata` into the accumulating message (`updateMessageMetadata`
+ * recurses into plain objects), so a nested key can never be cleared — only
+ * overwritten. Emitting the whole snapshot keeps every bucket authoritative
+ * each step (see the invariant on `CherryUIMessageMetadata`).
  */
 
 import type { MessageStats } from '@shared/data/types/message'

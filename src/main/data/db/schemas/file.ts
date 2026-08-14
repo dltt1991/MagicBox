@@ -112,7 +112,7 @@ export const fileEntryTable = sqliteTable(
     // External removal is always immediate via permanentDelete (DB-only; the
     // physical file is left untouched, path-level @main/utils/file/fs.remove is a separate call).
     check('fe_external_no_delete', sql`${t.origin} != 'external' OR ${t.deletedAt} IS NULL`),
-    // Cherry does not own external content, so its hash cannot be kept current.
+    // Magic Box does not own external content, so its hash cannot be kept current.
     check('fe_contenthash_external_null', sql`${t.origin} != 'external' OR ${t.contentHash} IS NULL`),
     // Size semantics are origin-dependent: internal rows carry an authoritative
     // byte count (non-null, ≥ 0); external rows must leave size NULL and read

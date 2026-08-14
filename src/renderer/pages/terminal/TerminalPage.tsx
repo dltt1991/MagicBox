@@ -590,22 +590,24 @@ export default function TerminalPage() {
 
   const activateTerminalPath = useCallback(
     async (path: string) => {
+      setSelectedWorkspacePath(path)
+
       try {
-        const info = await ipcApi.request('file.path_stat', { path: toAbsolutePath(path) })
-        if (info.kind === 'directory') {
-          if (!workspaceRoot || !isPathInsideRoot(path, workspaceRoot)) {
-            setWorkspaceRootState(path)
-            setSelectedWorkspacePath(null)
-          } else {
-            setSelectedWorkspacePath(path)
-          }
-          return
+        await window.api.file.listDirectoryEntries(AbsoluteFilePathSchema.parse(path), {
+          includeHidden: true,
+          maxDepth: 1,
+          maxEntries: 1
+        })
+
+        if (!workspaceRoot || !isPathInsideRoot(path, workspaceRoot)) {
+          setWorkspaceRootState(path)
+          setSelectedWorkspacePath(null)
         }
+        return
       } catch {
         // Let FilePreview render its invalid-path state when a parsed terminal path no longer exists.
       }
 
-      setSelectedWorkspacePath(path)
       setActiveFilePath(path)
       setPreviewOpen(true)
     },

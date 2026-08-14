@@ -6,26 +6,26 @@ version: 1.0.0
 
 ## Magic Box workflow (READ FIRST — overrides packaging / install steps below)
 
-You are running inside Magic Box. Skills live in a managed global registry,
-so you do **not** write files to `.claude/skills/` or to
-`~/Library/Application Support/.../Skills/` directly, and you should **ignore**
-any `package_skill.py` / `.skill` packaging steps mentioned later in this file
-(they apply to Claude Code / Claude.ai, not here).
+You are running inside Magic Box. Skills live in a managed registry that Magic Box
+keeps in sync with the filesystem automatically — there is **no** install or register
+tool to call, and you should **ignore** any `package_skill.py` / `.skill` packaging
+steps mentioned later in this file (they apply to Claude Code / Claude.ai, not here).
 
-**To create a new skill, write it straight into Cherry's managed skills directory:**
+**To create a new skill, write it straight into Magic Box's managed skills directory:**
 
 1. Resolve the directory once by running `echo "$CHERRY_STUDIO_SKILLS_DIR"` in Bash.
-   That folder is Cherry's managed skill library.
+   That folder is Magic Box's managed skill library.
 2. Create `$CHERRY_STUDIO_SKILLS_DIR/<skill-folder-name>/` and write `SKILL.md` plus any
    supporting files (`scripts/`, `references/`, `assets/`) into it with your normal file
    tools.
-3. That's it. Cherry's skill sync detects the new directory, registers it in the catalog,
+3. That's it. Magic Box's skill sync detects the new directory, registers it in the catalog,
    and lists it in the app — no register step. You can re-edit the files in place at any
    time and the changes are picked up on the next sync.
 
 Use a lowercase, hyphenated `<skill-folder-name>` (e.g. `my-cool-skill`). The `name:`
-field inside your `SKILL.md` frontmatter is the display name and may differ from the
-folder name (e.g. `name: My Cool Skill` with folder `my-cool-skill`).
+field inside your `SKILL.md` frontmatter must match the folder name and use only
+lowercase letters, numbers, and hyphens (e.g. `name: my-cool-skill` with folder
+`my-cool-skill`), per the Agent Skills spec — it is not a free-form display name.
 
 Eval / test workspaces (`<skill-name>-workspace/`, `iteration-*/`, etc.) from the
 evaluation loop described below must be created **outside** that skills directory —

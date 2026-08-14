@@ -276,7 +276,7 @@ Renames observed by the watcher alone surface as `removed` + `added` (chokidar's
 
 ### 5.4 External-Rename Identity Loss
 
-A rename that originates **outside** Cherry — Finder, `mv`, an external editor — surfaces only through chokidar as `unlink(oldPath)` + `add(newPath)`. The builder applies these as `removed` + `added` mutations, so the `TreeNode` for the renamed file is destroyed and a new one is created. Identity is lost: React keys re-key, downstream `Map<path, TreeNode>` lookups invalidate, editor cursors / `useFileContent` SWR caches / `noteTable` overlays observe "the old file disappeared, an unrelated new file appeared".
+A rename that originates **outside** Magic Box — Finder, `mv`, an external editor — surfaces only through chokidar as `unlink(oldPath)` + `add(newPath)`. The builder applies these as `removed` + `added` mutations, so the `TreeNode` for the renamed file is destroyed and a new one is created. Identity is lost: React keys re-key, downstream `Map<path, TreeNode>` lookups invalidate, editor cursors / `useFileContent` SWR caches / `noteTable` overlays observe "the old file disappeared, an unrelated new file appeared".
 
 We considered pairing chokidar's `unlink` + `add` into a synthetic `renamed` event via heuristics (basename equality + timestamp proximity), the way VS Code / Atom do. We chose not to:
 
@@ -284,7 +284,7 @@ We considered pairing chokidar's `unlink` + `add` into a synthetic `renamed` eve
 - **Filename + timestamp pairing has a measurable false-positive rate** on bursty FS operations (`git checkout` switching branches, editor batch-saves, build pipelines rewriting bundles in place). A **mis-paired identity** — claiming "file A renamed to file B" when really A was deleted and B was created independently — is strictly worse than identity loss, because downstream caches now follow the wrong file silently.
 - **The heuristic adds API surface** every caller would have to reason about (pairing window, opt-out, false-positive handling).
 
-Within-Cherry renames go through `file.tree.rename` (§4.4) and *do* preserve identity, because the caller knows it's a rename and the chokidar `unlink` + `add` are suppressed by the dedup window. The external-rename case sits outside that contract on purpose — Cherry can't claim "rename" on behalf of an event source that didn't tell us it was a rename.
+Within-Magic Box renames go through `file.tree.rename` (§4.4) and *do* preserve identity, because the caller knows it's a rename and the chokidar `unlink` + `add` are suppressed by the dedup window. The external-rename case sits outside that contract on purpose — Magic Box can't claim "rename" on behalf of an event source that didn't tell us it was a rename.
 
 Reconsider if external editor integration with the Notes workspace becomes a real pain point — most likely path is an opt-in builder option (e.g. `pairExternalRenames: true`) that enables heuristic pairing with documented false-positive risk, pushing the trade-off to the caller rather than forcing it on every consumer.
 
