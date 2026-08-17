@@ -1,145 +1,403 @@
-// @vitest-environment jsdom
-import '@testing-library/jest-dom/vitest'
-
 import type { AbsoluteFilePath } from '@shared/types/file'
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type React from 'react'
 import type { PropsWithChildren } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const mocks = vi.hoisted(() => ({
-  fsRead: vi.fn(),
-  fsReadText: vi.fn(),
-  loggerError: vi.fn(),
-  readWorkbook: vi.fn(),
-  sheetToJson: vi.fn()
-}))
+import { createMockWorkbookModel } from '../mockModel'
+import type { ChartModel } from '../renderModel'
+import SpreadsheetFilePreview from '../SpreadsheetFilePreview'
+import type { XlsxWorkbookState } from '../useXlsxWorkbook'
+import type { XlsxGridProps } from '../XlsxGrid'
 
-vi.mock('@e965/xlsx', () => ({
-  read: mocks.readWorkbook,
-  utils: {
-    sheet_to_json: mocks.sheetToJson
+const mocks = vi.hoisted(() => ({
+  workbookState: { status: 'idle' } as unknown,
+  useXlsxWorkbookCalls: [] as Array<{ filePath: string; refreshKey: number; sourceSize?: number }>,
+  translationCalls: [] as Array<{ key: string; options?: Record<string, unknown> }>,
+  gridProps: [] as unknown[],
+  chartRendererRender: vi.fn(() => () => {}),
+  chartRendererModuleLoadCount: 0,
+  chartRendererModuleShouldReject: false,
+  createObjectURL: vi.fn(),
+  revokeObjectURL: vi.fn(),
+  fsReadText: vi.fn(),
+  logger: {
+    error: vi.fn()
   }
 }))
+
+vi.mock('../useXlsxWorkbook', () => ({
+  XLSX_PREVIEW_MAX_SIZE_BYTES: 20 * 1024 * 1024,
+  useXlsxWorkbook: (filePath: string, refreshKey: number, sourceSize?: number) => {
+    mocks.useXlsxWorkbookCalls.push({ filePath, refreshKey, sourceSize })
+    return mocks.workbookState
+  }
+}))
+
+vi.mock('../XlsxGrid', () => ({
+  default: (props: {
+    sheet: { name: string; cells: Record<string, unknown> }
+    zoom: number
+    onSelectCell?: (info: unknown) => void
+    renderChart?: (chart: unknown, container: HTMLElement) => () => void
+  }) => {
+    mocks.gridProps.push(props)
+    const selectCell = (key: string) =>
+      props.onSelectCell?.({
+        address: key,
+        cell: props.sheet.cells[key === 'B6' ? '6:2' : key === 'B9' ? '9:2' : '3:1'] ?? null
+      })
+    return (
+      <div
+        data-testid="xlsx-grid"
+        data-sheet-name={props.sheet.name}
+        data-zoom={props.zoom}
+        data-has-render-chart={String(Boolean(props.renderChart))}>
+        <button type="button" data-testid="grid-select-b6" onClick={() => selectCell('B6')}>
+          select B6
+        </button>
+        <button type="button" data-testid="grid-select-b9" onClick={() => selectCell('B9')}>
+          select B9
+        </button>
+        <button type="button" data-testid="grid-select-a3" onClick={() => selectCell('A3')}>
+          select A3
+        </button>
+      </div>
+    )
+  }
+}))
+
+vi.mock('../charts/EchartsChartRenderer', () => {
+  mocks.chartRendererModuleLoadCount += 1
+  if (mocks.chartRendererModuleShouldReject) {
+    throw new Error('chart renderer chunk failed')
+  }
+  return {
+    echartsChartRenderer: { render: mocks.chartRendererRender }
+  }
+})
 
 vi.mock('@logger', () => ({
-  loggerService: {
-    withContext: () => ({ error: mocks.loggerError, warn: vi.fn(), info: vi.fn(), debug: vi.fn() })
-  }
+  loggerService: { withContext: () => mocks.logger }
 }))
 
-vi.mock('@cherrystudio/ui', () => ({
-  EmptyState: ({ title, description }: { title?: string; description?: string }) => (
-    <div data-testid="empty-state">
-      <span>{title}</span>
-      <span>{description}</span>
-    </div>
-  ),
-  Scrollbar: ({ children, ...props }: PropsWithChildren<React.ComponentPropsWithoutRef<'div'>>) => (
-    <div {...props}>{children}</div>
-  )
+vi.mock('@cherrystudio/ui', async () => {
+  const React = await import('react')
+  const TabsContext = React.createContext<{ value?: string; onValueChange?: (v: string) => void }>({})
+  return {
+    Button: ({ children, ...props }: PropsWithChildren<React.ComponentPropsWithoutRef<'button'>>) => (
+      <button type="button" {...props}>
+        {children}
+      </button>
+    ),
+    EmptyState: ({ title, description }: { title: string; description?: string }) => (
+      <div data-testid="empty-state">
+        <span>{title}</span>
+        <span>{description}</span>
+      </div>
+    ),
+    Scrollbar: ({ children, ...props }: PropsWithChildren<React.ComponentPropsWithoutRef<'div'>>) => (
+      <div {...props}>{children}</div>
+    ),
+    Tooltip: ({ children }: PropsWithChildren<{ content?: string; delay?: number }>) => <>{children}</>,
+    Tabs: ({
+      value,
+      onValueChange,
+      children
+    }: PropsWithChildren<{
+      value?: string
+      onValueChange?: (v: string) => void
+      variant?: string
+      className?: string
+    }>) => <TabsContext value={{ value, onValueChange }}>{children}</TabsContext>,
+    TabsList: ({ children, ...props }: PropsWithChildren<React.ComponentPropsWithoutRef<'div'>>) => (
+      <div role="tablist" {...props}>
+        {children}
+      </div>
+    ),
+    TabsTrigger: ({
+      value,
+      children,
+      ...props
+    }: PropsWithChildren<{ value: string } & React.ComponentPropsWithoutRef<'button'>>) => {
+      const ctx = React.use(TabsContext)
+      return (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={ctx.value === value}
+          onClick={() => ctx.onValueChange?.(value)}
+          {...props}>
+          {children}
+        </button>
+      )
+    }
+  }
+})
+
+vi.mock('@cherrystudio/ui/lib/utils', () => ({
+  cn: (...args: unknown[]) => args.filter(Boolean).join(' ')
 }))
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key })
+  useTranslation: () => ({
+    t: (key: string, options?: Record<string, unknown>) => {
+      mocks.translationCalls.push({ key, options })
+      return key
+    }
+  })
 }))
 
-import SpreadsheetFilePreview from '../SpreadsheetFilePreview'
+const setWorkbookState = (state: XlsxWorkbookState) => {
+  mocks.workbookState = state
+}
 
-const filePath = '/tmp/workbook/sales.xlsx' as AbsoluteFilePath
+const lastGridProps = () => {
+  const props = mocks.gridProps.at(-1)
+  if (!props) throw new Error('Expected XlsxGrid to have rendered')
+  return props as XlsxGridProps
+}
 
-beforeEach(() => {
-  vi.clearAllMocks()
-  mocks.fsRead.mockResolvedValue(new Uint8Array([80, 75, 3, 4]))
-  mocks.fsReadText.mockResolvedValue('Name,Amount\nAlpha,12\n"Beta, B",0\n')
-  mocks.readWorkbook.mockReturnValue({
-    SheetNames: ['Q1'],
-    Sheets: { Q1: {} }
-  })
-  mocks.sheetToJson.mockReturnValue([
-    ['Name', 'Amount'],
-    ['Alpha', 12],
-    ['Beta', 0]
-  ])
-  Object.defineProperty(window, 'api', {
-    configurable: true,
-    value: { fs: { read: mocks.fsRead, readText: mocks.fsReadText } }
-  })
-})
+/** Remove charts from the mock model so tests unrelated to chart lazy loading do not trigger act warnings. */
+const modelWithoutCharts = () => {
+  const model = createMockWorkbookModel()
+  for (const sheet of model.sheets) sheet.charts = []
+  return model
+}
 
-afterEach(cleanup)
+const renderPanel = (size = 1024, filePath = '/tmp/workspace/book.xlsx' as AbsoluteFilePath, fileName = 'book.xlsx') =>
+  render(<SpreadsheetFilePreview filePath={filePath} fileName={fileName} metadata={{ size }} refreshKey={0} />)
 
 describe('SpreadsheetFilePreview', () => {
-  it('loads spreadsheet bytes and renders the first sheet as a read-only table', async () => {
-    render(
-      <SpreadsheetFilePreview filePath={filePath} fileName="sales.xlsx" metadata={{ size: 1024 }} refreshKey={0} />
-    )
-
-    expect(screen.getByRole('status')).toHaveTextContent('file_preview.loading')
-    expect(await screen.findByRole('table', { name: 'Q1' })).toBeInTheDocument()
-
-    expect(mocks.fsRead).toHaveBeenCalledWith(filePath)
-    expect(mocks.readWorkbook).toHaveBeenCalledWith(expect.any(Uint8Array), { type: 'array' })
-    expect(mocks.sheetToJson).toHaveBeenCalledWith({}, { blankrows: false, defval: '', header: 1 })
-    expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument()
-    expect(screen.getByRole('columnheader', { name: 'Amount' })).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: 'Alpha' })).toBeInTheDocument()
-    expect(screen.getByRole('cell', { name: '12' })).toBeInTheDocument()
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mocks.useXlsxWorkbookCalls.length = 0
+    mocks.translationCalls.length = 0
+    mocks.gridProps.length = 0
+    mocks.chartRendererRender.mockImplementation(() => () => {})
+    mocks.chartRendererModuleShouldReject = false
+    mocks.createObjectURL.mockReturnValue('blob:xlsx-image')
+    mocks.fsReadText.mockResolvedValue('Name,Amount\nAlpha,12\n"Beta, B",0\n')
+    setWorkbookState({ status: 'loading' })
+    Object.defineProperty(URL, 'createObjectURL', { configurable: true, value: mocks.createObjectURL })
+    Object.defineProperty(URL, 'revokeObjectURL', { configurable: true, value: mocks.revokeObjectURL })
+    Object.defineProperty(window, 'api', {
+      configurable: true,
+      value: { fs: { readText: mocks.fsReadText } }
+    })
   })
 
-  it('renders CSV files through the same spreadsheet table path', async () => {
-    const csvPath = '/tmp/workbook/data.csv' as AbsoluteFilePath
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
 
-    render(<SpreadsheetFilePreview filePath={csvPath} fileName="data.csv" metadata={{ size: 1024 }} refreshKey={0} />)
+  it('renders the loading state while parsing', () => {
+    setWorkbookState({ status: 'loading' })
 
-    await screen.findByRole('table', { name: 'data.csv' })
+    renderPanel()
 
-    expect(mocks.fsReadText).toHaveBeenCalledWith(csvPath)
-    expect(mocks.fsRead).not.toHaveBeenCalled()
-    expect(mocks.readWorkbook).not.toHaveBeenCalled()
+    expect(screen.getByRole('status')).toHaveTextContent('file_preview.loading')
+    expect(screen.queryByTestId('xlsx-grid')).not.toBeInTheDocument()
+  })
+
+  it('renders the error state with a translated description, not the raw technical message', () => {
+    setWorkbookState({ status: 'error', message: 'not an xlsx' })
+
+    renderPanel()
+
+    expect(screen.getByTestId('empty-state')).toHaveTextContent('file_preview.load_error.title')
+    // The raw worker message is logged, not shown; the UI uses a translated, generic description.
+    expect(screen.getByTestId('empty-state')).toHaveTextContent('xlsx_preview.error.description')
+    expect(screen.getByTestId('empty-state')).not.toHaveTextContent('not an xlsx')
+  })
+
+  it('renders the oversize state with the size-limit message', () => {
+    setWorkbookState({ status: 'oversize', sizeBytes: 25 * 1024 * 1024 })
+
+    renderPanel()
+
+    expect(screen.getByTestId('empty-state')).toHaveTextContent('xlsx_preview.too_large.title')
+    expect(screen.getByTestId('empty-state')).toHaveTextContent('xlsx_preview.too_large.description')
+    expect(mocks.translationCalls).toContainEqual({
+      key: 'xlsx_preview.too_large.description',
+      options: { size: '25.0 MB', limit: '20.0 MB' }
+    })
+  })
+
+  it('forwards the preflighted metadata size to the workbook hook', () => {
+    setWorkbookState({ status: 'loading' })
+
+    renderPanel(4096)
+
+    expect(mocks.useXlsxWorkbookCalls.at(-1)).toEqual({
+      filePath: '/tmp/workspace/book.xlsx',
+      refreshKey: 0,
+      sourceSize: 4096
+    })
+  })
+
+  it('renders delimited text files without invoking the xlsx workbook hook', async () => {
+    renderPanel(1024, '/tmp/workspace/data.csv' as AbsoluteFilePath, 'data.csv')
+
+    expect(await screen.findByRole('table', { name: 'data.csv' })).toBeInTheDocument()
+    expect(mocks.fsReadText).toHaveBeenCalledWith('/tmp/workspace/data.csv')
+    expect(mocks.useXlsxWorkbookCalls).toEqual([])
     expect(screen.getByRole('cell', { name: 'Beta, B' })).toBeInTheDocument()
   })
 
-  it('does not reject oversized CSV files before reading text', async () => {
-    const csvPath = '/tmp/workbook/large.csv' as AbsoluteFilePath
+  it('renders the grid and visible sheet tabs when ready, with no status text until a cell is selected', () => {
+    setWorkbookState({ status: 'ready', model: modelWithoutCharts() })
 
-    render(
-      <SpreadsheetFilePreview
-        filePath={csvPath}
-        fileName="large.csv"
-        metadata={{ size: 25 * 1024 * 1024 + 1 }}
-        refreshKey={0}
-      />
-    )
+    renderPanel()
 
-    expect(await screen.findByRole('table', { name: 'large.csv' })).toBeInTheDocument()
-    expect(mocks.fsReadText).toHaveBeenCalledWith(csvPath)
-    expect(mocks.fsRead).not.toHaveBeenCalled()
-    expect(mocks.readWorkbook).not.toHaveBeenCalled()
+    expect(screen.getByTestId('spreadsheet-file-preview')).toBeInTheDocument()
+    expect(screen.getByTestId('xlsx-grid')).toHaveAttribute('data-sheet-name', 'Sales')
+    expect(screen.getByRole('tab', { name: 'Sales' })).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByRole('tab', { name: 'Notes' })).toHaveAttribute('aria-selected', 'false')
+    // Hidden sheets get no tab.
+    expect(screen.queryByRole('tab', { name: 'HiddenSheet' })).not.toBeInTheDocument()
+    // No selection → no status text (the sheet tabs already show the active sheet).
+    expect(screen.queryByTestId('xlsx-preview-status-bar')).not.toBeInTheDocument()
   })
 
-  it('shows an empty state when the workbook has no cells', async () => {
-    mocks.sheetToJson.mockReturnValueOnce([])
+  it('falls back to the first sheet when every sheet is hidden', () => {
+    const model = modelWithoutCharts()
+    for (const sheet of model.sheets) sheet.hidden = true
+    setWorkbookState({ status: 'ready', model })
 
-    render(
-      <SpreadsheetFilePreview filePath={filePath} fileName="sales.xlsx" metadata={{ size: 1024 }} refreshKey={0} />
-    )
+    renderPanel()
+
+    expect(screen.getByTestId('xlsx-grid')).toHaveAttribute('data-sheet-name', 'Sales')
+    expect(screen.getByRole('tab', { name: 'Sales' })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: 'Notes' })).not.toBeInTheDocument()
+  })
+
+  it('switches sheets via the tabs and clears the selection', () => {
+    setWorkbookState({ status: 'ready', model: modelWithoutCharts() })
+
+    renderPanel()
+
+    fireEvent.click(screen.getByTestId('grid-select-b6'))
+    expect(screen.getByTestId('xlsx-preview-status-bar')).toHaveTextContent('B6')
+
+    fireEvent.click(screen.getByRole('tab', { name: 'Notes' }))
+
+    expect(screen.getByTestId('xlsx-grid')).toHaveAttribute('data-sheet-name', 'Notes')
+    expect(screen.getByRole('tab', { name: 'Notes' })).toHaveAttribute('aria-selected', 'true')
+    // Selection was cleared by the sheet switch, so the status text disappears.
+    expect(screen.queryByTestId('xlsx-preview-status-bar')).not.toBeInTheDocument()
+  })
+
+  it('shows the formula source for a selected formula cell', () => {
+    setWorkbookState({ status: 'ready', model: modelWithoutCharts() })
+
+    renderPanel()
+
+    fireEvent.click(screen.getByTestId('grid-select-b6'))
+
+    const statusBar = screen.getByTestId('xlsx-preview-status-bar')
+    expect(statusBar).toHaveTextContent('B6 = SUM(B3:B5)')
+    expect(statusBar).toHaveClass('selectable', 'select-text', 'cursor-text')
+    expect(screen.queryByText('xlsx_preview.formula_not_evaluated')).not.toBeInTheDocument()
+  })
+
+  it('adds the unevaluated hint for a selected unevaluated formula cell', () => {
+    setWorkbookState({ status: 'ready', model: modelWithoutCharts() })
+
+    renderPanel()
+
+    fireEvent.click(screen.getByTestId('grid-select-b9'))
+
+    expect(screen.getByTestId('xlsx-preview-status-bar')).toHaveTextContent('B9 = FOOBAR(B3:B5)')
+    expect(screen.getByText('xlsx_preview.formula_not_evaluated')).toBeInTheDocument()
+  })
+
+  it('shows address plus cell text for a selected plain cell', () => {
+    setWorkbookState({ status: 'ready', model: modelWithoutCharts() })
+
+    renderPanel()
+
+    fireEvent.click(screen.getByTestId('grid-select-a3'))
+
+    expect(screen.getByTestId('xlsx-preview-status-bar')).toHaveTextContent('A3 Q1')
+  })
+
+  it('steps through the zoom levels without a reset control', () => {
+    setWorkbookState({ status: 'ready', model: modelWithoutCharts() })
+
+    renderPanel()
+
+    expect(screen.getByTestId('xlsx-preview-zoom-value')).toHaveTextContent('100%')
+
+    fireEvent.click(screen.getByRole('button', { name: 'preview.zoom_in' }))
+    expect(screen.getByTestId('xlsx-preview-zoom-value')).toHaveTextContent('125%')
+    expect(screen.getByTestId('xlsx-grid')).toHaveAttribute('data-zoom', '1.25')
+
+    fireEvent.click(screen.getByRole('button', { name: 'preview.zoom_out' }))
+    fireEvent.click(screen.getByRole('button', { name: 'preview.zoom_out' }))
+    expect(screen.getByTestId('xlsx-preview-zoom-value')).toHaveTextContent('75%')
+    expect(screen.getByTestId('xlsx-grid')).toHaveAttribute('data-zoom', '0.75')
+
+    // Zoom reset lives nowhere anymore — refreshing the preview restores the default.
+    expect(screen.queryByRole('button', { name: 'preview.reset' })).not.toBeInTheDocument()
+  })
+
+  it('creates image object URLs when ready and revokes them on unmount', () => {
+    setWorkbookState({ status: 'ready', model: modelWithoutCharts() })
+
+    const { unmount } = renderPanel()
+
+    expect(mocks.createObjectURL).toHaveBeenCalledTimes(1)
+    expect(lastGridProps().imageUrls).toEqual({ 1: 'blob:xlsx-image' })
+    expect(mocks.revokeObjectURL).not.toHaveBeenCalled()
+
+    unmount()
+
+    expect(mocks.revokeObjectURL).toHaveBeenCalledWith('blob:xlsx-image')
+  })
+
+  it('logs and keeps chart rendering disabled when the chart renderer chunk fails', async () => {
+    mocks.chartRendererModuleShouldReject = true
+    setWorkbookState({ status: 'ready', model: createMockWorkbookModel() })
+
+    renderPanel()
 
     await waitFor(() =>
-      expect(screen.getByTestId('empty-state')).toHaveTextContent('file_preview.spreadsheet.empty.title')
+      expect(mocks.logger.error).toHaveBeenCalledWith('Failed to load xlsx chart renderer', expect.any(Error))
     )
+    expect(screen.getByTestId('xlsx-grid')).toHaveAttribute('data-has-render-chart', 'false')
   })
 
-  it('contains read failures inside the preview and logs the cause', async () => {
-    const error = new Error('bad workbook')
-    mocks.fsRead.mockRejectedValueOnce(error)
+  it('lazily loads the echarts renderer once a sheet has charts and wires renderChart into the grid', async () => {
+    setWorkbookState({ status: 'ready', model: createMockWorkbookModel() })
 
-    render(
-      <SpreadsheetFilePreview filePath={filePath} fileName="sales.xlsx" metadata={{ size: 1024 }} refreshKey={0} />
-    )
+    renderPanel()
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('file_preview.load_error.title')
-    expect(screen.getByRole('alert')).toHaveTextContent('file_preview.load_error.description')
-    expect(mocks.loggerError).toHaveBeenCalledWith(`Failed to load spreadsheet preview: ${filePath}`, error)
+    await waitFor(() => expect(screen.getByTestId('xlsx-grid')).toHaveAttribute('data-has-render-chart', 'true'))
+
+    const container = document.createElement('div')
+    const chart = { type: 'bar' } as ChartModel
+    lastGridProps().renderChart?.(chart, container)
+    expect(mocks.chartRendererRender).toHaveBeenCalledWith(chart, container)
+  })
+
+  it('does not wire renderChart for models without charts', () => {
+    setWorkbookState({ status: 'ready', model: modelWithoutCharts() })
+
+    renderPanel()
+
+    expect(screen.getByTestId('xlsx-grid')).toHaveAttribute('data-has-render-chart', 'false')
+  })
+
+  it('forwards filePath and refreshKey to useXlsxWorkbook', () => {
+    setWorkbookState({ status: 'loading' })
+
+    renderPanel()
+
+    expect(mocks.useXlsxWorkbookCalls.at(-1)).toEqual({
+      filePath: '/tmp/workspace/book.xlsx',
+      refreshKey: 0,
+      sourceSize: 1024
+    })
   })
 })
