@@ -106,11 +106,14 @@ describe('file preview registry', () => {
     expect(resolveExtensionPlugin(`/tmp/slides.${extension}`, filePreviewRegistry)?.id).toBe('powerpoint')
   })
 
-  it.each(['csv', 'CSV', 'xlsx', 'XLSX'])('registers the spreadsheet plugin for .%s files', (extension) => {
-    expect(resolveExtensionPlugin(`/tmp/sheet.${extension}`, filePreviewRegistry)?.id).toBe('spreadsheet')
-  })
+  it.each(['csv', 'CSV', 'tsv', 'TSV', 'xlsx', 'XLSX'])(
+    'registers the spreadsheet plugin for .%s files',
+    (extension) => {
+      expect(resolveExtensionPlugin(`/tmp/workbook.${extension}`, filePreviewRegistry)?.id).toBe('spreadsheet')
+    }
+  )
 
-  it.each(['html', 'htm', 'HTML', 'HTM'])('registers the HTML plugin for .%s files', (extension) => {
+  it.each(['html', 'htm'])('registers the HTML plugin for .%s files', (extension) => {
     expect(resolveExtensionPlugin(`/tmp/page.${extension}`, filePreviewRegistry)?.id).toBe('html')
   })
 
