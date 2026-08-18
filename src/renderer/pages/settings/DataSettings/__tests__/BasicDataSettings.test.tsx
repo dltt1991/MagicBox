@@ -117,7 +117,7 @@ describe('BasicDataSettings', () => {
     await renderSettings()
     fireEvent.click(screen.getByRole('button', { name: 'settings.data.clear_cache.button' }))
     await waitFor(() => expect(clearCacheShowMock).toHaveBeenCalledOnce())
-    vi.spyOn(localStorage, 'setItem').mockImplementationOnce(() => {
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
       throw new DOMException('quota exceeded', 'QuotaExceededError')
     })
     requestMock.mockResolvedValueOnce({
