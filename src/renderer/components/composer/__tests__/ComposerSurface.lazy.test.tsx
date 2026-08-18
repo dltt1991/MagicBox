@@ -1,5 +1,5 @@
 import { MockUsePreferenceUtils } from '@test-mocks/renderer/usePreference'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -113,6 +113,7 @@ describe('deferred ComposerSurface', () => {
   })
 
   afterEach(() => {
+    cleanup()
     vi.unstubAllGlobals()
   })
 
@@ -269,6 +270,18 @@ describe('deferred ComposerSurface', () => {
 
     await screen.findByTestId('composer-runtime')
     expect(mocks.runtimeIntent?.hadFocus).toBe(true)
+  })
+
+  it('loads the runtime for the compact structural variant', async () => {
+    render(<Harness compactWhenSingleLine />)
+
+    expect(await screen.findByTestId('composer-runtime')).toBeInTheDocument()
+  })
+
+  it('loads the runtime for the expanded structural variant', async () => {
+    render(<Harness isExpanded />)
+
+    expect(await screen.findByTestId('composer-runtime')).toBeInTheDocument()
   })
 
   it('follows the send-shortcut preference when the caller does not pass one', () => {

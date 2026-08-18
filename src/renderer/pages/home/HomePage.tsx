@@ -25,6 +25,7 @@ import { useCurrentTabId, useIsActiveTab, useTabSelfVisuals } from '@renderer/ho
 import { useAssistants } from '@renderer/hooks/useAssistant'
 import { toCreateAssistantDtoFromCatalogPreset } from '@renderer/hooks/useAssistantCatalogPresets'
 import { useClassicLayoutRightPaneOpen } from '@renderer/hooks/useClassicLayoutRightPaneOpen'
+import { useComposerFocusRequest } from '@renderer/hooks/useComposerFocusRequest'
 import { useConversationCenterSurface } from '@renderer/hooks/useConversationCenterSurface'
 import { useConversationShellPaneState } from '@renderer/hooks/useConversationShellPaneState'
 import { useModelById } from '@renderer/hooks/useModel'
@@ -230,6 +231,7 @@ const HomePage: FC = () => {
   const visibleTopic = isMessageOnlyView
     ? routeTopic
     : (activeTopic ?? (isActiveTopicLoading ? lastVisibleTopicRef.current : undefined) ?? undefined)
+  const requestComposerFocus = useComposerFocusRequest(visibleTopic?.id)
   const resourceConversationKey = useMemo(() => {
     if (visibleTopic?.id) return `topic:${visibleTopic.id}`
     return 'empty'
@@ -364,6 +366,14 @@ const HomePage: FC = () => {
     [closeSurface, setActiveTopic]
   )
 
+  const activateCreatedTopic = useCallback(
+    (topic: Topic) => {
+      setActiveTopicAndCloseResourceView(topic)
+      requestComposerFocus(topic.id)
+    },
+    [requestComposerFocus, setActiveTopicAndCloseResourceView]
+  )
+
   const resolveAssistantIdForSelection = useCallback(
     async (selection: AssistantConversationSelection) => {
       if (selection.type === 'assistant') return selection.assistantId
@@ -392,7 +402,7 @@ const HomePage: FC = () => {
         const result = await reuseOrCreateTopic(assistantId)
         const rendererTopic = mapApiTopicToRendererTopic(result.topic)
 
-        setActiveTopicAndCloseResourceView(rendererTopic)
+        activateCreatedTopic(rendererTopic)
         if (result.created) {
           void refreshTopics().catch((err) => {
             logger.warn('Failed to refresh topics after assistant picker topic create', err as Error)
@@ -405,7 +415,7 @@ const HomePage: FC = () => {
         isCreatingTopicRef.current = false
       }
     },
-    [refreshTopics, resolveAssistantIdForSelection, reuseOrCreateTopic, setActiveTopicAndCloseResourceView, t]
+    [activateCreatedTopic, refreshTopics, resolveAssistantIdForSelection, reuseOrCreateTopic, t]
   )
 
   const resolveEmptyTopic = useCallback(
@@ -438,7 +448,7 @@ const HomePage: FC = () => {
       isCreatingTopicRef.current = true
       try {
         const topic = await resolveEmptyTopic(payload, options)
-        setActiveTopicAndCloseResourceView(topic)
+        activateCreatedTopic(topic)
         return topic
       } catch (err) {
         logger.error('Failed to create empty topic', err as Error)
@@ -448,7 +458,7 @@ const HomePage: FC = () => {
         isCreatingTopicRef.current = false
       }
     },
-    [resolveEmptyTopic, setActiveTopicAndCloseResourceView, t]
+    [activateCreatedTopic, resolveEmptyTopic, t]
   )
 
   const createAndActivateFreshTopic = useCallback(
@@ -460,7 +470,7 @@ const HomePage: FC = () => {
         const topic = await createTopic({
           ...(selection.assistantId ? { assistantId: selection.assistantId } : {})
         })
-        setActiveTopicAndCloseResourceView(mapApiTopicToRendererTopic(topic))
+        activateCreatedTopic(mapApiTopicToRendererTopic(topic))
         void refreshTopics().catch((err) => {
           logger.warn('Failed to refresh topics after fresh topic create', err as Error)
         })
@@ -471,7 +481,7 @@ const HomePage: FC = () => {
         isCreatingTopicRef.current = false
       }
     },
-    [createTopic, refreshTopics, resolveNewTopicAssistantTarget, setActiveTopicAndCloseResourceView, t]
+    [activateCreatedTopic, createTopic, refreshTopics, resolveNewTopicAssistantTarget, t]
   )
 
   const handleCreateEmptyTopic = useCallback(
