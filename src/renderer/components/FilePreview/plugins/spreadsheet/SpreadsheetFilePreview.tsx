@@ -425,8 +425,6 @@ function XlsxSpreadsheetFilePreview({ filePath, fileName, metadata, refreshKey }
             onZoomIn={zoomIn}
           />
         </div>
-
-        <div aria-hidden className="hidden h-24 shrink-0 [[data-shell-maximized-overlay]_&]:block" />
       </div>
     )
   }
