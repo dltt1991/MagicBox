@@ -37,14 +37,29 @@ beforeEach(() => {
   // Translate the `{ target, content }` batch back to `/resolved~/…` paths so
   // the strip-semantics fixtures stay unchanged.
   mocks.request.mockReset()
-  mocks.request.mockImplementation(async (_route: string, input: { files: CliConfigWriteFile[] }) => {
-    for (const file of input.files) {
-      const resolvedPath = `/resolved${CLI_CONFIG_FILE_SPECS[file.target].path}`
-      if ('delete' in file) deletes.push(resolvedPath)
-      else writes[resolvedPath] = file.content
+  mocks.request.mockImplementation(
+    async (route: string, input: { targets?: CliConfigWriteFile['target'][]; files?: CliConfigWriteFile[] }) => {
+      if (route === 'code_cli.read_config') {
+        return {
+          files: (input.targets ?? []).map((target) => {
+            const resolvedPath = `/resolved${CLI_CONFIG_FILE_SPECS[target].path}`
+            return {
+              target,
+              path: resolvedPath,
+              content: resolvedPath in existing ? existing[resolvedPath] : null
+            }
+          })
+        }
+      }
+
+      for (const file of input.files ?? []) {
+        const resolvedPath = `/resolved${CLI_CONFIG_FILE_SPECS[file.target].path}`
+        if ('delete' in file) deletes.push(resolvedPath)
+        else writes[resolvedPath] = file.content
+      }
+      return { success: true }
     }
-    return { success: true }
-  })
+  )
 })
 
 describe('clearCliConfig', () => {
@@ -229,7 +244,7 @@ describe('clearCliConfig', () => {
   it('qwen: missing config is already clear and sends no IPC', async () => {
     await clearCliConfig({ cliTool: CodeCli.QWEN_CODE })
 
-    expect(mocks.request).not.toHaveBeenCalled()
+    expect(mocks.request).not.toHaveBeenCalledWith('code_cli.write_config', expect.anything())
   })
 
   it('qwen: strips managed settings when config exists', async () => {
@@ -262,7 +277,7 @@ describe('clearCliConfig', () => {
   it('kimi: missing config is already clear and sends no IPC', async () => {
     await clearCliConfig({ cliTool: CodeCli.KIMI_CODE })
 
-    expect(mocks.request).not.toHaveBeenCalled()
+    expect(mocks.request).not.toHaveBeenCalledWith('code_cli.write_config', expect.anything())
   })
 
   it('kimi: strips Magic Box-managed entries when config exists', async () => {
@@ -329,7 +344,6 @@ describe('clearCliConfig', () => {
     existing['/resolved~/.codex/auth.json'] = JSON.stringify({ OPENAI_API_KEY: 'sk', user: 'keep' })
     await clearCliConfig({ cliTool: CodeCli.OPENAI_CODEX })
 
-    expect(mocks.request).toHaveBeenCalledTimes(1)
     expect(mocks.request).toHaveBeenCalledWith('code_cli.write_config', {
       cliTool: CodeCli.OPENAI_CODEX,
       files: [
@@ -341,7 +355,21 @@ describe('clearCliConfig', () => {
 
   it('throws the main-process failure message when the rewrite is rejected', async () => {
     existing['/resolved~/.codex/config.toml'] = 'model_provider = "cherry-deepseek"'
-    mocks.request.mockResolvedValue({ success: false, message: 'disk full' })
+    mocks.request.mockImplementation(async (route: string, input: { targets?: CliConfigWriteFile['target'][] }) => {
+      if (route === 'code_cli.read_config') {
+        return {
+          files: (input.targets ?? []).map((target) => {
+            const resolvedPath = `/resolved${CLI_CONFIG_FILE_SPECS[target].path}`
+            return {
+              target,
+              path: resolvedPath,
+              content: resolvedPath in existing ? existing[resolvedPath] : null
+            }
+          })
+        }
+      }
+      return { success: false, message: 'disk full' }
+    })
 
     await expect(clearCliConfig({ cliTool: CodeCli.OPENAI_CODEX })).rejects.toThrow('disk full')
   })

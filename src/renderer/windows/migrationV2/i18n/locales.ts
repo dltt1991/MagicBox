@@ -4,6 +4,11 @@
  */
 
 export const zhCN = {
+  'migration.diagnostics.logs_not_included': '未能加入应用日志，当前诊断包仅包含系统信息。',
+  'migration.diagnostics.saved_local': '诊断包已保存到本地且未自动上传，请发送至问题反馈邮箱以协助排查。',
+  'migration.completed.agent_files_skipped_one': '已跳过 1 个路径重叠的 Agent 文件目标；旧版源数据已保留',
+  'migration.completed.agent_files_skipped_other': '已跳过 {{count}} 个路径重叠的 Agent 文件目标；旧版源数据已保留',
+  'migration.skip_dialog.failed': '跳过迁移失败，请重试。',
   common: { close: '关闭', error: '错误', loading: '加载中', success: '成功' },
   error: { unknown: '未知错误' },
   settings: {
@@ -190,6 +195,15 @@ export const zhCN = {
 }
 
 export const enUS = {
+  'migration.diagnostics.logs_not_included':
+    'Application logs could not be included. This diagnostic bundle contains only system information.',
+  'migration.diagnostics.saved_local':
+    'The diagnostic bundle was saved locally and was not uploaded automatically. Send it to the feedback address to help troubleshoot the issue.',
+  'migration.completed.agent_files_skipped_one':
+    'Skipped 1 overlapping Agent filesystem target; legacy source data was preserved',
+  'migration.completed.agent_files_skipped_other':
+    'Skipped {{count}} overlapping Agent filesystem targets; legacy source data was preserved',
+  'migration.skip_dialog.failed': 'Failed to skip migration. Please try again.',
   common: { close: 'Close', error: 'Error', loading: 'Loading', success: 'Success' },
   error: { unknown: 'Unknown error' },
   settings: {

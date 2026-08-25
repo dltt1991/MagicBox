@@ -1,10 +1,11 @@
 import { Button, type RenderRowArgs } from '@cherrystudio/ui'
 import { cn } from '@cherrystudio/ui/lib/utils'
 import { Icon } from '@iconify/react'
-import { CommandContextMenu, type CommandContextMenuExtraItem } from '@renderer/components/command'
+import { CommandContextMenu, type CommandContextMenuExtraItem, type MaybePromise } from '@renderer/components/command'
 import { getFileIconName } from '@renderer/utils/fileIconName'
 import { ChevronRight } from 'lucide-react'
 import type React from 'react'
+import { useState } from 'react'
 
 import type { FileTreeAnimationSlot, FileTreeNode, FileTreeRenameSlot } from './types'
 
@@ -14,7 +15,7 @@ interface FileTreeRowProps {
   renameSlot?: FileTreeRenameSlot
   animationSlot?: FileTreeAnimationSlot
   renderRowExtras?: (node: FileTreeNode) => React.ReactNode
-  getMenuItems?: (node: FileTreeNode) => readonly CommandContextMenuExtraItem[]
+  getMenuItems?: (node: FileTreeNode) => MaybePromise<readonly CommandContextMenuExtraItem[]>
   fileIcon?: (node: FileTreeNode) => React.ReactNode
   folderIcon?: (node: FileTreeNode, expanded: boolean) => React.ReactNode
 }
@@ -30,6 +31,7 @@ export function FileTreeRow(props: FileTreeRowProps) {
   const { node, depth, isExpanded, isSelected, isDragging, dragPosition, toggleExpanded, selectNode, dragHandleProps } =
     args
 
+  const [menuOpen, setMenuOpen] = useState(false)
   const isFolder = node.kind === 'folder'
   const isRenaming = renameSlot ? renameSlot.isRenaming(node) : false
   const effectiveDragHandleProps = isRenaming ? { ...dragHandleProps, draggable: false } : dragHandleProps
@@ -72,6 +74,12 @@ export function FileTreeRow(props: FileTreeRowProps) {
     if (isFolder) toggleExpanded()
   }
 
+  const handleRowKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return
+    event.preventDefault()
+    handleRowClick()
+  }
+
   const indent = { paddingLeft: `${depth * INDENT_STEP_PX + INDENT_BASE_PX}px` }
 
   const row = (
@@ -79,8 +87,14 @@ export function FileTreeRow(props: FileTreeRowProps) {
       {...effectiveDragHandleProps}
       data-node-id={node.id}
       data-kind={node.kind}
+      role="treeitem"
+      aria-label={node.name}
+      aria-selected={isSelected}
+      aria-expanded={isFolder ? isExpanded : undefined}
+      tabIndex={0}
       draggable={isRenaming ? false : onDragStart ? true : effectiveDragHandleProps.draggable}
       onClick={handleRowClick}
+      onKeyDown={handleRowKeyDown}
       onDragStart={(event) => {
         if (isRenaming) return
         effectiveDragHandleProps.onDragStart?.(event)
@@ -94,6 +108,7 @@ export function FileTreeRow(props: FileTreeRowProps) {
         isFolder
           ? 'text-foreground hover:bg-accent/50'
           : 'text-muted-foreground hover:bg-accent/40 hover:text-foreground',
+        menuOpen && 'bg-accent/50 text-foreground',
         isSelected && 'bg-accent/60 text-accent-foreground',
         isDragging && 'opacity-50',
         dragPosition === 'inside' && 'bg-primary/15 ring-1 ring-primary/40',
@@ -148,13 +163,15 @@ export function FileTreeRow(props: FileTreeRowProps) {
     </div>
   )
 
-  const menuItems = getMenuItems?.(node)
-  if (!menuItems || menuItems.length === 0) {
+  if (!getMenuItems) {
     return row
   }
 
   return (
-    <CommandContextMenu location="webcontents.context" extraItems={menuItems}>
+    <CommandContextMenu
+      location="webcontents.context"
+      getExtraItems={() => getMenuItems(node)}
+      onOpenChange={setMenuOpen}>
       {row}
     </CommandContextMenu>
   )

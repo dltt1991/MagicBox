@@ -79,7 +79,11 @@ const doInit = async (): Promise<void> => {
     .use(
       resourcesToBackend((language: string) => {
         const loader = localeLoaders[language as LanguageVarious]
-        return loader ? loader() : Promise.reject(new Error(`No locale pack for "${language}"`))
+        return loader
+          ? loader().then((module) =>
+              module && typeof module === 'object' && 'default' in module ? module.default : module
+            )
+          : Promise.reject(new Error(`No locale pack for "${language}"`))
       })
     )
     .use(initReactI18next)
