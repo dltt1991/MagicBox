@@ -60,6 +60,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
+function hasOpaqueReplaySignature(value: unknown): boolean {
+  if (!isRecord(value)) return false
+  return Object.keys(value).some((key) => key.toLowerCase().includes('signature'))
+}
+
 /**
  * Composer rebuilds text parts instead of patching them in place. A valid Magic Box composer
  * snapshot on a single text part can be rebuilt from the edited draft, and empty references carry
@@ -71,7 +76,13 @@ function hasUnroundtrippableTextMetadata(part: TextMessagePart, textPartCount: n
   if (providerMetadata === undefined) return false
   if (!isRecord(providerMetadata)) return true
   if (Object.keys(providerMetadata).length === 0) return false
-  if (Object.keys(providerMetadata).some((provider) => provider !== 'cherry')) return true
+  if (
+    Object.entries(providerMetadata).some(
+      ([provider, value]) => provider !== 'cherry' && hasOpaqueReplaySignature(value)
+    )
+  ) {
+    return true
+  }
 
   const cherry = providerMetadata.cherry
   if (!isRecord(cherry)) return cherry !== undefined
