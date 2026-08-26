@@ -19,7 +19,6 @@ export const TranscriptionBackendConfigSchema = z.discriminatedUnion('backend', 
     backend: z.literal('custom_endpoint'),
     endpointId: z.string().min(1).optional(),
     baseUrl: z.url(),
-    apiKey: z.string().min(1).optional(),
     model: z.string().min(1).optional(),
     requestFormat: z.enum(['openai_multipart', 'json_base64'])
   })

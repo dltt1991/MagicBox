@@ -7,7 +7,8 @@ import {
   type TranscriptionResult,
   TranscriptionSegmentSchema,
   TranscriptionSourceTypeSchema,
-  TranscriptionStatusSchema} from '../../types/transcription'
+  TranscriptionStatusSchema
+} from '../../types/transcription'
 import type { CursorPaginationParams, CursorPaginationResponse } from '../types'
 
 export const CreateTranscriptionRecordSchema = z.strictObject({
@@ -93,9 +94,6 @@ export type TranscriptionSchemas = {
     POST: {
       body: CreateTranscriptionRecordDto
       response: TranscriptionRecord
-    }
-    DELETE: {
-      response: void
     }
   }
   '/transcription/records/:id': {

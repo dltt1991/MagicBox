@@ -7,7 +7,8 @@ import {
   type TranscriptionSchemas,
   UpdateTranscriptionPromptTemplateSchema,
   UpdateTranscriptionRecordSchema,
-  UpdateTranscriptionTextSchema} from '@shared/data/api/schemas/transcription'
+  UpdateTranscriptionTextSchema
+} from '@shared/data/api/schemas/transcription'
 import type { HandlersFor } from '@shared/data/api/types'
 import * as z from 'zod'
 
@@ -26,8 +27,7 @@ export const transcriptionHandlers: HandlersFor<TranscriptionSchemas> = {
     POST: async ({ body }) => {
       CreateTranscriptionRecordSchema.parse(body)
       return notImplemented('create transcription record')
-    },
-    DELETE: async () => notImplemented('delete transcription records')
+    }
   },
   '/transcription/records/:id': {
     GET: async ({ params }) => {
