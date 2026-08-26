@@ -33,3 +33,22 @@ The review corrected two issues before final verification:
 
 - `pnpm lint` could not start because oxlint rejects the existing `.oxlintrc.json`: `options.typeAware` is only supported in the root config, but it is declared in `/Users/guotao/Work/code/MagicBox/.oxlintrc.json`. The command stopped before ESLint, typecheck, i18n, or formatting.
 - The environment runs Node `25.8.0`; the repository pins `>=24.11.1 <24.16.0`. Successful checks emitted the corresponding engine warning.
+
+## Fix
+
+### Changed Files
+
+- Added `src/main/services/transcription/TranscriptionService.ts`, a lifecycle-managed facade for recording target creation and playback URL resolution. It depends on `MediaProtocolService`, delegates managed audio operations to the internal `TranscriptionAudioStore`, and resolves persisted records through `TranscriptionHistoryService`.
+- Added `src/main/services/transcription/index.ts` and registered `TranscriptionService` in `src/main/core/application/serviceRegistry.ts`.
+- Updated `src/main/ipc/handlers/transcription.ts` so `transcription.recording.create` and `transcription.audio_url.resolve` resolve `application.get('TranscriptionService')`; the IPC handler no longer imports the audio store or history service.
+- Updated the handler test and added `src/main/services/transcription/__tests__/TranscriptionService.test.ts` to cover the lifecycle facade's two owned operations.
+
+### Tests Run
+
+- `pnpm test:main src/main/core/paths/__tests__/pathRegistry.test.ts src/main/services/transcription/__tests__/TranscriptionAudioStore.test.ts src/main/services/transcription/__tests__/TranscriptionService.test.ts src/main/services/mediaProtocol/__tests__/MediaProtocolService.audio.test.ts src/main/ipc/handlers/__tests__/transcription.test.ts` passed — 5 files, 63 tests.
+- `pnpm typecheck:node` passed.
+- `git diff --check` passed.
+
+### Lint Result
+
+- `pnpm lint` failed before linting with the pre-existing oxlint configuration error: `The options.typeAware option is only supported in the root config, but it was found in /Users/guotao/Work/code/MagicBox/.oxlintrc.json.` The command also emitted the existing Node engine warning because the environment uses Node `25.8.0` while the repository pins `>=24.11.1 <24.16.0`.

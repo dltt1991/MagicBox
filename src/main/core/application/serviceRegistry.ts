@@ -60,6 +60,7 @@ import { StorageMonitorService } from '@main/services/StorageMonitorService'
 import { SubWindowService } from '@main/services/SubWindowService'
 import { TerminalService } from '@main/services/terminal'
 import { ThemeService } from '@main/services/ThemeService'
+import { TranscriptionService } from '@main/services/transcription'
 import { TrayService } from '@main/services/TrayService'
 import { WebSearchService } from '@main/services/webSearch'
 import { WebviewService } from '@main/services/WebviewService'
@@ -118,6 +119,7 @@ export const services = {
   OvmsManager,
   ProtocolService,
   MediaProtocolService,
+  TranscriptionService,
   ScreenshotOverlayService,
   ProxyService,
   StorageMonitorService,

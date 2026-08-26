@@ -1,5 +1,4 @@
-import { transcriptionHistoryService } from '@data/services/TranscriptionHistoryService'
-import { transcriptionAudioStore } from '@main/services/transcription/TranscriptionAudioStore'
+import { application } from '@application'
 import { IpcError } from '@shared/ipc/errors/IpcError'
 import { transcriptionErrorCodes } from '@shared/ipc/errors/transcription'
 import type { transcriptionRequestSchemas } from '@shared/ipc/schemas/transcription'
@@ -10,11 +9,10 @@ function notImplemented(): never {
 }
 
 export const transcriptionHandlers: IpcHandlersFor<typeof transcriptionRequestSchemas> = {
-  'transcription.recording.create': async ({ extension }) => transcriptionAudioStore.reserveRecordingTarget(extension),
-  'transcription.audio_url.resolve': async ({ recordId }) => {
-    const { record } = transcriptionHistoryService.getRecord(recordId)
-    return transcriptionAudioStore.resolveAudioUrl(record)
-  },
+  'transcription.recording.create': async ({ extension }) =>
+    application.get('TranscriptionService').reserveRecordingTarget(extension),
+  'transcription.audio_url.resolve': async ({ recordId }) =>
+    application.get('TranscriptionService').resolveAudioUrl(recordId),
   'transcription.transcribe': async () => notImplemented(),
   'transcription.cancel': async () => notImplemented(),
   'transcription.organize': async () => notImplemented()
