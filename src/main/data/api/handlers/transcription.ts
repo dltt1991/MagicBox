@@ -1,4 +1,4 @@
-import { DataApiErrorFactory } from '@shared/data/api/errors'
+import { transcriptionHistoryService } from '@data/services/TranscriptionHistoryService'
 import {
   CreateTranscriptionPromptTemplateSchema,
   CreateTranscriptionRecordSchema,
@@ -14,64 +14,60 @@ import * as z from 'zod'
 
 const IdParamsSchema = z.strictObject({ id: z.string().min(1) })
 
-function notImplemented(operation: string): never {
-  throw DataApiErrorFactory.invalidOperation(operation, 'transcription persistence is not implemented yet')
-}
-
 export const transcriptionHandlers: HandlersFor<TranscriptionSchemas> = {
   '/transcription/records': {
     GET: async ({ query }) => {
-      TranscriptionRecordQuerySchema.parse(query ?? {})
-      return notImplemented('list transcription records')
+      return transcriptionHistoryService.listRecords(TranscriptionRecordQuerySchema.parse(query ?? {}))
     },
     POST: async ({ body }) => {
-      CreateTranscriptionRecordSchema.parse(body)
-      return notImplemented('create transcription record')
+      return transcriptionHistoryService.createRecord(CreateTranscriptionRecordSchema.parse(body))
     }
   },
   '/transcription/records/:id': {
     GET: async ({ params }) => {
-      IdParamsSchema.parse(params)
-      return notImplemented('get transcription record')
+      return transcriptionHistoryService.getRecord(IdParamsSchema.parse(params).id)
     },
     PATCH: async ({ params, body }) => {
-      IdParamsSchema.parse(params)
-      UpdateTranscriptionRecordSchema.parse(body)
-      return notImplemented('update transcription record')
+      return transcriptionHistoryService.updateRecord(
+        IdParamsSchema.parse(params).id,
+        UpdateTranscriptionRecordSchema.parse(body)
+      )
     },
     DELETE: async ({ params }) => {
-      IdParamsSchema.parse(params)
-      return notImplemented('delete transcription record')
+      transcriptionHistoryService.deleteRecord(IdParamsSchema.parse(params).id)
+      return undefined
     }
   },
   '/transcription/records/:id/result': {
     PUT: async ({ params, body }) => {
-      IdParamsSchema.parse(params)
-      SaveTranscriptionResultSchema.parse(body)
-      return notImplemented('save transcription result')
+      return transcriptionHistoryService.saveResult(
+        IdParamsSchema.parse(params).id,
+        SaveTranscriptionResultSchema.parse(body)
+      )
     },
     PATCH: async ({ params, body }) => {
-      IdParamsSchema.parse(params)
-      UpdateTranscriptionTextSchema.parse(body)
-      return notImplemented('update transcription text')
+      return transcriptionHistoryService.updateResultText(
+        IdParamsSchema.parse(params).id,
+        UpdateTranscriptionTextSchema.parse(body)
+      )
     }
   },
   '/transcription/prompt-templates': {
-    GET: async () => notImplemented('list transcription prompt templates'),
+    GET: async () => transcriptionHistoryService.listPromptTemplates(),
     POST: async ({ body }) => {
-      CreateTranscriptionPromptTemplateSchema.parse(body)
-      return notImplemented('create transcription prompt template')
+      return transcriptionHistoryService.createPromptTemplate(CreateTranscriptionPromptTemplateSchema.parse(body))
     }
   },
   '/transcription/prompt-templates/:id': {
     PATCH: async ({ params, body }) => {
-      IdParamsSchema.parse(params)
-      UpdateTranscriptionPromptTemplateSchema.parse(body)
-      return notImplemented('update transcription prompt template')
+      return transcriptionHistoryService.updatePromptTemplate(
+        IdParamsSchema.parse(params).id,
+        UpdateTranscriptionPromptTemplateSchema.parse(body)
+      )
     },
     DELETE: async ({ params }) => {
-      IdParamsSchema.parse(params)
-      return notImplemented('delete transcription prompt template')
+      transcriptionHistoryService.deletePromptTemplate(IdParamsSchema.parse(params).id)
+      return undefined
     }
   }
 }
