@@ -110,6 +110,11 @@ export function buildPathRegistry() {
     // Local embedding model cache (transformers.js HF cache root, downloaded on first use)
     'feature.embedding.models': path.join(appUserDataRuntime, 'models', 'qwen3-embedding'),
 
+    // Transcription recording storage, temporary workspace, and local Whisper model cache.
+    'feature.transcription.recordings': path.join(appUserDataData, 'Transcription', 'Recordings'),
+    'feature.transcription.temp': path.join(appTemp, 'transcription'),
+    'feature.transcription.whisper': path.join(appUserDataRuntime, 'models', 'whisper'),
+
     // onnxruntime-node native binary (napi addon + shared lib), downloaded on first
     // use of local embedding or local OCR — see OnnxRuntimeBinaryService.
     'feature.onnxruntime.binary': path.join(appUserDataToolchain, 'onnxruntime'),
