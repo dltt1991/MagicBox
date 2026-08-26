@@ -29,29 +29,39 @@ describe('TranscriptionHistoryService', () => {
     expect(dbh.db.select().from(transcriptionRecordTable).all()).toEqual([])
   })
 
-  it('overwrites the one latest result for a record', () => {
+  it('preserves edited transcript text and segments when saving a new organization result', () => {
     const record = transcriptionHistoryService.createRecord(createInput)
 
     const first = transcriptionHistoryService.saveResult(record.id, {
       transcriptText: 'First draft',
       segments: [{ startMs: 0, endMs: 1000, text: 'First draft' }]
     })
-    const second = transcriptionHistoryService.saveResult(record.id, {
-      transcriptText: 'Final draft',
-      segments: [{ startMs: 0, endMs: 1200, text: 'Final draft' }],
+    transcriptionHistoryService.updateResultText(record.id, {
+      transcriptText: 'Edited draft',
+      segments: [{ startMs: 0, endMs: 1500, text: 'Edited draft' }]
+    })
+    const reorganized = transcriptionHistoryService.saveResult(record.id, {
+      transcriptText: 'Stale draft',
+      segments: [{ startMs: 0, endMs: 1000, text: 'Stale draft' }],
+      organizationTemplateId: 'builtin-general-summary',
+      organizationPromptSnapshot: 'Current organization prompt',
       organizationOutput: 'Summary'
     })
 
-    expect(second).toMatchObject({
+    expect(reorganized).toMatchObject({
       id: first.id,
       recordId: record.id,
-      transcriptText: 'Final draft',
+      transcriptText: 'Edited draft',
+      segments: [{ startMs: 0, endMs: 1500, text: 'Edited draft' }],
+      organizationTemplateId: 'builtin-general-summary',
+      organizationPromptSnapshot: 'Current organization prompt',
       organizationOutput: 'Summary'
     })
     expect(dbh.db.select().from(transcriptionResultTable).all()).toHaveLength(1)
     expect(transcriptionHistoryService.getRecord(record.id).result).toMatchObject({
       id: first.id,
-      transcriptText: 'Final draft'
+      transcriptText: 'Edited draft',
+      segments: [{ startMs: 0, endMs: 1500, text: 'Edited draft' }]
     })
   })
 

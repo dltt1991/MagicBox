@@ -41,3 +41,24 @@ None. Task 1 shared DataApi and IpcApi contracts remain unchanged. The service a
 - Renderer test execution is blocked by the known nested-worktree `@vitest/web-worker` path issue.
 - Full lint execution is blocked by the existing oxlint configuration parse error.
 - The environment uses Node `25.8.0`, while this repository pins `>=24.11.1 <24.16.0`; all successful checks emitted the corresponding engine warning.
+
+## Critical Review Fix
+
+### Root Cause
+
+`saveResult()` used the complete `SaveTranscriptionResultDto` for both inserts and existing-result updates. A re-organization request can contain the transcript snapshot used for generation, so that stale snapshot replaced text and segments previously changed through the explicit edit path.
+
+### Fix
+
+- New result rows still insert transcript text, serialized segments, and organization fields.
+- Existing result rows now update only `organizationTemplateId`, `organizationPromptSnapshot`, and `organizationOutput`; Drizzle's timestamp hook updates `updatedAt`.
+- `updateResultText()` remains the only service method that changes transcript text or segments.
+
+### Regression Test And Verification
+
+- Added a regression test that creates a result, explicitly edits its transcript and segments, then saves a stale transcript with a new organization result. It asserts that the edited transcript and segments remain while organization fields update.
+- The test failed before the service change because the stale values replaced the edited values.
+- `pnpm test:main src/main/data/services/__tests__/TranscriptionHistoryService.test.ts` passed: 3 tests.
+- `pnpm test:main src/main/data/api/handlers/__tests__/transcription.test.ts` passed: 2 tests.
+- `pnpm typecheck` passed.
+- `git diff --check` passed.

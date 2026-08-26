@@ -192,6 +192,11 @@ export class TranscriptionHistoryService {
         .get()
       if (!record) throw DataApiErrorFactory.notFound('TranscriptionRecord', recordId)
       const values = { ...input, segmentsJson: JSON.stringify(input.segments) }
+      const organizationValues = {
+        organizationTemplateId: input.organizationTemplateId,
+        organizationPromptSnapshot: input.organizationPromptSnapshot,
+        organizationOutput: input.organizationOutput
+      }
       const current = tx
         .select()
         .from(transcriptionResultTable)
@@ -200,7 +205,7 @@ export class TranscriptionHistoryService {
       const row = current
         ? tx
             .update(transcriptionResultTable)
-            .set(values)
+            .set(organizationValues)
             .where(eq(transcriptionResultTable.recordId, recordId))
             .returning()
             .get()
