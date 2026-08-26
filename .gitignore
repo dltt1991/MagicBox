@@ -51,6 +51,7 @@ scripts/linux-native/prebuilt/
 
 # Local
 local
+.worktrees/
 .aider*
 .cursorrules
 .cursor/*
