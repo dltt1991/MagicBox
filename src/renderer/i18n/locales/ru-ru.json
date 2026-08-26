@@ -4714,6 +4714,8 @@
   "settings.dependencies.localModels.status.ready": "Готов",
   "settings.dependencies.localModels.title": "Локальные модели",
   "settings.dependencies.localModels.unsupported": "Локальные модели не поддерживаются на этой платформе.",
+  "settings.dependencies.localModels.whisper.name": "Whisper для транскрибации",
+  "settings.dependencies.localModels.whisper.subtitle": "Whisper Small · ~500 МБ",
   "settings.dependencies.notInstalled": "Not installed",
   "settings.dependencies.openBinariesDir": "Открыть каталог исполняемых файлов",
   "settings.dependencies.remove": "Удалить инструмент",

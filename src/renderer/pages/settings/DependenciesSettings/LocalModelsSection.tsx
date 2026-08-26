@@ -5,7 +5,7 @@ import { useLocalModel } from '@renderer/hooks/useLocalModel'
 import { ipcApi } from '@renderer/ipc'
 import { cn } from '@renderer/utils/style'
 import type { LocalModelKind, LocalModelStatus } from '@shared/data/presets/localModel'
-import { Boxes, Download, RefreshCw, ScanText, Trash2, X } from 'lucide-react'
+import { Boxes, Download, Mic, RefreshCw, ScanText, Trash2, X } from 'lucide-react'
 import type { FC, ReactNode } from 'react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -170,8 +170,7 @@ const ModelCard: FC<ModelCardProps> = ({
 }
 
 /**
- * Local model download cards — embedding (transformers.js) and OCR
- * (PaddleOCR), each wired to its inference/download backend over IpcApi.
+ * Local model download cards, each wired to its inference/download backend over IpcApi.
  */
 const LocalModelsSection: FC = () => {
   const { t } = useTranslation()
@@ -182,6 +181,7 @@ const LocalModelsSection: FC = () => {
 
   const embedding = useLocalModelCard('embedding')
   const ocr = useLocalModelCard('ocr')
+  const whisper = useLocalModelCard('whisper')
 
   useEffect(() => {
     let mounted = true
@@ -196,9 +196,10 @@ const LocalModelsSection: FC = () => {
     }
   }, [])
 
-  // Both models share the same inference runtime, so they're unsupported together
+  // All models share the same inference runtime, so they're unsupported together
   // (e.g. Intel Mac — onnxruntime-node ships no darwin-x64 binding).
-  const unsupported = embedding.status === 'unsupported' && ocr.status === 'unsupported'
+  const unsupported =
+    embedding.status === 'unsupported' && ocr.status === 'unsupported' && whisper.status === 'unsupported'
 
   return (
     <div className="min-w-0">
@@ -251,6 +252,17 @@ const LocalModelsSection: FC = () => {
             onDownload={ocr.download}
             onCancel={ocr.cancel}
             onRemove={ocr.remove}
+          />
+          <ModelCard
+            icon={<Mic className="size-5" />}
+            name={t('settings.dependencies.localModels.whisper.name')}
+            subtitle={t('settings.dependencies.localModels.whisper.subtitle')}
+            status={whisper.status}
+            percent={whisper.percent}
+            notice={whisper.notice}
+            onDownload={whisper.download}
+            onCancel={whisper.cancel}
+            onRemove={whisper.remove}
           />
         </div>
       )}

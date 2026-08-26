@@ -26,12 +26,23 @@ vi.mock('@main/services/localModel/LocalOcrDownloadService', () => ({
   }
 }))
 
+vi.mock('@main/services/localModel/LocalWhisperDownloadService', () => ({
+  localWhisperDownloadService: {
+    getStatus: vi.fn(),
+    getStatusInfo: vi.fn(),
+    download: vi.fn(),
+    cancel: vi.fn(),
+    remove: vi.fn()
+  }
+}))
+
 vi.mock('@main/services/localModel/OnnxRuntimeBinaryService', () => ({
   onnxRuntimeBinaryService: { removeIfUnused: vi.fn() }
 }))
 
 const { localEmbeddingDownloadService } = await import('@main/services/localModel/LocalEmbeddingDownloadService')
 const { localOcrDownloadService } = await import('@main/services/localModel/LocalOcrDownloadService')
+const { localWhisperDownloadService } = await import('@main/services/localModel/LocalWhisperDownloadService')
 const { onnxRuntimeBinaryService } = await import('@main/services/localModel/OnnxRuntimeBinaryService')
 const { localModelHandlers } = await import('../localModel')
 
@@ -49,12 +60,14 @@ describe('localModelHandlers', () => {
     const status = await localModelHandlers['local_model.get_status']({ model: 'embedding' }, ctx)
     const result = await localModelHandlers['local_model.download']({ model: 'ocr' }, ctx)
     await localModelHandlers['local_model.cancel']({ model: 'embedding' }, ctx)
+    await localModelHandlers['local_model.cancel']({ model: 'whisper' }, ctx)
 
     expect(localEmbeddingDownloadService.getStatusInfo).toHaveBeenCalled()
     expect(status).toEqual({ status: 'ready' })
     expect(localOcrDownloadService.download).toHaveBeenCalled()
     expect(result).toEqual({ result: 'ready' })
     expect(localEmbeddingDownloadService.cancel).toHaveBeenCalled()
+    expect(localWhisperDownloadService.cancel).toHaveBeenCalled()
   })
 
   it('reports the main-process hardware acceleration capability', async () => {
@@ -134,6 +147,16 @@ describe('localModelHandlers', () => {
       vi.mocked(localEmbeddingDownloadService.getStatus).mockReturnValue('ready')
 
       await localModelHandlers['local_model.remove']({ model: 'ocr' }, ctx)
+
+      expect(onnxRuntimeBinaryService.removeIfUnused).toHaveBeenCalledWith(true)
+    })
+
+    it('keeps the shared onnxruntime binary while either remaining local model is ready', async () => {
+      vi.mocked(localEmbeddingDownloadService.remove).mockResolvedValue({ removed: true })
+      vi.mocked(localOcrDownloadService.getStatus).mockReturnValue('not_downloaded')
+      vi.mocked(localWhisperDownloadService.getStatus).mockReturnValue('ready')
+
+      await localModelHandlers['local_model.remove']({ model: 'embedding' }, ctx)
 
       expect(onnxRuntimeBinaryService.removeIfUnused).toHaveBeenCalledWith(true)
     })

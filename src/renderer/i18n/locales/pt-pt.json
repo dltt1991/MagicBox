@@ -4714,6 +4714,8 @@
   "settings.dependencies.localModels.status.ready": "Pronto",
   "settings.dependencies.localModels.title": "Modelos Locais",
   "settings.dependencies.localModels.unsupported": "Os modelos locais não são suportados nesta plataforma.",
+  "settings.dependencies.localModels.whisper.name": "Whisper para transcrição",
+  "settings.dependencies.localModels.whisper.subtitle": "Whisper Small · ~500 MB",
   "settings.dependencies.notInstalled": "Not installed",
   "settings.dependencies.openBinariesDir": "Abrir a pasta dos binários",
   "settings.dependencies.remove": "Remover ferramenta",

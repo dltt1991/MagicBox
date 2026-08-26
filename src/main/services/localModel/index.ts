@@ -5,5 +5,6 @@
  */
 export { localEmbeddingDownloadService } from './LocalEmbeddingDownloadService'
 export { localOcrDownloadService } from './LocalOcrDownloadService'
+export { localWhisperDownloadService } from './LocalWhisperDownloadService'
 export { onnxRuntimeBinaryService } from './OnnxRuntimeBinaryService'
 export { isLocalModelReady } from './readiness'

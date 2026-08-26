@@ -4714,6 +4714,8 @@
   "settings.dependencies.localModels.status.ready": "Gata",
   "settings.dependencies.localModels.title": "Modele Locale",
   "settings.dependencies.localModels.unsupported": "Modelele locale nu sunt acceptate pe această platformă.",
+  "settings.dependencies.localModels.whisper.name": "Whisper pentru transcriere",
+  "settings.dependencies.localModels.whisper.subtitle": "Whisper Small · ~500 MB",
   "settings.dependencies.notInstalled": "Not installed",
   "settings.dependencies.openBinariesDir": "Deschide directorul fișierelor binare",
   "settings.dependencies.remove": "Elimină instrumentul",
