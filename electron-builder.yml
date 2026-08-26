@@ -77,6 +77,7 @@ asarUnpack:
   - "!resources/devtools/**"
   - "**/*.{metal,exp,lib}"
   - "node_modules/@cherrystudio/dsh-bridge/dist/runtime/**"
+  - "node_modules/@ffmpeg-installer/**" # bundled audio decoder must be executable outside app.asar
   - "node_modules/sharp/**"
   - "node_modules/node-pty/**"
   - "node_modules/koffi/**"
