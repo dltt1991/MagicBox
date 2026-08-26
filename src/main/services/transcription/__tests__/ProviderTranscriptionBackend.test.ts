@@ -12,7 +12,7 @@ describe('ProviderTranscriptionBackend', () => {
     })
     const backend = new ProviderTranscriptionBackend({
       readFile: vi.fn().mockResolvedValue(Buffer.from('audio')),
-      resolve: vi.fn().mockResolvedValue({ model: { id: 'model' } }),
+      resolve: vi.fn().mockResolvedValue({ model: { id: 'model' }, providerOptionsKey: 'openai' }),
       transcribe
     })
 
@@ -24,7 +24,12 @@ describe('ProviderTranscriptionBackend', () => {
       signal: new AbortController().signal
     })
 
-    expect(transcribe).toHaveBeenCalledWith(expect.objectContaining({ audio: expect.any(Uint8Array) }))
+    expect(transcribe).toHaveBeenCalledWith(
+      expect.objectContaining({
+        audio: expect.any(Uint8Array),
+        providerOptions: { openai: { language: 'en' } }
+      })
+    )
     expect(result).toMatchObject({ backend: 'provider_model', language: 'en', durationMs: 1200 })
     expect(result.segments).toEqual([{ startMs: 0, endMs: 1200, text: 'hello' }])
   })

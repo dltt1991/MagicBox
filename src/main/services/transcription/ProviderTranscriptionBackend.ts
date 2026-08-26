@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 
 import { extensionRegistry } from '@cherrystudio/ai-core/provider'
 import { resolveProviderAiSdkConfig } from '@main/ai/provider/config'
+import { resolveEffectiveEndpoint, resolveProviderOptionsKey } from '@main/ai/provider/endpoint'
 import { modelService } from '@main/data/services/ModelService'
 import { providerService } from '@main/data/services/ProviderService'
 import type { TranscriptionLanguage, TranscriptionSegment } from '@shared/data/types/transcription'
@@ -11,7 +12,7 @@ import { mapSegments } from './segmentMapper'
 
 export interface ProviderTranscriptionBackendDependencies {
   readFile?: typeof readFile
-  resolve?: (providerId: string, modelId: string) => Promise<{ model: unknown }>
+  resolve?: (providerId: string, modelId: string) => Promise<{ model: unknown; providerOptionsKey: string }>
   transcribe?: typeof experimental_transcribe
 }
 
@@ -35,12 +36,15 @@ export class ProviderTranscriptionBackend {
   }> {
     const audio = await (this.dependencies.readFile ?? readFile)(input.audioPath)
     input.signal.throwIfAborted()
-    const { model } = await (this.dependencies.resolve ?? resolveProviderModel)(input.providerId, input.modelId)
+    const { model, providerOptionsKey } = await (this.dependencies.resolve ?? resolveProviderModel)(
+      input.providerId,
+      input.modelId
+    )
     const response = await (this.dependencies.transcribe ?? experimental_transcribe)({
       model: model as never,
       audio: Uint8Array.from(audio),
       abortSignal: input.signal,
-      providerOptions: input.language === 'auto' ? undefined : { transcription: { language: input.language } }
+      providerOptions: input.language === 'auto' ? undefined : { [providerOptionsKey]: { language: input.language } }
     })
     return {
       text: response.text.trim(),
@@ -54,12 +58,23 @@ export class ProviderTranscriptionBackend {
   }
 }
 
-async function resolveProviderModel(providerId: string, modelId: string): Promise<{ model: unknown }> {
+async function resolveProviderModel(
+  providerId: string,
+  modelId: string
+): Promise<{ model: unknown; providerOptionsKey: string }> {
   const provider = providerService.getByProviderId(providerId)
   const model = modelService.getByKey(providerId, modelId)
-  const { config } = await resolveProviderAiSdkConfig(provider, model)
+  const resolvedEndpoint = resolveEffectiveEndpoint(provider, model)
+  const { config } = await resolveProviderAiSdkConfig(provider, model, { resolvedEndpoint })
   const runtimeProvider = await extensionRegistry.createProvider(config.providerId, config.providerSettings)
   if (!runtimeProvider.transcriptionModel) throw new Error('Configured provider does not support transcription')
   if (!model.apiModelId) throw new Error('Configured transcription model has no API model id')
-  return { model: runtimeProvider.transcriptionModel(model.apiModelId) }
+  return {
+    model: runtimeProvider.transcriptionModel(model.apiModelId),
+    providerOptionsKey: resolveProviderOptionsKey(config.providerId, {
+      actualProviderId: provider.id,
+      endpointType: resolvedEndpoint.endpointType,
+      gatewayProviderOptionsKey: resolvedEndpoint.providerOptionsKey
+    })
+  }
 }
