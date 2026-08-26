@@ -1,4 +1,5 @@
 import fs from 'node:fs'
+import path from 'node:path'
 import { Readable, Transform } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import type { ReadableStream as NodeWebReadableStream } from 'node:stream/web'
@@ -62,7 +63,10 @@ class LocalWhisperDownloadService extends LocalModelDownloadService {
   }
 
   private modelPath(fileName: string): string {
-    return application.getPath('feature.transcription.whisper', fileName)
+    const [directory, file] = fileName.split('/')
+    return file
+      ? path.join(application.getPath('feature.transcription.whisper', directory), file)
+      : application.getPath('feature.transcription.whisper', directory)
   }
 
   private isComplete(file: RemoteModelFile): boolean {
@@ -97,6 +101,7 @@ class LocalWhisperDownloadService extends LocalModelDownloadService {
     signal: AbortSignal,
     onProgress: (fraction: number) => void
   ): Promise<void> {
+    await fs.promises.mkdir(path.dirname(dest), { recursive: true })
     const response = await net.fetch(url, { signal })
     if (!response.ok || !response.body) throw new Error(`HTTP ${response.status} for ${url}`)
 

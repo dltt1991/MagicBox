@@ -45,6 +45,8 @@ const { LOCAL_MODELS } = await import('@main/ai/inference/localModelCatalog')
 const { application } = await import('@application')
 
 const MODEL_DIR = '/mock/feature.transcription.whisper'
+const ENCODER_PATH = `${MODEL_DIR}/onnx/encoder_model_quantized.onnx`
+const DECODER_PATH = `${MODEL_DIR}/onnx/decoder_model_merged_quantized.onnx`
 
 function markReadyFiles(): void {
   const sizes = new Map(LOCAL_MODELS.whisper.files.map((file) => [`${MODEL_DIR}/${file.fileName}`, file.minBytes]))
@@ -89,9 +91,11 @@ describe('LocalWhisperDownloadService', () => {
 
     markReadyFiles()
     expect(localWhisperDownloadService.getStatus()).toBe('ready')
+    expect(existsSync).toHaveBeenCalledWith(ENCODER_PATH)
+    expect(existsSync).toHaveBeenCalledWith(DECODER_PATH)
   })
 
-  it('downloads all Whisper files with aggregate progress and atomically promotes each completed file', async () => {
+  it('downloads ONNX weights into the loader-required onnx subdirectory', async () => {
     vi.mocked(net.fetch).mockImplementation((async () => response()) as never)
 
     await expect(localWhisperDownloadService.download()).resolves.toBe('ready')
@@ -99,6 +103,9 @@ describe('LocalWhisperDownloadService', () => {
     expect(ensureOnnxRuntime).toHaveBeenCalledTimes(1)
     expect(net.fetch).toHaveBeenCalledTimes(LOCAL_MODELS.whisper.files.length)
     expect(rename).toHaveBeenCalledTimes(LOCAL_MODELS.whisper.files.length)
+    expect(mkdir).toHaveBeenCalledWith(`${MODEL_DIR}/onnx`, { recursive: true })
+    expect(rename).toHaveBeenCalledWith(`${ENCODER_PATH}.tmp`, ENCODER_PATH)
+    expect(rename).toHaveBeenCalledWith(`${DECODER_PATH}.tmp`, DECODER_PATH)
     expect(application.get('IpcApiService').broadcast).toHaveBeenCalledWith(
       'local_model.download_progress',
       expect.objectContaining({ model: 'whisper', status: 'ready', percent: 100 })

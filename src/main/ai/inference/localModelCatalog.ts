@@ -101,14 +101,14 @@ export const LOCAL_MODELS = {
       {
         repo: 'onnx-community/whisper-small',
         remoteFile: 'onnx/encoder_model_quantized.onnx',
-        fileName: 'encoder_model_quantized.onnx',
+        fileName: 'onnx/encoder_model_quantized.onnx',
         minBytes: 1_000_000,
         weight: 160
       },
       {
         repo: 'onnx-community/whisper-small',
         remoteFile: 'onnx/decoder_model_merged_quantized.onnx',
-        fileName: 'decoder_model_merged_quantized.onnx',
+        fileName: 'onnx/decoder_model_merged_quantized.onnx',
         minBytes: 1_000_000,
         weight: 300
       }
