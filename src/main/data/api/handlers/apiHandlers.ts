@@ -39,6 +39,7 @@ import { skillHandlers } from './skills'
 import { tagHandlers } from './tags'
 import { temporaryChatHandlers } from './temporaryChats'
 import { topicHandlers } from './topics'
+import { transcriptionHandlers } from './transcription'
 import { translateHandlers } from './translate'
 
 /**
@@ -74,5 +75,6 @@ export const apiHandlers: ApiImplementation = {
   ...agentWorkspaceHandlers,
   ...jobHandlers,
   ...searchHandlers,
-  ...aiUsageRecordHandlers
+  ...aiUsageRecordHandlers,
+  ...transcriptionHandlers
 }

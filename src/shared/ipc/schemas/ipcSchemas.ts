@@ -33,6 +33,7 @@ import { skillRequestSchemas } from './skill'
 import { type SystemEventSchemas, systemRequestSchemas } from './system'
 import { type TabEventSchemas, tabRequestSchemas } from './tab'
 import { type TerminalEventSchemas, terminalRequestSchemas } from './terminal'
+import { type TranscriptionEventSchemas, transcriptionRequestSchemas } from './transcription'
 import { type TranslateEventSchemas, translateRequestSchemas } from './translate'
 import { webSearchRequestSchemas } from './webSearch'
 import { webviewRequestSchemas } from './webview'
@@ -80,6 +81,7 @@ export const ipcRequestSchemas = {
   ...systemRequestSchemas,
   ...tabRequestSchemas,
   ...terminalRequestSchemas,
+  ...transcriptionRequestSchemas,
   ...translateRequestSchemas,
   ...webSearchRequestSchemas,
   ...webviewRequestSchemas,
@@ -115,6 +117,7 @@ export type IpcEventSchemas = AiEventSchemas &
   SystemEventSchemas &
   TabEventSchemas &
   TerminalEventSchemas &
+  TranscriptionEventSchemas &
   TranslateEventSchemas &
   WindowEventSchemas
 /** Union of all declared event names. */

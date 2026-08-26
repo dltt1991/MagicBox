@@ -166,6 +166,7 @@
         { "id": "assistants", "type": "app" },
         { "id": "agents", "type": "app" },
         { "id": "translate", "type": "app" },
+        { "id": "transcription", "type": "app" },
         { "id": "paintings", "type": "app" },
         { "id": "knowledge", "type": "app" },
         { "id": "terminal", "type": "app" }

@@ -90,6 +90,10 @@ const SIDEBAR_APP_DEFINITIONS = [
     routePrefix: '/app/translate'
   },
   {
+    id: 'transcription',
+    routePrefix: '/app/transcription'
+  },
+  {
     id: 'mini_app',
     routePrefix: '/app/mini-app',
     exactRouteFocus: true

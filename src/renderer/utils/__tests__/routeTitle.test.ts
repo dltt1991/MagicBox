@@ -44,6 +44,7 @@ describe('routeTitle', () => {
         ['/app/agents', '工作'],
         ['/app/paintings', '绘画'],
         ['/app/translate', '翻译'],
+        ['/app/transcription', '转录'],
         ['/app/mini-app', '小程序'],
         ['/app/knowledge', '知识库'],
         ['/app/files', '文件'],
@@ -118,6 +119,7 @@ describe('routeTitle', () => {
       it.each([
         ['/app/chat', 'agent.session.group.conversation'],
         ['/app/agents', 'title.work'],
+        ['/app/transcription', 'title.transcription'],
         ['/app/release-notes', 'settings.about.releases.title'],
         ['/settings', 'title.settings']
       ])('should return i18n key for %s', (url, expectedKey) => {

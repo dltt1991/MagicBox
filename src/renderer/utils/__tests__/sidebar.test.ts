@@ -28,6 +28,10 @@ describe('sidebar config helpers', () => {
     expect(SIDEBAR_FAVORITE_ORDER.slice(0, 5)).toEqual(['assistants', 'agents', 'paintings', 'translate', 'mini_app'])
   })
 
+  it('places transcription immediately after translate in the default app order', () => {
+    expect(SIDEBAR_FAVORITE_ORDER.indexOf('transcription')).toBe(SIDEBAR_FAVORITE_ORDER.indexOf('translate') + 1)
+  })
+
   it('preserves the preference order when reading ordered visible sidebar favorites', () => {
     expect(
       getOrderedVisibleSidebarFavorites([appFavorite('translate'), appFavorite('assistants'), appFavorite('agents')])
