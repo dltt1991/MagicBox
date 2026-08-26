@@ -1,11 +1,12 @@
 import { application } from '@application'
-import { IpcError } from '@shared/ipc/errors/IpcError'
-import { transcriptionErrorCodes } from '@shared/ipc/errors/transcription'
+import { IpcError, IpcErrorCode } from '@shared/ipc/errors/IpcError'
 import type { transcriptionRequestSchemas } from '@shared/ipc/schemas/transcription'
-import type { IpcHandlersFor } from '@shared/ipc/types'
+import type { IpcContext, IpcHandlersFor, WindowId } from '@shared/ipc/types'
 
-function notImplemented(): never {
-  throw new IpcError(transcriptionErrorCodes.TRANSCRIPTION_NOT_IMPLEMENTED, 'Transcription is not implemented yet')
+function requireSenderWindow(ctx: IpcContext): WindowId {
+  if (!ctx.senderId)
+    throw new IpcError(IpcErrorCode.FORBIDDEN_SENDER, 'Transcription requests require a managed window')
+  return ctx.senderId
 }
 
 export const transcriptionHandlers: IpcHandlersFor<typeof transcriptionRequestSchemas> = {
@@ -13,7 +14,12 @@ export const transcriptionHandlers: IpcHandlersFor<typeof transcriptionRequestSc
     application.get('TranscriptionService').reserveRecordingTarget(extension),
   'transcription.audio_url.resolve': async ({ recordId }) =>
     application.get('TranscriptionService').resolveAudioUrl(recordId),
-  'transcription.transcribe': async () => notImplemented(),
-  'transcription.cancel': async () => notImplemented(),
-  'transcription.organize': async () => notImplemented()
+  'transcription.transcribe': async (input, ctx) =>
+    application.get('TranscriptionService').transcribe(input, requireSenderWindow(ctx)),
+  'transcription.cancel': async ({ jobId }, ctx) => {
+    requireSenderWindow(ctx)
+    application.get('TranscriptionService').cancel(jobId)
+  },
+  'transcription.organize': async (input, ctx) =>
+    application.get('TranscriptionService').organize(input, requireSenderWindow(ctx))
 }
