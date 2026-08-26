@@ -33,22 +33,22 @@ describe('transcription handlers', () => {
     transcribeMock.mockReset()
   })
 
-  it('creates a recording target for the requested extension', async () => {
+  it('creates a recording target for the WAV recording format', async () => {
     reserveRecordingTargetMock.mockReturnValue({
       recordingId: 'record-1',
-      filePath: '/managed/record-1.webm',
-      suggestedName: 'record-1.webm'
+      filePath: '/managed/record-1.wav',
+      suggestedName: 'record-1.wav'
     })
 
     await expect(
-      transcriptionHandlers['transcription.recording.create']({ extension: '.webm' }, {} as never)
+      transcriptionHandlers['transcription.recording.create']({ extension: '.wav' }, {} as never)
     ).resolves.toEqual({
       recordingId: 'record-1',
-      filePath: '/managed/record-1.webm',
-      suggestedName: 'record-1.webm'
+      filePath: '/managed/record-1.wav',
+      suggestedName: 'record-1.wav'
     })
     expect(getMock).toHaveBeenCalledWith('TranscriptionService')
-    expect(reserveRecordingTargetMock).toHaveBeenCalledWith('.webm')
+    expect(reserveRecordingTargetMock).toHaveBeenCalledWith('.wav')
   })
 
   it('resolves a record playback URL through the transcription service', async () => {

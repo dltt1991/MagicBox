@@ -48,11 +48,11 @@ describe('TranscriptionAudioStore', () => {
 
   afterEach(() => rmSync(recordingsRoot, { recursive: true, force: true }))
 
-  it('reserves each recording inside the managed recordings directory', () => {
-    const target = new TranscriptionAudioStore().reserveRecordingTarget('.webm')
+  it('reserves WAV recordings inside the managed recordings directory by default', () => {
+    const target = new TranscriptionAudioStore().reserveRecordingTarget()
 
-    expect(target.filePath).toBe(path.join(recordingsRoot, `${target.recordingId}.webm`))
-    expect(target.suggestedName).toBe(`${target.recordingId}.webm`)
+    expect(target.filePath).toBe(path.join(recordingsRoot, `${target.recordingId}.wav`))
+    expect(target.suggestedName).toBe(`${target.recordingId}.wav`)
     expect(target.recordingId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)
     expect(existsSync(path.dirname(target.filePath))).toBe(true)
   })

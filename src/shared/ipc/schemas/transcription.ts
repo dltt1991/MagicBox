@@ -31,7 +31,7 @@ export const transcriptionRequestSchemas = {
       extension: z
         .string()
         .regex(/^\.[a-z0-9]+$/i)
-        .default('.webm')
+        .default('.wav')
     }),
     output: z.strictObject({
       recordingId: z.string().min(1),

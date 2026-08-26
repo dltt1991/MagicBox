@@ -23,52 +23,22 @@ function pcmWav(samples: number[]): Buffer {
 
 describe('preprocessAudio', () => {
   it('decodes 16 kHz PCM WAV audio in-process without an external decoder', async () => {
-    const transcode = vi.fn()
+    const readFile = vi.fn().mockResolvedValue(pcmWav([0, 16_384, -16_384]))
     const audio = await preprocessAudio('/audio.wav', undefined, {
-      readFile: vi.fn().mockResolvedValue(pcmWav([0, 16_384, -16_384])),
-      transcode
+      readFile
     })
 
     expect(Array.from(audio)).toEqual([0, 0.5, -0.5])
-    expect(transcode).not.toHaveBeenCalled()
+    expect(readFile).toHaveBeenCalledWith('/audio.wav')
   })
 
-  it.each(['webm', 'mp3'])('uses the bundled decoder for %s audio and removes its temporary WAV', async (extension) => {
-    const transcode = vi.fn().mockResolvedValue(undefined)
-    const remove = vi.fn().mockResolvedValue(undefined)
-    const outputPath = '/temp/transcription.wav'
+  it.each(['webm', 'mp3'])('rejects %s audio before attempting a target-specific decoder', async (extension) => {
+    const readFile = vi.fn()
 
-    const audio = await preprocessAudio(`/audio.${extension}`, undefined, {
-      ffmpegPath: '/bundled/ffmpeg',
-      readFile: vi.fn().mockResolvedValue(pcmWav([0, 16_384, -16_384])),
-      transcode,
-      remove,
-      tempPath: () => outputPath
-    })
+    await expect(preprocessAudio(`/audio.${extension}`, undefined, { readFile })).rejects.toThrow(
+      'Local Whisper supports uncompressed WAV audio only. Use a provider or custom endpoint for compressed audio.'
+    )
 
-    expect(Array.from(audio)).toEqual([0, 0.5, -0.5])
-    expect(transcode).toHaveBeenCalledWith('/bundled/ffmpeg', `/audio.${extension}`, outputPath, undefined)
-    expect(remove).toHaveBeenCalledWith(outputPath)
-  })
-
-  it('cleans up a canceled compressed-audio conversion', async () => {
-    const controller = new AbortController()
-    const remove = vi.fn().mockResolvedValue(undefined)
-    const transcode = vi.fn().mockImplementation(async (_binary, _input, _output, signal?: AbortSignal) => {
-      controller.abort()
-      signal?.throwIfAborted()
-    })
-
-    await expect(
-      preprocessAudio('/audio.webm', controller.signal, {
-        ffmpegPath: '/bundled/ffmpeg',
-        readFile: vi.fn(),
-        transcode,
-        remove,
-        tempPath: () => '/temp/transcription.wav'
-      })
-    ).rejects.toThrow()
-
-    expect(remove).toHaveBeenCalledWith('/temp/transcription.wav')
+    expect(readFile).not.toHaveBeenCalled()
   })
 })

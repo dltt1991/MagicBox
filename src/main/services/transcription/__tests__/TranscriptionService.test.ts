@@ -48,11 +48,11 @@ describe('TranscriptionService', () => {
   })
 
   it('owns recording target reservation', () => {
-    const target = { recordingId: 'record-1', filePath: '/managed/record-1.webm', suggestedName: 'record-1.webm' }
+    const target = { recordingId: 'record-1', filePath: '/managed/record-1.wav', suggestedName: 'record-1.wav' }
     reserveRecordingTargetMock.mockReturnValue(target)
 
-    expect(new TranscriptionService().reserveRecordingTarget('.webm')).toBe(target)
-    expect(reserveRecordingTargetMock).toHaveBeenCalledWith('.webm')
+    expect(new TranscriptionService().reserveRecordingTarget('.wav')).toBe(target)
+    expect(reserveRecordingTargetMock).toHaveBeenCalledWith('.wav')
   })
 
   it('loads the persisted record before resolving its playback URL', () => {

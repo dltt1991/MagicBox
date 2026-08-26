@@ -1,24 +1,12 @@
-import { spawn } from 'node:child_process'
-import { randomUUID } from 'node:crypto'
-import { readFile, rm } from 'node:fs/promises'
+import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 
-import { application } from '@application'
-import { path as ffmpegInstallerPath } from '@ffmpeg-installer/ffmpeg'
-
 const SAMPLE_RATE = 16_000
-const UNSUPPORTED_AUDIO_ERROR = 'Local Whisper supports uncompressed WAV audio only in this build'
-const DECODER_UNAVAILABLE_ERROR = 'Local Whisper audio decoder is unavailable. Reinstall Magic Box and try again.'
-const DECODE_FAILED_ERROR = 'Local Whisper could not decode this audio. Try another audio file.'
-
-type Transcode = (binaryPath: string, inputPath: string, outputPath: string, signal?: AbortSignal) => Promise<void>
+const UNSUPPORTED_AUDIO_ERROR =
+  'Local Whisper supports uncompressed WAV audio only. Use a provider or custom endpoint for compressed audio.'
 
 export interface AudioPreprocessDependencies {
   readFile?: typeof readFile
-  remove?: (path: string) => Promise<void>
-  ffmpegPath?: string | null
-  tempPath?: () => string
-  transcode?: Transcode
 }
 
 /** Decode WAV audio to Whisper's 16 kHz mono float samples without exposing it to a renderer. */
@@ -28,83 +16,10 @@ export async function preprocessAudio(
   dependencies: AudioPreprocessDependencies = {}
 ): Promise<Float32Array> {
   signal?.throwIfAborted()
-  if (path.extname(audioPath).toLowerCase() !== '.wav') {
-    return await transcodeCompressedAudio(audioPath, signal, dependencies)
-  }
+  if (path.extname(audioPath).toLowerCase() !== '.wav') throw new Error(UNSUPPORTED_AUDIO_ERROR)
   const encoded = await (dependencies.readFile ?? readFile)(audioPath)
   signal?.throwIfAborted()
   return decodeWav(encoded)
-}
-
-async function transcodeCompressedAudio(
-  audioPath: string,
-  signal: AbortSignal | undefined,
-  dependencies: AudioPreprocessDependencies
-): Promise<Float32Array> {
-  const binaryPath = dependencies.ffmpegPath === undefined ? bundledFfmpegPath() : dependencies.ffmpegPath
-  if (!binaryPath) throw new Error(DECODER_UNAVAILABLE_ERROR)
-  const outputPath =
-    dependencies.tempPath?.() ?? application.getPath('feature.transcription.temp', `whisper-${randomUUID()}.wav`)
-  try {
-    await (dependencies.transcode ?? transcodeAudio)(binaryPath, audioPath, outputPath, signal)
-    signal?.throwIfAborted()
-    return decodeWav(await (dependencies.readFile ?? readFile)(outputPath))
-  } finally {
-    await (dependencies.remove ?? removeFile)(outputPath).catch(() => undefined)
-  }
-}
-
-function bundledFfmpegPath(): string | null {
-  return ffmpegInstallerPath.replace(/([\\/])app\.asar([\\/])/, '$1app.asar.unpacked$2')
-}
-
-async function removeFile(filePath: string): Promise<void> {
-  await rm(filePath, { force: true })
-}
-
-async function transcodeAudio(
-  binaryPath: string,
-  inputPath: string,
-  outputPath: string,
-  signal?: AbortSignal
-): Promise<void> {
-  signal?.throwIfAborted()
-  await new Promise<void>((resolve, reject) => {
-    const process = spawn(
-      binaryPath,
-      [
-        '-nostdin',
-        '-v',
-        'error',
-        '-i',
-        inputPath,
-        '-vn',
-        '-ac',
-        '1',
-        '-ar',
-        `${SAMPLE_RATE}`,
-        '-c:a',
-        'pcm_s16le',
-        '-f',
-        'wav',
-        outputPath
-      ],
-      { windowsHide: true }
-    )
-    const abort = () => process.kill('SIGTERM')
-    const cleanup = () => signal?.removeEventListener('abort', abort)
-    signal?.addEventListener('abort', abort, { once: true })
-    process.once('error', () => {
-      cleanup()
-      reject(new Error(DECODER_UNAVAILABLE_ERROR))
-    })
-    process.once('close', (code) => {
-      cleanup()
-      if (signal?.aborted) return reject(signal.reason)
-      if (code !== 0) return reject(new Error(DECODE_FAILED_ERROR))
-      resolve()
-    })
-  })
 }
 
 function decodeWav(encoded: Uint8Array): Float32Array {

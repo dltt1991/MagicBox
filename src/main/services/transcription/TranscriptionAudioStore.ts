@@ -18,7 +18,7 @@ const AUDIO_MIME_TYPES: Record<string, string> = {
 }
 
 export class TranscriptionAudioStore {
-  reserveRecordingTarget(extension: string): { recordingId: string; filePath: string; suggestedName: string } {
+  reserveRecordingTarget(extension = '.wav'): { recordingId: string; filePath: string; suggestedName: string } {
     const recordingId = uuidv7()
     const suggestedName = `${recordingId}${extension}`
     const recordingsDir = application.getPath('feature.transcription.recordings')
