@@ -1,4 +1,4 @@
-import { Button, ConfirmDialog } from '@cherrystudio/ui'
+import { Button, Checkbox, ConfirmDialog } from '@cherrystudio/ui'
 import type { TranscriptionRecord } from '@shared/data/types/transcription'
 import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
@@ -78,7 +78,7 @@ export function TranscriptionHistorySidebar({
         content={
           deleteTarget?.audioManaged ? (
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={deleteAudio} onChange={(event) => setDeleteAudio(event.target.checked)} />
+              <Checkbox checked={deleteAudio} onCheckedChange={(checked) => setDeleteAudio(checked === true)} />
               {t('transcription.delete_recording_audio')}
             </label>
           ) : undefined

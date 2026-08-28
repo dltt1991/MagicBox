@@ -5,27 +5,21 @@ import { describe, expect, it, vi } from 'vitest'
 import { getTemplateDisplayName, OrganizationPanel } from '../OrganizationPanel'
 
 describe('OrganizationPanel', () => {
+  const summaryTemplate = {
+    id: 'summary',
+    name: 'General Summary',
+    prompt: 'Summarize {{transcript}}',
+    builtIn: true,
+    isDefault: true,
+    orderKey: 'a',
+    createdAt: '2026-08-27T00:00:00.000Z',
+    updatedAt: '2026-08-27T00:00:00.000Z'
+  }
+
   it('organizes with a built-in template and a custom prompt', async () => {
     const user = userEvent.setup()
     const onOrganize = vi.fn()
-    render(
-      <OrganizationPanel
-        templates={[
-          {
-            id: 'summary',
-            name: 'General Summary',
-            prompt: 'Summarize {{transcript}}',
-            builtIn: true,
-            isDefault: true,
-            orderKey: 'a',
-            createdAt: '2026-08-27T00:00:00.000Z',
-            updatedAt: '2026-08-27T00:00:00.000Z'
-          }
-        ]}
-        organizationOutput={null}
-        onOrganize={onOrganize}
-      />
-    )
+    render(<OrganizationPanel templates={[summaryTemplate]} organizationOutput={null} onOrganize={onOrganize} />)
 
     await user.click(screen.getByRole('button', { name: 'Organize' }))
     expect(onOrganize).toHaveBeenCalledWith({ prompt: 'Summarize {{transcript}}', templateId: 'summary' })
@@ -48,5 +42,16 @@ describe('OrganizationPanel', () => {
     render(<OrganizationPanel templates={[]} organizationOutput={null} onOrganize={vi.fn()} disabled />)
 
     expect(screen.getByRole('button', { name: 'Organize' })).toBeDisabled()
+  })
+
+  it('selects the default template after templates load', async () => {
+    const user = userEvent.setup()
+    const onOrganize = vi.fn()
+    const { rerender } = render(<OrganizationPanel templates={[]} organizationOutput={null} onOrganize={onOrganize} />)
+
+    rerender(<OrganizationPanel templates={[summaryTemplate]} organizationOutput={null} onOrganize={onOrganize} />)
+    await user.click(screen.getByRole('button', { name: 'Organize' }))
+
+    expect(onOrganize).toHaveBeenCalledWith({ prompt: 'Summarize {{transcript}}', templateId: 'summary' })
   })
 })

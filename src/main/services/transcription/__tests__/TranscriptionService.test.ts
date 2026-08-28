@@ -6,6 +6,7 @@ const {
   createRecordMock,
   deleteAudioMock,
   getRecordMock,
+  releaseTemporaryAudioUrlMock,
   reserveRecordingTargetMock,
   resolveAudioUrlMock,
   resolveTemporaryAudioUrlMock,
@@ -16,6 +17,7 @@ const {
   createRecordMock: vi.fn(),
   deleteAudioMock: vi.fn(),
   getRecordMock: vi.fn(),
+  releaseTemporaryAudioUrlMock: vi.fn(),
   reserveRecordingTargetMock: vi.fn(),
   resolveAudioUrlMock: vi.fn(),
   resolveTemporaryAudioUrlMock: vi.fn(),
@@ -37,6 +39,7 @@ vi.mock('../TranscriptionAudioStore', () => ({
   transcriptionAudioStore: {
     reserveRecordingTarget: reserveRecordingTargetMock,
     resolveAudioUrl: resolveAudioUrlMock,
+    releaseTemporaryAudioUrl: releaseTemporaryAudioUrlMock,
     resolveTemporaryAudioUrl: resolveTemporaryAudioUrlMock,
     writeRecording: writeRecordingMock,
     deleteAudio: deleteAudioMock
@@ -51,6 +54,7 @@ describe('TranscriptionService', () => {
     getRecordMock.mockReset()
     reserveRecordingTargetMock.mockReset()
     resolveAudioUrlMock.mockReset()
+    releaseTemporaryAudioUrlMock.mockReset()
     resolveTemporaryAudioUrlMock.mockReset()
     writeRecordingMock.mockReset()
     createRecordMock.mockReset()
@@ -89,13 +93,24 @@ describe('TranscriptionService', () => {
   })
 
   it('resolves a selected import through a temporary playback URL', () => {
-    resolveTemporaryAudioUrlMock.mockReturnValue({ url: 'cherry-media://audio/import-1', missing: false })
+    resolveTemporaryAudioUrlMock.mockReturnValue({
+      url: 'cherry-media://audio/import-1',
+      missing: false,
+      previewId: 'import-1'
+    })
 
     expect(new TranscriptionService().resolveTemporaryAudioUrl('/imported/audio.m4a')).toEqual({
       url: 'cherry-media://audio/import-1',
-      missing: false
+      missing: false,
+      previewId: 'import-1'
     })
     expect(resolveTemporaryAudioUrlMock).toHaveBeenCalledWith('/imported/audio.m4a')
+  })
+
+  it('owns temporary playback URL release', () => {
+    new TranscriptionService().releaseTemporaryAudioUrl('transcription-preview-1')
+
+    expect(releaseTemporaryAudioUrlMock).toHaveBeenCalledWith('transcription-preview-1')
   })
 
   it('deletes only the selected managed recording on request', () => {

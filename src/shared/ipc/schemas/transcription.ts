@@ -57,7 +57,15 @@ export const transcriptionRequestSchemas = {
   }),
   'transcription.audio_url.preview': defineRoute({
     input: z.strictObject({ audioPath: z.string().min(1) }),
-    output: z.strictObject({ url: z.string().nullable(), missing: z.boolean() })
+    output: z.strictObject({
+      url: z.string().nullable(),
+      missing: z.boolean(),
+      previewId: z.string().min(1).nullable()
+    })
+  }),
+  'transcription.audio_url.release': defineRoute({
+    input: z.strictObject({ previewId: z.string().min(1) }),
+    output: z.void()
   }),
   'transcription.transcribe': defineRoute({
     input: z.strictObject({

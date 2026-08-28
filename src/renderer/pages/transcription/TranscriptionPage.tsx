@@ -151,8 +151,8 @@ export default function TranscriptionPage() {
           onChooseFile={handleChooseFile}
           onPause={recorder.pause}
           onResume={recorder.resume}
-          onStart={recorder.start}
-          onStop={() => void handleStopRecording()}
+          onStart={() => void runHandled(recorder.start())}
+          onStop={() => void runHandled(handleStopRecording())}
           recordingStatus={recorder.status}
           sourceName={draftSource?.name ?? record?.title ?? null}
         />
@@ -160,7 +160,7 @@ export default function TranscriptionPage() {
           <Button
             disabled={!canTranscribe || job.isRunning}
             loading={job.isRunning}
-            onClick={() => void handleTranscribe()}>
+            onClick={() => void runHandled(handleTranscribe())}>
             {t('transcription.transcribe')}
           </Button>
           <Button disabled={!job.isRunning} variant="outline" onClick={() => void job.cancel()}>
@@ -201,7 +201,7 @@ export default function TranscriptionPage() {
             onExport={(text) => void window.api.file.save('transcription-summary.txt', text)}
             onOrganize={
               record && result
-                ? ({ prompt, templateId }) => void job.organize({ recordId: record.id, prompt, templateId })
+                ? ({ prompt, templateId }) => void runHandled(job.organize({ recordId: record.id, prompt, templateId }))
                 : undefined
             }
           />
@@ -219,6 +219,10 @@ export default function TranscriptionPage() {
       />
     </main>
   )
+}
+
+export async function runHandled(promise: Promise<unknown>): Promise<void> {
+  await promise.catch(() => undefined)
 }
 
 export function buildBackendConfig(

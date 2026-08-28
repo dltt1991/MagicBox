@@ -1,7 +1,7 @@
 import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Textarea } from '@cherrystudio/ui'
 import CopyButton from '@renderer/components/CopyButton'
 import type { TranscriptionPromptTemplate } from '@shared/data/types/transcription'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { CustomPromptDialog } from './CustomPromptDialog'
@@ -28,6 +28,11 @@ export function OrganizationPanel({
   const [templateId, setTemplateId] = useState(defaultTemplateId)
   const [customPrompt, setCustomPrompt] = useState('')
   const [customPromptOpen, setCustomPromptOpen] = useState(false)
+  useEffect(() => {
+    if (!customPrompt && defaultTemplateId && !templates.some((template) => template.id === templateId)) {
+      setTemplateId(defaultTemplateId)
+    }
+  }, [customPrompt, defaultTemplateId, templateId, templates])
   const selectedTemplate = useMemo(
     () => templates.find((template) => template.id === templateId),
     [templateId, templates]

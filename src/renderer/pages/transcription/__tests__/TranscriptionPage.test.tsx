@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { TranscriptionToolbar } from '../components/TranscriptionToolbar'
-import TranscriptionPage, { buildBackendConfig, deleteHistoryRecord } from '../TranscriptionPage'
+import TranscriptionPage, { buildBackendConfig, deleteHistoryRecord, runHandled } from '../TranscriptionPage'
 
 describe('TranscriptionPage', () => {
   it('switches between recording and file input modes', async () => {
@@ -56,5 +56,9 @@ describe('TranscriptionPage', () => {
     expect(request).toHaveBeenCalledWith('transcription.recording.delete', { recordId: 'record-1', deleteAudio: false })
     expect(deleteRecord).toHaveBeenCalledWith('record-1')
     expect(request.mock.invocationCallOrder[0]).toBeLessThan(deleteRecord.mock.invocationCallOrder[0])
+  })
+
+  it('handles rejected job promises at the page boundary', async () => {
+    await expect(runHandled(Promise.reject(new Error('backend failed')))).resolves.toBeUndefined()
   })
 })

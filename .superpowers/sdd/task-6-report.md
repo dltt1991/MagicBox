@@ -93,5 +93,29 @@ Both commands also emitted the existing Node engine warning because this environ
 
 ## Fix Commit
 
-- `6deb45a93e90949e05d60f6ce09d0f40de2066dd` — `fix(transcription): complete workspace flows`; verified `gpgsig` header present.
+- `4fd45aa86c737561c90b1b7c551e088754d07304` — `fix(transcription): complete workspace flows`; verified `gpgsig` header present.
 - The commit used `--no-verify` after two hook attempts demonstrated a non-converging Biome/ESLint import-spacing conflict. The requested typechecks, i18n check, targeted formatter, focused main/shared tests, and diff check passed independently.
+
+## Re-Review Fixes
+
+- Added `transcription.audio_url.release` and paired temporary imported preview URLs with renderer cleanup on replacement, record selection, unmount, and late canceled preview responses.
+- Synchronized the organization template selector when templates load asynchronously and no user/custom selection exists.
+- Added page-boundary handling for rejected transcription/organization/start/stop promises after hooks capture error state.
+- Filled the non-English transcription locale values and ran `pnpm i18n:sync`.
+- Replaced the native delete-audio checkbox with the shared `@cherrystudio/ui` `Checkbox`.
+
+## Re-Review Fix Verification
+
+- `pnpm typecheck:web`: PASS.
+- `pnpm typecheck:node`: PASS.
+- `pnpm i18n:check`: PASS, 80,400 translations checked.
+- `pnpm test:main src/main/services/transcription/__tests__/TranscriptionAudioStore.test.ts src/main/services/transcription/__tests__/TranscriptionService.test.ts src/main/ipc/handlers/__tests__/transcription.test.ts`: PASS, 3 files / 25 tests / 0 failures.
+- `pnpm test:shared src/shared/ipc/schemas/__tests__/transcription.test.ts`: PASS, 1 file / 3 tests / 0 failures.
+- `pnpm format`: PASS, fixed 2 files before final verification.
+- `git diff --check`: PASS.
+- Required renderer focused command remains BLOCKED before collection by `@vitest/web-worker` module resolution under Node `25.8.0` in this nested worktree.
+- `pnpm lint` remains BLOCKED before linting by the existing `.oxlintrc.json` `options.typeAware` placement error.
+
+## Re-Review Fix Commit
+
+- This report is included in the signed commit `fix(transcription): close workspace review gaps`; verify the final hash with `git cat-file commit HEAD`.

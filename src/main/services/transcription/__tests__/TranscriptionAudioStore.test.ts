@@ -5,9 +5,10 @@ import path from 'node:path'
 import type { TranscriptionRecord } from '@shared/data/types/transcription'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { getMock, getPathMock, storeFileMock } = vi.hoisted(() => ({
+const { getMock, getPathMock, removeMock, storeFileMock } = vi.hoisted(() => ({
   getMock: vi.fn(),
   getPathMock: vi.fn(),
+  removeMock: vi.fn(),
   storeFileMock: vi.fn()
 }))
 
@@ -42,7 +43,8 @@ describe('TranscriptionAudioStore', () => {
   beforeEach(() => {
     recordingsRoot = mkdtempSync(path.join(tmpdir(), 'cherry-transcription-audio-'))
     getPathMock.mockReset().mockReturnValue(recordingsRoot)
-    getMock.mockReset().mockReturnValue({ storeFile: storeFileMock, remove: vi.fn() })
+    getMock.mockReset().mockReturnValue({ storeFile: storeFileMock, remove: removeMock })
+    removeMock.mockReset()
     storeFileMock.mockReset()
   })
 
@@ -108,16 +110,30 @@ describe('TranscriptionAudioStore', () => {
 
     const result = new TranscriptionAudioStore().resolveTemporaryAudioUrl(audioPath)
 
-    expect(result).toEqual({ url: expect.stringMatching(/^cherry-media:\/\/audio\//), missing: false })
+    expect(result).toEqual({
+      url: expect.stringMatching(/^cherry-media:\/\/audio\//),
+      missing: false,
+      previewId: expect.stringMatching(/^transcription-preview-/)
+    })
     expect(result.url).not.toContain(audioPath)
     expect(storeFileMock).toHaveBeenCalledWith(MediaKind.Audio, expect.any(String), audioPath, 'audio/mp4')
+  })
+
+  it('releases temporary playback media mappings', () => {
+    new TranscriptionAudioStore().releaseTemporaryAudioUrl('transcription-preview-1')
+
+    expect(removeMock).toHaveBeenCalledWith(MediaKind.Audio, 'transcription-preview-1')
   })
 
   it('does not resolve non-audio files through the temporary playback route', () => {
     const filePath = path.join(recordingsRoot, 'imported.txt')
     writeFileSync(filePath, 'not audio')
 
-    expect(new TranscriptionAudioStore().resolveTemporaryAudioUrl(filePath)).toEqual({ url: null, missing: true })
+    expect(new TranscriptionAudioStore().resolveTemporaryAudioUrl(filePath)).toEqual({
+      url: null,
+      missing: true,
+      previewId: null
+    })
     expect(storeFileMock).not.toHaveBeenCalled()
   })
 

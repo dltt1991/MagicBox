@@ -45,9 +45,17 @@ export class TranscriptionAudioStore {
     return this.storeAudioUrl(record.id, record.audioPath)
   }
 
-  resolveTemporaryAudioUrl(audioPath: string): { url: string | null; missing: boolean } {
-    if (!existsSync(audioPath) || !getAudioMimeType(audioPath)) return { url: null, missing: true }
-    return this.storeAudioUrl(`transcription-preview-${uuidv7()}`, audioPath)
+  resolveTemporaryAudioUrl(audioPath: string): { url: string | null; missing: boolean; previewId: string | null } {
+    if (!existsSync(audioPath) || !getAudioMimeType(audioPath)) return { url: null, missing: true, previewId: null }
+    const previewId = `transcription-preview-${uuidv7()}`
+    const result = this.storeAudioUrl(previewId, audioPath)
+    return { ...result, previewId }
+  }
+
+  releaseTemporaryAudioUrl(previewId: string): void {
+    if (previewId.startsWith('transcription-preview-')) {
+      application.get('MediaProtocolService').remove(MediaKind.Audio, previewId)
+    }
   }
 
   deleteAudio(record: TranscriptionRecord, options: { deleteAudio?: boolean } = {}): void {

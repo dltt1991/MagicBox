@@ -6,6 +6,7 @@ const {
   deleteRecordingMock,
   getMock,
   organizeMock,
+  releaseTemporaryAudioUrlMock,
   reserveRecordingTargetMock,
   resolveAudioUrlMock,
   resolveTemporaryAudioUrlMock,
@@ -16,6 +17,7 @@ const {
   deleteRecordingMock: vi.fn(),
   getMock: vi.fn(),
   organizeMock: vi.fn(),
+  releaseTemporaryAudioUrlMock: vi.fn(),
   reserveRecordingTargetMock: vi.fn(),
   resolveAudioUrlMock: vi.fn(),
   resolveTemporaryAudioUrlMock: vi.fn(),
@@ -35,6 +37,7 @@ describe('transcription handlers', () => {
       cancel: cancelMock,
       deleteRecording: deleteRecordingMock,
       organize: organizeMock,
+      releaseTemporaryAudioUrl: releaseTemporaryAudioUrlMock,
       reserveRecordingTarget: reserveRecordingTargetMock,
       resolveAudioUrl: resolveAudioUrlMock,
       resolveTemporaryAudioUrl: resolveTemporaryAudioUrlMock,
@@ -47,6 +50,7 @@ describe('transcription handlers', () => {
     cancelMock.mockReset()
     deleteRecordingMock.mockReset()
     organizeMock.mockReset()
+    releaseTemporaryAudioUrlMock.mockReset()
     transcribeMock.mockReset()
     writeRecordingMock.mockReset()
   })
@@ -83,15 +87,27 @@ describe('transcription handlers', () => {
   })
 
   it('resolves a selected import through the transcription service', async () => {
-    resolveTemporaryAudioUrlMock.mockReturnValue({ url: 'cherry-media://audio/import-1', missing: false })
+    resolveTemporaryAudioUrlMock.mockReturnValue({
+      url: 'cherry-media://audio/import-1',
+      missing: false,
+      previewId: 'import-1'
+    })
 
     await expect(
       transcriptionHandlers['transcription.audio_url.preview'](
         { audioPath: '/imported/audio.m4a' },
         { senderId: 'window-1' }
       )
-    ).resolves.toEqual({ url: 'cherry-media://audio/import-1', missing: false })
+    ).resolves.toEqual({ url: 'cherry-media://audio/import-1', missing: false, previewId: 'import-1' })
     expect(resolveTemporaryAudioUrlMock).toHaveBeenCalledWith('/imported/audio.m4a')
+  })
+
+  it('releases selected import playback URLs through the transcription service', async () => {
+    await transcriptionHandlers['transcription.audio_url.release'](
+      { previewId: 'transcription-preview-1' },
+      { senderId: 'window-1' }
+    )
+    expect(releaseTemporaryAudioUrlMock).toHaveBeenCalledWith('transcription-preview-1')
   })
 
   it('writes PCM WAV bytes only through the transcription service', async () => {
