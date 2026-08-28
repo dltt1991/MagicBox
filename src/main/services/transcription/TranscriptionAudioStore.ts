@@ -19,24 +19,32 @@ const AUDIO_MIME_TYPES: Record<string, string> = {
 }
 
 export class TranscriptionAudioStore {
+  private readonly recordingPaths = new Map<string, string>()
   private readonly reservedRecordingPaths = new Map<string, string>()
 
-  reserveRecordingTarget(extension = '.wav'): { recordingId: string; filePath: string; suggestedName: string } {
+  reserveRecordingTarget(extension = '.wav'): { recordingId: string; suggestedName: string } {
     const recordingId = uuidv7()
     const suggestedName = `${recordingId}${extension}`
     const recordingsDir = application.getPath('feature.transcription.recordings')
     mkdirSync(recordingsDir, { recursive: true })
     const filePath = path.join(recordingsDir, suggestedName)
     this.reservedRecordingPaths.set(recordingId, filePath)
-    return { recordingId, filePath, suggestedName }
+    return { recordingId, suggestedName }
   }
 
-  writeRecording(recordingId: string, wavBytes: Uint8Array): { filePath: string } {
+  writeRecording(recordingId: string, wavBytes: Uint8Array): { recordingId: string } {
     const filePath = this.reservedRecordingPaths.get(recordingId)
     if (!filePath || !isPcmWav(wavBytes)) throw new Error('Recording data must be PCM WAV bytes for a reserved target')
     writeFileSync(filePath, wavBytes)
     this.reservedRecordingPaths.delete(recordingId)
-    return { filePath }
+    this.recordingPaths.set(recordingId, filePath)
+    return { recordingId }
+  }
+
+  getRecordingPath(recordingId: string): string {
+    const filePath = this.recordingPaths.get(recordingId)
+    if (!filePath) throw new Error('Recording file is not available')
+    return filePath
   }
 
   resolveAudioUrl(record: TranscriptionRecord): { url: string | null; missing: boolean } {
@@ -50,6 +58,14 @@ export class TranscriptionAudioStore {
     const previewId = `transcription-preview-${uuidv7()}`
     const result = this.storeAudioUrl(previewId, audioPath)
     return { ...result, previewId }
+  }
+
+  resolveTemporaryRecordingUrl(recordingId: string): {
+    url: string | null
+    missing: boolean
+    previewId: string | null
+  } {
+    return this.resolveTemporaryAudioUrl(this.getRecordingPath(recordingId))
   }
 
   releaseTemporaryAudioUrl(previewId: string): void {

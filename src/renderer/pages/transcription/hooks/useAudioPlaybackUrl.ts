@@ -4,7 +4,10 @@ import { useEffect, useRef, useState } from 'react'
 type PlaybackState = { url: string | null; missing: boolean }
 type PreviewPlaybackState = PlaybackState & { previewId: string | null }
 
-export function useAudioPlaybackUrl(recordId: string | null, previewAudioPath: string | null = null) {
+export function useAudioPlaybackUrl(
+  recordId: string | null,
+  previewSource: { audioPath?: string; recordingId?: string } | null = null
+) {
   const [state, setState] = useState<PlaybackState>({ url: null, missing: false })
   const previewIdRef = useRef<string | null>(null)
 
@@ -18,7 +21,7 @@ export function useAudioPlaybackUrl(recordId: string | null, previewAudioPath: s
       }
     }
 
-    if (!recordId && !previewAudioPath) {
+    if (!recordId && !previewSource) {
       releasePreview()
       setState({ url: null, missing: false })
       return
@@ -26,7 +29,7 @@ export function useAudioPlaybackUrl(recordId: string | null, previewAudioPath: s
     if (recordId) releasePreview()
     const request: Promise<PlaybackState | PreviewPlaybackState> = recordId
       ? ipcApi.request('transcription.audio_url.resolve', { recordId })
-      : ipcApi.request('transcription.audio_url.preview', { audioPath: previewAudioPath! })
+      : ipcApi.request('transcription.audio_url.preview', previewSource!)
     void request.then(
       (result) => {
         const previewId = getPreviewId(result)
@@ -52,7 +55,7 @@ export function useAudioPlaybackUrl(recordId: string | null, previewAudioPath: s
       cancelled = true
       if (!recordId) releasePreview()
     }
-  }, [previewAudioPath, recordId])
+  }, [previewSource, recordId])
 
   return state
 }

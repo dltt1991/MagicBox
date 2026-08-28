@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 export type AudioRecorderStatus = 'idle' | 'starting' | 'recording' | 'paused' | 'saving'
 
-type RecorderResult = { audioPath: string }
+type RecorderResult = { recordingId: string; suggestedName: string }
 
 export function useAudioRecorder() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -24,8 +24,9 @@ export function useAudioRecorder() {
   const start = useCallback(async () => {
     setError(null)
     setStatus('starting')
+    let stream: MediaStream | null = null
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       if (!mountedRef.current) {
         stream.getTracks().forEach((track) => track.stop())
         return
@@ -40,6 +41,9 @@ export function useAudioRecorder() {
       recorder.start()
       setStatus('recording')
     } catch {
+      stream?.getTracks().forEach((track) => track.stop())
+      if (streamRef.current === stream) streamRef.current = null
+      mediaRecorderRef.current = null
       if (!mountedRef.current) return
       setError(new Error('transcription.error.microphone_unavailable'))
       setStatus('idle')
@@ -89,7 +93,7 @@ async function saveWav(blob: Blob): Promise<RecorderResult> {
     const wavBytes = encodePcmWav(audioBuffer)
     const target = await ipcApi.request('transcription.recording.create', { extension: '.wav' })
     await ipcApi.request('transcription.recording.write', { recordingId: target.recordingId, wavBytes })
-    return { audioPath: target.filePath }
+    return { recordingId: target.recordingId, suggestedName: target.suggestedName }
   } finally {
     await audioContext.close()
   }

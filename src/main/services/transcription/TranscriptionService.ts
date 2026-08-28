@@ -21,6 +21,18 @@ type BackendResult = {
   modelId?: string
 }
 
+type TranscriptionCommandInput = {
+  jobId: string
+  recordId?: string
+  audioPath?: string
+  recordingId?: string
+  sourceType: 'recording' | 'file'
+  language: TranscriptionLanguage
+  backend: TranscriptionBackendConfig
+}
+
+type ResolvedTranscriptionCommandInput = Omit<TranscriptionCommandInput, 'audioPath'> & { audioPath: string }
+
 interface TranscriptionServiceDependencies {
   local: Pick<LocalWhisperRuntime, 'transcribe'>
   provider: Pick<ProviderTranscriptionBackend, 'transcribe'>
@@ -67,27 +79,22 @@ export class TranscriptionService extends BaseService {
     return transcriptionAudioStore.resolveTemporaryAudioUrl(audioPath)
   }
 
+  resolveTemporaryRecordingUrl(recordingId: string) {
+    return transcriptionAudioStore.resolveTemporaryRecordingUrl(recordingId)
+  }
+
   releaseTemporaryAudioUrl(previewId: string): void {
     transcriptionAudioStore.releaseTemporaryAudioUrl(previewId)
   }
 
-  async transcribe(
-    input: {
-      jobId: string
-      recordId?: string
-      audioPath: string
-      sourceType: 'recording' | 'file'
-      language: TranscriptionLanguage
-      backend: TranscriptionBackendConfig
-    },
-    senderId: string
-  ) {
+  async transcribe(input: TranscriptionCommandInput, senderId: string) {
     const controller = this.startJob(input.jobId)
     try {
       this.sendProgress(senderId, input.jobId, 'preparing')
-      const output = await this.runBackend(input, controller.signal, senderId)
+      const audioPath = this.resolveInputAudioPath(input)
+      const output = await this.runBackend({ ...input, audioPath }, controller.signal, senderId)
       controller.signal.throwIfAborted()
-      const record = this.saveTranscription(input, output)
+      const record = this.saveTranscription({ ...input, audioPath }, output)
       const result = transcriptionHistoryService.saveResult(record.id, {
         transcriptText: output.text,
         segments: output.segments,
@@ -162,7 +169,7 @@ export class TranscriptionService extends BaseService {
   }
 
   private async runBackend(
-    input: Parameters<TranscriptionService['transcribe']>[0],
+    input: ResolvedTranscriptionCommandInput,
     signal: AbortSignal,
     senderId: string
   ): Promise<BackendResult> {
@@ -189,7 +196,7 @@ export class TranscriptionService extends BaseService {
     })
   }
 
-  private saveTranscription(input: Parameters<TranscriptionService['transcribe']>[0], output: BackendResult) {
+  private saveTranscription(input: ResolvedTranscriptionCommandInput, output: BackendResult) {
     const values = {
       durationMs: output.durationMs,
       language: output.language ?? null,
@@ -211,6 +218,12 @@ export class TranscriptionService extends BaseService {
       audioManaged: input.sourceType === 'recording',
       ...values
     })
+  }
+
+  private resolveInputAudioPath(input: TranscriptionCommandInput): string {
+    if (input.recordingId) return transcriptionAudioStore.getRecordingPath(input.recordingId)
+    if (input.audioPath) return input.audioPath
+    throw new Error('Audio source is not available')
   }
 
   private sendProgress(

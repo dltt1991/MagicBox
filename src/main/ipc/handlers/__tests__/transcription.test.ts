@@ -9,6 +9,7 @@ const {
   releaseTemporaryAudioUrlMock,
   reserveRecordingTargetMock,
   resolveAudioUrlMock,
+  resolveTemporaryRecordingUrlMock,
   resolveTemporaryAudioUrlMock,
   transcribeMock,
   writeRecordingMock
@@ -20,6 +21,7 @@ const {
   releaseTemporaryAudioUrlMock: vi.fn(),
   reserveRecordingTargetMock: vi.fn(),
   resolveAudioUrlMock: vi.fn(),
+  resolveTemporaryRecordingUrlMock: vi.fn(),
   resolveTemporaryAudioUrlMock: vi.fn(),
   transcribeMock: vi.fn(),
   writeRecordingMock: vi.fn()
@@ -40,12 +42,14 @@ describe('transcription handlers', () => {
       releaseTemporaryAudioUrl: releaseTemporaryAudioUrlMock,
       reserveRecordingTarget: reserveRecordingTargetMock,
       resolveAudioUrl: resolveAudioUrlMock,
+      resolveTemporaryRecordingUrl: resolveTemporaryRecordingUrlMock,
       resolveTemporaryAudioUrl: resolveTemporaryAudioUrlMock,
       transcribe: transcribeMock,
       writeRecording: writeRecordingMock
     })
     reserveRecordingTargetMock.mockReset()
     resolveAudioUrlMock.mockReset()
+    resolveTemporaryRecordingUrlMock.mockReset()
     resolveTemporaryAudioUrlMock.mockReset()
     cancelMock.mockReset()
     deleteRecordingMock.mockReset()
@@ -58,7 +62,6 @@ describe('transcription handlers', () => {
   it('creates a recording target for the WAV recording format', async () => {
     reserveRecordingTargetMock.mockReturnValue({
       recordingId: 'record-1',
-      filePath: '/managed/record-1.wav',
       suggestedName: 'record-1.wav'
     })
 
@@ -66,7 +69,6 @@ describe('transcription handlers', () => {
       transcriptionHandlers['transcription.recording.create']({ extension: '.wav' }, {} as never)
     ).resolves.toEqual({
       recordingId: 'record-1',
-      filePath: '/managed/record-1.wav',
       suggestedName: 'record-1.wav'
     })
     expect(getMock).toHaveBeenCalledWith('TranscriptionService')
@@ -102,6 +104,19 @@ describe('transcription handlers', () => {
     expect(resolveTemporaryAudioUrlMock).toHaveBeenCalledWith('/imported/audio.m4a')
   })
 
+  it('resolves a selected recording through the transcription service', async () => {
+    resolveTemporaryRecordingUrlMock.mockReturnValue({
+      url: 'cherry-media://audio/recording-1',
+      missing: false,
+      previewId: 'preview-1'
+    })
+
+    await expect(
+      transcriptionHandlers['transcription.audio_url.preview']({ recordingId: 'recording-1' }, { senderId: 'window-1' })
+    ).resolves.toEqual({ url: 'cherry-media://audio/recording-1', missing: false, previewId: 'preview-1' })
+    expect(resolveTemporaryRecordingUrlMock).toHaveBeenCalledWith('recording-1')
+  })
+
   it('releases selected import playback URLs through the transcription service', async () => {
     await transcriptionHandlers['transcription.audio_url.release'](
       { previewId: 'transcription-preview-1' },
@@ -112,14 +127,14 @@ describe('transcription handlers', () => {
 
   it('writes PCM WAV bytes only through the transcription service', async () => {
     const wavBytes = new Uint8Array([1, 2, 3])
-    writeRecordingMock.mockReturnValue({ filePath: '/managed/record-1.wav' })
+    writeRecordingMock.mockReturnValue({ recordingId: 'record-1' })
 
     await expect(
       transcriptionHandlers['transcription.recording.write'](
         { recordingId: 'record-1', wavBytes },
         { senderId: 'window-1' }
       )
-    ).resolves.toEqual({ filePath: '/managed/record-1.wav' })
+    ).resolves.toEqual({ recordingId: 'record-1' })
     expect(writeRecordingMock).toHaveBeenCalledWith('record-1', wavBytes)
   })
 

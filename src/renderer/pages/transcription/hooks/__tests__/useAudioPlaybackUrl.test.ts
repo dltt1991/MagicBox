@@ -24,15 +24,15 @@ describe('useAudioPlaybackUrl', () => {
       return { missing: false }
     })
 
-    const { rerender, unmount } = renderHook(({ previewAudioPath }) => useAudioPlaybackUrl(null, previewAudioPath), {
-      initialProps: { previewAudioPath: '/first.wav' }
+    const { rerender, unmount } = renderHook(({ previewSource }) => useAudioPlaybackUrl(null, previewSource), {
+      initialProps: { previewSource: { audioPath: '/first.wav' } }
     })
 
     await waitFor(() =>
       expect(ipcApi.request).toHaveBeenCalledWith('transcription.audio_url.preview', { audioPath: '/first.wav' })
     )
 
-    await act(async () => rerender({ previewAudioPath: '/second.wav' }))
+    await act(async () => rerender({ previewSource: { audioPath: '/second.wav' } }))
     await waitFor(() =>
       expect(ipcApi.request).toHaveBeenCalledWith('transcription.audio_url.release', { previewId: 'preview-1' })
     )

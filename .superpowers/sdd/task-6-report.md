@@ -203,3 +203,24 @@ Both commands also emitted the existing Node engine warning because this environ
 ## Fifth Re-Review Fix Commit
 
 - Pending signed commit: `fix(transcription): stop abandoned recorder streams`.
+
+## Sixth Re-Review Fixes
+
+- Kept app-managed recording paths main-owned: `recording.create` and `recording.write` now return only an opaque `recordingId` plus suggested filename, and preview/transcribe routes resolve that ID inside `TranscriptionService`.
+- Stopped granted microphone streams when `MediaRecorder` construction or startup fails after permission is granted.
+- Removed direct IPC route schema tests for this surface and moved the meaningful coverage to handler/service/audio-store behavior.
+
+## Sixth Re-Review Verification
+
+- `pnpm typecheck:web`: PASS.
+- `pnpm typecheck:node`: PASS.
+- `pnpm i18n:check`: PASS, 80,436 translations checked.
+- `pnpm test:main src/main/services/transcription/__tests__/TranscriptionAudioStore.test.ts src/main/services/transcription/__tests__/TranscriptionService.test.ts src/main/ipc/handlers/__tests__/transcription.test.ts`: PASS, 3 files / 29 tests / 0 failures.
+- `pnpm exec vitest run --project renderer src/renderer/pages/transcription/hooks/__tests__/useAudioRecorder.test.ts src/renderer/pages/transcription/hooks/__tests__/useAudioPlaybackUrl.test.ts src/renderer/pages/transcription/__tests__/TranscriptionPage.test.tsx`: BLOCKED before collection by `@vitest/web-worker` module resolution under Node `25.8.0` in this nested worktree.
+- `pnpm format`: PASS, fixed 6 files before final verification.
+- `pnpm lint`: BLOCKED before linting by the existing `.oxlintrc.json` `options.typeAware` placement error.
+- `git diff --check`: PASS.
+
+## Sixth Re-Review Fix Commit
+
+- Pending signed commit: `fix(transcription): keep recording paths in main`.

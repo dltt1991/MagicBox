@@ -52,11 +52,21 @@ export default function TranscriptionPage() {
   const recorder = useAudioRecorder()
   const job = useTranscriptionJob()
   const localWhisper = useLocalModel('whisper')
-  const playback = useAudioPlaybackUrl(record?.id ?? null, draftSource?.audioPath ?? null)
+  const previewSource = useMemo(
+    () =>
+      draftSource?.sourceType === 'file'
+        ? { audioPath: draftSource.audioPath }
+        : draftSource?.sourceType === 'recording'
+          ? { recordingId: draftSource.recordingId }
+          : null,
+    [draftSource]
+  )
+  const playback = useAudioPlaybackUrl(record?.id ?? null, previewSource)
   const missingIds = new Set(playback.missing && record ? [record.id] : [])
 
   const audioUrl = playback.url
-  const audioPath = draftSource?.audioPath ?? record?.audioPath ?? null
+  const audioPath = draftSource?.sourceType === 'file' ? draftSource.audioPath : (record?.audioPath ?? null)
+  const recordingId = draftSource?.sourceType === 'recording' ? draftSource.recordingId : null
   const backendConfig = useMemo(
     () =>
       buildBackendConfig(backend, {
@@ -66,7 +76,7 @@ export default function TranscriptionPage() {
       }),
     [backend, customEndpointBaseUrl, customEndpointRequestFormat, defaultModelId]
   )
-  const canTranscribe = Boolean(audioPath && backendConfig)
+  const canTranscribe = Boolean((audioPath || recordingId) && backendConfig)
   const transcriptText = result?.transcriptText ?? ''
   const segments = result?.segments ?? []
   const organizationOutput = result?.organizationOutput ?? null
@@ -94,25 +104,36 @@ export default function TranscriptionPage() {
     if (!recording) return
     setSelectedId(null)
     setDraftSource({
-      audioPath: recording.audioPath,
-      name: recording.audioPath.split(/[\\/]/).pop() ?? t('transcription.recording'),
+      name: recording.suggestedName,
+      recordingId: recording.recordingId,
       sourceType: 'recording'
     })
   }, [recorder, t])
 
   const handleTranscribe = useCallback(async () => {
-    if (!audioPath || !backendConfig) return
+    if ((!audioPath && !recordingId) || !backendConfig) return
     const { record: nextRecord } = await job.start({
-      audioPath,
       backend: backendConfig,
       language,
+      ...(audioPath ? { audioPath } : { recordingId: recordingId! }),
       recordId: selectedId ?? undefined,
       sourceType: getDraftSourceType(draftSource, record?.sourceType ?? sourceMode)
     })
     setSelectedId(nextRecord.id)
     setDraftSource(null)
     await refresh()
-  }, [audioPath, backendConfig, draftSource, job, language, record?.sourceType, refresh, selectedId, sourceMode])
+  }, [
+    audioPath,
+    backendConfig,
+    draftSource,
+    job,
+    language,
+    record?.sourceType,
+    recordingId,
+    refresh,
+    selectedId,
+    sourceMode
+  ])
 
   const handleDelete = useCallback(
     async (target: TranscriptionRecord, deleteAudio: boolean) => {
@@ -224,7 +245,9 @@ export default function TranscriptionPage() {
   )
 }
 
-type DraftSource = { audioPath: string; name: string; sourceType: 'recording' | 'file' }
+type DraftSource =
+  | { audioPath: string; name: string; sourceType: 'file' }
+  | { name: string; recordingId: string; sourceType: 'recording' }
 
 export async function runHandled(promise: Promise<unknown>): Promise<void> {
   await promise.catch(() => undefined)

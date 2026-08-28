@@ -36,7 +36,6 @@ export const transcriptionRequestSchemas = {
     }),
     output: z.strictObject({
       recordingId: z.string().min(1),
-      filePath: z.string().min(1),
       suggestedName: z.string().min(1)
     })
   }),
@@ -45,7 +44,7 @@ export const transcriptionRequestSchemas = {
       recordingId: z.string().min(1),
       wavBytes: uint8ArraySchema.refine((bytes) => bytes.byteLength <= 256 * 1024 * 1024, 'Recording is too large')
     }),
-    output: z.strictObject({ filePath: z.string().min(1) })
+    output: z.strictObject({ recordingId: z.string().min(1) })
   }),
   'transcription.recording.delete': defineRoute({
     input: z.strictObject({ recordId: z.string().min(1), deleteAudio: z.boolean().default(false) }),
@@ -56,7 +55,9 @@ export const transcriptionRequestSchemas = {
     output: z.strictObject({ url: z.string().nullable(), missing: z.boolean() })
   }),
   'transcription.audio_url.preview': defineRoute({
-    input: z.strictObject({ audioPath: z.string().min(1) }),
+    input: z
+      .strictObject({ audioPath: z.string().min(1).optional(), recordingId: z.string().min(1).optional() })
+      .refine((input) => Boolean(input.audioPath) !== Boolean(input.recordingId), 'Provide audioPath or recordingId'),
     output: z.strictObject({
       url: z.string().nullable(),
       missing: z.boolean(),
@@ -68,14 +69,17 @@ export const transcriptionRequestSchemas = {
     output: z.void()
   }),
   'transcription.transcribe': defineRoute({
-    input: z.strictObject({
-      jobId: z.string().min(1),
-      recordId: z.string().min(1).optional(),
-      audioPath: z.string().min(1),
-      sourceType: TranscriptionSourceTypeSchema,
-      language: TranscriptionLanguageSchema,
-      backend: TranscriptionBackendConfigSchema
-    }),
+    input: z
+      .strictObject({
+        jobId: z.string().min(1),
+        recordId: z.string().min(1).optional(),
+        audioPath: z.string().min(1).optional(),
+        recordingId: z.string().min(1).optional(),
+        sourceType: TranscriptionSourceTypeSchema,
+        language: TranscriptionLanguageSchema,
+        backend: TranscriptionBackendConfigSchema
+      })
+      .refine((input) => Boolean(input.audioPath) !== Boolean(input.recordingId), 'Provide audioPath or recordingId'),
     output: z.strictObject({ record: TranscriptionRecordSchema, result: TranscriptionResultSchema })
   }),
   'transcription.cancel': defineRoute({

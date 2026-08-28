@@ -5,10 +5,11 @@ import { useCallback, useRef, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 
 type TranscriptionInput = {
-  audioPath: string
+  audioPath?: string
   backend: TranscriptionBackendConfig
   language: TranscriptionLanguage
   recordId?: string
+  recordingId?: string
   sourceType: TranscriptionSourceType
 }
 
