@@ -184,3 +184,22 @@ Both commands also emitted the existing Node engine warning because this environ
 ## Fourth Re-Review Fix Commit
 
 - Pending signed commit: `fix(transcription): lock pending recorder start`.
+
+## Fifth Re-Review Fixes
+
+- Added an unmount guard for microphone permission resolution so a stream granted after page unmount is immediately stopped and no state updates are attempted.
+
+## Fifth Re-Review Verification
+
+- `pnpm typecheck:web`: PASS.
+- `pnpm typecheck:node`: PASS.
+- `pnpm i18n:check`: PASS, 80,436 translations checked.
+- `pnpm test:main src/main/services/transcription/__tests__/TranscriptionAudioStore.test.ts src/main/services/transcription/__tests__/TranscriptionService.test.ts src/main/ipc/handlers/__tests__/transcription.test.ts`: PASS, 3 files / 25 tests / 0 failures.
+- `pnpm test:shared src/shared/ipc/schemas/__tests__/transcription.test.ts`: PASS, 1 file / 3 tests / 0 failures.
+- `pnpm exec vitest run ...transcription renderer tests...`: BLOCKED before collection by `@vitest/web-worker` module resolution under Node `25.8.0` in this nested worktree.
+- `pnpm format && pnpm lint`: format PASS; lint remains BLOCKED before linting by the existing `.oxlintrc.json` `options.typeAware` placement error.
+- `git diff --check`: PASS.
+
+## Fifth Re-Review Fix Commit
+
+- Pending signed commit: `fix(transcription): stop abandoned recorder streams`.

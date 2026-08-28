@@ -7,6 +7,7 @@ type RecorderResult = { audioPath: string }
 
 export function useAudioRecorder() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const mountedRef = useRef(true)
   const streamRef = useRef<MediaStream | null>(null)
   const chunksRef = useRef<BlobPart[]>([])
   const [error, setError] = useState<Error | null>(null)
@@ -14,6 +15,7 @@ export function useAudioRecorder() {
 
   useEffect(
     () => () => {
+      mountedRef.current = false
       streamRef.current?.getTracks().forEach((track) => track.stop())
     },
     []
@@ -24,6 +26,10 @@ export function useAudioRecorder() {
     setStatus('starting')
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      if (!mountedRef.current) {
+        stream.getTracks().forEach((track) => track.stop())
+        return
+      }
       chunksRef.current = []
       const recorder = new MediaRecorder(stream)
       streamRef.current = stream
@@ -34,6 +40,7 @@ export function useAudioRecorder() {
       recorder.start()
       setStatus('recording')
     } catch {
+      if (!mountedRef.current) return
       setError(new Error('transcription.error.microphone_unavailable'))
       setStatus('idle')
     }
@@ -64,10 +71,11 @@ export function useAudioRecorder() {
         streamRef.current = null
       })
     } catch {
+      if (!mountedRef.current) return null
       setError(new Error('transcription.error.recording_failed'))
       return null
     } finally {
-      setStatus('idle')
+      if (mountedRef.current) setStatus('idle')
     }
   }, [])
 
