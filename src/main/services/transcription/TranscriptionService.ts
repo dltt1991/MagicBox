@@ -49,6 +49,15 @@ export class TranscriptionService extends BaseService {
     return transcriptionAudioStore.reserveRecordingTarget(extension)
   }
 
+  writeRecording(recordingId: string, wavBytes: Uint8Array) {
+    return transcriptionAudioStore.writeRecording(recordingId, wavBytes)
+  }
+
+  deleteRecording(recordId: string, deleteAudio: boolean): void {
+    const { record } = transcriptionHistoryService.getRecord(recordId)
+    transcriptionAudioStore.deleteAudio(record, { deleteAudio })
+  }
+
   resolveAudioUrl(recordId: string) {
     const { record } = transcriptionHistoryService.getRecord(recordId)
     return transcriptionAudioStore.resolveAudioUrl(record)

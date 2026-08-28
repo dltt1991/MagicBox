@@ -4,18 +4,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
   createRecordMock,
+  deleteAudioMock,
   getRecordMock,
   reserveRecordingTargetMock,
   resolveAudioUrlMock,
   saveResultMock,
-  updateRecordMock
+  updateRecordMock,
+  writeRecordingMock
 } = vi.hoisted(() => ({
   createRecordMock: vi.fn(),
+  deleteAudioMock: vi.fn(),
   getRecordMock: vi.fn(),
   reserveRecordingTargetMock: vi.fn(),
   resolveAudioUrlMock: vi.fn(),
   saveResultMock: vi.fn(),
-  updateRecordMock: vi.fn()
+  updateRecordMock: vi.fn(),
+  writeRecordingMock: vi.fn()
 }))
 
 vi.mock('@data/services/TranscriptionHistoryService', () => ({
@@ -30,7 +34,9 @@ vi.mock('@data/services/TranscriptionHistoryService', () => ({
 vi.mock('../TranscriptionAudioStore', () => ({
   transcriptionAudioStore: {
     reserveRecordingTarget: reserveRecordingTargetMock,
-    resolveAudioUrl: resolveAudioUrlMock
+    resolveAudioUrl: resolveAudioUrlMock,
+    writeRecording: writeRecordingMock,
+    deleteAudio: deleteAudioMock
   }
 }))
 
@@ -42,7 +48,9 @@ describe('TranscriptionService', () => {
     getRecordMock.mockReset()
     reserveRecordingTargetMock.mockReset()
     resolveAudioUrlMock.mockReset()
+    writeRecordingMock.mockReset()
     createRecordMock.mockReset()
+    deleteAudioMock.mockReset()
     saveResultMock.mockReset()
     updateRecordMock.mockReset()
   })
@@ -53,6 +61,14 @@ describe('TranscriptionService', () => {
 
     expect(new TranscriptionService().reserveRecordingTarget('.wav')).toBe(target)
     expect(reserveRecordingTargetMock).toHaveBeenCalledWith('.wav')
+  })
+
+  it('owns writing PCM WAV bytes to a reserved recording target', () => {
+    const bytes = new Uint8Array([1, 2, 3])
+    writeRecordingMock.mockReturnValue({ filePath: '/managed/record-1.wav' })
+
+    expect(new TranscriptionService().writeRecording('record-1', bytes)).toEqual({ filePath: '/managed/record-1.wav' })
+    expect(writeRecordingMock).toHaveBeenCalledWith('record-1', bytes)
   })
 
   it('loads the persisted record before resolving its playback URL', () => {
@@ -66,6 +82,15 @@ describe('TranscriptionService', () => {
     })
     expect(getRecordMock).toHaveBeenCalledWith('record-1')
     expect(resolveAudioUrlMock).toHaveBeenCalledWith(record)
+  })
+
+  it('deletes only the selected managed recording on request', () => {
+    const record = { id: 'record-1', audioManaged: true, audioPath: '/managed/record-1.wav' }
+    getRecordMock.mockReturnValue({ record, result: null })
+
+    new TranscriptionService().deleteRecording('record-1', true)
+
+    expect(deleteAudioMock).toHaveBeenCalledWith(record, { deleteAudio: true })
   })
 
   it('selects the requested backend, sends progress, and persists its successful result', async () => {

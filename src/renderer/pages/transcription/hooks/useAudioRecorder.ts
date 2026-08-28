@@ -1,0 +1,114 @@
+import { ipcApi } from '@renderer/ipc'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
+type RecorderResult = { audioPath: string; previewUrl: string }
+
+export function useAudioRecorder() {
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const streamRef = useRef<MediaStream | null>(null)
+  const previewUrlRef = useRef<string | null>(null)
+  const chunksRef = useRef<BlobPart[]>([])
+  const [error, setError] = useState<Error | null>(null)
+  const [status, setStatus] = useState<'idle' | 'recording' | 'paused' | 'saving'>('idle')
+
+  useEffect(
+    () => () => {
+      streamRef.current?.getTracks().forEach((track) => track.stop())
+      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+    },
+    []
+  )
+
+  const start = useCallback(async () => {
+    setError(null)
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    chunksRef.current = []
+    const recorder = new MediaRecorder(stream)
+    streamRef.current = stream
+    mediaRecorderRef.current = recorder
+    recorder.ondataavailable = (event) => {
+      if (event.data.size) chunksRef.current.push(event.data)
+    }
+    recorder.start()
+    setStatus('recording')
+  }, [])
+
+  const pause = useCallback(() => {
+    mediaRecorderRef.current?.pause()
+    setStatus('paused')
+  }, [])
+
+  const resume = useCallback(() => {
+    mediaRecorderRef.current?.resume()
+    setStatus('recording')
+  }, [])
+
+  const stop = useCallback(
+    () =>
+      new Promise<RecorderResult>((resolve, reject) => {
+        const recorder = mediaRecorderRef.current
+        if (!recorder) return reject(new Error('No active recorder'))
+        setStatus('saving')
+        recorder.onerror = () => reject(new Error('Recording failed'))
+        recorder.onstop = () => {
+          void saveWav(new Blob(chunksRef.current), previewUrlRef).then(resolve, reject)
+        }
+        recorder.stop()
+        streamRef.current?.getTracks().forEach((track) => track.stop())
+        streamRef.current = null
+      }).finally(() => setStatus('idle')),
+    []
+  )
+
+  return { error, pause, resume, start, status, stop }
+}
+
+async function saveWav(blob: Blob, previewUrlRef: { current: string | null }): Promise<RecorderResult> {
+  const audioContext = new AudioContext()
+  try {
+    const audioBuffer = await audioContext.decodeAudioData(await blob.arrayBuffer())
+    const wavBytes = encodePcmWav(audioBuffer)
+    const target = await ipcApi.request('transcription.recording.create', { extension: '.wav' })
+    await ipcApi.request('transcription.recording.write', { recordingId: target.recordingId, wavBytes })
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
+    const previewBuffer = new ArrayBuffer(wavBytes.byteLength)
+    new Uint8Array(previewBuffer).set(wavBytes)
+    const previewUrl = URL.createObjectURL(new Blob([previewBuffer], { type: 'audio/wav' }))
+    previewUrlRef.current = previewUrl
+    return { audioPath: target.filePath, previewUrl }
+  } finally {
+    await audioContext.close()
+  }
+}
+
+function encodePcmWav(buffer: AudioBuffer): Uint8Array {
+  const channelCount = buffer.numberOfChannels
+  const frameBytes = channelCount * 2
+  const dataBytes = buffer.length * frameBytes
+  const bytes = new Uint8Array(44 + dataBytes)
+  const view = new DataView(bytes.buffer)
+  writeTag(bytes, 0, 'RIFF')
+  view.setUint32(4, 36 + dataBytes, true)
+  writeTag(bytes, 8, 'WAVE')
+  writeTag(bytes, 12, 'fmt ')
+  view.setUint32(16, 16, true)
+  view.setUint16(20, 1, true)
+  view.setUint16(22, channelCount, true)
+  view.setUint32(24, buffer.sampleRate, true)
+  view.setUint32(28, buffer.sampleRate * frameBytes, true)
+  view.setUint16(32, frameBytes, true)
+  view.setUint16(34, 16, true)
+  writeTag(bytes, 36, 'data')
+  view.setUint32(40, dataBytes, true)
+  for (let frame = 0, offset = 44; frame < buffer.length; frame++) {
+    for (let channel = 0; channel < channelCount; channel++, offset += 2) {
+      const sample = Math.max(-1, Math.min(1, buffer.getChannelData(channel)[frame] ?? 0))
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true)
+    }
+  }
+  return bytes
+}
+
+function writeTag(bytes: Uint8Array, offset: number, value: string): void {
+  for (let index = 0; index < value.length; index++) bytes[offset + index] = value.charCodeAt(index)
+}

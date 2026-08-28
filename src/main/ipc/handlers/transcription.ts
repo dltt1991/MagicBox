@@ -12,6 +12,14 @@ function requireSenderWindow(ctx: IpcContext): WindowId {
 export const transcriptionHandlers: IpcHandlersFor<typeof transcriptionRequestSchemas> = {
   'transcription.recording.create': async ({ extension }) =>
     application.get('TranscriptionService').reserveRecordingTarget(extension),
+  'transcription.recording.write': async ({ recordingId, wavBytes }, ctx) => {
+    requireSenderWindow(ctx)
+    return application.get('TranscriptionService').writeRecording(recordingId, wavBytes)
+  },
+  'transcription.recording.delete': async ({ recordId, deleteAudio }, ctx) => {
+    requireSenderWindow(ctx)
+    application.get('TranscriptionService').deleteRecording(recordId, deleteAudio)
+  },
   'transcription.audio_url.resolve': async ({ recordId }) =>
     application.get('TranscriptionService').resolveAudioUrl(recordId),
   'transcription.transcribe': async (input, ctx) =>

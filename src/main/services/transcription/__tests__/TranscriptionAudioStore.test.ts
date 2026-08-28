@@ -1,4 +1,4 @@
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
@@ -55,6 +55,29 @@ describe('TranscriptionAudioStore', () => {
     expect(target.suggestedName).toBe(`${target.recordingId}.wav`)
     expect(target.recordingId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)
     expect(existsSync(path.dirname(target.filePath))).toBe(true)
+  })
+
+  it('writes PCM WAV bytes only to the matching reserved recording target', () => {
+    const store = new TranscriptionAudioStore()
+    const target = store.reserveRecordingTarget()
+    const wav = new Uint8Array(44)
+    wav.set([0x52, 0x49, 0x46, 0x46], 0)
+    wav.set([0x57, 0x41, 0x56, 0x45], 8)
+    wav.set([0x66, 0x6d, 0x74, 0x20], 12)
+    wav.set([16, 0, 0, 0], 16)
+    wav.set([1, 0, 1, 0], 20)
+    wav.set([0x80, 0x3e, 0, 0], 24)
+    wav.set([0, 0x7d, 0, 0], 28)
+    wav.set([2, 0, 16, 0], 32)
+    wav.set([0x64, 0x61, 0x74, 0x61], 36)
+
+    expect(store.writeRecording(target.recordingId, wav)).toEqual({ filePath: target.filePath })
+    expect(readFileSync(target.filePath)).toEqual(Buffer.from(wav))
+    expect(() => store.writeRecording(target.recordingId, wav)).toThrow()
+
+    const invalidTarget = store.reserveRecordingTarget()
+    expect(() => store.writeRecording(invalidTarget.recordingId, new Uint8Array([0x1a, 0x45, 0xdf, 0xa3]))).toThrow()
+    expect(existsSync(invalidTarget.filePath)).toBe(false)
   })
 
   it('returns no playback URL when a referenced file is missing', () => {

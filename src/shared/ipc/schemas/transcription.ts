@@ -7,6 +7,7 @@ import {
 import * as z from 'zod'
 
 import { defineRoute } from '../define'
+import { uint8ArraySchema } from './common'
 
 export const TranscriptionBackendConfigSchema = z.discriminatedUnion('backend', [
   z.strictObject({ backend: z.literal('local_whisper') }),
@@ -38,6 +39,17 @@ export const transcriptionRequestSchemas = {
       filePath: z.string().min(1),
       suggestedName: z.string().min(1)
     })
+  }),
+  'transcription.recording.write': defineRoute({
+    input: z.strictObject({
+      recordingId: z.string().min(1),
+      wavBytes: uint8ArraySchema.refine((bytes) => bytes.byteLength <= 256 * 1024 * 1024, 'Recording is too large')
+    }),
+    output: z.strictObject({ filePath: z.string().min(1) })
+  }),
+  'transcription.recording.delete': defineRoute({
+    input: z.strictObject({ recordId: z.string().min(1), deleteAudio: z.boolean().default(false) }),
+    output: z.void()
   }),
   'transcription.audio_url.resolve': defineRoute({
     input: z.strictObject({ recordId: z.string().min(1) }),

@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
 import { application } from '@application'
@@ -18,12 +18,24 @@ const AUDIO_MIME_TYPES: Record<string, string> = {
 }
 
 export class TranscriptionAudioStore {
+  private readonly reservedRecordingPaths = new Map<string, string>()
+
   reserveRecordingTarget(extension = '.wav'): { recordingId: string; filePath: string; suggestedName: string } {
     const recordingId = uuidv7()
     const suggestedName = `${recordingId}${extension}`
     const recordingsDir = application.getPath('feature.transcription.recordings')
     mkdirSync(recordingsDir, { recursive: true })
-    return { recordingId, filePath: path.join(recordingsDir, suggestedName), suggestedName }
+    const filePath = path.join(recordingsDir, suggestedName)
+    this.reservedRecordingPaths.set(recordingId, filePath)
+    return { recordingId, filePath, suggestedName }
+  }
+
+  writeRecording(recordingId: string, wavBytes: Uint8Array): { filePath: string } {
+    const filePath = this.reservedRecordingPaths.get(recordingId)
+    if (!filePath || !isPcmWav(wavBytes)) throw new Error('Recording data must be PCM WAV bytes for a reserved target')
+    writeFileSync(filePath, wavBytes)
+    this.reservedRecordingPaths.delete(recordingId)
+    return { filePath }
   }
 
   resolveAudioUrl(record: TranscriptionRecord): { url: string | null; missing: boolean } {
@@ -50,6 +62,29 @@ export class TranscriptionAudioStore {
 
 function getAudioMimeType(filePath: string): string {
   return AUDIO_MIME_TYPES[path.extname(filePath).toLowerCase()] ?? 'application/octet-stream'
+}
+
+function isPcmWav(bytes: Uint8Array): boolean {
+  if (bytes.byteLength < 44 || readTag(bytes, 0) !== 'RIFF' || readTag(bytes, 8) !== 'WAVE') return false
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+  let offset = 12
+  let hasPcmFormat = false
+  let hasData = false
+  while (offset + 8 <= bytes.byteLength) {
+    const size = view.getUint32(offset + 4, true)
+    const bodyOffset = offset + 8
+    if (bodyOffset + size > bytes.byteLength) return false
+    if (readTag(bytes, offset) === 'fmt ' && size >= 16) {
+      hasPcmFormat = view.getUint16(bodyOffset, true) === 1
+    }
+    if (readTag(bytes, offset) === 'data') hasData = true
+    offset = bodyOffset + size + (size % 2)
+  }
+  return hasPcmFormat && hasData
+}
+
+function readTag(bytes: Uint8Array, offset: number): string {
+  return String.fromCharCode(...bytes.subarray(offset, offset + 4))
 }
 
 export const transcriptionAudioStore = new TranscriptionAudioStore()
