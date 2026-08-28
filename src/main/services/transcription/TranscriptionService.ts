@@ -63,6 +63,10 @@ export class TranscriptionService extends BaseService {
     return transcriptionAudioStore.resolveAudioUrl(record)
   }
 
+  resolveTemporaryAudioUrl(audioPath: string) {
+    return transcriptionAudioStore.resolveTemporaryAudioUrl(audioPath)
+  }
+
   async transcribe(
     input: {
       jobId: string

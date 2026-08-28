@@ -12,11 +12,16 @@ type TranscriptionToolbarProps = {
   onBackendChange: (backend: TranscriptionBackendConfig['backend']) => void
   onLanguageChange: (language: TranscriptionLanguage) => void
   onSourceModeChange: (sourceMode: SourceMode) => void
+  providerAvailable: boolean
   sourceMode: SourceMode
 }
 
 const MODEL_STATUS_LABEL_KEYS: Record<string, string> = {
-  ready: 'transcription.model_status.ready'
+  downloading: 'transcription.model_status.downloading',
+  error: 'transcription.model_status.error',
+  not_downloaded: 'transcription.model_status.not_downloaded',
+  ready: 'transcription.model_status.ready',
+  unsupported: 'transcription.model_status.unsupported'
 }
 
 export function TranscriptionToolbar({
@@ -26,6 +31,7 @@ export function TranscriptionToolbar({
   onBackendChange,
   onLanguageChange,
   onSourceModeChange,
+  providerAvailable,
   sourceMode
 }: TranscriptionToolbarProps) {
   const { t } = useTranslation()
@@ -52,7 +58,9 @@ export function TranscriptionToolbar({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="local_whisper">{t('transcription.backend_local')}</SelectItem>
-          <SelectItem value="provider_model">{t('transcription.backend_provider')}</SelectItem>
+          <SelectItem disabled={!providerAvailable} value="provider_model">
+            {t('transcription.backend_provider')}
+          </SelectItem>
           <SelectItem value="custom_endpoint">{t('transcription.backend_custom')}</SelectItem>
         </SelectContent>
       </Select>
@@ -67,7 +75,7 @@ export function TranscriptionToolbar({
         </SelectContent>
       </Select>
       <span className="ml-auto text-muted-foreground text-xs">
-        {t(MODEL_STATUS_LABEL_KEYS[localModelStatus] ?? 'transcription.model_status.ready')}
+        {t(MODEL_STATUS_LABEL_KEYS[localModelStatus] ?? 'transcription.model_status.not_downloaded')}
       </span>
     </header>
   )

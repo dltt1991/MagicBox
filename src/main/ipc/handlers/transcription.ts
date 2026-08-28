@@ -22,6 +22,10 @@ export const transcriptionHandlers: IpcHandlersFor<typeof transcriptionRequestSc
   },
   'transcription.audio_url.resolve': async ({ recordId }) =>
     application.get('TranscriptionService').resolveAudioUrl(recordId),
+  'transcription.audio_url.preview': async ({ audioPath }, ctx) => {
+    requireSenderWindow(ctx)
+    return application.get('TranscriptionService').resolveTemporaryAudioUrl(audioPath)
+  },
   'transcription.transcribe': async (input, ctx) =>
     application.get('TranscriptionService').transcribe(input, requireSenderWindow(ctx)),
   'transcription.cancel': async ({ jobId }, ctx) => {

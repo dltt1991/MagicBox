@@ -8,6 +8,7 @@ const {
   getRecordMock,
   reserveRecordingTargetMock,
   resolveAudioUrlMock,
+  resolveTemporaryAudioUrlMock,
   saveResultMock,
   updateRecordMock,
   writeRecordingMock
@@ -17,6 +18,7 @@ const {
   getRecordMock: vi.fn(),
   reserveRecordingTargetMock: vi.fn(),
   resolveAudioUrlMock: vi.fn(),
+  resolveTemporaryAudioUrlMock: vi.fn(),
   saveResultMock: vi.fn(),
   updateRecordMock: vi.fn(),
   writeRecordingMock: vi.fn()
@@ -35,6 +37,7 @@ vi.mock('../TranscriptionAudioStore', () => ({
   transcriptionAudioStore: {
     reserveRecordingTarget: reserveRecordingTargetMock,
     resolveAudioUrl: resolveAudioUrlMock,
+    resolveTemporaryAudioUrl: resolveTemporaryAudioUrlMock,
     writeRecording: writeRecordingMock,
     deleteAudio: deleteAudioMock
   }
@@ -48,6 +51,7 @@ describe('TranscriptionService', () => {
     getRecordMock.mockReset()
     reserveRecordingTargetMock.mockReset()
     resolveAudioUrlMock.mockReset()
+    resolveTemporaryAudioUrlMock.mockReset()
     writeRecordingMock.mockReset()
     createRecordMock.mockReset()
     deleteAudioMock.mockReset()
@@ -82,6 +86,16 @@ describe('TranscriptionService', () => {
     })
     expect(getRecordMock).toHaveBeenCalledWith('record-1')
     expect(resolveAudioUrlMock).toHaveBeenCalledWith(record)
+  })
+
+  it('resolves a selected import through a temporary playback URL', () => {
+    resolveTemporaryAudioUrlMock.mockReturnValue({ url: 'cherry-media://audio/import-1', missing: false })
+
+    expect(new TranscriptionService().resolveTemporaryAudioUrl('/imported/audio.m4a')).toEqual({
+      url: 'cherry-media://audio/import-1',
+      missing: false
+    })
+    expect(resolveTemporaryAudioUrlMock).toHaveBeenCalledWith('/imported/audio.m4a')
   })
 
   it('deletes only the selected managed recording on request', () => {

@@ -8,6 +8,7 @@ const {
   organizeMock,
   reserveRecordingTargetMock,
   resolveAudioUrlMock,
+  resolveTemporaryAudioUrlMock,
   transcribeMock,
   writeRecordingMock
 } = vi.hoisted(() => ({
@@ -17,6 +18,7 @@ const {
   organizeMock: vi.fn(),
   reserveRecordingTargetMock: vi.fn(),
   resolveAudioUrlMock: vi.fn(),
+  resolveTemporaryAudioUrlMock: vi.fn(),
   transcribeMock: vi.fn(),
   writeRecordingMock: vi.fn()
 }))
@@ -35,11 +37,13 @@ describe('transcription handlers', () => {
       organize: organizeMock,
       reserveRecordingTarget: reserveRecordingTargetMock,
       resolveAudioUrl: resolveAudioUrlMock,
+      resolveTemporaryAudioUrl: resolveTemporaryAudioUrlMock,
       transcribe: transcribeMock,
       writeRecording: writeRecordingMock
     })
     reserveRecordingTargetMock.mockReset()
     resolveAudioUrlMock.mockReset()
+    resolveTemporaryAudioUrlMock.mockReset()
     cancelMock.mockReset()
     deleteRecordingMock.mockReset()
     organizeMock.mockReset()
@@ -76,6 +80,18 @@ describe('transcription handlers', () => {
     })
     expect(getMock).toHaveBeenCalledWith('TranscriptionService')
     expect(resolveAudioUrlMock).toHaveBeenCalledWith('record-1')
+  })
+
+  it('resolves a selected import through the transcription service', async () => {
+    resolveTemporaryAudioUrlMock.mockReturnValue({ url: 'cherry-media://audio/import-1', missing: false })
+
+    await expect(
+      transcriptionHandlers['transcription.audio_url.preview'](
+        { audioPath: '/imported/audio.m4a' },
+        { senderId: 'window-1' }
+      )
+    ).resolves.toEqual({ url: 'cherry-media://audio/import-1', missing: false })
+    expect(resolveTemporaryAudioUrlMock).toHaveBeenCalledWith('/imported/audio.m4a')
   })
 
   it('writes PCM WAV bytes only through the transcription service', async () => {

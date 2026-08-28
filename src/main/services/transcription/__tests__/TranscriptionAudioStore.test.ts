@@ -102,6 +102,25 @@ describe('TranscriptionAudioStore', () => {
     expect(result.url).not.toContain(audioPath)
   })
 
+  it('resolves a selected import through a temporary media URL without persisting it', () => {
+    const audioPath = path.join(recordingsRoot, 'imported.m4a')
+    writeFileSync(audioPath, 'audio')
+
+    const result = new TranscriptionAudioStore().resolveTemporaryAudioUrl(audioPath)
+
+    expect(result).toEqual({ url: expect.stringMatching(/^cherry-media:\/\/audio\//), missing: false })
+    expect(result.url).not.toContain(audioPath)
+    expect(storeFileMock).toHaveBeenCalledWith(MediaKind.Audio, expect.any(String), audioPath, 'audio/mp4')
+  })
+
+  it('does not resolve non-audio files through the temporary playback route', () => {
+    const filePath = path.join(recordingsRoot, 'imported.txt')
+    writeFileSync(filePath, 'not audio')
+
+    expect(new TranscriptionAudioStore().resolveTemporaryAudioUrl(filePath)).toEqual({ url: null, missing: true })
+    expect(storeFileMock).not.toHaveBeenCalled()
+  })
+
   it('deletes managed audio only when explicitly requested and never deletes imports', () => {
     const managedPath = path.join(recordingsRoot, 'managed.webm')
     const importedPath = path.join(recordingsRoot, 'imported.m4a')

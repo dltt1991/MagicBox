@@ -7,10 +7,11 @@ import {
   useDeleteTranscriptionRecord,
   useTranscriptionRecords
 } from '@renderer/hooks/transcription/useTranscriptionRecords'
+import { useLocalModel } from '@renderer/hooks/useLocalModel'
 import { ipcApi } from '@renderer/ipc'
-import type { TranscriptionRecord } from '@shared/data/types/transcription'
+import type { TranscriptionRecord, TranscriptionSegment } from '@shared/data/types/transcription'
 import type { TranscriptionBackendConfig } from '@shared/ipc/schemas/transcription'
-import { useCallback, useRef, useState } from 'react'
+import { type RefObject, useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { AudioSourcePanel } from './components/AudioSourcePanel'
@@ -49,15 +50,27 @@ export default function TranscriptionPage() {
   const [customEndpointRequestFormat] = usePreference('feature.transcription.custom_endpoint.request_format')
   const [defaultModelId] = usePreference('chat.default_model_id')
   const { deleteRecord } = useDeleteTranscriptionRecord()
-  const saveResult = useSaveTranscriptionResult(record?.id ?? selectedId ?? '__transcription_unselected__')
   const recorder = useAudioRecorder()
   const job = useTranscriptionJob()
-  const playback = useAudioPlaybackUrl(record?.id ?? null)
+  const localWhisper = useLocalModel('whisper')
+  const playback = useAudioPlaybackUrl(
+    record?.id ?? null,
+    sourceMode === 'file' ? (draftSource?.audioPath ?? null) : null
+  )
   const missingIds = new Set(playback.missing && record ? [record.id] : [])
 
   const audioUrl = draftSource?.previewUrl ?? playback.url
   const audioPath = draftSource?.audioPath ?? record?.audioPath ?? null
-  const canTranscribe = Boolean(audioPath && (backend !== 'custom_endpoint' || customEndpointBaseUrl))
+  const backendConfig = useMemo(
+    () =>
+      buildBackendConfig(backend, {
+        customEndpointBaseUrl,
+        customEndpointRequestFormat,
+        defaultModelId
+      }),
+    [backend, customEndpointBaseUrl, customEndpointRequestFormat, defaultModelId]
+  )
+  const canTranscribe = Boolean(audioPath && backendConfig)
   const transcriptText = result?.transcriptText ?? ''
   const segments = result?.segments ?? []
   const organizationOutput = result?.organizationOutput ?? null
@@ -82,6 +95,7 @@ export default function TranscriptionPage() {
 
   const handleStopRecording = useCallback(async () => {
     const recording = await recorder.stop()
+    if (!recording) return
     setSelectedId(null)
     setDraftSource({
       audioPath: recording.audioPath,
@@ -91,12 +105,7 @@ export default function TranscriptionPage() {
   }, [recorder, t])
 
   const handleTranscribe = useCallback(async () => {
-    if (!audioPath) return
-    const backendConfig = buildBackendConfig(backend, {
-      customEndpointBaseUrl,
-      customEndpointRequestFormat,
-      defaultModelId
-    })
+    if (!audioPath || !backendConfig) return
     const { record: nextRecord } = await job.start({
       audioPath,
       backend: backendConfig,
@@ -107,25 +116,11 @@ export default function TranscriptionPage() {
     setSelectedId(nextRecord.id)
     setDraftSource(null)
     await refresh()
-  }, [
-    audioPath,
-    backend,
-    customEndpointBaseUrl,
-    customEndpointRequestFormat,
-    defaultModelId,
-    draftSource,
-    job,
-    language,
-    record?.sourceType,
-    refresh,
-    selectedId,
-    sourceMode
-  ])
+  }, [audioPath, backendConfig, draftSource, job, language, record?.sourceType, refresh, selectedId, sourceMode])
 
   const handleDelete = useCallback(
     async (target: TranscriptionRecord, deleteAudio: boolean) => {
-      if (deleteAudio) await ipcApi.request('transcription.recording.delete', { recordId: target.id, deleteAudio })
-      await deleteRecord(target.id)
+      await deleteHistoryRecord(target, deleteAudio, (route, input) => ipcApi.request(route, input), deleteRecord)
       if (selectedId === target.id) setSelectedId(null)
       await refresh()
     },
@@ -138,7 +133,10 @@ export default function TranscriptionPage() {
         <TranscriptionToolbar
           backend={backend}
           language={language}
-          localModelStatus="ready"
+          localModelStatus={localWhisper.status}
+          providerAvailable={Boolean(
+            buildBackendConfig('provider_model', { defaultModelId, customEndpointBaseUrl, customEndpointRequestFormat })
+          )}
           sourceMode={sourceMode}
           onBackendChange={setBackend}
           onLanguageChange={setLanguage}
@@ -179,24 +177,33 @@ export default function TranscriptionPage() {
           ) : null}
         </div>
         <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto]">
-          <TranscriptEditor
-            audioRef={audioRef}
-            isSaving={saveResult.isSaving}
-            segments={segments}
-            text={transcriptText}
-            onExport={(text) => void window.api.file.save('transcript.txt', text)}
-            onSave={({ transcriptText: nextText, segments }) =>
-              void saveResult.updateText({ transcriptText: nextText, segments })
-            }
-          />
+          {record && result ? (
+            <PersistedTranscriptEditor
+              audioRef={audioRef}
+              recordId={record.id}
+              segments={segments}
+              text={transcriptText}
+            />
+          ) : (
+            <TranscriptEditor
+              audioRef={audioRef}
+              disabled
+              segments={segments}
+              text={transcriptText}
+              onExport={(text) => void window.api.file.save('transcript.txt', text)}
+            />
+          )}
           <OrganizationPanel
             templates={templates}
             organizationOutput={organizationOutput}
             isOrganizing={job.isRunning}
+            disabled={!record || !result}
             onExport={(text) => void window.api.file.save('transcription-summary.txt', text)}
-            onOrganize={({ prompt, templateId }) => {
-              if (record?.id) void job.organize({ recordId: record.id, prompt, templateId })
-            }}
+            onOrganize={
+              record && result
+                ? ({ prompt, templateId }) => void job.organize({ recordId: record.id, prompt, templateId })
+                : undefined
+            }
           />
         </div>
       </div>
@@ -214,19 +221,63 @@ export default function TranscriptionPage() {
   )
 }
 
-function buildBackendConfig(
+export function buildBackendConfig(
   backend: TranscriptionBackendConfig['backend'],
   options: {
     customEndpointBaseUrl: string
     customEndpointRequestFormat: 'openai_multipart' | 'json_base64'
     defaultModelId: string | null
   }
-): TranscriptionBackendConfig {
+): TranscriptionBackendConfig | null {
   if (backend === 'provider_model') {
-    const [providerId, modelId] = (options.defaultModelId || 'openai::whisper-1').split('::')
-    return { backend, providerId: providerId || 'openai', modelId: modelId || 'whisper-1' }
+    const [providerId, modelId] = options.defaultModelId?.split('::') ?? []
+    return providerId && modelId ? { backend, providerId, modelId } : null
   }
-  if (backend === 'custom_endpoint')
-    return { backend, baseUrl: options.customEndpointBaseUrl, requestFormat: options.customEndpointRequestFormat }
+  if (backend === 'custom_endpoint') {
+    return options.customEndpointBaseUrl
+      ? { backend, baseUrl: options.customEndpointBaseUrl, requestFormat: options.customEndpointRequestFormat }
+      : null
+  }
   return { backend }
+}
+
+type DeleteRequest = (
+  route: 'transcription.recording.delete',
+  input: { deleteAudio: boolean; recordId: string }
+) => Promise<unknown>
+
+export async function deleteHistoryRecord(
+  record: Pick<TranscriptionRecord, 'id'>,
+  deleteAudio: boolean,
+  request: DeleteRequest,
+  deleteRecord: (id: string) => Promise<unknown>
+): Promise<void> {
+  await request('transcription.recording.delete', { recordId: record.id, deleteAudio })
+  await deleteRecord(record.id)
+}
+
+function PersistedTranscriptEditor({
+  audioRef,
+  recordId,
+  segments,
+  text
+}: {
+  audioRef: RefObject<HTMLAudioElement | null>
+  recordId: string
+  segments: TranscriptionSegment[]
+  text: string
+}) {
+  const saveResult = useSaveTranscriptionResult(recordId)
+  return (
+    <TranscriptEditor
+      audioRef={audioRef}
+      isSaving={saveResult.isSaving}
+      segments={segments}
+      text={text}
+      onExport={(value) => void window.api.file.save('transcript.txt', value)}
+      onSave={({ transcriptText, segments: nextSegments }) =>
+        void saveResult.updateText({ transcriptText, segments: nextSegments })
+      }
+    />
+  )
 }

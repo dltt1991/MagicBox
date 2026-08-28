@@ -7,15 +7,17 @@ import { useTranslation } from 'react-i18next'
 import { CustomPromptDialog } from './CustomPromptDialog'
 
 type OrganizationPanelProps = {
+  disabled?: boolean
   isOrganizing?: boolean
   onExport?: (text: string) => void
-  onOrganize: (input: { prompt: string; templateId: string | null }) => void
+  onOrganize?: (input: { prompt: string; templateId: string | null }) => void
   organizationOutput: string | null
   templates: TranscriptionPromptTemplate[]
 }
 
 export function OrganizationPanel({
   isOrganizing = false,
+  disabled = false,
   onExport,
   onOrganize,
   organizationOutput,
@@ -51,7 +53,7 @@ export function OrganizationPanel({
           <SelectContent>
             {templates.map((template) => (
               <SelectItem key={template.id} value={template.id}>
-                {template.name}
+                {template.builtIn ? t(getTemplateDisplayName(template)) : template.name}
               </SelectItem>
             ))}
             <SelectItem value="custom">{t('transcription.custom_prompt')}</SelectItem>
@@ -62,9 +64,9 @@ export function OrganizationPanel({
         </Button>
         <Button
           size="sm"
-          disabled={!prompt}
+          disabled={disabled || !onOrganize || !prompt}
           loading={isOrganizing}
-          onClick={() => onOrganize({ prompt, templateId: customPrompt ? null : templateId })}>
+          onClick={() => onOrganize?.({ prompt, templateId: customPrompt ? null : templateId })}>
           {organizationOutput ? t('common.retry') : t('transcription.organize')}
         </Button>
         {organizationOutput ? (
@@ -90,4 +92,15 @@ export function OrganizationPanel({
       />
     </section>
   )
+}
+
+const BUILT_IN_TEMPLATE_LABEL_KEYS: Record<string, string> = {
+  'builtin-article-draft': 'transcription.template.article_draft',
+  'builtin-general-summary': 'transcription.template.general_summary',
+  'builtin-interview-notes': 'transcription.template.interview_notes',
+  'builtin-meeting-minutes': 'transcription.template.meeting_minutes'
+}
+
+export function getTemplateDisplayName(template: Pick<TranscriptionPromptTemplate, 'builtIn' | 'id' | 'name'>): string {
+  return template.builtIn ? (BUILT_IN_TEMPLATE_LABEL_KEYS[template.id] ?? template.name) : template.name
 }

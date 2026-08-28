@@ -21,16 +21,21 @@ export function useAudioRecorder() {
 
   const start = useCallback(async () => {
     setError(null)
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    chunksRef.current = []
-    const recorder = new MediaRecorder(stream)
-    streamRef.current = stream
-    mediaRecorderRef.current = recorder
-    recorder.ondataavailable = (event) => {
-      if (event.data.size) chunksRef.current.push(event.data)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      chunksRef.current = []
+      const recorder = new MediaRecorder(stream)
+      streamRef.current = stream
+      mediaRecorderRef.current = recorder
+      recorder.ondataavailable = (event) => {
+        if (event.data.size) chunksRef.current.push(event.data)
+      }
+      recorder.start()
+      setStatus('recording')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause : new Error(String(cause)))
+      setStatus('idle')
     }
-    recorder.start()
-    setStatus('recording')
   }, [])
 
   const pause = useCallback(() => {
@@ -43,9 +48,9 @@ export function useAudioRecorder() {
     setStatus('recording')
   }, [])
 
-  const stop = useCallback(
-    () =>
-      new Promise<RecorderResult>((resolve, reject) => {
+  const stop = useCallback(async (): Promise<RecorderResult | null> => {
+    try {
+      return await new Promise<RecorderResult>((resolve, reject) => {
         const recorder = mediaRecorderRef.current
         if (!recorder) return reject(new Error('No active recorder'))
         setStatus('saving')
@@ -56,9 +61,14 @@ export function useAudioRecorder() {
         recorder.stop()
         streamRef.current?.getTracks().forEach((track) => track.stop())
         streamRef.current = null
-      }).finally(() => setStatus('idle')),
-    []
-  )
+      })
+    } catch (cause) {
+      setError(cause instanceof Error ? cause : new Error(String(cause)))
+      return null
+    } finally {
+      setStatus('idle')
+    }
+  }, [])
 
   return { error, pause, resume, start, status, stop }
 }

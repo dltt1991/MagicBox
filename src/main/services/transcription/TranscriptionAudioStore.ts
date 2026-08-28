@@ -8,6 +8,7 @@ import { v7 as uuidv7 } from 'uuid'
 
 const AUDIO_MIME_TYPES: Record<string, string> = {
   '.aac': 'audio/aac',
+  '.flac': 'audio/flac',
   '.m4a': 'audio/mp4',
   '.mp3': 'audio/mpeg',
   '.mp4': 'audio/mp4',
@@ -41,10 +42,12 @@ export class TranscriptionAudioStore {
   resolveAudioUrl(record: TranscriptionRecord): { url: string | null; missing: boolean } {
     if (!existsSync(record.audioPath)) return { url: null, missing: true }
 
-    application
-      .get('MediaProtocolService')
-      .storeFile(MediaKind.Audio, record.id, record.audioPath, getAudioMimeType(record.audioPath))
-    return { url: `cherry-media://audio/${record.id}`, missing: false }
+    return this.storeAudioUrl(record.id, record.audioPath)
+  }
+
+  resolveTemporaryAudioUrl(audioPath: string): { url: string | null; missing: boolean } {
+    if (!existsSync(audioPath) || !getAudioMimeType(audioPath)) return { url: null, missing: true }
+    return this.storeAudioUrl(`transcription-preview-${uuidv7()}`, audioPath)
   }
 
   deleteAudio(record: TranscriptionRecord, options: { deleteAudio?: boolean } = {}): void {
@@ -58,10 +61,17 @@ export class TranscriptionAudioStore {
     const relativePath = path.relative(application.getPath('feature.transcription.recordings'), filePath)
     return relativePath !== '' && !relativePath.startsWith(`..${path.sep}`) && !path.isAbsolute(relativePath)
   }
+
+  private storeAudioUrl(id: string, audioPath: string): { url: string; missing: false } {
+    application
+      .get('MediaProtocolService')
+      .storeFile(MediaKind.Audio, id, audioPath, getAudioMimeType(audioPath) ?? 'application/octet-stream')
+    return { url: `cherry-media://audio/${id}`, missing: false }
+  }
 }
 
-function getAudioMimeType(filePath: string): string {
-  return AUDIO_MIME_TYPES[path.extname(filePath).toLowerCase()] ?? 'application/octet-stream'
+function getAudioMimeType(filePath: string): string | null {
+  return AUDIO_MIME_TYPES[path.extname(filePath).toLowerCase()] ?? null
 }
 
 function isPcmWav(bytes: Uint8Array): boolean {

@@ -20,4 +20,10 @@ describe('TranscriptEditor', () => {
     await user.click(screen.getByRole('button', { name: '00:12 Important point' }))
     expect(audio.currentTime).toBe(12.5)
   })
+
+  it('does not save an unpersisted transcript draft', () => {
+    render(<TranscriptEditor audioRef={{ current: null }} disabled segments={[]} text="Draft" onSave={vi.fn()} />)
+
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
+  })
 })

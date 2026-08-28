@@ -55,6 +55,10 @@ export const transcriptionRequestSchemas = {
     input: z.strictObject({ recordId: z.string().min(1) }),
     output: z.strictObject({ url: z.string().nullable(), missing: z.boolean() })
   }),
+  'transcription.audio_url.preview': defineRoute({
+    input: z.strictObject({ audioPath: z.string().min(1) }),
+    output: z.strictObject({ url: z.string().nullable(), missing: z.boolean() })
+  }),
   'transcription.transcribe': defineRoute({
     input: z.strictObject({
       jobId: z.string().min(1),

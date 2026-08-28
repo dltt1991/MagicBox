@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
-import { OrganizationPanel } from '../OrganizationPanel'
+import { getTemplateDisplayName, OrganizationPanel } from '../OrganizationPanel'
 
 describe('OrganizationPanel', () => {
   it('organizes with a built-in template and a custom prompt', async () => {
@@ -35,5 +35,18 @@ describe('OrganizationPanel', () => {
     await user.click(screen.getByRole('button', { name: 'Use prompt' }))
     await user.click(screen.getByRole('button', { name: 'Organize' }))
     expect(onOrganize).toHaveBeenLastCalledWith({ prompt: 'Extract decisions', templateId: null })
+  })
+
+  it('uses locale keys for built-in templates and preserves custom names', () => {
+    expect(
+      getTemplateDisplayName({ builtIn: true, id: 'builtin-meeting-minutes', name: 'Meeting Minutes' } as never)
+    ).toBe('transcription.template.meeting_minutes')
+    expect(getTemplateDisplayName({ builtIn: false, id: 'custom', name: 'My outline' } as never)).toBe('My outline')
+  })
+
+  it('disables organization until a transcription result is persisted', () => {
+    render(<OrganizationPanel templates={[]} organizationOutput={null} onOrganize={vi.fn()} disabled />)
+
+    expect(screen.getByRole('button', { name: 'Organize' })).toBeDisabled()
   })
 })

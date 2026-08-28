@@ -9,15 +9,17 @@ import { useSegmentSeek } from '../hooks/useSegmentSeek'
 
 type TranscriptEditorProps = {
   audioRef: RefObject<HTMLAudioElement | null>
+  disabled?: boolean
   isSaving?: boolean
   onExport?: (text: string) => void
-  onSave: (value: { segments: TranscriptionSegment[]; transcriptText: string }) => void
+  onSave?: (value: { segments: TranscriptionSegment[]; transcriptText: string }) => void
   segments: TranscriptionSegment[]
   text: string
 }
 
 export function TranscriptEditor({
   audioRef,
+  disabled = false,
   isSaving = false,
   onExport,
   onSave,
@@ -41,9 +43,9 @@ export function TranscriptEditor({
           </Button>
           <Button
             size="sm"
-            disabled={draft === text}
+            disabled={disabled || !onSave || draft === text}
             loading={isSaving}
-            onClick={() => onSave({ transcriptText: draft, segments })}>
+            onClick={() => onSave?.({ transcriptText: draft, segments })}>
             {t('common.save')}
           </Button>
         </div>
