@@ -164,3 +164,23 @@ Both commands also emitted the existing Node engine warning because this environ
 ## Third Re-Review Fix Commit
 
 - Pending signed commit: `fix(transcription): preserve draft source state`.
+
+## Fourth Re-Review Fixes
+
+- Added recorder `starting` state before awaiting microphone permission.
+- Kept source switching disabled while microphone permission is pending.
+
+## Fourth Re-Review Verification
+
+- `pnpm typecheck:web`: PASS.
+- `pnpm typecheck:node`: PASS.
+- `pnpm i18n:check`: PASS, 80,436 translations checked.
+- `pnpm test:main src/main/services/transcription/__tests__/TranscriptionAudioStore.test.ts src/main/services/transcription/__tests__/TranscriptionService.test.ts src/main/ipc/handlers/__tests__/transcription.test.ts`: PASS, 3 files / 25 tests / 0 failures.
+- `pnpm test:shared src/shared/ipc/schemas/__tests__/transcription.test.ts`: PASS, 1 file / 3 tests / 0 failures.
+- `pnpm format && pnpm lint`: format PASS and fixed 1 file; lint remains BLOCKED before linting by the existing `.oxlintrc.json` `options.typeAware` placement error.
+- Required renderer focused command remains BLOCKED before collection by `@vitest/web-worker` module resolution under Node `25.8.0` in this nested worktree.
+- `git diff --check`: PASS.
+
+## Fourth Re-Review Fix Commit
+
+- Pending signed commit: `fix(transcription): lock pending recorder start`.

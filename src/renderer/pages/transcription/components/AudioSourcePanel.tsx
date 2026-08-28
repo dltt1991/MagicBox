@@ -3,6 +3,8 @@ import { Pause, Play, Square } from 'lucide-react'
 import type { RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import type { AudioRecorderStatus } from '../hooks/useAudioRecorder'
+
 type AudioSourcePanelProps = {
   audioRef: RefObject<HTMLAudioElement | null>
   audioUrl: string | null
@@ -14,7 +16,7 @@ type AudioSourcePanelProps = {
   onResume: () => void
   onStart: () => void
   onStop: () => void
-  recordingStatus: 'idle' | 'recording' | 'paused' | 'saving'
+  recordingStatus: AudioRecorderStatus
   sourceName: string | null
 }
 
@@ -38,8 +40,11 @@ export function AudioSourcePanel({
     <section className="grid min-h-38 gap-3 border-border-subtle border-b py-3">
       <div className="flex min-w-0 items-center gap-2">
         {mode === 'recording' ? (
-          recordingStatus === 'idle' ? (
-            <Button onClick={onStart}>
+          recordingStatus === 'idle' || recordingStatus === 'starting' ? (
+            <Button
+              disabled={recordingStatus === 'starting'}
+              loading={recordingStatus === 'starting'}
+              onClick={onStart}>
               <Play />
               {t('transcription.start_recording')}
             </Button>

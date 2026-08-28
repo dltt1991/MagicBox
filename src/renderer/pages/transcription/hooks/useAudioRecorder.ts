@@ -1,6 +1,8 @@
 import { ipcApi } from '@renderer/ipc'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+export type AudioRecorderStatus = 'idle' | 'starting' | 'recording' | 'paused' | 'saving'
+
 type RecorderResult = { audioPath: string }
 
 export function useAudioRecorder() {
@@ -8,7 +10,7 @@ export function useAudioRecorder() {
   const streamRef = useRef<MediaStream | null>(null)
   const chunksRef = useRef<BlobPart[]>([])
   const [error, setError] = useState<Error | null>(null)
-  const [status, setStatus] = useState<'idle' | 'recording' | 'paused' | 'saving'>('idle')
+  const [status, setStatus] = useState<AudioRecorderStatus>('idle')
 
   useEffect(
     () => () => {
@@ -19,6 +21,7 @@ export function useAudioRecorder() {
 
   const start = useCallback(async () => {
     setError(null)
+    setStatus('starting')
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       chunksRef.current = []
