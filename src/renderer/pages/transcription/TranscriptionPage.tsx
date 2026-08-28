@@ -38,11 +38,10 @@ export default function TranscriptionPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [sourceMode, setSourceMode] = useState<'recording' | 'file'>('recording')
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [draftSource, setDraftSource] = useState<{ audioPath: string; name: string; previewUrl: string | null } | null>(
-    null
-  )
+  const [draftSource, setDraftSource] = useState<{ audioPath: string; name: string } | null>(null)
   const [backend, setBackend] = useState<TranscriptionBackendConfig['backend']>('local_whisper')
   const [language, setLanguage] = useState('auto')
+  const [actionError, setActionError] = useState<Error | null>(null)
   const { items: records, refresh } = useTranscriptionRecords()
   const { record, result } = useTranscriptionRecord(selectedId)
   const { templates } = useTranscriptionPromptTemplates()
@@ -53,13 +52,10 @@ export default function TranscriptionPage() {
   const recorder = useAudioRecorder()
   const job = useTranscriptionJob()
   const localWhisper = useLocalModel('whisper')
-  const playback = useAudioPlaybackUrl(
-    record?.id ?? null,
-    sourceMode === 'file' ? (draftSource?.audioPath ?? null) : null
-  )
+  const playback = useAudioPlaybackUrl(record?.id ?? null, draftSource?.audioPath ?? null)
   const missingIds = new Set(playback.missing && record ? [record.id] : [])
 
-  const audioUrl = draftSource?.previewUrl ?? playback.url
+  const audioUrl = playback.url
   const audioPath = draftSource?.audioPath ?? record?.audioPath ?? null
   const backendConfig = useMemo(
     () =>
@@ -88,8 +84,7 @@ export default function TranscriptionPage() {
     setSelectedId(null)
     setDraftSource({
       audioPath: filePath,
-      name: filePath.split(/[\\/]/).pop() ?? t('transcription.import_audio'),
-      previewUrl: null
+      name: filePath.split(/[\\/]/).pop() ?? t('transcription.import_audio')
     })
   }, [t])
 
@@ -99,8 +94,7 @@ export default function TranscriptionPage() {
     setSelectedId(null)
     setDraftSource({
       audioPath: recording.audioPath,
-      name: recording.audioPath.split(/[\\/]/).pop() ?? t('transcription.recording'),
-      previewUrl: recording.previewUrl
+      name: recording.audioPath.split(/[\\/]/).pop() ?? t('transcription.recording')
     })
   }, [recorder, t])
 
@@ -126,6 +120,10 @@ export default function TranscriptionPage() {
     },
     [deleteRecord, refresh, selectedId]
   )
+  const handleAction = useCallback(async (promise: Promise<unknown>) => {
+    setActionError(null)
+    await promise.catch(() => setActionError(new Error('transcription.error.operation_failed')))
+  }, [])
 
   return (
     <main className="grid h-full min-h-0 grid-cols-1 bg-background lg:grid-cols-[minmax(0,1fr)_16rem]">
@@ -145,14 +143,14 @@ export default function TranscriptionPage() {
         <AudioSourcePanel
           audioRef={audioRef}
           audioUrl={audioUrl}
-          error={recorder.error ?? job.error}
+          error={recorder.error ?? job.error ?? actionError}
           isMissing={playback.missing}
           mode={sourceMode}
-          onChooseFile={handleChooseFile}
+          onChooseFile={() => void handleAction(handleChooseFile())}
           onPause={recorder.pause}
           onResume={recorder.resume}
-          onStart={() => void runHandled(recorder.start())}
-          onStop={() => void runHandled(handleStopRecording())}
+          onStart={() => void handleAction(recorder.start())}
+          onStop={() => void handleAction(handleStopRecording())}
           recordingStatus={recorder.status}
           sourceName={draftSource?.name ?? record?.title ?? null}
         />
@@ -160,10 +158,10 @@ export default function TranscriptionPage() {
           <Button
             disabled={!canTranscribe || job.isRunning}
             loading={job.isRunning}
-            onClick={() => void runHandled(handleTranscribe())}>
+            onClick={() => void handleAction(handleTranscribe())}>
             {t('transcription.transcribe')}
           </Button>
-          <Button disabled={!job.isRunning} variant="outline" onClick={() => void job.cancel()}>
+          <Button disabled={!job.isRunning} variant="outline" onClick={() => void handleAction(job.cancel())}>
             {t('common.cancel')}
           </Button>
           {backend === 'custom_endpoint' && !customEndpointBaseUrl ? (
@@ -180,6 +178,7 @@ export default function TranscriptionPage() {
           {record && result ? (
             <PersistedTranscriptEditor
               audioRef={audioRef}
+              onActionError={() => setActionError(new Error('transcription.error.operation_failed'))}
               recordId={record.id}
               segments={segments}
               text={transcriptText}
@@ -190,7 +189,7 @@ export default function TranscriptionPage() {
               disabled
               segments={segments}
               text={transcriptText}
-              onExport={(text) => void window.api.file.save('transcript.txt', text)}
+              onExport={(text) => void handleAction(window.api.file.save('transcript.txt', text))}
             />
           )}
           <OrganizationPanel
@@ -198,10 +197,11 @@ export default function TranscriptionPage() {
             organizationOutput={organizationOutput}
             isOrganizing={job.isRunning}
             disabled={!record || !result}
-            onExport={(text) => void window.api.file.save('transcription-summary.txt', text)}
+            onExport={(text) => void handleAction(window.api.file.save('transcription-summary.txt', text))}
             onOrganize={
               record && result
-                ? ({ prompt, templateId }) => void runHandled(job.organize({ recordId: record.id, prompt, templateId }))
+                ? ({ prompt, templateId }) =>
+                    void handleAction(job.organize({ recordId: record.id, prompt, templateId }))
                 : undefined
             }
           />
@@ -211,7 +211,7 @@ export default function TranscriptionPage() {
         missingRecordIds={missingIds}
         records={records}
         selectedId={selectedId}
-        onDelete={handleDelete}
+        onDelete={(record, deleteAudio) => void handleAction(handleDelete(record, deleteAudio))}
         onSelect={(recordId) => {
           setDraftSource(null)
           setSelectedId(recordId)
@@ -262,25 +262,33 @@ export async function deleteHistoryRecord(
 
 function PersistedTranscriptEditor({
   audioRef,
+  onActionError,
   recordId,
   segments,
   text
 }: {
   audioRef: RefObject<HTMLAudioElement | null>
+  onActionError: () => void
   recordId: string
   segments: TranscriptionSegment[]
   text: string
 }) {
   const saveResult = useSaveTranscriptionResult(recordId)
+  const handleAction = useCallback(
+    async (promise: Promise<unknown>) => {
+      await promise.catch(onActionError)
+    },
+    [onActionError]
+  )
   return (
     <TranscriptEditor
       audioRef={audioRef}
       isSaving={saveResult.isSaving}
       segments={segments}
       text={text}
-      onExport={(value) => void window.api.file.save('transcript.txt', value)}
+      onExport={(value) => void handleAction(window.api.file.save('transcript.txt', value))}
       onSave={({ transcriptText, segments: nextSegments }) =>
-        void saveResult.updateText({ transcriptText, segments: nextSegments })
+        void handleAction(saveResult.updateText({ transcriptText, segments: nextSegments }))
       }
     />
   )

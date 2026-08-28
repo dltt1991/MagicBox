@@ -33,8 +33,8 @@ export function useTranscriptionJob() {
       setProgress({ stage: 'preparing' })
       try {
         return (await ipcApi.request(route, { ...input, jobId } as never)) as T
-      } catch (cause) {
-        const nextError = cause instanceof Error ? cause : new Error(String(cause))
+      } catch {
+        const nextError = new Error('transcription.error.operation_failed')
         setError(nextError)
         throw nextError
       } finally {

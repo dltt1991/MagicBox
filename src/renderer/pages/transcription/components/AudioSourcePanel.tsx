@@ -65,7 +65,11 @@ export function AudioSourcePanel({
       </div>
       {audioUrl ? <audio ref={audioRef} className="h-9 w-full" controls src={audioUrl} /> : null}
       {isMissing ? <p className="text-sm text-warning">{t('transcription.audio_unavailable')}</p> : null}
-      {error ? <p className="text-error text-sm">{error.message}</p> : null}
+      {error ? <p className="text-error text-sm">{t(errorMessageKey(error))}</p> : null}
     </section>
   )
+}
+
+function errorMessageKey(error: Error): string {
+  return error.message.startsWith('transcription.error.') ? error.message : 'transcription.error.operation_failed'
 }

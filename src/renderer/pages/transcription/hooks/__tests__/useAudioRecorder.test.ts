@@ -10,6 +10,6 @@ describe('useAudioRecorder', () => {
 
     await act(async () => result.current.start())
 
-    expect(result.current.error).toMatchObject({ message: 'Denied' })
+    expect(result.current.error).toMatchObject({ message: 'transcription.error.microphone_unavailable' })
   })
 })

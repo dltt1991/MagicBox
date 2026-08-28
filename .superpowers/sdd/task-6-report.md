@@ -119,3 +119,26 @@ Both commands also emitted the existing Node engine warning because this environ
 ## Re-Review Fix Commit
 
 - This report is included in the signed commit `fix(transcription): close workspace review gaps`; verify the final hash with `git cat-file commit HEAD`.
+
+## Second Re-Review Fixes
+
+- Removed recorder-created `blob:` playback. Recording drafts now resolve through the same `cherry-media://audio/<id>` preview path as imported drafts.
+- Routed cancel, file selection, deletion, exports, transcript save, recording start/stop, transcription, and organization through handled promise boundaries.
+- Added `.catch(() => undefined)` to temporary preview release calls.
+- Mapped raw recorder/job/action errors to localized transcription error messages before rendering.
+
+## Second Re-Review Verification
+
+- `pnpm typecheck:web`: PASS.
+- `pnpm typecheck:node`: PASS.
+- `pnpm i18n:check`: PASS, 80,436 translations checked.
+- `pnpm test:main src/main/services/transcription/__tests__/TranscriptionAudioStore.test.ts src/main/services/transcription/__tests__/TranscriptionService.test.ts src/main/ipc/handlers/__tests__/transcription.test.ts`: PASS, 3 files / 25 tests / 0 failures.
+- `pnpm test:shared src/shared/ipc/schemas/__tests__/transcription.test.ts`: PASS, 1 file / 3 tests / 0 failures.
+- `pnpm format`: PASS, fixed 1 file before final verification.
+- `git diff --check`: PASS.
+- Required renderer focused command remains BLOCKED before collection by `@vitest/web-worker` module resolution under Node `25.8.0` in this nested worktree.
+- `pnpm lint` remains BLOCKED before linting by the existing `.oxlintrc.json` `options.typeAware` placement error.
+
+## Second Re-Review Fix Commit
+
+- Pending signed commit: `fix(transcription): use safe draft playback`.

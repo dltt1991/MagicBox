@@ -14,7 +14,7 @@ export function useAudioPlaybackUrl(recordId: string | null, previewAudioPath: s
       const previewId = previewIdRef.current
       if (previewId) {
         previewIdRef.current = null
-        void ipcApi.request('transcription.audio_url.release', { previewId })
+        void ipcApi.request('transcription.audio_url.release', { previewId }).catch(() => undefined)
       }
     }
 
@@ -32,7 +32,7 @@ export function useAudioPlaybackUrl(recordId: string | null, previewAudioPath: s
         const previewId = getPreviewId(result)
         if (cancelled) {
           if (previewId) {
-            void ipcApi.request('transcription.audio_url.release', { previewId })
+            void ipcApi.request('transcription.audio_url.release', { previewId }).catch(() => undefined)
           }
           return
         }

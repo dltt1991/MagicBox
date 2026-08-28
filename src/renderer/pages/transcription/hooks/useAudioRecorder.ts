@@ -1,12 +1,11 @@
 import { ipcApi } from '@renderer/ipc'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-type RecorderResult = { audioPath: string; previewUrl: string }
+type RecorderResult = { audioPath: string }
 
 export function useAudioRecorder() {
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const streamRef = useRef<MediaStream | null>(null)
-  const previewUrlRef = useRef<string | null>(null)
   const chunksRef = useRef<BlobPart[]>([])
   const [error, setError] = useState<Error | null>(null)
   const [status, setStatus] = useState<'idle' | 'recording' | 'paused' | 'saving'>('idle')
@@ -14,7 +13,6 @@ export function useAudioRecorder() {
   useEffect(
     () => () => {
       streamRef.current?.getTracks().forEach((track) => track.stop())
-      if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
     },
     []
   )
@@ -32,8 +30,8 @@ export function useAudioRecorder() {
       }
       recorder.start()
       setStatus('recording')
-    } catch (cause) {
-      setError(cause instanceof Error ? cause : new Error(String(cause)))
+    } catch {
+      setError(new Error('transcription.error.microphone_unavailable'))
       setStatus('idle')
     }
   }, [])
@@ -56,14 +54,14 @@ export function useAudioRecorder() {
         setStatus('saving')
         recorder.onerror = () => reject(new Error('Recording failed'))
         recorder.onstop = () => {
-          void saveWav(new Blob(chunksRef.current), previewUrlRef).then(resolve, reject)
+          void saveWav(new Blob(chunksRef.current)).then(resolve, reject)
         }
         recorder.stop()
         streamRef.current?.getTracks().forEach((track) => track.stop())
         streamRef.current = null
       })
-    } catch (cause) {
-      setError(cause instanceof Error ? cause : new Error(String(cause)))
+    } catch {
+      setError(new Error('transcription.error.recording_failed'))
       return null
     } finally {
       setStatus('idle')
@@ -73,19 +71,14 @@ export function useAudioRecorder() {
   return { error, pause, resume, start, status, stop }
 }
 
-async function saveWav(blob: Blob, previewUrlRef: { current: string | null }): Promise<RecorderResult> {
+async function saveWav(blob: Blob): Promise<RecorderResult> {
   const audioContext = new AudioContext()
   try {
     const audioBuffer = await audioContext.decodeAudioData(await blob.arrayBuffer())
     const wavBytes = encodePcmWav(audioBuffer)
     const target = await ipcApi.request('transcription.recording.create', { extension: '.wav' })
     await ipcApi.request('transcription.recording.write', { recordingId: target.recordingId, wavBytes })
-    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current)
-    const previewBuffer = new ArrayBuffer(wavBytes.byteLength)
-    new Uint8Array(previewBuffer).set(wavBytes)
-    const previewUrl = URL.createObjectURL(new Blob([previewBuffer], { type: 'audio/wav' }))
-    previewUrlRef.current = previewUrl
-    return { audioPath: target.filePath, previewUrl }
+    return { audioPath: target.filePath }
   } finally {
     await audioContext.close()
   }
