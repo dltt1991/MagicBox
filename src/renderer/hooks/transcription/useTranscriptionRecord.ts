@@ -8,9 +8,15 @@ export function useTranscriptionRecord(id: string | null) {
   })
   const refresh = useCallback(() => refetch(), [refetch])
 
-  useDataChange('/transcription/records/:id', () => void refresh(), {
-    routeParams: { id: id ?? '__transcription_unselected__' }
-  })
+  useDataChange(
+    '/transcription/records/:id',
+    () => {
+      void refresh().catch(() => undefined)
+    },
+    {
+      routeParams: { id: id ?? '__transcription_unselected__' }
+    }
+  )
 
   return { record: data?.record, result: data?.result ?? null, isLoading, error, refresh }
 }

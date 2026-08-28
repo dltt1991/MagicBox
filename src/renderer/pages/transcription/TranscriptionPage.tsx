@@ -38,7 +38,7 @@ export default function TranscriptionPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [sourceMode, setSourceMode] = useState<'recording' | 'file'>('recording')
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [draftSource, setDraftSource] = useState<{ audioPath: string; name: string } | null>(null)
+  const [draftSource, setDraftSource] = useState<DraftSource | null>(null)
   const [backend, setBackend] = useState<TranscriptionBackendConfig['backend']>('local_whisper')
   const [language, setLanguage] = useState('auto')
   const [actionError, setActionError] = useState<Error | null>(null)
@@ -84,7 +84,8 @@ export default function TranscriptionPage() {
     setSelectedId(null)
     setDraftSource({
       audioPath: filePath,
-      name: filePath.split(/[\\/]/).pop() ?? t('transcription.import_audio')
+      name: filePath.split(/[\\/]/).pop() ?? t('transcription.import_audio'),
+      sourceType: 'file'
     })
   }, [t])
 
@@ -94,7 +95,8 @@ export default function TranscriptionPage() {
     setSelectedId(null)
     setDraftSource({
       audioPath: recording.audioPath,
-      name: recording.audioPath.split(/[\\/]/).pop() ?? t('transcription.recording')
+      name: recording.audioPath.split(/[\\/]/).pop() ?? t('transcription.recording'),
+      sourceType: 'recording'
     })
   }, [recorder, t])
 
@@ -105,7 +107,7 @@ export default function TranscriptionPage() {
       backend: backendConfig,
       language,
       recordId: selectedId ?? undefined,
-      sourceType: draftSource ? sourceMode : (record?.sourceType ?? sourceMode)
+      sourceType: getDraftSourceType(draftSource, record?.sourceType ?? sourceMode)
     })
     setSelectedId(nextRecord.id)
     setDraftSource(null)
@@ -135,6 +137,7 @@ export default function TranscriptionPage() {
           providerAvailable={Boolean(
             buildBackendConfig('provider_model', { defaultModelId, customEndpointBaseUrl, customEndpointRequestFormat })
           )}
+          recordingActive={recorder.status !== 'idle'}
           sourceMode={sourceMode}
           onBackendChange={setBackend}
           onLanguageChange={setLanguage}
@@ -221,8 +224,17 @@ export default function TranscriptionPage() {
   )
 }
 
+type DraftSource = { audioPath: string; name: string; sourceType: 'recording' | 'file' }
+
 export async function runHandled(promise: Promise<unknown>): Promise<void> {
   await promise.catch(() => undefined)
+}
+
+export function getDraftSourceType(
+  draftSource: Pick<DraftSource, 'sourceType'> | null,
+  fallback: 'recording' | 'file'
+): 'recording' | 'file' {
+  return draftSource?.sourceType ?? fallback
 }
 
 export function buildBackendConfig(

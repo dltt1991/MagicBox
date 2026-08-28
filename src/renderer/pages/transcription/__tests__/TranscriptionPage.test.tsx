@@ -3,7 +3,12 @@ import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
 import { TranscriptionToolbar } from '../components/TranscriptionToolbar'
-import TranscriptionPage, { buildBackendConfig, deleteHistoryRecord, runHandled } from '../TranscriptionPage'
+import TranscriptionPage, {
+  buildBackendConfig,
+  deleteHistoryRecord,
+  getDraftSourceType,
+  runHandled
+} from '../TranscriptionPage'
 
 describe('TranscriptionPage', () => {
   it('switches between recording and file input modes', async () => {
@@ -47,6 +52,25 @@ describe('TranscriptionPage', () => {
     expect(screen.getByRole('option', { name: 'Provider model' })).toHaveAttribute('data-disabled')
   })
 
+  it('disables source switching while recording', () => {
+    render(
+      <TranscriptionToolbar
+        backend="local_whisper"
+        language="auto"
+        localModelStatus="ready"
+        providerAvailable
+        recordingActive
+        sourceMode="recording"
+        onBackendChange={vi.fn()}
+        onLanguageChange={vi.fn()}
+        onSourceModeChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole('button', { name: 'Recording' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Import audio' })).toBeDisabled()
+  })
+
   it('always clears the media mapping before deleting history', async () => {
     const request = vi.fn().mockResolvedValue(undefined)
     const deleteRecord = vi.fn().mockResolvedValue(undefined)
@@ -60,5 +84,10 @@ describe('TranscriptionPage', () => {
 
   it('handles rejected job promises at the page boundary', async () => {
     await expect(runHandled(Promise.reject(new Error('backend failed')))).resolves.toBeUndefined()
+  })
+
+  it('keeps the original draft source type when the toolbar mode changes', () => {
+    expect(getDraftSourceType({ sourceType: 'recording' }, 'file')).toBe('recording')
+    expect(getDraftSourceType(null, 'file')).toBe('file')
   })
 })

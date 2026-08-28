@@ -13,6 +13,7 @@ type TranscriptionToolbarProps = {
   onLanguageChange: (language: TranscriptionLanguage) => void
   onSourceModeChange: (sourceMode: SourceMode) => void
   providerAvailable: boolean
+  recordingActive?: boolean
   sourceMode: SourceMode
 }
 
@@ -32,6 +33,7 @@ export function TranscriptionToolbar({
   onLanguageChange,
   onSourceModeChange,
   providerAvailable,
+  recordingActive = false,
   sourceMode
 }: TranscriptionToolbarProps) {
   const { t } = useTranslation()
@@ -42,12 +44,14 @@ export function TranscriptionToolbar({
         <Button
           size="sm"
           variant={sourceMode === 'recording' ? 'default' : 'ghost'}
+          disabled={recordingActive}
           onClick={() => onSourceModeChange('recording')}>
           {t('transcription.recording')}
         </Button>
         <Button
           size="sm"
           variant={sourceMode === 'file' ? 'default' : 'ghost'}
+          disabled={recordingActive}
           onClick={() => onSourceModeChange('file')}>
           {t('transcription.import_audio')}
         </Button>

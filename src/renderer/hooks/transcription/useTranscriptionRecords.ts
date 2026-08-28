@@ -22,7 +22,7 @@ export function useTranscriptionRecords({ pageSize = 20, search, status }: UseTr
   }, [refresh, reset])
 
   useDataChange('/transcription/records', () => {
-    void reload()
+    void reload().catch(() => undefined)
   })
 
   return {

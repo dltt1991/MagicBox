@@ -1,7 +1,8 @@
-import { MockUseDataApiUtils, mockUseInfiniteQuery } from '@test-mocks/renderer/useDataApi'
+import { MockUseDataApiUtils, mockUseInfiniteQuery, mockUseQuery } from '@test-mocks/renderer/useDataApi'
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { useTranscriptionRecord } from '../useTranscriptionRecord'
 import { useTranscriptionRecords } from '../useTranscriptionRecords'
 
 describe('useTranscriptionRecords', () => {
@@ -43,5 +44,42 @@ describe('useTranscriptionRecords', () => {
     })
     expect(reset).toHaveBeenCalledTimes(1)
     expect(refresh).toHaveBeenCalledTimes(1)
+  })
+
+  it('handles refresh failures from data-change callbacks', async () => {
+    const refresh = vi.fn().mockRejectedValue(new Error('refresh failed'))
+    mockUseInfiniteQuery.mockReturnValue(buildInfiniteState({ refresh }) as never)
+
+    renderHook(() => useTranscriptionRecords())
+
+    await expect(async () => {
+      await act(async () => {
+        MockUseDataApiUtils.emitDataChange([{ endpoint: '/transcription/records', kind: 'membership' }])
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+    }).not.toThrow()
+  })
+
+  it('handles selected-record refresh failures from data-change callbacks', async () => {
+    const refetch = vi.fn().mockRejectedValue(new Error('refresh failed'))
+    mockUseQuery.mockReturnValue({
+      data: { record: undefined, result: null },
+      isLoading: false,
+      isRefreshing: false,
+      error: undefined,
+      refetch,
+      mutate: vi.fn()
+    } as never)
+
+    renderHook(() => useTranscriptionRecord('record-1'))
+
+    await expect(async () => {
+      await act(async () => {
+        MockUseDataApiUtils.emitDataChange([{ endpoint: '/transcription/records/:id' }] as const)
+        await Promise.resolve()
+        await Promise.resolve()
+      })
+    }).not.toThrow()
   })
 })

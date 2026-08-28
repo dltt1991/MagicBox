@@ -142,3 +142,25 @@ Both commands also emitted the existing Node engine warning because this environ
 ## Second Re-Review Fix Commit
 
 - Pending signed commit: `fix(transcription): use safe draft playback`.
+
+## Third Re-Review Fixes
+
+- Persisted draft source type at recording/import time so later toolbar mode changes cannot misclassify managed recordings or imported files.
+- Disabled source-mode switching while the recorder is recording, paused, or saving.
+- Caught data-change refresh rejections in transcription list/detail hooks.
+
+## Third Re-Review Verification
+
+- `pnpm typecheck:web`: PASS.
+- `pnpm typecheck:node`: PASS.
+- `pnpm i18n:check`: PASS, 80,436 translations checked.
+- `pnpm test:main src/main/services/transcription/__tests__/TranscriptionAudioStore.test.ts src/main/services/transcription/__tests__/TranscriptionService.test.ts src/main/ipc/handlers/__tests__/transcription.test.ts`: PASS, 3 files / 25 tests / 0 failures.
+- `pnpm test:shared src/shared/ipc/schemas/__tests__/transcription.test.ts`: PASS, 1 file / 3 tests / 0 failures.
+- `pnpm format`: PASS, fixed 2 files before final verification.
+- `git diff --check`: PASS.
+- Required renderer focused command remains BLOCKED before collection by `@vitest/web-worker` module resolution under Node `25.8.0` in this nested worktree.
+- `pnpm lint` remains BLOCKED before linting by the existing `.oxlintrc.json` `options.typeAware` placement error.
+
+## Third Re-Review Fix Commit
+
+- Pending signed commit: `fix(transcription): preserve draft source state`.
