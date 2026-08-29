@@ -577,6 +577,17 @@ describe('app Sidebar', () => {
     expect(itemIds.slice(translateIndex, translateIndex + 2)).toEqual(['translate', 'transcription'])
   })
 
+  it('renders sidebar menu items in visible preference order', () => {
+    mocks.sidebarFavorites = [appFavorite('translate'), appFavorite('assistants'), appFavorite('agents')]
+
+    render(<Sidebar />)
+
+    const labels = Array.from(screen.getByTestId('sidebar-items').querySelectorAll('span')).map(
+      (element) => element.textContent
+    )
+    expect(labels).toEqual(['Translate', 'Chat', 'Work'])
+  })
+
   it('removes a sidebar app favorite from the context menu', () => {
     mocks.sidebarFavorites = [appFavorite('assistants'), appFavorite('knowledge'), appFavorite('files')]
 
