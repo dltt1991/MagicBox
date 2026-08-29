@@ -7,7 +7,6 @@ const {
   discardRecordingMock,
   getMock,
   organizeMock,
-  reconcileTranscriptionSidebarFavoriteMock,
   releaseAudioUrlMock,
   reserveRecordingTargetMock,
   resolveAudioUrlMock,
@@ -21,7 +20,6 @@ const {
   discardRecordingMock: vi.fn(),
   getMock: vi.fn(),
   organizeMock: vi.fn(),
-  reconcileTranscriptionSidebarFavoriteMock: vi.fn(),
   releaseAudioUrlMock: vi.fn(),
   reserveRecordingTargetMock: vi.fn(),
   resolveAudioUrlMock: vi.fn(),
@@ -39,23 +37,19 @@ import { transcriptionHandlers } from '../transcription'
 
 describe('transcription handlers', () => {
   beforeEach(() => {
-    getMock.mockReset().mockImplementation((name: string) =>
-      name === 'PreferenceService'
-        ? { reconcileTranscriptionSidebarFavorite: reconcileTranscriptionSidebarFavoriteMock }
-        : {
-            cancel: cancelMock,
-            deleteRecording: deleteRecordingMock,
-            discardRecording: discardRecordingMock,
-            organize: organizeMock,
-            releaseAudioUrl: releaseAudioUrlMock,
-            reserveRecordingTarget: reserveRecordingTargetMock,
-            resolveAudioUrl: resolveAudioUrlMock,
-            resolveTemporaryRecordingUrl: resolveTemporaryRecordingUrlMock,
-            resolveTemporaryAudioUrl: resolveTemporaryAudioUrlMock,
-            transcribe: transcribeMock,
-            writeRecording: writeRecordingMock
-          }
-    )
+    getMock.mockReset().mockReturnValue({
+      cancel: cancelMock,
+      deleteRecording: deleteRecordingMock,
+      discardRecording: discardRecordingMock,
+      organize: organizeMock,
+      releaseAudioUrl: releaseAudioUrlMock,
+      reserveRecordingTarget: reserveRecordingTargetMock,
+      resolveAudioUrl: resolveAudioUrlMock,
+      resolveTemporaryRecordingUrl: resolveTemporaryRecordingUrlMock,
+      resolveTemporaryAudioUrl: resolveTemporaryAudioUrlMock,
+      transcribe: transcribeMock,
+      writeRecording: writeRecordingMock
+    })
     reserveRecordingTargetMock.mockReset()
     resolveAudioUrlMock.mockReset()
     resolveTemporaryRecordingUrlMock.mockReset()
@@ -64,7 +58,6 @@ describe('transcription handlers', () => {
     deleteRecordingMock.mockReset()
     discardRecordingMock.mockReset()
     organizeMock.mockReset()
-    reconcileTranscriptionSidebarFavoriteMock.mockReset()
     releaseAudioUrlMock.mockReset()
     transcribeMock.mockReset()
     writeRecordingMock.mockReset()
@@ -168,12 +161,6 @@ describe('transcription handlers', () => {
       { senderId: 'window-1' }
     )
     expect(discardRecordingMock).toHaveBeenCalledWith('recording-1')
-  })
-
-  it('reconciles sidebar favorites through the preference service', async () => {
-    await transcriptionHandlers['transcription.sidebar.reconcile'](undefined, { senderId: 'window-1' })
-
-    expect(reconcileTranscriptionSidebarFavoriteMock).toHaveBeenCalledOnce()
   })
 
   it('delegates transcription commands with the managed sender id', async () => {

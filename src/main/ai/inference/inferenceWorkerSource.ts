@@ -38,6 +38,7 @@ let proxyStatus = 'not-initialized'
 const CPU_RUNTIME_PROFILE = ${JSON.stringify(CPU_LOCAL_INFERENCE_PROFILE)}
 let runtimeProfile = CPU_RUNTIME_PROFILE
 const pipelines = new Map() // key: modelDir|dtype -> Promise<extractor>
+const speechPipelines = new Map() // key: modelDir|dtype -> Promise<transcriber>
 const paddleServices = new Map() // key: det|rec|dict -> Promise<PaddleOcrService>
 
 // Injected from pooling.ts and services/proxy (single, unit-tested sources). Bound to
@@ -145,6 +146,29 @@ function getLocalPipeline(modelDir, dtype) {
   return promise
 }
 
+function getSpeechPipeline(modelDir, dtype) {
+  const key = modelDir + '|' + dtype
+  let promise = speechPipelines.get(key)
+  if (!promise) {
+    promise = (async () => {
+      const { pipeline, env } = getTransformers()
+      if (cacheDir) env.cacheDir = cacheDir
+      const transcriber = await pipeline('automatic-speech-recognition', modelDir, {
+        dtype,
+        device: runtimeProfile.transformersDevice,
+        session_options: runtimeProfile.sessionOptions
+      })
+      if (runtimeProfile.id !== 'cpu') {
+        postLog('info', 'hardware provider active provider=' + runtimeProfile.id + ' runtime=whisper')
+      }
+      return transcriber
+    })()
+    speechPipelines.set(key, promise)
+    promise.catch(() => speechPipelines.delete(key))
+  }
+  return promise
+}
+
 /**
  * Download the model into the transformers.js cache. Unlike inference this needs a repo id
  * and the mirror env, and the resulting pipeline is discarded: inference reloads by
@@ -196,6 +220,15 @@ async function handleCountTokens(msg) {
   const extractor = await getLocalPipeline(msg.modelDir, msg.dtype)
   const tokenCounts = msg.texts.map((text) => extractor.tokenizer.encode(text, { add_special_tokens: true }).length)
   parentPort.postMessage({ type: 'result', id: msg.id, tokenCounts })
+}
+
+async function handleWhisperTranscribe(msg) {
+  const transcriber = await getSpeechPipeline(msg.modelDir, 'q8')
+  const output = await transcriber(msg.audio, {
+    return_timestamps: true,
+    ...(msg.language ? { language: msg.language } : {})
+  })
+  parentPort.postMessage({ type: 'result', id: msg.id, text: output.text, chunks: output.chunks || [] })
 }
 
 function ocrKey(paths) {
@@ -251,8 +284,9 @@ async function handleOcr(msg, buffer) {
 }
 
 async function disposeCachedInference() {
-  const resources = [...pipelines.values(), ...paddleServices.values()]
+  const resources = [...pipelines.values(), ...speechPipelines.values(), ...paddleServices.values()]
   pipelines.clear()
+  speechPipelines.clear()
   paddleServices.clear()
   const results = await Promise.allSettled(
     resources.map(async (resourcePromise) => {
@@ -345,7 +379,9 @@ parentPort.on('message', (msg) => {
           ? handleCountTokens
           : msg.type === 'ocr.recognize'
             ? handleOcr
-            : null
+            : msg.type === 'whisper.transcribe'
+              ? handleWhisperTranscribe
+              : null
   if (!run) {
     parentPort.postMessage({ type: 'error', id: msg.id, message: 'unknown message type: ' + msg.type })
     return

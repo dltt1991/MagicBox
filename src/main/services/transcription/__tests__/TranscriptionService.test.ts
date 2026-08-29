@@ -6,10 +6,11 @@ const {
   createRecordMock,
   createRecordWithResultMock,
   deleteAudioMock,
-  discardClaimedRecordingMock,
+  deleteRecordMock,
   discardRecordingMock,
   getRecordMock,
   claimRecordingMock,
+  releaseClaimedRecordingMock,
   releaseAudioUrlMock,
   resolveTemporaryRecordingUrlMock,
   reserveRecordingTargetMock,
@@ -23,10 +24,11 @@ const {
   createRecordMock: vi.fn(),
   createRecordWithResultMock: vi.fn(),
   deleteAudioMock: vi.fn(),
-  discardClaimedRecordingMock: vi.fn(),
+  deleteRecordMock: vi.fn(),
   discardRecordingMock: vi.fn(),
   getRecordMock: vi.fn(),
   claimRecordingMock: vi.fn(),
+  releaseClaimedRecordingMock: vi.fn(),
   releaseAudioUrlMock: vi.fn(),
   resolveTemporaryRecordingUrlMock: vi.fn(),
   reserveRecordingTargetMock: vi.fn(),
@@ -42,6 +44,7 @@ vi.mock('@data/services/TranscriptionHistoryService', () => ({
   transcriptionHistoryService: {
     createRecord: createRecordMock,
     createRecordWithResult: createRecordWithResultMock,
+    deleteRecord: deleteRecordMock,
     getRecord: getRecordMock,
     saveResult: saveResultMock,
     updateRecord: updateRecordMock
@@ -55,7 +58,7 @@ vi.mock('../TranscriptionAudioStore', () => ({
     releaseAudioUrl: releaseAudioUrlMock,
     claimRecording: claimRecordingMock,
     discardRecording: discardRecordingMock,
-    discardClaimedRecording: discardClaimedRecordingMock,
+    releaseClaimedRecording: releaseClaimedRecordingMock,
     adoptRecording: adoptRecordingMock,
     resolveTemporaryRecordingUrl: resolveTemporaryRecordingUrlMock,
     resolveTemporaryAudioUrl: resolveTemporaryAudioUrlMock,
@@ -74,7 +77,6 @@ describe('TranscriptionService', () => {
     reserveRecordingTargetMock.mockReset()
     resolveAudioUrlMock.mockReset()
     releaseAudioUrlMock.mockReset()
-    discardClaimedRecordingMock.mockReset()
     discardRecordingMock.mockReset()
     adoptRecordingMock.mockReset()
     resolveTemporaryAudioUrlMock.mockReset()
@@ -83,6 +85,7 @@ describe('TranscriptionService', () => {
     createRecordMock.mockReset()
     createRecordWithResultMock.mockReset()
     deleteAudioMock.mockReset()
+    deleteRecordMock.mockReset()
     saveResultMock.mockReset()
     updateRecordMock.mockReset()
   })
@@ -158,7 +161,9 @@ describe('TranscriptionService', () => {
 
     new TranscriptionService().deleteRecording('record-1', true)
 
+    expect(deleteRecordMock).toHaveBeenCalledWith('record-1')
     expect(deleteAudioMock).toHaveBeenCalledWith(record, { deleteAudio: true })
+    expect(deleteRecordMock.mock.invocationCallOrder[0]).toBeLessThan(deleteAudioMock.mock.invocationCallOrder[0])
   })
 
   it('selects the requested backend, sends progress, and persists its successful result', async () => {
@@ -242,10 +247,10 @@ describe('TranscriptionService', () => {
       expect.objectContaining({ transcriptText: 'hello' })
     )
     expect(adoptRecordingMock).toHaveBeenCalledWith('recording-1')
-    expect(discardClaimedRecordingMock).not.toHaveBeenCalled()
+    expect(releaseClaimedRecordingMock).not.toHaveBeenCalled()
   })
 
-  it('cleans up a claimed recording when transcription fails before persistence', async () => {
+  it('releases a claimed recording back to the draft when transcription fails before persistence', async () => {
     const local = {
       transcribe: vi.fn().mockRejectedValue(new Error('decode failed'))
     }
@@ -270,7 +275,7 @@ describe('TranscriptionService', () => {
     ).rejects.toThrow('decode failed')
 
     expect(claimRecordingMock).toHaveBeenCalledWith('recording-1')
-    expect(discardClaimedRecordingMock).toHaveBeenCalledWith('recording-1')
+    expect(releaseClaimedRecordingMock).toHaveBeenCalledWith('recording-1')
     expect(adoptRecordingMock).not.toHaveBeenCalled()
   })
 

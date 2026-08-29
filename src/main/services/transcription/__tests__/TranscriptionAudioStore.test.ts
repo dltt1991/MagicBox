@@ -211,7 +211,29 @@ describe('TranscriptionAudioStore', () => {
     expect(() => store.getRecordingPath(target.recordingId)).toThrow()
   })
 
-  it('keeps claimed recordings until the main transcription job adopts or discards them', () => {
+  it('restores claimed recordings to draft ownership when a transcription job fails', () => {
+    const store = new TranscriptionAudioStore()
+    const target = store.reserveRecordingTarget()
+    const wav = new Uint8Array(44)
+    wav.set([0x52, 0x49, 0x46, 0x46], 0)
+    wav.set([0x57, 0x41, 0x56, 0x45], 8)
+    wav.set([0x66, 0x6d, 0x74, 0x20], 12)
+    wav.set([16, 0, 0, 0], 16)
+    wav.set([1, 0, 1, 0], 20)
+    wav.set([0x80, 0x3e, 0, 0], 24)
+    wav.set([0, 0x7d, 0, 0], 28)
+    wav.set([2, 0, 16, 0], 32)
+    wav.set([0x64, 0x61, 0x74, 0x61], 36)
+    store.writeRecording(target.recordingId, wav)
+    const filePath = store.claimRecording(target.recordingId)
+
+    store.releaseClaimedRecording(target.recordingId)
+
+    expect(existsSync(filePath)).toBe(true)
+    expect(store.getRecordingPath(target.recordingId)).toBe(filePath)
+  })
+
+  it('deletes a claimed recording on failure only when the draft was discarded meanwhile', () => {
     const store = new TranscriptionAudioStore()
     const target = store.reserveRecordingTarget()
     const wav = new Uint8Array(44)
@@ -228,9 +250,8 @@ describe('TranscriptionAudioStore', () => {
     const filePath = store.claimRecording(target.recordingId)
 
     store.discardRecording(target.recordingId)
+    store.releaseClaimedRecording(target.recordingId)
 
-    expect(existsSync(filePath)).toBe(true)
-    store.discardClaimedRecording(target.recordingId)
     expect(existsSync(filePath)).toBe(false)
   })
 

@@ -70,9 +70,23 @@ vi.mock('../inferenceAcceleration', () => ({
 
 // Import the SUT after the worker mock is declared (it constructs a Worker lazily on first send).
 const { EmbeddingInferenceService } = await import('../EmbeddingInferenceService')
+const { InferenceServiceBase } = await import('../InferenceServiceBase')
 const { OcrInferenceService } = await import('../OcrInferenceService')
 const embeddingInferenceService = new EmbeddingInferenceService()
 const ocrInferenceService = new OcrInferenceService()
+
+class TestInferenceService extends InferenceServiceBase {
+  constructor() {
+    super('whisper')
+  }
+
+  sendWhisper(signal?: AbortSignal): Promise<unknown> {
+    return this.send(
+      { type: 'whisper.transcribe', audio: new Float32Array([0]), modelDir: '/models/whisper' },
+      { signal, terminateOnAbort: true }
+    )
+  }
+}
 
 /** Where the main process probed the complete cache — inference loads the model from here. */
 const MODEL_DIR = '/models/qwen3-embedding/org/model'
@@ -134,6 +148,19 @@ describe('InferenceService worker exit / failAll', () => {
     await expect(pending).rejects.toThrow(/exited unexpectedly \(code 0\)/)
     // failAll logs once for the in-flight rejection; a clean exit is not "abnormal".
     expect(mockMainLoggerService.error).toHaveBeenCalledTimes(1)
+  })
+
+  it('terminates the worker when a request opts into terminate-on-abort', async () => {
+    const service = new TestInferenceService()
+    const controller = new AbortController()
+    const pending = service.sendWhisper(controller.signal)
+    const worker = await latestWorker()
+    await waitForPostedRequests(worker, 1)
+
+    controller.abort(new Error('canceled'))
+
+    await expect(pending).rejects.toThrow('canceled')
+    expect(worker.terminate).toHaveBeenCalledOnce()
   })
 
   it('logs an abnormal (non-zero) exit even when no request is in flight (idle crash visibility)', async () => {

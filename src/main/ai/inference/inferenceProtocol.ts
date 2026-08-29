@@ -131,11 +131,25 @@ export interface OcrRecognizeMessage {
   source: OcrRecognizeSource
 }
 
+export interface WhisperChunk {
+  timestamp: [number, number]
+  text: string
+}
+
+export interface WhisperTranscribeMessage {
+  type: 'whisper.transcribe'
+  id: string
+  audio: Float32Array
+  language?: string
+  modelDir: string
+}
+
 export type InferenceRequest =
   | EmbeddingLoadMessage
   | EmbeddingEmbedMessage
   | EmbeddingCountTokensMessage
   | OcrRecognizeMessage
+  | WhisperTranscribeMessage
 
 // -- worker → main --------------------------------------------------------
 
@@ -171,6 +185,8 @@ export interface InferenceResultMessage {
   lines?: OcrLine[][] | null
   /** Token counts, one per input text (`embedding.countTokens`). */
   tokenCounts?: number[] | null
+  /** Timestamped transcript chunks (`whisper.transcribe`). */
+  chunks?: WhisperChunk[] | null
 }
 
 export interface InferenceErrorMessage {

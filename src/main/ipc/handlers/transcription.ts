@@ -21,10 +21,6 @@ export const transcriptionHandlers: IpcHandlersFor<typeof transcriptionRequestSc
     requireSenderWindow(ctx)
     application.get('TranscriptionService').discardRecording(recordingId)
   },
-  'transcription.sidebar.reconcile': async (_input, ctx) => {
-    requireSenderWindow(ctx)
-    await application.get('PreferenceService').reconcileTranscriptionSidebarFavorite()
-  },
   'transcription.recording.delete': async ({ recordId, deleteAudio }, ctx) => {
     requireSenderWindow(ctx)
     application.get('TranscriptionService').deleteRecording(recordId, deleteAudio)

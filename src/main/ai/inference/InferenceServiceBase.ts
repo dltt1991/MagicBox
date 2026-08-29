@@ -38,6 +38,7 @@ interface InferenceResult {
   text?: string | null
   lines?: OcrLine[][] | null
   tokenCounts?: number[] | null
+  chunks?: Array<{ timestamp: [number, number]; text: string }> | null
 }
 
 interface Pending {
@@ -214,7 +215,8 @@ export abstract class InferenceServiceBase extends BaseService {
           embeddings: msg.embeddings ?? null,
           text: msg.text ?? null,
           lines: msg.lines ?? null,
-          tokenCounts: msg.tokenCounts ?? null
+          tokenCounts: msg.tokenCounts ?? null,
+          chunks: msg.chunks ?? null
         })
         return
       }
@@ -243,7 +245,7 @@ export abstract class InferenceServiceBase extends BaseService {
 
   protected async send(
     request: DistributiveOmit<InferenceRequest, 'id'>,
-    opts: { onProgress?: (p: InferenceProgress) => void; signal?: AbortSignal } = {}
+    opts: { onProgress?: (p: InferenceProgress) => void; signal?: AbortSignal; terminateOnAbort?: boolean } = {}
   ): Promise<InferenceResult> {
     // Fail fast on an already-aborted signal rather than occupying a queue slot
     // (sendNow's own check below only fires once this request reaches the front).
@@ -262,7 +264,7 @@ export abstract class InferenceServiceBase extends BaseService {
 
   private async sendNow(
     request: DistributiveOmit<InferenceRequest, 'id'>,
-    opts: { onProgress?: (p: InferenceProgress) => void; signal?: AbortSignal }
+    opts: { onProgress?: (p: InferenceProgress) => void; signal?: AbortSignal; terminateOnAbort?: boolean }
   ): Promise<InferenceResult> {
     if (opts.signal?.aborted) {
       throw opts.signal.reason instanceof Error ? opts.signal.reason : new Error('aborted')
@@ -278,6 +280,7 @@ export abstract class InferenceServiceBase extends BaseService {
         if (!this.pending.has(id)) return
         this.pending.delete(id)
         reject(opts.signal?.reason instanceof Error ? opts.signal.reason : new Error('aborted'))
+        if (opts.terminateOnAbort) void this.terminate().catch(() => undefined)
       }
       const cleanup = () => opts.signal?.removeEventListener('abort', onAbort)
       this.pending.set(id, { resolve, reject, onProgress: opts.onProgress, cleanup })

@@ -72,6 +72,7 @@ export class TranscriptionService extends BaseService {
 
   deleteRecording(recordId: string, deleteAudio: boolean): void {
     const { record } = transcriptionHistoryService.getRecord(recordId)
+    transcriptionHistoryService.deleteRecord(recordId)
     transcriptionAudioStore.deleteAudio(record, { deleteAudio })
   }
 
@@ -121,7 +122,7 @@ export class TranscriptionService extends BaseService {
           errorSummary: stage === 'failed' ? 'Transcription failed' : null
         })
       }
-      if (claimedRecordingId) transcriptionAudioStore.discardClaimedRecording(claimedRecordingId)
+      if (claimedRecordingId) transcriptionAudioStore.releaseClaimedRecording(claimedRecordingId)
       throw error
     } finally {
       this.activeJobs.delete(input.jobId)

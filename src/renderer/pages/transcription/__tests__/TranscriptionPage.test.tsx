@@ -32,16 +32,12 @@ describe('TranscriptionPage', () => {
 
     expect(
       buildBackendConfig('provider_model', {
-        customEndpointBaseUrl: '',
-        customEndpointRequestFormat: 'openai_multipart',
         transcriptionModel: transcriptionModel as never
       })
     ).toEqual({ backend: 'provider_model', providerId: 'provider', modelId: 'whisper-1' })
 
     expect(
       buildBackendConfig('provider_model', {
-        customEndpointBaseUrl: '',
-        customEndpointRequestFormat: 'openai_multipart',
         transcriptionModel: { ...transcriptionModel, capabilities: [] } as never
       })
     ).toBeNull()
@@ -84,15 +80,12 @@ describe('TranscriptionPage', () => {
     expect(screen.getByRole('button', { name: 'Import audio' })).toBeDisabled()
   })
 
-  it('always clears the media mapping before deleting history', async () => {
+  it('delegates history deletion to the transcription owner', async () => {
     const request = vi.fn().mockResolvedValue(undefined)
-    const deleteRecord = vi.fn().mockResolvedValue(undefined)
 
-    await deleteHistoryRecord({ id: 'record-1' } as never, false, request, deleteRecord)
+    await deleteHistoryRecord({ id: 'record-1' } as never, false, request)
 
     expect(request).toHaveBeenCalledWith('transcription.recording.delete', { recordId: 'record-1', deleteAudio: false })
-    expect(deleteRecord).toHaveBeenCalledWith('record-1')
-    expect(request.mock.invocationCallOrder[0]).toBeLessThan(deleteRecord.mock.invocationCallOrder[0])
   })
 
   it('handles rejected job promises at the page boundary', async () => {

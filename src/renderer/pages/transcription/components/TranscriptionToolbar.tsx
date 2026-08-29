@@ -64,7 +64,6 @@ export function TranscriptionToolbar({
         <SelectContent>
           <SelectItem value="local_whisper">{t('transcription.backend_local')}</SelectItem>
           <SelectItem value="provider_model">{t('transcription.backend_provider')}</SelectItem>
-          <SelectItem value="custom_endpoint">{t('transcription.backend_custom')}</SelectItem>
         </SelectContent>
       </Select>
       {backend === 'provider_model' ? onlineModelSelector : null}

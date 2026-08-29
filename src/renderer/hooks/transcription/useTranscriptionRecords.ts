@@ -1,4 +1,4 @@
-import { useDataChange, useInfiniteFlatItems, useInfiniteQuery, useMutation } from '@data/hooks/useDataApi'
+import { useDataChange, useInfiniteFlatItems, useInfiniteQuery } from '@data/hooks/useDataApi'
 import type { TranscriptionRecordQueryParams } from '@shared/data/api/schemas/transcription'
 import { useCallback, useMemo } from 'react'
 
@@ -34,17 +34,5 @@ export function useTranscriptionRecords({ pageSize = 20, search, status }: UseTr
     error,
     loadMore: loadNext,
     refresh: reload
-  }
-}
-
-export function useDeleteTranscriptionRecord() {
-  const { trigger, isLoading, error } = useMutation('DELETE', '/transcription/records/:id', {
-    refresh: ['/transcription/records']
-  })
-
-  return {
-    deleteRecord: useCallback((id: string) => trigger({ params: { id } }), [trigger]),
-    isDeleting: isLoading,
-    error
   }
 }

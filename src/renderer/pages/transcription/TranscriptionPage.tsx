@@ -4,10 +4,7 @@ import { usePreference } from '@renderer/data/hooks/usePreference'
 import { useSaveTranscriptionResult } from '@renderer/hooks/transcription/useSaveTranscriptionResult'
 import { useTranscriptionPromptTemplates } from '@renderer/hooks/transcription/useTranscriptionPromptTemplates'
 import { useTranscriptionRecord } from '@renderer/hooks/transcription/useTranscriptionRecord'
-import {
-  useDeleteTranscriptionRecord,
-  useTranscriptionRecords
-} from '@renderer/hooks/transcription/useTranscriptionRecords'
+import { useTranscriptionRecords } from '@renderer/hooks/transcription/useTranscriptionRecords'
 import { useLocalModel } from '@renderer/hooks/useLocalModel'
 import { useModelById } from '@renderer/hooks/useModel'
 import { useProviders } from '@renderer/hooks/useProvider'
@@ -52,12 +49,9 @@ export default function TranscriptionPage() {
   const { hasMore, isLoadingMore, items: records, loadMore, refresh } = useTranscriptionRecords()
   const { record, result } = useTranscriptionRecord(selectedId)
   const { templates } = useTranscriptionPromptTemplates()
-  const [customEndpointBaseUrl] = usePreference('feature.transcription.custom_endpoint.base_url')
-  const [customEndpointRequestFormat] = usePreference('feature.transcription.custom_endpoint.request_format')
   const [transcriptionModelId, setTranscriptionModelId] = usePreference('feature.transcription.model_id')
   const { model: transcriptionModel } = useModelById(transcriptionModelId as UniqueModelId | null)
   const { providers } = useProviders()
-  const { deleteRecord } = useDeleteTranscriptionRecord()
   const recorder = useAudioRecorder()
   const job = useTranscriptionJob()
   const localWhisper = useLocalModel('whisper')
@@ -79,11 +73,9 @@ export default function TranscriptionPage() {
   const backendConfig = useMemo(
     () =>
       buildBackendConfig(backend, {
-        customEndpointBaseUrl,
-        customEndpointRequestFormat,
         transcriptionModel
       }),
-    [backend, customEndpointBaseUrl, customEndpointRequestFormat, transcriptionModel]
+    [backend, transcriptionModel]
   )
   const canTranscribe = Boolean((audioPath || recordingId || record?.id) && backendConfig)
   const transcriptText = result?.transcriptText ?? ''
@@ -147,11 +139,11 @@ export default function TranscriptionPage() {
 
   const handleDelete = useCallback(
     async (target: TranscriptionRecordView, deleteAudio: boolean) => {
-      await deleteHistoryRecord(target, deleteAudio, (route, input) => ipcApi.request(route, input), deleteRecord)
+      await deleteHistoryRecord(target, deleteAudio, (route, input) => ipcApi.request(route, input))
       if (selectedId === target.id) setSelectedId(null)
       await refresh()
     },
-    [deleteRecord, refresh, selectedId]
+    [refresh, selectedId]
   )
   const handleAction = useCallback(async (promise: Promise<unknown>) => {
     setActionError(null)
@@ -208,9 +200,6 @@ export default function TranscriptionPage() {
           <Button disabled={!job.isRunning} variant="outline" onClick={() => void handleAction(job.cancel())}>
             {t('common.cancel')}
           </Button>
-          {backend === 'custom_endpoint' && !customEndpointBaseUrl ? (
-            <span className="text-muted-foreground text-sm">{t('transcription.custom_endpoint_required')}</span>
-          ) : null}
           {job.progress ? (
             <span className="text-muted-foreground text-sm">
               {t(PROGRESS_LABEL_KEYS[job.progress.stage] ?? 'transcription.progress.preparing')}{' '}
@@ -221,6 +210,7 @@ export default function TranscriptionPage() {
         <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto]">
           {record && result ? (
             <PersistedTranscriptEditor
+              key={record.id}
               audioRef={audioRef}
               onActionError={() => setActionError(new Error('transcription.error.operation_failed'))}
               recordId={record.id}
@@ -285,8 +275,6 @@ export function getDraftSourceType(
 export function buildBackendConfig(
   backend: TranscriptionBackendConfig['backend'],
   options: {
-    customEndpointBaseUrl: string
-    customEndpointRequestFormat: 'openai_multipart' | 'json_base64'
     transcriptionModel: Model | undefined
   }
 ): TranscriptionBackendConfig | null {
@@ -296,9 +284,7 @@ export function buildBackendConfig(
     return { backend, providerId, modelId }
   }
   if (backend === 'custom_endpoint') {
-    return options.customEndpointBaseUrl
-      ? { backend, baseUrl: options.customEndpointBaseUrl, requestFormat: options.customEndpointRequestFormat }
-      : null
+    return null
   }
   return { backend }
 }
@@ -311,11 +297,9 @@ type DeleteRequest = (
 export async function deleteHistoryRecord(
   record: Pick<TranscriptionRecordView, 'id'>,
   deleteAudio: boolean,
-  request: DeleteRequest,
-  deleteRecord: (id: string) => Promise<unknown>
+  request: DeleteRequest
 ): Promise<void> {
   await request('transcription.recording.delete', { recordId: record.id, deleteAudio })
-  await deleteRecord(record.id)
 }
 
 function PersistedTranscriptEditor({

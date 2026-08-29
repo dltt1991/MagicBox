@@ -19,6 +19,8 @@ export interface RemoteModelFile {
   fileName: string
   /** Reject smaller downloads (LFS pointers are ~132 bytes; error pages are tiny). */
   minBytes: number
+  /** Optional sha256 checked before the temp file becomes the ready artifact. */
+  sha256?: string
   /** Relative download weight for the aggregate progress bar (≈ file MB). */
   weight: number
 }
@@ -69,6 +71,7 @@ export const LOCAL_MODELS = {
   /** Whisper small in transformers.js' q8 ONNX layout for local transcription. */
   whisper: {
     repo: 'onnx-community/whisper-small',
+    revision: '36050c46d777d46dc4b5f43f6d90574fc38f8732',
     files: [
       {
         repo: 'onnx-community/whisper-small',
@@ -120,7 +123,7 @@ export const LOCAL_MODELS = {
     weights: Record<'detection' | 'recognition', RemoteModelFile>
     dictionary: { repo: string; sourceFile: string; fileName: string; minBytes: number }
   }
-  whisper: { repo: string; files: readonly RemoteModelFile[] }
+  whisper: { repo: string; revision: string; files: readonly RemoteModelFile[] }
 }
 
 /** Must match package.json's pinned `onnxruntime-node` dependency version. */

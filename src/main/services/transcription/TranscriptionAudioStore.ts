@@ -19,6 +19,7 @@ const AUDIO_MIME_TYPES: Record<string, string> = {
 }
 
 export class TranscriptionAudioStore {
+  private readonly abandonedClaimedRecordingIds = new Set<string>()
   private readonly claimedRecordingPaths = new Map<string, string>()
   private readonly recordingPaths = new Map<string, string>()
   private readonly reservedRecordingPaths = new Map<string, string>()
@@ -51,6 +52,7 @@ export class TranscriptionAudioStore {
   claimRecording(recordingId: string): string {
     const filePath = this.getRecordingPath(recordingId)
     this.recordingPaths.delete(recordingId)
+    this.abandonedClaimedRecordingIds.delete(recordingId)
     this.claimedRecordingPaths.set(recordingId, filePath)
     return filePath
   }
@@ -81,6 +83,10 @@ export class TranscriptionAudioStore {
   }
 
   discardRecording(recordingId: string): void {
+    if (this.claimedRecordingPaths.has(recordingId)) {
+      this.abandonedClaimedRecordingIds.add(recordingId)
+      return
+    }
     const filePath = this.recordingPaths.get(recordingId) ?? this.reservedRecordingPaths.get(recordingId)
     this.recordingPaths.delete(recordingId)
     this.reservedRecordingPaths.delete(recordingId)
@@ -89,12 +95,18 @@ export class TranscriptionAudioStore {
 
   adoptRecording(recordingId: string): void {
     this.claimedRecordingPaths.delete(recordingId)
+    this.abandonedClaimedRecordingIds.delete(recordingId)
   }
 
-  discardClaimedRecording(recordingId: string): void {
+  releaseClaimedRecording(recordingId: string): void {
     const filePath = this.claimedRecordingPaths.get(recordingId)
     this.claimedRecordingPaths.delete(recordingId)
-    if (filePath) rmSync(filePath, { force: true })
+    if (!filePath) return
+    if (this.abandonedClaimedRecordingIds.delete(recordingId)) {
+      rmSync(filePath, { force: true })
+      return
+    }
+    this.recordingPaths.set(recordingId, filePath)
   }
 
   deleteAudio(record: TranscriptionRecord, options: { deleteAudio?: boolean } = {}): void {

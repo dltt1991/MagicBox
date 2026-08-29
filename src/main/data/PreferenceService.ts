@@ -232,6 +232,7 @@ export class PreferenceService extends BaseService {
         }
       }
 
+      await this.reconcileTranscriptionSidebarFavorite()
       this.setupWindowCleanup()
       logger.info(`Preference cache initialized with ${results.length} values`)
     } catch (error) {
@@ -416,9 +417,9 @@ export class PreferenceService extends BaseService {
     }
   }
 
-  public async reconcileTranscriptionSidebarFavorite(): Promise<void> {
+  private async reconcileTranscriptionSidebarFavorite(): Promise<void> {
     const key = 'ui.sidebar.favorites'
-    const oldValue = this.get(key)
+    const oldValue = this.cache[key]
     let nextValue: SidebarFavoriteItem[] | undefined
     application.get('DbService').withWriteTx((tx) => {
       const marker = tx

@@ -96,12 +96,17 @@ describe('LocalWhisperDownloadService', () => {
   })
 
   it('downloads ONNX weights into the loader-required onnx subdirectory', async () => {
-    vi.mocked(net.fetch).mockImplementation((async () => response()) as never)
+    const urls: string[] = []
+    vi.mocked(net.fetch).mockImplementation((async (url: string) => {
+      urls.push(url)
+      return response()
+    }) as never)
 
     await expect(localWhisperDownloadService.download()).resolves.toBe('ready')
 
     expect(ensureOnnxRuntime).toHaveBeenCalledTimes(1)
     expect(net.fetch).toHaveBeenCalledTimes(LOCAL_MODELS.whisper.files.length)
+    expect(urls.every((url) => url.includes(`/resolve/${LOCAL_MODELS.whisper.revision}/`))).toBe(true)
     expect(rename).toHaveBeenCalledTimes(LOCAL_MODELS.whisper.files.length)
     expect(mkdir).toHaveBeenCalledWith(`${MODEL_DIR}/onnx`, { recursive: true })
     expect(rename).toHaveBeenCalledWith(`${ENCODER_PATH}.tmp`, ENCODER_PATH)

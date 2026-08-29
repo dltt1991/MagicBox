@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 import { Readable, Transform } from 'node:stream'
@@ -9,7 +10,6 @@ import { loggerService } from '@logger'
 import { LOCAL_MODELS, type RemoteModelFile } from '@main/ai/inference/localModelCatalog'
 import { modelSourceOrder, resolveModelFileUrl } from '@main/ai/inference/modelSource'
 import { regionService } from '@main/services/RegionService'
-import { whisperInferenceRuntime } from '@main/services/transcription'
 import type { LocalModelKind } from '@shared/data/presets/localModel'
 import { net } from 'electron'
 
@@ -53,6 +53,7 @@ class LocalWhisperDownloadService extends LocalModelDownloadService {
   }
 
   async remove(): Promise<{ removed: boolean }> {
+    const { whisperInferenceRuntime } = await import('@main/services/transcription')
     await whisperInferenceRuntime.unload()
     await fs.promises.rm(this.modelDir(), { recursive: true, force: true })
     return { removed: true }
@@ -79,11 +80,13 @@ class LocalWhisperDownloadService extends LocalModelDownloadService {
     onProgress: (fraction: number) => void
   ): Promise<void> {
     const inChina = await regionService.isInChina().catch(() => false)
-    const urls = modelSourceOrder(inChina).map((id) => resolveModelFileUrl(id, file.repo, file.remoteFile))
+    const urls = modelSourceOrder(inChina).map((id) =>
+      resolveModelFileUrl(id, file.repo, file.remoteFile, LOCAL_MODELS.whisper.revision)
+    )
     let lastError: unknown
     for (const url of urls) {
       try {
-        await this.fetchToFile(url, this.modelPath(file.fileName), file.minBytes, signal, onProgress)
+        await this.fetchToFile(url, this.modelPath(file.fileName), file.minBytes, file.sha256, signal, onProgress)
         return
       } catch (error) {
         if (signal.aborted) throw error
@@ -98,6 +101,7 @@ class LocalWhisperDownloadService extends LocalModelDownloadService {
     url: string,
     dest: string,
     minBytes: number,
+    sha256: string | undefined,
     signal: AbortSignal,
     onProgress: (fraction: number) => void
   ): Promise<void> {
@@ -127,8 +131,20 @@ class LocalWhisperDownloadService extends LocalModelDownloadService {
       await fs.promises.rm(tmp, { force: true })
       throw new Error(`download from ${url} too small (${received} bytes)`)
     }
+    if (sha256) await this.verifySha256(tmp, sha256, url)
     await fs.promises.rename(tmp, dest)
     onProgress(1)
+  }
+
+  private async verifySha256(filePath: string, expected: string, url: string): Promise<void> {
+    const hash = createHash('sha256')
+    const stream = fs.createReadStream(filePath)
+    for await (const chunk of stream) hash.update(chunk)
+    const actual = hash.digest('hex')
+    if (actual !== expected) {
+      await fs.promises.rm(filePath, { force: true })
+      throw new Error(`download from ${url} failed sha256 verification`)
+    }
   }
 }
 

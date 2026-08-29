@@ -350,35 +350,6 @@ export function migrateTerminalFavoriteDefault(
   return preserveForwardCompatibleSidebarFavoriteItems(favorites, [...items, createSidebarAppFavorite('terminal')])
 }
 
-const LEGACY_DEFAULT_SIDEBAR_APPS: SidebarAppId[] = [
-  'assistants',
-  'agents',
-  'translate',
-  'paintings',
-  'knowledge',
-  'terminal'
-]
-
-export function migrateTranscriptionFavoriteDefault(
-  favorites: readonly SidebarFavoriteItem[] | undefined
-): SidebarFavoriteItem[] | undefined {
-  const items = getSidebarFavoriteItems(favorites)
-  const appIds = items.flatMap((item) => (item.type === 'app' ? [item.id] : []))
-  if (
-    appIds.length !== LEGACY_DEFAULT_SIDEBAR_APPS.length ||
-    appIds.some((id, index) => id !== LEGACY_DEFAULT_SIDEBAR_APPS[index])
-  ) {
-    return undefined
-  }
-
-  const translateIndex = items.findIndex((item) => item.type === 'app' && item.id === 'translate')
-  return preserveForwardCompatibleSidebarFavoriteItems(favorites, [
-    ...items.slice(0, translateIndex + 1),
-    createSidebarAppFavorite('transcription'),
-    ...items.slice(translateIndex + 1)
-  ])
-}
-
 // --- Favorites mutations -----------------------------------------------------
 //
 // The favorites preference stores apps and mini apps interleaved in one ordered

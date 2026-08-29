@@ -50,10 +50,6 @@ export const transcriptionRequestSchemas = {
     input: z.strictObject({ recordingId: z.string().min(1) }),
     output: z.void()
   }),
-  'transcription.sidebar.reconcile': defineRoute({
-    input: z.undefined(),
-    output: z.void()
-  }),
   'transcription.recording.delete': defineRoute({
     input: z.strictObject({ recordId: z.string().min(1), deleteAudio: z.boolean().default(false) }),
     output: z.void()
