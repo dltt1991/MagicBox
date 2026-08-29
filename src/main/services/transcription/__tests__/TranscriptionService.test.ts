@@ -223,6 +223,42 @@ describe('TranscriptionService', () => {
     expect(createRecordMock).toHaveBeenCalledWith(expect.objectContaining({ audioPath: '/managed/recording.wav' }))
   })
 
+  it('resolves persisted records before re-transcription without renderer paths', async () => {
+    const local = {
+      transcribe: vi.fn().mockResolvedValue({
+        text: 'hello again',
+        segments: [{ startMs: 0, endMs: 500, text: 'hello again' }],
+        durationMs: 500,
+        backend: 'local_whisper'
+      })
+    }
+    const record = { id: '018f0f37-8a1c-7f50-8000-000000000005', audioPath: '/managed/recording.wav', status: 'ready' }
+    const result = { id: '018f0f37-8a1c-7f50-8000-000000000006', recordId: record.id }
+    getRecordMock.mockReturnValue({ record, result: null })
+    updateRecordMock.mockReturnValue(record)
+    saveResultMock.mockReturnValue(result)
+
+    const service = new TranscriptionService({
+      local,
+      provider: { transcribe: vi.fn() },
+      custom: { transcribe: vi.fn() }
+    })
+
+    await service.transcribe(
+      {
+        jobId: 'job-1',
+        recordId: record.id,
+        sourceType: 'recording',
+        language: 'auto',
+        backend: { backend: 'local_whisper' }
+      },
+      'window-1'
+    )
+
+    expect(local.transcribe).toHaveBeenCalledWith('/managed/recording.wav', 'auto', expect.any(AbortSignal))
+    expect(updateRecordMock).toHaveBeenCalledWith(record.id, expect.objectContaining({ status: 'ready' }))
+  })
+
   it('does not save a successful result after its job is canceled', async () => {
     const local = {
       transcribe: vi.fn(

@@ -9,7 +9,7 @@ import {
 } from '@renderer/hooks/transcription/useTranscriptionRecords'
 import { useLocalModel } from '@renderer/hooks/useLocalModel'
 import { ipcApi } from '@renderer/ipc'
-import type { TranscriptionRecord, TranscriptionSegment } from '@shared/data/types/transcription'
+import type { TranscriptionRecordView, TranscriptionSegment } from '@shared/data/types/transcription'
 import type { TranscriptionBackendConfig } from '@shared/ipc/schemas/transcription'
 import { type RefObject, useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -76,7 +76,7 @@ export default function TranscriptionPage() {
       }),
     [backend, customEndpointBaseUrl, customEndpointRequestFormat, defaultModelId]
   )
-  const canTranscribe = Boolean((audioPath || recordingId) && backendConfig)
+  const canTranscribe = Boolean((audioPath || recordingId || record?.id) && backendConfig)
   const transcriptText = result?.transcriptText ?? ''
   const segments = result?.segments ?? []
   const organizationOutput = result?.organizationOutput ?? null
@@ -108,14 +108,14 @@ export default function TranscriptionPage() {
       recordingId: recording.recordingId,
       sourceType: 'recording'
     })
-  }, [recorder, t])
+  }, [recorder])
 
   const handleTranscribe = useCallback(async () => {
-    if ((!audioPath && !recordingId) || !backendConfig) return
+    if ((!audioPath && !recordingId && !record?.id) || !backendConfig) return
     const { record: nextRecord } = await job.start({
       backend: backendConfig,
       language,
-      ...(audioPath ? { audioPath } : { recordingId: recordingId! }),
+      ...(audioPath ? { audioPath } : recordingId ? { recordingId } : {}),
       recordId: selectedId ?? undefined,
       sourceType: getDraftSourceType(draftSource, record?.sourceType ?? sourceMode)
     })
@@ -128,6 +128,7 @@ export default function TranscriptionPage() {
     draftSource,
     job,
     language,
+    record?.id,
     record?.sourceType,
     recordingId,
     refresh,
@@ -136,7 +137,7 @@ export default function TranscriptionPage() {
   ])
 
   const handleDelete = useCallback(
-    async (target: TranscriptionRecord, deleteAudio: boolean) => {
+    async (target: TranscriptionRecordView, deleteAudio: boolean) => {
       await deleteHistoryRecord(target, deleteAudio, (route, input) => ipcApi.request(route, input), deleteRecord)
       if (selectedId === target.id) setSelectedId(null)
       await refresh()
@@ -286,7 +287,7 @@ type DeleteRequest = (
 ) => Promise<unknown>
 
 export async function deleteHistoryRecord(
-  record: Pick<TranscriptionRecord, 'id'>,
+  record: Pick<TranscriptionRecordView, 'id'>,
   deleteAudio: boolean,
   request: DeleteRequest,
   deleteRecord: (id: string) => Promise<unknown>

@@ -1,4 +1,5 @@
 import { application } from '@application'
+import type { TranscriptionRecord, TranscriptionRecordView } from '@shared/data/types/transcription'
 import { IpcError, IpcErrorCode } from '@shared/ipc/errors/IpcError'
 import type { transcriptionRequestSchemas } from '@shared/ipc/schemas/transcription'
 import type { IpcContext, IpcHandlersFor, WindowId } from '@shared/ipc/types'
@@ -33,12 +34,18 @@ export const transcriptionHandlers: IpcHandlersFor<typeof transcriptionRequestSc
     requireSenderWindow(ctx)
     application.get('TranscriptionService').releaseTemporaryAudioUrl(previewId)
   },
-  'transcription.transcribe': async (input, ctx) =>
-    application.get('TranscriptionService').transcribe(input, requireSenderWindow(ctx)),
+  'transcription.transcribe': async (input, ctx) => {
+    const { record, result } = await application.get('TranscriptionService').transcribe(input, requireSenderWindow(ctx))
+    return { record: toRecordView(record), result }
+  },
   'transcription.cancel': async ({ jobId }, ctx) => {
     requireSenderWindow(ctx)
     application.get('TranscriptionService').cancel(jobId)
   },
   'transcription.organize': async (input, ctx) =>
     application.get('TranscriptionService').organize(input, requireSenderWindow(ctx))
+}
+
+function toRecordView(record: TranscriptionRecord): TranscriptionRecordView {
+  return { ...record, audioPath: record.audioManaged ? null : record.audioPath }
 }

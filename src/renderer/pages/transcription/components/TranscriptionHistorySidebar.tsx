@@ -1,14 +1,14 @@
 import { Button, Checkbox, ConfirmDialog } from '@cherrystudio/ui'
-import type { TranscriptionRecord } from '@shared/data/types/transcription'
+import type { TranscriptionRecordView } from '@shared/data/types/transcription'
 import { Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 type TranscriptionHistorySidebarProps = {
   missingRecordIds: ReadonlySet<string>
-  onDelete: (record: TranscriptionRecord, deleteAudio: boolean) => void
+  onDelete: (record: TranscriptionRecordView, deleteAudio: boolean) => void
   onSelect: (recordId: string) => void
-  records: TranscriptionRecord[]
+  records: TranscriptionRecordView[]
   selectedId: string | null
 }
 
@@ -20,7 +20,7 @@ export function TranscriptionHistorySidebar({
   selectedId
 }: TranscriptionHistorySidebarProps) {
   const { t } = useTranslation()
-  const [deleteTarget, setDeleteTarget] = useState<TranscriptionRecord | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<TranscriptionRecordView | null>(null)
   const [deleteAudio, setDeleteAudio] = useState(false)
 
   return (

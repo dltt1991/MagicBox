@@ -27,7 +27,11 @@ describe('transcription handlers', () => {
     const created = { id: '019606a0-0000-7000-8000-000000000001', ...body }
     vi.mocked(transcriptionHistoryService.createRecord).mockReturnValue(created as never)
 
-    await expect(transcriptionHandlers['/transcription/records'].POST({ body } as never)).resolves.toBe(created)
+    await expect(transcriptionHandlers['/transcription/records'].POST({ body } as never)).resolves.toMatchObject({
+      audioManaged: false,
+      audioPath: '/tmp/call.wav',
+      title: 'Call'
+    })
     expect(transcriptionHistoryService.createRecord).toHaveBeenCalledWith(body)
     await expect(
       transcriptionHandlers['/transcription/records'].POST({ body: { ...body, ignored: true } } as never)
@@ -51,5 +55,35 @@ describe('transcription handlers', () => {
       transcriptText: 'Text',
       segments: []
     })
+  })
+
+  it('redacts app-managed audio paths from renderer-facing records', async () => {
+    const managed = {
+      id: '019606a0-0000-7000-8000-000000000001',
+      title: 'Managed',
+      sourceType: 'recording' as const,
+      audioPath: '/managed/recording.wav',
+      audioManaged: true,
+      durationMs: null,
+      language: null,
+      backend: null,
+      providerId: null,
+      modelId: null,
+      status: 'ready' as const,
+      errorSummary: null,
+      createdAt: '2026-08-26T00:00:00.000Z',
+      updatedAt: '2026-08-26T00:00:00.000Z'
+    }
+    vi.mocked(transcriptionHistoryService.listRecords).mockReturnValue({ items: [managed], total: 1 } as never)
+    vi.mocked(transcriptionHistoryService.getRecord).mockReturnValue({ record: managed, result: null } as never)
+
+    await expect(
+      transcriptionHandlers['/transcription/records'].GET({ query: { limit: 20 } } as never)
+    ).resolves.toMatchObject({
+      items: [{ audioPath: null, audioManaged: true }]
+    })
+    await expect(
+      transcriptionHandlers['/transcription/records/:id'].GET({ params: { id: managed.id } } as never)
+    ).resolves.toMatchObject({ record: { audioPath: null, audioManaged: true }, result: null })
   })
 })

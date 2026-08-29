@@ -147,26 +147,66 @@ describe('transcription handlers', () => {
   })
 
   it('delegates transcription commands with the managed sender id', async () => {
-    transcribeMock.mockResolvedValue({ record: { id: 'record-1' }, result: { id: 'result-1' } })
-    await transcriptionHandlers['transcription.transcribe'](
-      {
-        jobId: 'job-1',
-        audioPath: '/audio.wav',
-        sourceType: 'file',
-        language: 'auto',
-        backend: { backend: 'local_whisper' }
-      },
-      { senderId: 'window-1' }
-    )
+    transcribeMock.mockResolvedValue({
+      record: { id: 'record-1', audioManaged: true, audioPath: '/managed/record-1.wav' },
+      result: { id: 'result-1' }
+    })
+    await expect(
+      transcriptionHandlers['transcription.transcribe'](
+        {
+          jobId: 'job-1',
+          audioPath: '/audio.wav',
+          sourceType: 'file',
+          language: 'auto',
+          backend: { backend: 'local_whisper' }
+        },
+        { senderId: 'window-1' }
+      )
+    ).resolves.toMatchObject({ record: { id: 'record-1', audioPath: null, audioManaged: true } })
     await transcriptionHandlers['transcription.cancel']({ jobId: 'job-1' }, { senderId: 'window-1' })
     await transcriptionHandlers['transcription.organize'](
-      { jobId: 'job-2', recordId: 'record-1', templateId: null, prompt: 'summarize' },
+      {
+        jobId: 'job-2',
+        recordId: 'record-1',
+        templateId: null,
+        prompt: 'summarize'
+      },
       { senderId: 'window-1' }
     )
 
     expect(transcribeMock).toHaveBeenCalledWith(expect.objectContaining({ jobId: 'job-1' }), 'window-1')
     expect(cancelMock).toHaveBeenCalledWith('job-1')
     expect(organizeMock).toHaveBeenCalledWith(expect.objectContaining({ jobId: 'job-2' }), 'window-1')
+  })
+
+  it('accepts persisted record ids for re-transcription without renderer audio paths', async () => {
+    transcribeMock.mockResolvedValue({
+      record: { id: 'record-1', audioManaged: true, audioPath: '/managed/record-1.wav' },
+      result: { id: 'result-1' }
+    })
+
+    await expect(
+      transcriptionHandlers['transcription.transcribe'](
+        {
+          jobId: 'job-1',
+          recordId: 'record-1',
+          sourceType: 'recording',
+          language: 'auto',
+          backend: { backend: 'local_whisper' }
+        },
+        { senderId: 'window-1' }
+      )
+    ).resolves.toMatchObject({ record: { audioPath: null } })
+    expect(transcribeMock).toHaveBeenCalledWith(
+      {
+        jobId: 'job-1',
+        recordId: 'record-1',
+        sourceType: 'recording',
+        language: 'auto',
+        backend: { backend: 'local_whisper' }
+      },
+      'window-1'
+    )
   })
 
   it('rejects transcription commands without a managed sender', async () => {

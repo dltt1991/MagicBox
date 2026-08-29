@@ -10,6 +10,7 @@ import {
   UpdateTranscriptionTextSchema
 } from '@shared/data/api/schemas/transcription'
 import type { HandlersFor } from '@shared/data/api/types'
+import type { TranscriptionRecord, TranscriptionRecordView } from '@shared/data/types/transcription'
 import * as z from 'zod'
 
 const IdParamsSchema = z.strictObject({ id: z.string().min(1) })
@@ -17,20 +18,24 @@ const IdParamsSchema = z.strictObject({ id: z.string().min(1) })
 export const transcriptionHandlers: HandlersFor<TranscriptionSchemas> = {
   '/transcription/records': {
     GET: async ({ query }) => {
-      return transcriptionHistoryService.listRecords(TranscriptionRecordQuerySchema.parse(query ?? {}))
+      const page = transcriptionHistoryService.listRecords(TranscriptionRecordQuerySchema.parse(query ?? {}))
+      return { ...page, items: page.items.map(toRecordView) }
     },
     POST: async ({ body }) => {
-      return transcriptionHistoryService.createRecord(CreateTranscriptionRecordSchema.parse(body))
+      return toRecordView(transcriptionHistoryService.createRecord(CreateTranscriptionRecordSchema.parse(body)))
     }
   },
   '/transcription/records/:id': {
     GET: async ({ params }) => {
-      return transcriptionHistoryService.getRecord(IdParamsSchema.parse(params).id)
+      const { record, result } = transcriptionHistoryService.getRecord(IdParamsSchema.parse(params).id)
+      return { record: toRecordView(record), result }
     },
     PATCH: async ({ params, body }) => {
-      return transcriptionHistoryService.updateRecord(
-        IdParamsSchema.parse(params).id,
-        UpdateTranscriptionRecordSchema.parse(body)
+      return toRecordView(
+        transcriptionHistoryService.updateRecord(
+          IdParamsSchema.parse(params).id,
+          UpdateTranscriptionRecordSchema.parse(body)
+        )
       )
     },
     DELETE: async ({ params }) => {
@@ -70,4 +75,8 @@ export const transcriptionHandlers: HandlersFor<TranscriptionSchemas> = {
       return undefined
     }
   }
+}
+
+function toRecordView(record: TranscriptionRecord): TranscriptionRecordView {
+  return { ...record, audioPath: record.audioManaged ? null : record.audioPath }
 }

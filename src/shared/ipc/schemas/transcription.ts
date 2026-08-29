@@ -1,6 +1,6 @@
 import {
   TranscriptionLanguageSchema,
-  TranscriptionRecordSchema,
+  TranscriptionRecordViewSchema,
   TranscriptionResultSchema,
   TranscriptionSourceTypeSchema
 } from '@shared/data/types/transcription'
@@ -79,8 +79,12 @@ export const transcriptionRequestSchemas = {
         language: TranscriptionLanguageSchema,
         backend: TranscriptionBackendConfigSchema
       })
-      .refine((input) => Boolean(input.audioPath) !== Boolean(input.recordingId), 'Provide audioPath or recordingId'),
-    output: z.strictObject({ record: TranscriptionRecordSchema, result: TranscriptionResultSchema })
+      .refine(
+        (input) => Boolean(input.audioPath) || Boolean(input.recordingId) || Boolean(input.recordId),
+        'Provide audioPath, recordingId, or recordId'
+      )
+      .refine((input) => !(input.audioPath && input.recordingId), 'Provide only one draft audio source'),
+    output: z.strictObject({ record: TranscriptionRecordViewSchema, result: TranscriptionResultSchema })
   }),
   'transcription.cancel': defineRoute({
     input: z.strictObject({ jobId: z.string().min(1) }),

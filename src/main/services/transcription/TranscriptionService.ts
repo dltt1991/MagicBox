@@ -223,6 +223,7 @@ export class TranscriptionService extends BaseService {
   private resolveInputAudioPath(input: TranscriptionCommandInput): string {
     if (input.recordingId) return transcriptionAudioStore.getRecordingPath(input.recordingId)
     if (input.audioPath) return input.audioPath
+    if (input.recordId) return transcriptionHistoryService.getRecord(input.recordId).record.audioPath
     throw new Error('Audio source is not available')
   }
 

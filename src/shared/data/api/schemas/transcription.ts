@@ -3,7 +3,7 @@ import * as z from 'zod'
 import {
   TranscriptionBackendSchema,
   type TranscriptionPromptTemplate,
-  type TranscriptionRecord,
+  type TranscriptionRecordView,
   type TranscriptionResult,
   TranscriptionSegmentSchema,
   TranscriptionSourceTypeSchema,
@@ -80,8 +80,8 @@ export const TranscriptionRecordQuerySchema = z.strictObject({
 export type TranscriptionRecordQuery = z.infer<typeof TranscriptionRecordQuerySchema>
 export type TranscriptionRecordQueryParams = z.input<typeof TranscriptionRecordQuerySchema> & CursorPaginationParams
 
-export interface TranscriptionRecordListResponse extends CursorPaginationResponse<TranscriptionRecord> {
-  items: TranscriptionRecord[]
+export interface TranscriptionRecordListResponse extends CursorPaginationResponse<TranscriptionRecordView> {
+  items: TranscriptionRecordView[]
   total: number
 }
 
@@ -93,18 +93,18 @@ export type TranscriptionSchemas = {
     }
     POST: {
       body: CreateTranscriptionRecordDto
-      response: TranscriptionRecord
+      response: TranscriptionRecordView
     }
   }
   '/transcription/records/:id': {
     GET: {
       params: { id: string }
-      response: { record: TranscriptionRecord; result: TranscriptionResult | null }
+      response: { record: TranscriptionRecordView; result: TranscriptionResult | null }
     }
     PATCH: {
       params: { id: string }
       body: UpdateTranscriptionRecordDto
-      response: TranscriptionRecord
+      response: TranscriptionRecordView
     }
     DELETE: {
       params: { id: string }

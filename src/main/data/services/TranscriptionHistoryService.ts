@@ -11,7 +11,6 @@ import type {
   CreateTranscriptionPromptTemplateDto,
   CreateTranscriptionRecordDto,
   SaveTranscriptionResultDto,
-  TranscriptionRecordListResponse,
   TranscriptionRecordQuery,
   UpdateTranscriptionPromptTemplateDto,
   UpdateTranscriptionRecordDto,
@@ -31,6 +30,12 @@ import { asNumericKey, decodeListCursor, encodeCursor, keysetOrdering } from './
 import { timestampToISO } from './utils/rowMappers'
 
 const logger = loggerService.withContext('DataApi:TranscriptionHistoryService')
+
+type TranscriptionRecordListResult = {
+  items: TranscriptionRecord[]
+  nextCursor?: string
+  total: number
+}
 
 const BUILT_IN_TEMPLATES = [
   {
@@ -94,7 +99,7 @@ function rowToTemplate(row: typeof transcriptionPromptTemplateTable.$inferSelect
 }
 
 export class TranscriptionHistoryService {
-  listRecords(query: TranscriptionRecordQuery): TranscriptionRecordListResponse {
+  listRecords(query: TranscriptionRecordQuery): TranscriptionRecordListResult {
     const db = application.get('DbService').getDb()
     const filters: SQL[] = []
     if (query.status) filters.push(eq(transcriptionRecordTable.status, query.status))

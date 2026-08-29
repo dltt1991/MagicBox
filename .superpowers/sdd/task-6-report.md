@@ -224,3 +224,24 @@ Both commands also emitted the existing Node engine warning because this environ
 ## Sixth Re-Review Fix Commit
 
 - Pending signed commit: `fix(transcription): keep recording paths in main`.
+
+## Seventh Re-Review Fixes
+
+- Split internal `TranscriptionRecord` from renderer-facing `TranscriptionRecordView`.
+- Redacted `audioPath` to `null` for app-managed recordings at both DataApi and transcription IPC handler boundaries while leaving imported-file paths visible.
+- Allowed persisted re-transcription to send only `recordId`; `TranscriptionService` now resolves the stored internal audio path before invoking the backend.
+
+## Seventh Re-Review Verification
+
+- `pnpm typecheck:web`: PASS.
+- `pnpm typecheck:node`: PASS.
+- `pnpm i18n:check`: PASS, 80,436 translations checked.
+- `pnpm test:main src/main/data/api/handlers/__tests__/transcription.test.ts src/main/services/transcription/__tests__/TranscriptionAudioStore.test.ts src/main/services/transcription/__tests__/TranscriptionService.test.ts src/main/ipc/handlers/__tests__/transcription.test.ts`: PASS, 4 files / 34 tests / 0 failures.
+- `pnpm exec vitest run --project renderer src/renderer/pages/transcription/hooks/__tests__/useAudioRecorder.test.ts src/renderer/pages/transcription/hooks/__tests__/useAudioPlaybackUrl.test.ts src/renderer/pages/transcription/__tests__/TranscriptionPage.test.tsx`: BLOCKED before collection by `@vitest/web-worker` module resolution under Node `25.8.0` in this nested worktree.
+- `pnpm format`: PASS.
+- `pnpm lint`: BLOCKED before linting by the existing `.oxlintrc.json` `options.typeAware` placement error.
+- `git diff --check`: PASS.
+
+## Seventh Re-Review Fix Commit
+
+- Pending signed commit: `fix(transcription): redact managed audio paths`.

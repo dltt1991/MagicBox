@@ -42,6 +42,11 @@ export const TranscriptionRecordSchema = z.strictObject({
 })
 export type TranscriptionRecord = z.infer<typeof TranscriptionRecordSchema>
 
+export const TranscriptionRecordViewSchema = TranscriptionRecordSchema.extend({
+  audioPath: z.string().min(1).nullable()
+})
+export type TranscriptionRecordView = z.infer<typeof TranscriptionRecordViewSchema>
+
 export const TranscriptionResultSchema = z.strictObject({
   id: z.uuidv7(),
   recordId: z.uuidv7(),
