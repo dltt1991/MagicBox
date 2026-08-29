@@ -115,8 +115,7 @@ export default function TranscriptionPage() {
     const { record: nextRecord } = await job.start({
       backend: backendConfig,
       language,
-      ...(audioPath ? { audioPath } : recordingId ? { recordingId } : {}),
-      recordId: selectedId ?? undefined,
+      ...(selectedId ? { recordId: selectedId } : audioPath ? { audioPath } : { recordingId: recordingId! }),
       sourceType: getDraftSourceType(draftSource, record?.sourceType ?? sourceMode)
     })
     setSelectedId(nextRecord.id)

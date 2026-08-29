@@ -80,10 +80,9 @@ export const transcriptionRequestSchemas = {
         backend: TranscriptionBackendConfigSchema
       })
       .refine(
-        (input) => Boolean(input.audioPath) || Boolean(input.recordingId) || Boolean(input.recordId),
-        'Provide audioPath, recordingId, or recordId'
-      )
-      .refine((input) => !(input.audioPath && input.recordingId), 'Provide only one draft audio source'),
+        (input) => [input.audioPath, input.recordingId, input.recordId].filter(Boolean).length === 1,
+        'Provide exactly one audioPath, recordingId, or recordId'
+      ),
     output: z.strictObject({ record: TranscriptionRecordViewSchema, result: TranscriptionResultSchema })
   }),
   'transcription.cancel': defineRoute({
