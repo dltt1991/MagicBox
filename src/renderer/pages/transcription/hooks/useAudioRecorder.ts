@@ -62,7 +62,7 @@ export function useAudioRecorder() {
 
   const stop = useCallback(async (): Promise<RecorderResult | null> => {
     try {
-      return await new Promise<RecorderResult>((resolve, reject) => {
+      const result = await new Promise<RecorderResult>((resolve, reject) => {
         const recorder = mediaRecorderRef.current
         if (!recorder) return reject(new Error('No active recorder'))
         setStatus('saving')
@@ -74,6 +74,11 @@ export function useAudioRecorder() {
         streamRef.current?.getTracks().forEach((track) => track.stop())
         streamRef.current = null
       })
+      if (!mountedRef.current) {
+        await ipcApi.request('transcription.recording.discard', { recordingId: result.recordingId })
+        return null
+      }
+      return result
     } catch {
       if (!mountedRef.current) return null
       setError(new Error('transcription.error.recording_failed'))

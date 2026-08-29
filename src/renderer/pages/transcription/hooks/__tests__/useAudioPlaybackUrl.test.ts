@@ -11,13 +11,13 @@ vi.mock('@renderer/ipc', () => ({
 }))
 
 describe('useAudioPlaybackUrl', () => {
-  it('releases temporary preview media mappings on replacement and unmount', async () => {
+  it('releases preview and history playback mappings on replacement and unmount', async () => {
     vi.mocked(ipcApi.request).mockImplementation(async (route, input) => {
       if (route === 'transcription.audio_url.preview') {
         const { audioPath } = input as { audioPath: string }
         return {
           missing: false,
-          previewId: audioPath === '/first.wav' ? 'preview-1' : 'preview-2',
+          playbackId: audioPath === '/first.wav' ? 'playback-1' : 'playback-2',
           url: audioPath === '/first.wav' ? 'cherry-media://audio/preview-1' : 'cherry-media://audio/preview-2'
         }
       }
@@ -34,11 +34,25 @@ describe('useAudioPlaybackUrl', () => {
 
     await act(async () => rerender({ previewSource: { audioPath: '/second.wav' } }))
     await waitFor(() =>
-      expect(ipcApi.request).toHaveBeenCalledWith('transcription.audio_url.release', { previewId: 'preview-1' })
+      expect(ipcApi.request).toHaveBeenCalledWith('transcription.audio_url.release', { playbackId: 'playback-1' })
     )
 
     unmount()
 
-    expect(ipcApi.request).toHaveBeenCalledWith('transcription.audio_url.release', { previewId: 'preview-2' })
+    expect(ipcApi.request).toHaveBeenCalledWith('transcription.audio_url.release', { playbackId: 'playback-2' })
+
+    vi.mocked(ipcApi.request).mockImplementation(async (route) =>
+      route === 'transcription.audio_url.resolve'
+        ? { missing: false, playbackId: 'history-lease', url: 'cherry-media://audio/history-lease' }
+        : undefined
+    )
+    const history = renderHook(() => useAudioPlaybackUrl('record-1'))
+    await waitFor(() =>
+      expect(ipcApi.request).toHaveBeenCalledWith('transcription.audio_url.resolve', { recordId: 'record-1' })
+    )
+    history.unmount()
+    expect(ipcApi.request).toHaveBeenCalledWith('transcription.audio_url.release', {
+      playbackId: 'history-lease'
+    })
   })
 })

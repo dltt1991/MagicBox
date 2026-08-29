@@ -29,7 +29,48 @@ describe('TranscriptionHistoryService', () => {
     expect(dbh.db.select().from(transcriptionRecordTable).all()).toEqual([])
   })
 
-  it('preserves edited transcript text and segments when saving a new organization result', () => {
+  it('replaces transcript text and segments when saving a new transcription result', () => {
+    const record = transcriptionHistoryService.createRecord(createInput)
+    const first = transcriptionHistoryService.saveResult(record.id, {
+      transcriptText: 'First pass',
+      segments: [{ startMs: 0, endMs: 1000, text: 'First pass' }],
+      organizationTemplateId: 'builtin-general-summary',
+      organizationPromptSnapshot: 'Old prompt',
+      organizationOutput: 'Old summary'
+    })
+
+    const replaced = transcriptionHistoryService.saveResult(record.id, {
+      transcriptText: 'Second pass',
+      segments: [{ startMs: 0, endMs: 1500, text: 'Second pass' }],
+      organizationTemplateId: null,
+      organizationPromptSnapshot: null,
+      organizationOutput: null
+    })
+
+    expect(replaced).toMatchObject({
+      id: first.id,
+      transcriptText: 'Second pass',
+      segments: [{ startMs: 0, endMs: 1500, text: 'Second pass' }],
+      organizationTemplateId: null,
+      organizationPromptSnapshot: null,
+      organizationOutput: null
+    })
+    expect(dbh.db.select().from(transcriptionResultTable).all()).toHaveLength(1)
+  })
+
+  it('rolls back a new transcription record when saving its result fails', () => {
+    expect(() =>
+      transcriptionHistoryService.createRecordWithResult(createInput, {
+        transcriptText: 'Invalid segment',
+        segments: [{ startMs: 1000, endMs: 0, text: 'Invalid segment' }]
+      })
+    ).toThrow()
+
+    expect(dbh.db.select().from(transcriptionRecordTable).all()).toEqual([])
+    expect(dbh.db.select().from(transcriptionResultTable).all()).toEqual([])
+  })
+
+  it('preserves edited transcript text and segments when updating organization fields', () => {
     const record = transcriptionHistoryService.createRecord(createInput)
 
     const first = transcriptionHistoryService.saveResult(record.id, {
@@ -40,9 +81,7 @@ describe('TranscriptionHistoryService', () => {
       transcriptText: 'Edited draft',
       segments: [{ startMs: 0, endMs: 1500, text: 'Edited draft' }]
     })
-    const reorganized = transcriptionHistoryService.saveResult(record.id, {
-      transcriptText: 'Stale draft',
-      segments: [{ startMs: 0, endMs: 1000, text: 'Stale draft' }],
+    const reorganized = transcriptionHistoryService.updateOrganizationResult(record.id, {
       organizationTemplateId: 'builtin-general-summary',
       organizationPromptSnapshot: 'Current organization prompt',
       organizationOutput: 'Summary'

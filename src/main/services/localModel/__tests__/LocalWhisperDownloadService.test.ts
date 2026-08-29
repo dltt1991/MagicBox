@@ -27,7 +27,7 @@ vi.mock('@main/services/RegionService', () => ({ regionService: { isInChina: vi.
 vi.mock('@main/services/localModel/OnnxRuntimeBinaryService', () => ({
   onnxRuntimeBinaryService: { ensure: ensureOnnxRuntime, isReady: onnxRuntimeIsReady }
 }))
-vi.mock('@main/services/transcription/WhisperInferenceRuntime', () => ({ whisperInferenceRuntime: { unload } }))
+vi.mock('@main/services/transcription', () => ({ whisperInferenceRuntime: { unload } }))
 vi.mock('node:fs', async () => {
   const actual = await vi.importActual<typeof NodeFs>('node:fs')
   const patched = {

@@ -19,6 +19,7 @@ const AUDIO_MIME_TYPES: Record<string, string> = {
 }
 
 export class TranscriptionAudioStore {
+  private readonly claimedRecordingPaths = new Map<string, string>()
   private readonly recordingPaths = new Map<string, string>()
   private readonly reservedRecordingPaths = new Map<string, string>()
 
@@ -47,35 +48,56 @@ export class TranscriptionAudioStore {
     return filePath
   }
 
-  resolveAudioUrl(record: TranscriptionRecord): { url: string | null; missing: boolean } {
-    if (!existsSync(record.audioPath)) return { url: null, missing: true }
-
-    return this.storeAudioUrl(record.id, record.audioPath)
+  claimRecording(recordingId: string): string {
+    const filePath = this.getRecordingPath(recordingId)
+    this.recordingPaths.delete(recordingId)
+    this.claimedRecordingPaths.set(recordingId, filePath)
+    return filePath
   }
 
-  resolveTemporaryAudioUrl(audioPath: string): { url: string | null; missing: boolean; previewId: string | null } {
-    if (!existsSync(audioPath) || !getAudioMimeType(audioPath)) return { url: null, missing: true, previewId: null }
-    const previewId = `transcription-preview-${uuidv7()}`
-    const result = this.storeAudioUrl(previewId, audioPath)
-    return { ...result, previewId }
+  resolveAudioUrl(record: TranscriptionRecord): { url: string | null; missing: boolean; playbackId: string | null } {
+    if (!existsSync(record.audioPath)) return { url: null, missing: true, playbackId: null }
+
+    return this.storeAudioUrl(record.audioPath)
+  }
+
+  resolveTemporaryAudioUrl(audioPath: string): { url: string | null; missing: boolean; playbackId: string | null } {
+    if (!existsSync(audioPath) || !getAudioMimeType(audioPath)) return { url: null, missing: true, playbackId: null }
+    return this.storeAudioUrl(audioPath)
   }
 
   resolveTemporaryRecordingUrl(recordingId: string): {
     url: string | null
     missing: boolean
-    previewId: string | null
+    playbackId: string | null
   } {
     return this.resolveTemporaryAudioUrl(this.getRecordingPath(recordingId))
   }
 
-  releaseTemporaryAudioUrl(previewId: string): void {
-    if (previewId.startsWith('transcription-preview-')) {
-      application.get('MediaProtocolService').remove(MediaKind.Audio, previewId)
+  releaseAudioUrl(playbackId: string): void {
+    if (playbackId.startsWith('transcription-playback-')) {
+      application.get('MediaProtocolService').remove(MediaKind.Audio, playbackId)
     }
   }
 
+  discardRecording(recordingId: string): void {
+    const filePath = this.recordingPaths.get(recordingId) ?? this.reservedRecordingPaths.get(recordingId)
+    this.recordingPaths.delete(recordingId)
+    this.reservedRecordingPaths.delete(recordingId)
+    if (filePath) rmSync(filePath, { force: true })
+  }
+
+  adoptRecording(recordingId: string): void {
+    this.claimedRecordingPaths.delete(recordingId)
+  }
+
+  discardClaimedRecording(recordingId: string): void {
+    const filePath = this.claimedRecordingPaths.get(recordingId)
+    this.claimedRecordingPaths.delete(recordingId)
+    if (filePath) rmSync(filePath, { force: true })
+  }
+
   deleteAudio(record: TranscriptionRecord, options: { deleteAudio?: boolean } = {}): void {
-    application.get('MediaProtocolService').remove(MediaKind.Audio, record.id)
     if (options.deleteAudio && record.audioManaged && this.isManagedRecordingPath(record.audioPath)) {
       rmSync(record.audioPath, { force: true })
     }
@@ -86,11 +108,12 @@ export class TranscriptionAudioStore {
     return relativePath !== '' && !relativePath.startsWith(`..${path.sep}`) && !path.isAbsolute(relativePath)
   }
 
-  private storeAudioUrl(id: string, audioPath: string): { url: string; missing: false } {
+  private storeAudioUrl(audioPath: string): { url: string; missing: false; playbackId: string } {
+    const playbackId = `transcription-playback-${uuidv7()}`
     application
       .get('MediaProtocolService')
-      .storeFile(MediaKind.Audio, id, audioPath, getAudioMimeType(audioPath) ?? 'application/octet-stream')
-    return { url: `cherry-media://audio/${id}`, missing: false }
+      .storeFile(MediaKind.Audio, playbackId, audioPath, getAudioMimeType(audioPath) ?? 'application/octet-stream')
+    return { url: `cherry-media://audio/${playbackId}`, missing: false, playbackId }
   }
 }
 

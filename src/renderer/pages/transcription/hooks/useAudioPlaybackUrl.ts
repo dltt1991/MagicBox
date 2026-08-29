@@ -2,48 +2,46 @@ import { ipcApi } from '@renderer/ipc'
 import { useEffect, useRef, useState } from 'react'
 
 type PlaybackState = { url: string | null; missing: boolean }
-type PreviewPlaybackState = PlaybackState & { previewId: string | null }
+type LeasedPlaybackState = PlaybackState & { playbackId: string | null }
 
 export function useAudioPlaybackUrl(
   recordId: string | null,
   previewSource: { audioPath?: string; recordingId?: string } | null = null
 ) {
   const [state, setState] = useState<PlaybackState>({ url: null, missing: false })
-  const previewIdRef = useRef<string | null>(null)
+  const playbackIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
-    const releasePreview = () => {
-      const previewId = previewIdRef.current
-      if (previewId) {
-        previewIdRef.current = null
-        void ipcApi.request('transcription.audio_url.release', { previewId }).catch(() => undefined)
+    const releasePlayback = () => {
+      const playbackId = playbackIdRef.current
+      if (playbackId) {
+        playbackIdRef.current = null
+        void ipcApi.request('transcription.audio_url.release', { playbackId }).catch(() => undefined)
       }
     }
 
     if (!recordId && !previewSource) {
-      releasePreview()
+      releasePlayback()
       setState({ url: null, missing: false })
       return
     }
-    if (recordId) releasePreview()
-    const request: Promise<PlaybackState | PreviewPlaybackState> = recordId
+    releasePlayback()
+    const request: Promise<LeasedPlaybackState> = recordId
       ? ipcApi.request('transcription.audio_url.resolve', { recordId })
       : ipcApi.request('transcription.audio_url.preview', previewSource!)
     void request.then(
       (result) => {
-        const previewId = getPreviewId(result)
+        const playbackId = result.playbackId
         if (cancelled) {
-          if (previewId) {
-            void ipcApi.request('transcription.audio_url.release', { previewId }).catch(() => undefined)
+          if (playbackId) {
+            void ipcApi.request('transcription.audio_url.release', { playbackId }).catch(() => undefined)
           }
           return
         }
         if (!cancelled) {
-          if ('previewId' in result) {
-            releasePreview()
-            previewIdRef.current = previewId
-          }
+          releasePlayback()
+          playbackIdRef.current = playbackId
           setState({ missing: result.missing, url: result.url })
         }
       },
@@ -53,13 +51,9 @@ export function useAudioPlaybackUrl(
     )
     return () => {
       cancelled = true
-      if (!recordId) releasePreview()
+      releasePlayback()
     }
   }, [previewSource, recordId])
 
   return state
-}
-
-function getPreviewId(result: PlaybackState | PreviewPlaybackState): string | null {
-  return 'previewId' in result && typeof result.previewId === 'string' ? result.previewId : null
 }

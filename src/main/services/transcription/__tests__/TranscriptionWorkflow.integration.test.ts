@@ -113,12 +113,18 @@ describe('Transcription workflow integration', () => {
         organizationOutput: 'Next steps: send the proposal.'
       }
     })
-    expect(playback).toEqual({ url: `cherry-media://audio/${transcribed.record.id}`, missing: false })
+    expect(playback).toEqual({
+      url: expect.stringMatching(/^cherry-media:\/\/audio\/transcription-playback-/),
+      missing: false,
+      playbackId: expect.stringMatching(/^transcription-playback-/)
+    })
     expect(mediaProtocolService.storeFile).toHaveBeenCalledWith(
       MediaKind.Audio,
-      transcribed.record.id,
+      playback.playbackId,
       audioPath,
       'audio/mp4'
     )
+    service.releaseAudioUrl(playback.playbackId!)
+    expect(mediaProtocolService.remove).toHaveBeenCalledWith(MediaKind.Audio, playback.playbackId)
   })
 })

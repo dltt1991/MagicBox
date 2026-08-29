@@ -103,7 +103,7 @@ describe('TranscriptionAudioStore', () => {
     expect(result).toEqual({
       url: expect.stringMatching(/^cherry-media:\/\/audio\//),
       missing: false,
-      previewId: expect.stringMatching(/^transcription-preview-/)
+      playbackId: expect.stringMatching(/^transcription-playback-/)
     })
     expect(result.url).not.toContain(recordingsRoot)
     expect(storeFileMock).toHaveBeenCalledWith(
@@ -121,7 +121,7 @@ describe('TranscriptionAudioStore', () => {
       audioPath: '/missing/input.m4a'
     })
 
-    expect(result).toEqual({ url: null, missing: true })
+    expect(result).toEqual({ url: null, missing: true, playbackId: null })
     expect(storeFileMock).not.toHaveBeenCalled()
   })
 
@@ -131,8 +131,12 @@ describe('TranscriptionAudioStore', () => {
 
     const result = new TranscriptionAudioStore().resolveAudioUrl({ ...record, audioPath })
 
-    expect(result).toEqual({ url: `cherry-media://audio/${record.id}`, missing: false })
-    expect(storeFileMock).toHaveBeenCalledWith(MediaKind.Audio, record.id, audioPath, 'audio/webm')
+    expect(result).toEqual({
+      url: expect.stringMatching(/^cherry-media:\/\/audio\/transcription-playback-/),
+      missing: false,
+      playbackId: expect.stringMatching(/^transcription-playback-/)
+    })
+    expect(storeFileMock).toHaveBeenCalledWith(MediaKind.Audio, result.playbackId, audioPath, 'audio/webm')
     expect(result.url).not.toContain(audioPath)
   })
 
@@ -145,16 +149,16 @@ describe('TranscriptionAudioStore', () => {
     expect(result).toEqual({
       url: expect.stringMatching(/^cherry-media:\/\/audio\//),
       missing: false,
-      previewId: expect.stringMatching(/^transcription-preview-/)
+      playbackId: expect.stringMatching(/^transcription-playback-/)
     })
     expect(result.url).not.toContain(audioPath)
     expect(storeFileMock).toHaveBeenCalledWith(MediaKind.Audio, expect.any(String), audioPath, 'audio/mp4')
   })
 
-  it('releases temporary playback media mappings', () => {
-    new TranscriptionAudioStore().releaseTemporaryAudioUrl('transcription-preview-1')
+  it('releases every playback media mapping', () => {
+    new TranscriptionAudioStore().releaseAudioUrl('transcription-playback-1')
 
-    expect(removeMock).toHaveBeenCalledWith(MediaKind.Audio, 'transcription-preview-1')
+    expect(removeMock).toHaveBeenCalledWith(MediaKind.Audio, 'transcription-playback-1')
   })
 
   it('does not resolve non-audio files through the temporary playback route', () => {
@@ -164,7 +168,7 @@ describe('TranscriptionAudioStore', () => {
     expect(new TranscriptionAudioStore().resolveTemporaryAudioUrl(filePath)).toEqual({
       url: null,
       missing: true,
-      previewId: null
+      playbackId: null
     })
     expect(storeFileMock).not.toHaveBeenCalled()
   })
@@ -183,6 +187,51 @@ describe('TranscriptionAudioStore', () => {
 
     store.deleteAudio({ ...record, audioPath: managedPath }, { deleteAudio: true })
     expect(existsSync(managedPath)).toBe(false)
+  })
+
+  it('discards an unsaved managed recording', () => {
+    const store = new TranscriptionAudioStore()
+    const target = store.reserveRecordingTarget()
+    const wav = new Uint8Array(44)
+    wav.set([0x52, 0x49, 0x46, 0x46], 0)
+    wav.set([0x57, 0x41, 0x56, 0x45], 8)
+    wav.set([0x66, 0x6d, 0x74, 0x20], 12)
+    wav.set([16, 0, 0, 0], 16)
+    wav.set([1, 0, 1, 0], 20)
+    wav.set([0x80, 0x3e, 0, 0], 24)
+    wav.set([0, 0x7d, 0, 0], 28)
+    wav.set([2, 0, 16, 0], 32)
+    wav.set([0x64, 0x61, 0x74, 0x61], 36)
+    store.writeRecording(target.recordingId, wav)
+    const filePath = store.getRecordingPath(target.recordingId)
+
+    store.discardRecording(target.recordingId)
+
+    expect(existsSync(filePath)).toBe(false)
+    expect(() => store.getRecordingPath(target.recordingId)).toThrow()
+  })
+
+  it('keeps claimed recordings until the main transcription job adopts or discards them', () => {
+    const store = new TranscriptionAudioStore()
+    const target = store.reserveRecordingTarget()
+    const wav = new Uint8Array(44)
+    wav.set([0x52, 0x49, 0x46, 0x46], 0)
+    wav.set([0x57, 0x41, 0x56, 0x45], 8)
+    wav.set([0x66, 0x6d, 0x74, 0x20], 12)
+    wav.set([16, 0, 0, 0], 16)
+    wav.set([1, 0, 1, 0], 20)
+    wav.set([0x80, 0x3e, 0, 0], 24)
+    wav.set([0, 0x7d, 0, 0], 28)
+    wav.set([2, 0, 16, 0], 32)
+    wav.set([0x64, 0x61, 0x74, 0x61], 36)
+    store.writeRecording(target.recordingId, wav)
+    const filePath = store.claimRecording(target.recordingId)
+
+    store.discardRecording(target.recordingId)
+
+    expect(existsSync(filePath)).toBe(true)
+    store.discardClaimedRecording(target.recordingId)
+    expect(existsSync(filePath)).toBe(false)
   })
 
   it('does not delete a managed record whose path escapes the recordings directory', () => {

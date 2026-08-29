@@ -4,9 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const {
   cancelMock,
   deleteRecordingMock,
+  discardRecordingMock,
   getMock,
   organizeMock,
-  releaseTemporaryAudioUrlMock,
+  reconcileTranscriptionSidebarFavoriteMock,
+  releaseAudioUrlMock,
   reserveRecordingTargetMock,
   resolveAudioUrlMock,
   resolveTemporaryRecordingUrlMock,
@@ -16,9 +18,11 @@ const {
 } = vi.hoisted(() => ({
   cancelMock: vi.fn(),
   deleteRecordingMock: vi.fn(),
+  discardRecordingMock: vi.fn(),
   getMock: vi.fn(),
   organizeMock: vi.fn(),
-  releaseTemporaryAudioUrlMock: vi.fn(),
+  reconcileTranscriptionSidebarFavoriteMock: vi.fn(),
+  releaseAudioUrlMock: vi.fn(),
   reserveRecordingTargetMock: vi.fn(),
   resolveAudioUrlMock: vi.fn(),
   resolveTemporaryRecordingUrlMock: vi.fn(),
@@ -35,26 +39,33 @@ import { transcriptionHandlers } from '../transcription'
 
 describe('transcription handlers', () => {
   beforeEach(() => {
-    getMock.mockReset().mockReturnValue({
-      cancel: cancelMock,
-      deleteRecording: deleteRecordingMock,
-      organize: organizeMock,
-      releaseTemporaryAudioUrl: releaseTemporaryAudioUrlMock,
-      reserveRecordingTarget: reserveRecordingTargetMock,
-      resolveAudioUrl: resolveAudioUrlMock,
-      resolveTemporaryRecordingUrl: resolveTemporaryRecordingUrlMock,
-      resolveTemporaryAudioUrl: resolveTemporaryAudioUrlMock,
-      transcribe: transcribeMock,
-      writeRecording: writeRecordingMock
-    })
+    getMock.mockReset().mockImplementation((name: string) =>
+      name === 'PreferenceService'
+        ? { reconcileTranscriptionSidebarFavorite: reconcileTranscriptionSidebarFavoriteMock }
+        : {
+            cancel: cancelMock,
+            deleteRecording: deleteRecordingMock,
+            discardRecording: discardRecordingMock,
+            organize: organizeMock,
+            releaseAudioUrl: releaseAudioUrlMock,
+            reserveRecordingTarget: reserveRecordingTargetMock,
+            resolveAudioUrl: resolveAudioUrlMock,
+            resolveTemporaryRecordingUrl: resolveTemporaryRecordingUrlMock,
+            resolveTemporaryAudioUrl: resolveTemporaryAudioUrlMock,
+            transcribe: transcribeMock,
+            writeRecording: writeRecordingMock
+          }
+    )
     reserveRecordingTargetMock.mockReset()
     resolveAudioUrlMock.mockReset()
     resolveTemporaryRecordingUrlMock.mockReset()
     resolveTemporaryAudioUrlMock.mockReset()
     cancelMock.mockReset()
     deleteRecordingMock.mockReset()
+    discardRecordingMock.mockReset()
     organizeMock.mockReset()
-    releaseTemporaryAudioUrlMock.mockReset()
+    reconcileTranscriptionSidebarFavoriteMock.mockReset()
+    releaseAudioUrlMock.mockReset()
     transcribeMock.mockReset()
     writeRecordingMock.mockReset()
   })
@@ -76,13 +87,18 @@ describe('transcription handlers', () => {
   })
 
   it('resolves a record playback URL through the transcription service', async () => {
-    resolveAudioUrlMock.mockReturnValue({ url: 'cherry-media://audio/record-1', missing: false })
+    resolveAudioUrlMock.mockReturnValue({
+      url: 'cherry-media://audio/playback-1',
+      missing: false,
+      playbackId: 'playback-1'
+    })
 
     await expect(
       transcriptionHandlers['transcription.audio_url.resolve']({ recordId: 'record-1' }, {} as never)
     ).resolves.toEqual({
-      url: 'cherry-media://audio/record-1',
-      missing: false
+      url: 'cherry-media://audio/playback-1',
+      missing: false,
+      playbackId: 'playback-1'
     })
     expect(getMock).toHaveBeenCalledWith('TranscriptionService')
     expect(resolveAudioUrlMock).toHaveBeenCalledWith('record-1')
@@ -92,7 +108,7 @@ describe('transcription handlers', () => {
     resolveTemporaryAudioUrlMock.mockReturnValue({
       url: 'cherry-media://audio/import-1',
       missing: false,
-      previewId: 'import-1'
+      playbackId: 'import-1'
     })
 
     await expect(
@@ -100,7 +116,7 @@ describe('transcription handlers', () => {
         { audioPath: '/imported/audio.m4a' },
         { senderId: 'window-1' }
       )
-    ).resolves.toEqual({ url: 'cherry-media://audio/import-1', missing: false, previewId: 'import-1' })
+    ).resolves.toEqual({ url: 'cherry-media://audio/import-1', missing: false, playbackId: 'import-1' })
     expect(resolveTemporaryAudioUrlMock).toHaveBeenCalledWith('/imported/audio.m4a')
   })
 
@@ -108,21 +124,21 @@ describe('transcription handlers', () => {
     resolveTemporaryRecordingUrlMock.mockReturnValue({
       url: 'cherry-media://audio/recording-1',
       missing: false,
-      previewId: 'preview-1'
+      playbackId: 'playback-1'
     })
 
     await expect(
       transcriptionHandlers['transcription.audio_url.preview']({ recordingId: 'recording-1' }, { senderId: 'window-1' })
-    ).resolves.toEqual({ url: 'cherry-media://audio/recording-1', missing: false, previewId: 'preview-1' })
+    ).resolves.toEqual({ url: 'cherry-media://audio/recording-1', missing: false, playbackId: 'playback-1' })
     expect(resolveTemporaryRecordingUrlMock).toHaveBeenCalledWith('recording-1')
   })
 
   it('releases selected import playback URLs through the transcription service', async () => {
     await transcriptionHandlers['transcription.audio_url.release'](
-      { previewId: 'transcription-preview-1' },
+      { playbackId: 'transcription-playback-1' },
       { senderId: 'window-1' }
     )
-    expect(releaseTemporaryAudioUrlMock).toHaveBeenCalledWith('transcription-preview-1')
+    expect(releaseAudioUrlMock).toHaveBeenCalledWith('transcription-playback-1')
   })
 
   it('writes PCM WAV bytes only through the transcription service', async () => {
@@ -144,6 +160,20 @@ describe('transcription handlers', () => {
       { senderId: 'window-1' }
     )
     expect(deleteRecordingMock).toHaveBeenCalledWith('record-1', true)
+  })
+
+  it('discards an unsaved managed recording through the transcription service', async () => {
+    await transcriptionHandlers['transcription.recording.discard'](
+      { recordingId: 'recording-1' },
+      { senderId: 'window-1' }
+    )
+    expect(discardRecordingMock).toHaveBeenCalledWith('recording-1')
+  })
+
+  it('reconciles sidebar favorites through the preference service', async () => {
+    await transcriptionHandlers['transcription.sidebar.reconcile'](undefined, { senderId: 'window-1' })
+
+    expect(reconcileTranscriptionSidebarFavoriteMock).toHaveBeenCalledOnce()
   })
 
   it('delegates transcription commands with the managed sender id', async () => {

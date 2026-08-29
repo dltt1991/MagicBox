@@ -1,4 +1,5 @@
 import { Button } from '@cherrystudio/ui'
+import { DefaultModelSelector } from '@renderer/components/DefaultModelSelector'
 import { usePreference } from '@renderer/data/hooks/usePreference'
 import { useSaveTranscriptionResult } from '@renderer/hooks/transcription/useSaveTranscriptionResult'
 import { useTranscriptionPromptTemplates } from '@renderer/hooks/transcription/useTranscriptionPromptTemplates'
@@ -8,9 +9,14 @@ import {
   useTranscriptionRecords
 } from '@renderer/hooks/transcription/useTranscriptionRecords'
 import { useLocalModel } from '@renderer/hooks/useLocalModel'
+import { useModelById } from '@renderer/hooks/useModel'
+import { useProviders } from '@renderer/hooks/useProvider'
 import { ipcApi } from '@renderer/ipc'
+import type { Model, UniqueModelId } from '@shared/data/types/model'
+import { parseUniqueModelId } from '@shared/data/types/model'
 import type { TranscriptionRecordView, TranscriptionSegment } from '@shared/data/types/transcription'
 import type { TranscriptionBackendConfig } from '@shared/ipc/schemas/transcription'
+import { isSpeechToTextModel } from '@shared/utils/model'
 import { type RefObject, useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -21,6 +27,7 @@ import { TranscriptionHistorySidebar } from './components/TranscriptionHistorySi
 import { TranscriptionToolbar } from './components/TranscriptionToolbar'
 import { useAudioPlaybackUrl } from './hooks/useAudioPlaybackUrl'
 import { useAudioRecorder } from './hooks/useAudioRecorder'
+import { type TranscriptionDraftSource, useTranscriptionDraft } from './hooks/useTranscriptionDraft'
 import { useTranscriptionJob } from './hooks/useTranscriptionJob'
 
 const PROGRESS_LABEL_KEYS: Record<string, string> = {
@@ -38,16 +45,18 @@ export default function TranscriptionPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [sourceMode, setSourceMode] = useState<'recording' | 'file'>('recording')
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [draftSource, setDraftSource] = useState<DraftSource | null>(null)
+  const { adopt: adoptDraftSource, replace: replaceDraftSource, source: draftSource } = useTranscriptionDraft()
   const [backend, setBackend] = useState<TranscriptionBackendConfig['backend']>('local_whisper')
   const [language, setLanguage] = useState('auto')
   const [actionError, setActionError] = useState<Error | null>(null)
-  const { items: records, refresh } = useTranscriptionRecords()
+  const { hasMore, isLoadingMore, items: records, loadMore, refresh } = useTranscriptionRecords()
   const { record, result } = useTranscriptionRecord(selectedId)
   const { templates } = useTranscriptionPromptTemplates()
   const [customEndpointBaseUrl] = usePreference('feature.transcription.custom_endpoint.base_url')
   const [customEndpointRequestFormat] = usePreference('feature.transcription.custom_endpoint.request_format')
-  const [defaultModelId] = usePreference('chat.default_model_id')
+  const [transcriptionModelId, setTranscriptionModelId] = usePreference('feature.transcription.model_id')
+  const { model: transcriptionModel } = useModelById(transcriptionModelId as UniqueModelId | null)
+  const { providers } = useProviders()
   const { deleteRecord } = useDeleteTranscriptionRecord()
   const recorder = useAudioRecorder()
   const job = useTranscriptionJob()
@@ -72,9 +81,9 @@ export default function TranscriptionPage() {
       buildBackendConfig(backend, {
         customEndpointBaseUrl,
         customEndpointRequestFormat,
-        defaultModelId
+        transcriptionModel
       }),
-    [backend, customEndpointBaseUrl, customEndpointRequestFormat, defaultModelId]
+    [backend, customEndpointBaseUrl, customEndpointRequestFormat, transcriptionModel]
   )
   const canTranscribe = Boolean((audioPath || recordingId || record?.id) && backendConfig)
   const transcriptText = result?.transcriptText ?? ''
@@ -92,23 +101,23 @@ export default function TranscriptionPage() {
     const filePath = typeof first === 'string' ? first : first?.path
     if (!filePath) return
     setSelectedId(null)
-    setDraftSource({
+    await replaceDraftSource({
       audioPath: filePath,
       name: filePath.split(/[\\/]/).pop() ?? t('transcription.import_audio'),
       sourceType: 'file'
     })
-  }, [t])
+  }, [replaceDraftSource, t])
 
   const handleStopRecording = useCallback(async () => {
     const recording = await recorder.stop()
     if (!recording) return
     setSelectedId(null)
-    setDraftSource({
+    await replaceDraftSource({
       name: recording.suggestedName,
       recordingId: recording.recordingId,
       sourceType: 'recording'
     })
-  }, [recorder])
+  }, [recorder, replaceDraftSource])
 
   const handleTranscribe = useCallback(async () => {
     if ((!audioPath && !recordingId && !record?.id) || !backendConfig) return
@@ -119,10 +128,11 @@ export default function TranscriptionPage() {
       sourceType: getDraftSourceType(draftSource, record?.sourceType ?? sourceMode)
     })
     setSelectedId(nextRecord.id)
-    setDraftSource(null)
+    adoptDraftSource()
     await refresh()
   }, [
     audioPath,
+    adoptDraftSource,
     backendConfig,
     draftSource,
     job,
@@ -155,9 +165,19 @@ export default function TranscriptionPage() {
           backend={backend}
           language={language}
           localModelStatus={localWhisper.status}
-          providerAvailable={Boolean(
-            buildBackendConfig('provider_model', { defaultModelId, customEndpointBaseUrl, customEndpointRequestFormat })
-          )}
+          onlineModelSelector={
+            <DefaultModelSelector
+              filter={isSpeechToTextModel}
+              model={transcriptionModel}
+              onSelect={(model) => {
+                void setTranscriptionModelId(model?.id ?? null).catch(() => {
+                  setActionError(new Error('transcription.error.operation_failed'))
+                })
+              }}
+              placeholder={t('settings.models.empty')}
+              providers={providers}
+            />
+          }
           recordingActive={recorder.status !== 'idle'}
           sourceMode={sourceMode}
           onBackendChange={setBackend}
@@ -232,29 +252,31 @@ export default function TranscriptionPage() {
         </div>
       </div>
       <TranscriptionHistorySidebar
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
         missingRecordIds={missingIds}
         records={records}
         selectedId={selectedId}
         onDelete={(record, deleteAudio) => void handleAction(handleDelete(record, deleteAudio))}
+        onLoadMore={loadMore}
         onSelect={(recordId) => {
-          setDraftSource(null)
-          setSelectedId(recordId)
+          void handleAction(
+            replaceDraftSource(null).then(() => {
+              setSelectedId(recordId)
+            })
+          )
         }}
       />
     </main>
   )
 }
 
-type DraftSource =
-  | { audioPath: string; name: string; sourceType: 'file' }
-  | { name: string; recordingId: string; sourceType: 'recording' }
-
 export async function runHandled(promise: Promise<unknown>): Promise<void> {
   await promise.catch(() => undefined)
 }
 
 export function getDraftSourceType(
-  draftSource: Pick<DraftSource, 'sourceType'> | null,
+  draftSource: Pick<TranscriptionDraftSource, 'sourceType'> | null,
   fallback: 'recording' | 'file'
 ): 'recording' | 'file' {
   return draftSource?.sourceType ?? fallback
@@ -265,12 +287,13 @@ export function buildBackendConfig(
   options: {
     customEndpointBaseUrl: string
     customEndpointRequestFormat: 'openai_multipart' | 'json_base64'
-    defaultModelId: string | null
+    transcriptionModel: Model | undefined
   }
 ): TranscriptionBackendConfig | null {
   if (backend === 'provider_model') {
-    const [providerId, modelId] = options.defaultModelId?.split('::') ?? []
-    return providerId && modelId ? { backend, providerId, modelId } : null
+    if (!options.transcriptionModel || !isSpeechToTextModel(options.transcriptionModel)) return null
+    const { providerId, modelId } = parseUniqueModelId(options.transcriptionModel.id)
+    return { backend, providerId, modelId }
   }
   if (backend === 'custom_endpoint') {
     return options.customEndpointBaseUrl

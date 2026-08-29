@@ -11,6 +11,7 @@ import {
   getSidebarMiniAppFavoriteIds,
   isMessageOnlyConversationUrl,
   migrateTerminalFavoriteDefault,
+  migrateTranscriptionFavoriteDefault,
   removeSidebarMiniApp,
   reorderLaunchpadApps,
   reorderSidebarFavorites,
@@ -85,6 +86,40 @@ describe('sidebar config helpers', () => {
 
   it('does not migrate sidebar favorites that already include terminal', () => {
     expect(migrateTerminalFavoriteDefault([appFavorite('assistants'), appFavorite('terminal')])).toBeUndefined()
+  })
+
+  it('adds transcription after translate for the legacy default favorites', () => {
+    expect(
+      migrateTranscriptionFavoriteDefault([
+        appFavorite('assistants'),
+        appFavorite('agents'),
+        appFavorite('translate'),
+        appFavorite('paintings'),
+        appFavorite('knowledge'),
+        appFavorite('terminal')
+      ])
+    ).toEqual([
+      appFavorite('assistants'),
+      appFavorite('agents'),
+      appFavorite('translate'),
+      appFavorite('transcription'),
+      appFavorite('paintings'),
+      appFavorite('knowledge'),
+      appFavorite('terminal')
+    ])
+  })
+
+  it('does not add transcription to a deliberately reordered sidebar', () => {
+    expect(
+      migrateTranscriptionFavoriteDefault([
+        appFavorite('assistants'),
+        appFavorite('translate'),
+        appFavorite('agents'),
+        appFavorite('paintings'),
+        appFavorite('knowledge'),
+        appFavorite('terminal')
+      ])
+    ).toBeUndefined()
   })
 
   it('does not prepend a required app that is already present at any position', () => {

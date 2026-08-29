@@ -163,6 +163,35 @@ export class TranscriptionHistoryService {
     return record
   }
 
+  createRecordWithResult(
+    recordInput: CreateTranscriptionRecordDto,
+    resultInput: SaveTranscriptionResultDto
+  ): { record: TranscriptionRecord; result: TranscriptionResult } {
+    const { record, result } = application.get('DbService').withWriteTx((tx) => {
+      const recordRow = tx
+        .insert(transcriptionRecordTable)
+        .values({ ...recordInput, status: recordInput.status ?? 'ready' })
+        .returning()
+        .get()
+      if (!recordRow)
+        throw DataApiErrorFactory.database(new Error('Insert did not return a row'), 'create transcription record')
+      const { segments, ...resultFields } = resultInput
+      const resultRow = tx
+        .insert(transcriptionResultTable)
+        .values({ recordId: recordRow.id, ...resultFields, segmentsJson: JSON.stringify(segments) })
+        .returning()
+        .get()
+      if (!resultRow)
+        throw DataApiErrorFactory.database(new Error('Insert did not return a row'), 'save transcription result')
+      return { record: rowToRecord(recordRow), result: rowToResult(resultRow) }
+    })
+    notifyDataApiDataChange([
+      { endpoint: '/transcription/records', kind: 'membership', entityIds: [record.id] },
+      { endpoint: '/transcription/records/:id', routeParams: { id: record.id }, entityIds: [record.id] }
+    ])
+    return { record, result }
+  }
+
   updateRecord(id: string, input: UpdateTranscriptionRecordDto): TranscriptionRecord {
     const db = application.get('DbService').getDb()
     const row = db
@@ -196,12 +225,8 @@ export class TranscriptionHistoryService {
         .where(eq(transcriptionRecordTable.id, recordId))
         .get()
       if (!record) throw DataApiErrorFactory.notFound('TranscriptionRecord', recordId)
-      const values = { ...input, segmentsJson: JSON.stringify(input.segments) }
-      const organizationValues = {
-        organizationTemplateId: input.organizationTemplateId,
-        organizationPromptSnapshot: input.organizationPromptSnapshot,
-        organizationOutput: input.organizationOutput
-      }
+      const { segments, ...fields } = input
+      const values = { ...fields, segmentsJson: JSON.stringify(segments) }
       const current = tx
         .select()
         .from(transcriptionResultTable)
@@ -210,7 +235,7 @@ export class TranscriptionHistoryService {
       const row = current
         ? tx
             .update(transcriptionResultTable)
-            .set(organizationValues)
+            .set(values)
             .where(eq(transcriptionResultTable.recordId, recordId))
             .returning()
             .get()
@@ -222,6 +247,28 @@ export class TranscriptionHistoryService {
       if (!row) throw DataApiErrorFactory.database(new Error('Write did not return a row'), 'save transcription result')
       return rowToResult(row)
     })
+    notifyDataApiDataChange([
+      { endpoint: '/transcription/records/:id', routeParams: { id: recordId }, entityIds: [recordId] }
+    ])
+    return result
+  }
+
+  updateOrganizationResult(
+    recordId: string,
+    input: Pick<
+      SaveTranscriptionResultDto,
+      'organizationTemplateId' | 'organizationPromptSnapshot' | 'organizationOutput'
+    >
+  ): TranscriptionResult {
+    const db = application.get('DbService').getDb()
+    const row = db
+      .update(transcriptionResultTable)
+      .set(input)
+      .where(eq(transcriptionResultTable.recordId, recordId))
+      .returning()
+      .get()
+    if (!row) throw DataApiErrorFactory.notFound('TranscriptionResult', recordId)
+    const result = rowToResult(row)
     notifyDataApiDataChange([
       { endpoint: '/transcription/records/:id', routeParams: { id: recordId }, entityIds: [recordId] }
     ])

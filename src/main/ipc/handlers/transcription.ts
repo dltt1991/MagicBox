@@ -17,6 +17,14 @@ export const transcriptionHandlers: IpcHandlersFor<typeof transcriptionRequestSc
     requireSenderWindow(ctx)
     return application.get('TranscriptionService').writeRecording(recordingId, wavBytes)
   },
+  'transcription.recording.discard': async ({ recordingId }, ctx) => {
+    requireSenderWindow(ctx)
+    application.get('TranscriptionService').discardRecording(recordingId)
+  },
+  'transcription.sidebar.reconcile': async (_input, ctx) => {
+    requireSenderWindow(ctx)
+    await application.get('PreferenceService').reconcileTranscriptionSidebarFavorite()
+  },
   'transcription.recording.delete': async ({ recordId, deleteAudio }, ctx) => {
     requireSenderWindow(ctx)
     application.get('TranscriptionService').deleteRecording(recordId, deleteAudio)
@@ -30,9 +38,9 @@ export const transcriptionHandlers: IpcHandlersFor<typeof transcriptionRequestSc
       ? service.resolveTemporaryRecordingUrl(recordingId)
       : service.resolveTemporaryAudioUrl(audioPath!)
   },
-  'transcription.audio_url.release': async ({ previewId }, ctx) => {
+  'transcription.audio_url.release': async ({ playbackId }, ctx) => {
     requireSenderWindow(ctx)
-    application.get('TranscriptionService').releaseTemporaryAudioUrl(previewId)
+    application.get('TranscriptionService').releaseAudioUrl(playbackId)
   },
   'transcription.transcribe': async (input, ctx) => {
     const { record, result } = await application.get('TranscriptionService').transcribe(input, requireSenderWindow(ctx))

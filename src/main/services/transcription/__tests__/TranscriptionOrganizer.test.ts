@@ -1,16 +1,16 @@
 import { application } from '@application'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { saveResultMock } = vi.hoisted(() => ({ saveResultMock: vi.fn() }))
+const { updateOrganizationResultMock } = vi.hoisted(() => ({ updateOrganizationResultMock: vi.fn() }))
 vi.mock('@data/services/TranscriptionHistoryService', () => ({
-  transcriptionHistoryService: { saveResult: saveResultMock }
+  transcriptionHistoryService: { updateOrganizationResult: updateOrganizationResultMock }
 }))
 
 import { TranscriptionOrganizer } from '../TranscriptionOrganizer'
 
 describe('TranscriptionOrganizer', () => {
   beforeEach(() => {
-    saveResultMock.mockReset()
+    updateOrganizationResultMock.mockReset()
     vi.mocked(application.get).mockImplementation(((name: string) =>
       name === 'AiService'
         ? { generateText: vi.fn().mockResolvedValue({ text: 'organized' }) }
@@ -31,7 +31,7 @@ describe('TranscriptionOrganizer', () => {
     })
 
     expect(result).toEqual({ result: 'organized' })
-    expect(saveResultMock).toHaveBeenCalledWith(
+    expect(updateOrganizationResultMock).toHaveBeenCalledWith(
       expect.any(String),
       expect.objectContaining({
         organizationPromptSnapshot: expect.stringContaining('hello'),

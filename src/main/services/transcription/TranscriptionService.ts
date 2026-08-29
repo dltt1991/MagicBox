@@ -6,7 +6,7 @@ import type { TranscriptionBackendConfig } from '@shared/ipc/schemas/transcripti
 
 import { resolveCustomEndpointConfig } from './customEndpointConfig'
 import { CustomEndpointTranscriptionBackend } from './CustomEndpointTranscriptionBackend'
-import { LocalWhisperRuntime } from './LocalWhisperRuntime'
+import { type LocalWhisperRuntime, whisperInferenceRuntime } from './LocalWhisperRuntime'
 import { ProviderTranscriptionBackend } from './ProviderTranscriptionBackend'
 import { transcriptionAudioStore } from './TranscriptionAudioStore'
 import { TranscriptionOrganizer } from './TranscriptionOrganizer'
@@ -34,7 +34,7 @@ type TranscriptionCommandInput = {
 type ResolvedTranscriptionCommandInput = Omit<TranscriptionCommandInput, 'audioPath'> & { audioPath: string }
 
 interface TranscriptionServiceDependencies {
-  local: Pick<LocalWhisperRuntime, 'transcribe'>
+  local: Pick<LocalWhisperRuntime, 'transcribe'> & Partial<Pick<LocalWhisperRuntime, 'unload'>>
   provider: Pick<ProviderTranscriptionBackend, 'transcribe'>
   custom: Pick<CustomEndpointTranscriptionBackend, 'transcribe'>
   organizer: Pick<TranscriptionOrganizer, 'organize'>
@@ -45,12 +45,13 @@ interface TranscriptionServiceDependencies {
 @DependsOn(['MediaProtocolService'])
 export class TranscriptionService extends BaseService {
   private readonly activeJobs = new Map<string, AbortController>()
+  private readonly localJobs = new Set<string>()
   private readonly dependencies: TranscriptionServiceDependencies
 
   constructor(dependencies: Partial<TranscriptionServiceDependencies> = {}) {
     super()
     this.dependencies = {
-      local: dependencies.local ?? new LocalWhisperRuntime(),
+      local: dependencies.local ?? whisperInferenceRuntime,
       provider: dependencies.provider ?? new ProviderTranscriptionBackend(),
       custom: dependencies.custom ?? new CustomEndpointTranscriptionBackend(),
       organizer: dependencies.organizer ?? new TranscriptionOrganizer()
@@ -63,6 +64,10 @@ export class TranscriptionService extends BaseService {
 
   writeRecording(recordingId: string, wavBytes: Uint8Array) {
     return transcriptionAudioStore.writeRecording(recordingId, wavBytes)
+  }
+
+  discardRecording(recordingId: string): void {
+    transcriptionAudioStore.discardRecording(recordingId)
   }
 
   deleteRecording(recordId: string, deleteAudio: boolean): void {
@@ -83,27 +88,30 @@ export class TranscriptionService extends BaseService {
     return transcriptionAudioStore.resolveTemporaryRecordingUrl(recordingId)
   }
 
-  releaseTemporaryAudioUrl(previewId: string): void {
-    transcriptionAudioStore.releaseTemporaryAudioUrl(previewId)
+  releaseAudioUrl(playbackId: string): void {
+    transcriptionAudioStore.releaseAudioUrl(playbackId)
   }
 
   async transcribe(input: TranscriptionCommandInput, senderId: string) {
     const controller = this.startJob(input.jobId)
+    let claimedRecordingId: string | null = null
     try {
       this.sendProgress(senderId, input.jobId, 'preparing')
       const audioPath = this.resolveInputAudioPath(input)
+      claimedRecordingId = input.recordingId ?? null
       const output = await this.runBackend({ ...input, audioPath }, controller.signal, senderId)
       controller.signal.throwIfAborted()
-      const record = this.saveTranscription({ ...input, audioPath }, output)
-      const result = transcriptionHistoryService.saveResult(record.id, {
+      const saved = this.saveTranscription({ ...input, audioPath }, output, {
         transcriptText: output.text,
         segments: output.segments,
         organizationTemplateId: null,
         organizationPromptSnapshot: null,
         organizationOutput: null
       })
-      this.sendProgress(senderId, input.jobId, 'completed', { recordId: record.id, percent: 100 })
-      return { record, result }
+      if (input.recordingId) transcriptionAudioStore.adoptRecording(input.recordingId)
+      claimedRecordingId = null
+      this.sendProgress(senderId, input.jobId, 'completed', { recordId: saved.record.id, percent: 100 })
+      return saved
     } catch (error) {
       const stage = controller.signal.aborted ? 'canceled' : 'failed'
       this.sendProgress(senderId, input.jobId, stage)
@@ -113,14 +121,21 @@ export class TranscriptionService extends BaseService {
           errorSummary: stage === 'failed' ? 'Transcription failed' : null
         })
       }
+      if (claimedRecordingId) transcriptionAudioStore.discardClaimedRecording(claimedRecordingId)
       throw error
     } finally {
       this.activeJobs.delete(input.jobId)
+      this.localJobs.delete(input.jobId)
     }
   }
 
   cancel(jobId: string): void {
-    this.activeJobs.get(jobId)?.abort()
+    const controller = this.activeJobs.get(jobId)
+    controller?.abort()
+    if (controller && this.localJobs.has(jobId)) {
+      const unloading = this.dependencies.local.unload?.()
+      if (unloading) void unloading.catch(() => undefined)
+    }
   }
 
   async organize(
@@ -159,6 +174,8 @@ export class TranscriptionService extends BaseService {
   protected override async onStop(): Promise<void> {
     for (const controller of this.activeJobs.values()) controller.abort()
     this.activeJobs.clear()
+    this.localJobs.clear()
+    await this.dependencies.local.unload?.()
   }
 
   private startJob(jobId: string): AbortController {
@@ -174,6 +191,7 @@ export class TranscriptionService extends BaseService {
     senderId: string
   ): Promise<BackendResult> {
     if (input.backend.backend === 'local_whisper') {
+      this.localJobs.add(input.jobId)
       this.sendProgress(senderId, input.jobId, 'loading_model')
       this.sendProgress(senderId, input.jobId, 'transcribing')
       return await this.dependencies.local.transcribe(input.audioPath, input.language, signal)
@@ -196,7 +214,11 @@ export class TranscriptionService extends BaseService {
     })
   }
 
-  private saveTranscription(input: ResolvedTranscriptionCommandInput, output: BackendResult) {
+  private saveTranscription(
+    input: ResolvedTranscriptionCommandInput,
+    output: BackendResult,
+    resultInput: Parameters<typeof transcriptionHistoryService.saveResult>[1]
+  ) {
     const values = {
       durationMs: output.durationMs,
       language: output.language ?? null,
@@ -206,22 +228,29 @@ export class TranscriptionService extends BaseService {
       status: 'ready' as const,
       errorSummary: null
     }
-    if (input.recordId) return transcriptionHistoryService.updateRecord(input.recordId, values)
-    return transcriptionHistoryService.createRecord({
-      title:
-        input.audioPath
-          .split(/[\\/]/)
-          .pop()
-          ?.replace(/\.[^.]+$/, '') || 'Transcription',
-      sourceType: input.sourceType,
-      audioPath: input.audioPath,
-      audioManaged: input.sourceType === 'recording',
-      ...values
-    })
+    if (input.recordId) {
+      const record = transcriptionHistoryService.updateRecord(input.recordId, values)
+      const result = transcriptionHistoryService.saveResult(record.id, resultInput)
+      return { record, result }
+    }
+    return transcriptionHistoryService.createRecordWithResult(
+      {
+        title:
+          input.audioPath
+            .split(/[\\/]/)
+            .pop()
+            ?.replace(/\.[^.]+$/, '') || 'Transcription',
+        sourceType: input.sourceType,
+        audioPath: input.audioPath,
+        audioManaged: input.sourceType === 'recording',
+        ...values
+      },
+      resultInput
+    )
   }
 
   private resolveInputAudioPath(input: TranscriptionCommandInput): string {
-    if (input.recordingId) return transcriptionAudioStore.getRecordingPath(input.recordingId)
+    if (input.recordingId) return transcriptionAudioStore.claimRecording(input.recordingId)
     if (input.recordId) return transcriptionHistoryService.getRecord(input.recordId).record.audioPath
     if (input.audioPath) return input.audioPath
     throw new Error('Audio source is not available')

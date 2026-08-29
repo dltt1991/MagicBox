@@ -10,6 +10,8 @@ describe('TranscriptionHistorySidebar', () => {
     const onSelect = vi.fn()
     render(
       <TranscriptionHistorySidebar
+        hasMore={false}
+        isLoadingMore={false}
         selectedId={null}
         records={[
           {
@@ -31,6 +33,7 @@ describe('TranscriptionHistorySidebar', () => {
         ]}
         missingRecordIds={new Set(['record-1'])}
         onDelete={vi.fn()}
+        onLoadMore={vi.fn()}
         onSelect={onSelect}
       />
     )
@@ -39,5 +42,43 @@ describe('TranscriptionHistorySidebar', () => {
     expect(onSelect).toHaveBeenCalledWith('record-1')
     expect(screen.getByRole('button', { name: 'Play Interview' })).toBeDisabled()
     expect(screen.getByText('Audio unavailable')).toBeInTheDocument()
+  })
+
+  it('loads more history and translates backend fallback labels', async () => {
+    const user = userEvent.setup()
+    const onLoadMore = vi.fn()
+    render(
+      <TranscriptionHistorySidebar
+        hasMore
+        isLoadingMore={false}
+        missingRecordIds={new Set()}
+        onDelete={vi.fn()}
+        onLoadMore={onLoadMore}
+        onSelect={vi.fn()}
+        records={[
+          {
+            id: 'record-1',
+            title: 'Local recording',
+            sourceType: 'recording',
+            audioManaged: true,
+            audioPath: null,
+            durationMs: 1000,
+            language: 'en',
+            backend: 'local_whisper',
+            providerId: null,
+            modelId: null,
+            status: 'ready',
+            errorSummary: null,
+            createdAt: '2026-08-27T00:00:00.000Z',
+            updatedAt: '2026-08-27T00:00:00.000Z'
+          }
+        ]}
+        selectedId={null}
+      />
+    )
+
+    expect(screen.getByText('Local Whisper')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'More' }))
+    expect(onLoadMore).toHaveBeenCalledOnce()
   })
 })

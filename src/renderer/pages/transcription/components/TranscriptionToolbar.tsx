@@ -1,6 +1,7 @@
 import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@cherrystudio/ui'
 import type { TranscriptionLanguage } from '@shared/data/types/transcription'
 import type { TranscriptionBackendConfig } from '@shared/ipc/schemas/transcription'
+import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
 type SourceMode = 'recording' | 'file'
@@ -12,7 +13,7 @@ type TranscriptionToolbarProps = {
   onBackendChange: (backend: TranscriptionBackendConfig['backend']) => void
   onLanguageChange: (language: TranscriptionLanguage) => void
   onSourceModeChange: (sourceMode: SourceMode) => void
-  providerAvailable: boolean
+  onlineModelSelector?: ReactNode
   recordingActive?: boolean
   sourceMode: SourceMode
 }
@@ -32,7 +33,7 @@ export function TranscriptionToolbar({
   onBackendChange,
   onLanguageChange,
   onSourceModeChange,
-  providerAvailable,
+  onlineModelSelector,
   recordingActive = false,
   sourceMode
 }: TranscriptionToolbarProps) {
@@ -62,12 +63,11 @@ export function TranscriptionToolbar({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="local_whisper">{t('transcription.backend_local')}</SelectItem>
-          <SelectItem disabled={!providerAvailable} value="provider_model">
-            {t('transcription.backend_provider')}
-          </SelectItem>
+          <SelectItem value="provider_model">{t('transcription.backend_provider')}</SelectItem>
           <SelectItem value="custom_endpoint">{t('transcription.backend_custom')}</SelectItem>
         </SelectContent>
       </Select>
+      {backend === 'provider_model' ? onlineModelSelector : null}
       <Select value={language} onValueChange={onLanguageChange}>
         <SelectTrigger size="sm" aria-label={t('common.language')}>
           <SelectValue />

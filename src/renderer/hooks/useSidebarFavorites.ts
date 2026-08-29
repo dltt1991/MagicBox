@@ -1,5 +1,6 @@
 import { usePersistCache } from '@data/hooks/useCache'
 import { usePreference } from '@data/hooks/usePreference'
+import { ipcApi } from '@renderer/ipc'
 import { toast } from '@renderer/services/toast'
 import type { SidebarAppId } from '@renderer/utils/sidebar'
 import {
@@ -79,6 +80,10 @@ export function useSidebarFavorites() {
         toast.error(t('common.error'))
       })
   }, [normalizedFavorites, setFavorites, setTerminalFavoriteMigrated, t, terminalFavoriteMigrated])
+
+  useEffect(() => {
+    void ipcApi.request('transcription.sidebar.reconcile').catch(() => undefined)
+  }, [])
 
   const setAppPinned = useCallback(
     (id: SidebarAppId, pinned: boolean) => persist(setSidebarAppPinned(normalizedFavorites, id, pinned)),

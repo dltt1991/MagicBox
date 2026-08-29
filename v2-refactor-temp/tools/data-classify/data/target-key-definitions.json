@@ -1004,6 +1004,13 @@
       "description": "Command shortcut: screenshot.capture (unified command system)"
     },
     {
+      "targetKey": "feature.transcription.model_id",
+      "type": "string",
+      "defaultValue": null,
+      "status": "classified",
+      "description": "Transcription model UniqueModelId (provider::modelId)"
+    },
+    {
       "targetKey": "feature.transcription.custom_endpoint.base_url",
       "type": "string",
       "defaultValue": "",

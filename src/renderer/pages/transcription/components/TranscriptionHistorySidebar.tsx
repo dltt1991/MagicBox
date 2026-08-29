@@ -5,16 +5,22 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 type TranscriptionHistorySidebarProps = {
+  hasMore: boolean
+  isLoadingMore: boolean
   missingRecordIds: ReadonlySet<string>
   onDelete: (record: TranscriptionRecordView, deleteAudio: boolean) => void
+  onLoadMore: () => void
   onSelect: (recordId: string) => void
   records: TranscriptionRecordView[]
   selectedId: string | null
 }
 
 export function TranscriptionHistorySidebar({
+  hasMore,
+  isLoadingMore,
   missingRecordIds,
   onDelete,
+  onLoadMore,
   onSelect,
   records,
   selectedId
@@ -54,7 +60,10 @@ export function TranscriptionHistorySidebar({
               </div>
               <div className="flex items-center gap-2 px-2 pb-2 text-muted-foreground text-xs">
                 <span>{formatDuration(record.durationMs)}</span>
-                <span className="truncate">{record.modelId ?? record.backend ?? t('transcription.not_available')}</span>
+                <span className="truncate">
+                  {record.modelId ??
+                    (record.backend ? t(BACKEND_LABEL_KEYS[record.backend]) : t('transcription.not_available'))}
+                </span>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -70,6 +79,11 @@ export function TranscriptionHistorySidebar({
             </div>
           )
         })}
+        {hasMore ? (
+          <Button className="mt-2 w-full" loading={isLoadingMore} variant="ghost" onClick={onLoadMore}>
+            {t('common.more')}
+          </Button>
+        ) : null}
       </div>
       <ConfirmDialog
         open={Boolean(deleteTarget)}
@@ -93,6 +107,12 @@ export function TranscriptionHistorySidebar({
     </aside>
   )
 }
+
+const BACKEND_LABEL_KEYS = {
+  custom_endpoint: 'transcription.backend_custom',
+  local_whisper: 'transcription.backend_local',
+  provider_model: 'transcription.backend_provider'
+} as const
 
 function formatDuration(durationMs: number | null): string {
   if (!durationMs) return '--:--'

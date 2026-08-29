@@ -22,9 +22,7 @@ export class TranscriptionOrganizer {
       prompt,
       requestOptions: { signal: input.signal }
     })
-    transcriptionHistoryService.saveResult(input.recordId, {
-      transcriptText: input.transcriptText,
-      segments: input.segments,
+    transcriptionHistoryService.updateOrganizationResult(input.recordId, {
       organizationTemplateId: input.templateId,
       organizationPromptSnapshot: prompt,
       organizationOutput: generated.text

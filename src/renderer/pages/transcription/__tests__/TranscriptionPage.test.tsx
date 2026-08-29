@@ -1,3 +1,4 @@
+import { MODEL_CAPABILITY } from '@shared/data/types/model'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
@@ -22,24 +23,37 @@ describe('TranscriptionPage', () => {
     expect(screen.queryByRole('button', { name: 'Start recording' })).not.toBeInTheDocument()
   })
 
-  it('does not create a provider request without a configured default model', () => {
+  it('creates provider requests only from a dedicated transcription model', () => {
+    const transcriptionModel = {
+      id: 'provider::whisper-1',
+      providerId: 'provider',
+      capabilities: [MODEL_CAPABILITY.AUDIO_TRANSCRIPT]
+    }
+
     expect(
       buildBackendConfig('provider_model', {
         customEndpointBaseUrl: '',
         customEndpointRequestFormat: 'openai_multipart',
-        defaultModelId: null
+        transcriptionModel: transcriptionModel as never
+      })
+    ).toEqual({ backend: 'provider_model', providerId: 'provider', modelId: 'whisper-1' })
+
+    expect(
+      buildBackendConfig('provider_model', {
+        customEndpointBaseUrl: '',
+        customEndpointRequestFormat: 'openai_multipart',
+        transcriptionModel: { ...transcriptionModel, capabilities: [] } as never
       })
     ).toBeNull()
   })
 
-  it('disables the provider option without a configured default model', async () => {
+  it('keeps online transcription selectable before a model is configured', async () => {
     const user = userEvent.setup()
     render(
       <TranscriptionToolbar
         backend="local_whisper"
         language="auto"
         localModelStatus="not_downloaded"
-        providerAvailable={false}
         sourceMode="recording"
         onBackendChange={vi.fn()}
         onLanguageChange={vi.fn()}
@@ -49,7 +63,7 @@ describe('TranscriptionPage', () => {
 
     await user.click(screen.getByRole('combobox', { name: 'Backend' }))
 
-    expect(screen.getByRole('option', { name: 'Provider model' })).toHaveAttribute('data-disabled')
+    expect(screen.getByRole('option', { name: 'Provider model' })).not.toHaveAttribute('data-disabled')
   })
 
   it('disables source switching while recording', () => {
@@ -58,7 +72,6 @@ describe('TranscriptionPage', () => {
         backend="local_whisper"
         language="auto"
         localModelStatus="ready"
-        providerAvailable
         recordingActive
         sourceMode="recording"
         onBackendChange={vi.fn()}

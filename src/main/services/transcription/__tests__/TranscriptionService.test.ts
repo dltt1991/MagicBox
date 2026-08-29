@@ -4,28 +4,36 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
   createRecordMock,
+  createRecordWithResultMock,
   deleteAudioMock,
+  discardClaimedRecordingMock,
+  discardRecordingMock,
   getRecordMock,
-  getRecordingPathMock,
-  releaseTemporaryAudioUrlMock,
+  claimRecordingMock,
+  releaseAudioUrlMock,
   resolveTemporaryRecordingUrlMock,
   reserveRecordingTargetMock,
   resolveAudioUrlMock,
   resolveTemporaryAudioUrlMock,
   saveResultMock,
+  adoptRecordingMock,
   updateRecordMock,
   writeRecordingMock
 } = vi.hoisted(() => ({
   createRecordMock: vi.fn(),
+  createRecordWithResultMock: vi.fn(),
   deleteAudioMock: vi.fn(),
+  discardClaimedRecordingMock: vi.fn(),
+  discardRecordingMock: vi.fn(),
   getRecordMock: vi.fn(),
-  getRecordingPathMock: vi.fn(),
-  releaseTemporaryAudioUrlMock: vi.fn(),
+  claimRecordingMock: vi.fn(),
+  releaseAudioUrlMock: vi.fn(),
   resolveTemporaryRecordingUrlMock: vi.fn(),
   reserveRecordingTargetMock: vi.fn(),
   resolveAudioUrlMock: vi.fn(),
   resolveTemporaryAudioUrlMock: vi.fn(),
   saveResultMock: vi.fn(),
+  adoptRecordingMock: vi.fn(),
   updateRecordMock: vi.fn(),
   writeRecordingMock: vi.fn()
 }))
@@ -33,6 +41,7 @@ const {
 vi.mock('@data/services/TranscriptionHistoryService', () => ({
   transcriptionHistoryService: {
     createRecord: createRecordMock,
+    createRecordWithResult: createRecordWithResultMock,
     getRecord: getRecordMock,
     saveResult: saveResultMock,
     updateRecord: updateRecordMock
@@ -43,10 +52,13 @@ vi.mock('../TranscriptionAudioStore', () => ({
   transcriptionAudioStore: {
     reserveRecordingTarget: reserveRecordingTargetMock,
     resolveAudioUrl: resolveAudioUrlMock,
-    releaseTemporaryAudioUrl: releaseTemporaryAudioUrlMock,
+    releaseAudioUrl: releaseAudioUrlMock,
+    claimRecording: claimRecordingMock,
+    discardRecording: discardRecordingMock,
+    discardClaimedRecording: discardClaimedRecordingMock,
+    adoptRecording: adoptRecordingMock,
     resolveTemporaryRecordingUrl: resolveTemporaryRecordingUrlMock,
     resolveTemporaryAudioUrl: resolveTemporaryAudioUrlMock,
-    getRecordingPath: getRecordingPathMock,
     writeRecording: writeRecordingMock,
     deleteAudio: deleteAudioMock
   }
@@ -58,14 +70,18 @@ describe('TranscriptionService', () => {
   beforeEach(() => {
     BaseService.resetInstances()
     getRecordMock.mockReset()
-    getRecordingPathMock.mockReset()
+    claimRecordingMock.mockReset()
     reserveRecordingTargetMock.mockReset()
     resolveAudioUrlMock.mockReset()
-    releaseTemporaryAudioUrlMock.mockReset()
+    releaseAudioUrlMock.mockReset()
+    discardClaimedRecordingMock.mockReset()
+    discardRecordingMock.mockReset()
+    adoptRecordingMock.mockReset()
     resolveTemporaryAudioUrlMock.mockReset()
     resolveTemporaryRecordingUrlMock.mockReset()
     writeRecordingMock.mockReset()
     createRecordMock.mockReset()
+    createRecordWithResultMock.mockReset()
     deleteAudioMock.mockReset()
     saveResultMock.mockReset()
     updateRecordMock.mockReset()
@@ -104,34 +120,34 @@ describe('TranscriptionService', () => {
     resolveTemporaryAudioUrlMock.mockReturnValue({
       url: 'cherry-media://audio/import-1',
       missing: false,
-      previewId: 'import-1'
+      playbackId: 'transcription-playback-1'
     })
 
     expect(new TranscriptionService().resolveTemporaryAudioUrl('/imported/audio.m4a')).toEqual({
       url: 'cherry-media://audio/import-1',
       missing: false,
-      previewId: 'import-1'
+      playbackId: 'transcription-playback-1'
     })
     expect(resolveTemporaryAudioUrlMock).toHaveBeenCalledWith('/imported/audio.m4a')
   })
 
   it('owns temporary playback URL release', () => {
-    new TranscriptionService().releaseTemporaryAudioUrl('transcription-preview-1')
+    new TranscriptionService().releaseAudioUrl('transcription-playback-1')
 
-    expect(releaseTemporaryAudioUrlMock).toHaveBeenCalledWith('transcription-preview-1')
+    expect(releaseAudioUrlMock).toHaveBeenCalledWith('transcription-playback-1')
   })
 
   it('resolves a selected recording through a temporary playback URL', () => {
     resolveTemporaryRecordingUrlMock.mockReturnValue({
       url: 'cherry-media://audio/recording-1',
       missing: false,
-      previewId: 'preview-1'
+      playbackId: 'transcription-playback-1'
     })
 
     expect(new TranscriptionService().resolveTemporaryRecordingUrl('recording-1')).toEqual({
       url: 'cherry-media://audio/recording-1',
       missing: false,
-      previewId: 'preview-1'
+      playbackId: 'transcription-playback-1'
     })
     expect(resolveTemporaryRecordingUrlMock).toHaveBeenCalledWith('recording-1')
   })
@@ -157,8 +173,7 @@ describe('TranscriptionService', () => {
     }
     const record = { id: '018f0f37-8a1c-7f50-8000-000000000001', status: 'ready' }
     const result = { id: '018f0f37-8a1c-7f50-8000-000000000002', recordId: record.id }
-    createRecordMock.mockReturnValue(record)
-    saveResultMock.mockReturnValue(result)
+    createRecordWithResultMock.mockReturnValue({ record, result })
 
     const service = new TranscriptionService({
       local,
@@ -184,7 +199,10 @@ describe('TranscriptionService', () => {
       'transcription.progress',
       expect.objectContaining({ jobId: 'job-1', stage: 'preparing' })
     )
-    expect(saveResultMock).toHaveBeenCalledWith(record.id, expect.objectContaining({ transcriptText: 'hello' }))
+    expect(createRecordWithResultMock).toHaveBeenCalledWith(
+      expect.objectContaining({ audioPath: '/audio.wav' }),
+      expect.objectContaining({ transcriptText: 'hello' })
+    )
   })
 
   it('resolves app-managed recordings before transcription without renderer paths', async () => {
@@ -198,9 +216,8 @@ describe('TranscriptionService', () => {
     }
     const record = { id: '018f0f37-8a1c-7f50-8000-000000000003', status: 'ready' }
     const result = { id: '018f0f37-8a1c-7f50-8000-000000000004', recordId: record.id }
-    getRecordingPathMock.mockReturnValue('/managed/recording.wav')
-    createRecordMock.mockReturnValue(record)
-    saveResultMock.mockReturnValue(result)
+    claimRecordingMock.mockReturnValue('/managed/recording.wav')
+    createRecordWithResultMock.mockReturnValue({ record, result })
 
     const service = new TranscriptionService({
       local,
@@ -220,7 +237,41 @@ describe('TranscriptionService', () => {
     )
 
     expect(local.transcribe).toHaveBeenCalledWith('/managed/recording.wav', 'auto', expect.any(AbortSignal))
-    expect(createRecordMock).toHaveBeenCalledWith(expect.objectContaining({ audioPath: '/managed/recording.wav' }))
+    expect(createRecordWithResultMock).toHaveBeenCalledWith(
+      expect.objectContaining({ audioPath: '/managed/recording.wav' }),
+      expect.objectContaining({ transcriptText: 'hello' })
+    )
+    expect(adoptRecordingMock).toHaveBeenCalledWith('recording-1')
+    expect(discardClaimedRecordingMock).not.toHaveBeenCalled()
+  })
+
+  it('cleans up a claimed recording when transcription fails before persistence', async () => {
+    const local = {
+      transcribe: vi.fn().mockRejectedValue(new Error('decode failed'))
+    }
+    claimRecordingMock.mockReturnValue('/managed/recording.wav')
+    const service = new TranscriptionService({
+      local,
+      provider: { transcribe: vi.fn() },
+      custom: { transcribe: vi.fn() }
+    })
+
+    await expect(
+      service.transcribe(
+        {
+          jobId: 'job-1',
+          recordingId: 'recording-1',
+          sourceType: 'recording',
+          language: 'auto',
+          backend: { backend: 'local_whisper' }
+        },
+        'window-1'
+      )
+    ).rejects.toThrow('decode failed')
+
+    expect(claimRecordingMock).toHaveBeenCalledWith('recording-1')
+    expect(discardClaimedRecordingMock).toHaveBeenCalledWith('recording-1')
+    expect(adoptRecordingMock).not.toHaveBeenCalled()
   })
 
   it('resolves persisted records before re-transcription without renderer paths', async () => {
@@ -259,12 +310,26 @@ describe('TranscriptionService', () => {
     expect(updateRecordMock).toHaveBeenCalledWith(record.id, expect.objectContaining({ status: 'ready' }))
   })
 
-  it('does not save a successful result after its job is canceled', async () => {
+  it('unloads local inference and does not save a stale completion after cancellation', async () => {
+    let finishInference: (value: {
+      text: string
+      segments: never[]
+      durationMs: number
+      backend: 'local_whisper'
+    }) => void = () => undefined
     const local = {
       transcribe: vi.fn(
-        (_audioPath: string, _language: string, signal?: AbortSignal) =>
-          new Promise<never>((_resolve, reject) => signal!.addEventListener('abort', () => reject(signal!.reason)))
-      )
+        () =>
+          new Promise<{
+            text: string
+            segments: never[]
+            durationMs: number
+            backend: 'local_whisper'
+          }>((resolve) => {
+            finishInference = resolve
+          })
+      ),
+      unload: vi.fn().mockResolvedValue(undefined)
     }
     const service = new TranscriptionService({
       local: local as never,
@@ -281,10 +346,12 @@ describe('TranscriptionService', () => {
       },
       'window-1'
     )
-    service.cancel('job-2')
+    await service.cancel('job-2')
+    finishInference({ text: 'stale', segments: [], durationMs: 100, backend: 'local_whisper' })
 
     await expect(pending).rejects.toBeDefined()
+    expect(local.unload).toHaveBeenCalledOnce()
     expect(saveResultMock).not.toHaveBeenCalled()
-    expect(createRecordMock).not.toHaveBeenCalled()
+    expect(createRecordWithResultMock).not.toHaveBeenCalled()
   })
 })

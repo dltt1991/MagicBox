@@ -46,13 +46,21 @@ export const transcriptionRequestSchemas = {
     }),
     output: z.strictObject({ recordingId: z.string().min(1) })
   }),
+  'transcription.recording.discard': defineRoute({
+    input: z.strictObject({ recordingId: z.string().min(1) }),
+    output: z.void()
+  }),
+  'transcription.sidebar.reconcile': defineRoute({
+    input: z.undefined(),
+    output: z.void()
+  }),
   'transcription.recording.delete': defineRoute({
     input: z.strictObject({ recordId: z.string().min(1), deleteAudio: z.boolean().default(false) }),
     output: z.void()
   }),
   'transcription.audio_url.resolve': defineRoute({
     input: z.strictObject({ recordId: z.string().min(1) }),
-    output: z.strictObject({ url: z.string().nullable(), missing: z.boolean() })
+    output: z.strictObject({ url: z.string().nullable(), missing: z.boolean(), playbackId: z.string().nullable() })
   }),
   'transcription.audio_url.preview': defineRoute({
     input: z
@@ -61,11 +69,11 @@ export const transcriptionRequestSchemas = {
     output: z.strictObject({
       url: z.string().nullable(),
       missing: z.boolean(),
-      previewId: z.string().min(1).nullable()
+      playbackId: z.string().min(1).nullable()
     })
   }),
   'transcription.audio_url.release': defineRoute({
-    input: z.strictObject({ previewId: z.string().min(1) }),
+    input: z.strictObject({ playbackId: z.string().min(1) }),
     output: z.void()
   }),
   'transcription.transcribe': defineRoute({
