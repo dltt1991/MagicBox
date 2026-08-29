@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest'
 
-import { SIDEBAR_FAVORITE_ORDER, type SidebarAppId } from '@renderer/utils/sidebar'
+import type { SidebarAppId } from '@renderer/utils/sidebar'
+import { DefaultPreferences } from '@shared/data/preference/preferenceSchemas'
 import type { SidebarFavoriteItem } from '@shared/data/preference/preferenceTypes'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -566,7 +567,7 @@ describe('app Sidebar', () => {
   })
 
   it('renders Transcription immediately after Translate in the default sidebar order', () => {
-    mocks.sidebarFavorites = SIDEBAR_FAVORITE_ORDER.map(appFavorite)
+    mocks.sidebarFavorites = DefaultPreferences.default['ui.sidebar.favorites']
 
     render(<Sidebar />)
 

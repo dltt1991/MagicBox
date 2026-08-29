@@ -46,4 +46,19 @@ The `options.typeAware` option is only supported in the root config, but it was 
 
 ## Review Fix Commit
 
-- Pending signed commit: `test(transcription): verify workflow persistence`.
+- `fdc45b3a1 test(transcription): verify workflow persistence`; verified with an SSH `gpgsig` header and `Signed-off-by` trailer.
+
+## Second Review Fixes
+
+- Updated the default rendered sidebar-order test to seed from `DefaultPreferences.default['ui.sidebar.favorites']`, so changes to the actual persisted default preference would break the test.
+
+## Second Review Verification
+
+- `pnpm format`: PASS.
+- `pnpm typecheck:web`: PASS.
+- `pnpm exec vitest run src/renderer/components/app/__tests__/Sidebar.test.tsx src/renderer/pages/transcription/__tests__/TranscriptionPage.test.tsx`: blocked before collection by the same Vitest `@vitest/web-worker` loader failure recorded above.
+- `git diff --check`: PASS.
+
+## Second Review Fix Commit
+
+- `test(transcription): use default sidebar favorites`; verified with an SSH `gpgsig` header and `Signed-off-by` trailer.
