@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest'
 
-import type { SidebarAppId } from '@renderer/utils/sidebar'
+import { SIDEBAR_FAVORITE_ORDER, type SidebarAppId } from '@renderer/utils/sidebar'
 import type { SidebarFavoriteItem } from '@shared/data/preference/preferenceTypes'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -565,15 +565,16 @@ describe('app Sidebar', () => {
     expect(screen.getByTestId('feedback-shell')).toHaveAttribute('data-open', 'false')
   })
 
-  it('renders sidebar menu items in visible preference order', () => {
-    mocks.sidebarFavorites = [appFavorite('translate'), appFavorite('assistants'), appFavorite('agents')]
+  it('renders Transcription immediately after Translate in the default sidebar order', () => {
+    mocks.sidebarFavorites = SIDEBAR_FAVORITE_ORDER.map(appFavorite)
 
     render(<Sidebar />)
 
-    const labels = Array.from(screen.getByTestId('sidebar-items').querySelectorAll('span')).map(
-      (element) => element.textContent
-    )
-    expect(labels).toEqual(['Translate', 'Chat', 'Work'])
+    const itemIds = Array.from(
+      screen.getByTestId('sidebar-items').querySelectorAll('[data-testid^="sidebar-item-"]')
+    ).map((element) => element.getAttribute('data-testid')?.replace('sidebar-item-', ''))
+    const translateIndex = itemIds.indexOf('translate')
+    expect(itemIds.slice(translateIndex, translateIndex + 2)).toEqual(['translate', 'transcription'])
   })
 
   it('removes a sidebar app favorite from the context menu', () => {

@@ -145,31 +145,67 @@ describe('TranscriptionService', () => {
     expect(deleteAudioMock).toHaveBeenCalledWith(record, { deleteAudio: true })
   })
 
-  it('selects the requested backend, sends progress, and persists its successful result', async () => {
+  it('persists an imported transcription, restores its organization, and resolves playback', async () => {
+    const audioFixturePath = '/fixtures/customer-call.m4a'
+    const segments = [
+      { startMs: 0, endMs: 600, text: 'Welcome to the call.' },
+      { startMs: 600, endMs: 1500, text: 'We agreed on next steps.' }
+    ]
     const local = {
       transcribe: vi.fn().mockResolvedValue({
-        text: 'hello',
-        segments: [{ startMs: 0, endMs: 500, text: 'hello' }],
+        text: 'Welcome to the call. We agreed on next steps.',
+        segments,
         language: 'en',
-        durationMs: 500,
+        durationMs: 1500,
         backend: 'local_whisper'
       })
     }
-    const record = { id: '018f0f37-8a1c-7f50-8000-000000000001', status: 'ready' }
-    const result = { id: '018f0f37-8a1c-7f50-8000-000000000002', recordId: record.id }
+    const record = {
+      id: '018f0f37-8a1c-7f50-8000-000000000001',
+      audioPath: audioFixturePath,
+      durationMs: 1500,
+      language: 'en',
+      status: 'ready'
+    }
+    const result = {
+      id: '018f0f37-8a1c-7f50-8000-000000000002',
+      recordId: record.id,
+      transcriptText: 'Welcome to the call. We agreed on next steps.',
+      segments,
+      organizationTemplateId: null,
+      organizationPromptSnapshot: null,
+      organizationOutput: null
+    }
+    const organizedResult = {
+      ...result,
+      organizationTemplateId: 'builtin-meeting-minutes',
+      organizationPromptSnapshot: 'Summarize {{transcript}}',
+      organizationOutput: 'Next steps: send the proposal.'
+    }
+    let latestResult = result
+    const organizer = {
+      organize: vi.fn().mockImplementation(async () => {
+        latestResult = organizedResult
+        return { result: organizedResult.organizationOutput }
+      })
+    }
     createRecordMock.mockReturnValue(record)
     saveResultMock.mockReturnValue(result)
+    getRecordMock.mockImplementation(() => ({ record, result: latestResult }))
+    resolveAudioUrlMock.mockReturnValue({ url: `cherry-media://audio/${record.id}`, missing: false })
 
     const service = new TranscriptionService({
       local,
       provider: { transcribe: vi.fn() },
-      custom: { transcribe: vi.fn() }
+      custom: { transcribe: vi.fn() },
+      organizer
     })
+
     await expect(
       service.transcribe(
         {
           jobId: 'job-1',
-          audioPath: '/audio.wav',
+          audioPath: audioFixturePath,
           sourceType: 'file',
           language: 'auto',
           backend: { backend: 'local_whisper' }
@@ -178,13 +214,43 @@ describe('TranscriptionService', () => {
       )
     ).resolves.toEqual({ record, result })
 
-    expect(local.transcribe).toHaveBeenCalledWith('/audio.wav', 'auto', expect.any(AbortSignal))
+    expect(local.transcribe).toHaveBeenCalledWith(audioFixturePath, 'auto', expect.any(AbortSignal))
+    expect(saveResultMock).toHaveBeenCalledWith(record.id, {
+      transcriptText: result.transcriptText,
+      segments,
+      organizationTemplateId: null,
+      organizationPromptSnapshot: null,
+      organizationOutput: null
+    })
+    expect(service.resolveAudioUrl(record.id)).toEqual({ url: `cherry-media://audio/${record.id}`, missing: false })
+
+    await expect(
+      service.organize(
+        {
+          jobId: 'job-2',
+          recordId: record.id,
+          templateId: 'builtin-meeting-minutes',
+          prompt: 'Summarize {{transcript}}'
+        },
+        'window-1'
+      )
+    ).resolves.toEqual({ result: organizedResult })
+    expect(organizer.organize).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recordId: record.id,
+        transcriptText: result.transcriptText,
+        segments,
+        language: 'en',
+        durationMs: 1500,
+        templateId: 'builtin-meeting-minutes'
+      })
+    )
     expect(application.get('IpcApiService').send).toHaveBeenCalledWith(
       'window-1',
       'transcription.progress',
       expect.objectContaining({ jobId: 'job-1', stage: 'preparing' })
     )
-    expect(saveResultMock).toHaveBeenCalledWith(record.id, expect.objectContaining({ transcriptText: 'hello' }))
+    expect(getRecordMock).toHaveBeenLastCalledWith(record.id)
   })
 
   it('resolves app-managed recordings before transcription without renderer paths', async () => {
