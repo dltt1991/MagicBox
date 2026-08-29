@@ -244,7 +244,7 @@ Both commands also emitted the existing Node engine warning because this environ
 
 ## Seventh Re-Review Fix Commit
 
-- Pending signed commit: `fix(transcription): redact managed audio paths`.
+- `b62c1f98f6dc6a6f647614e93a8621c87cf91c3a` — `fix(transcription): redact managed audio paths`; verified `gpgsig` header present.
 
 ## Eighth Re-Review Fixes
 
@@ -265,4 +265,8 @@ Both commands also emitted the existing Node engine warning because this environ
 
 ## Eighth Re-Review Fix Commit
 
-- Pending signed commit: `fix(transcription): isolate retranscription sources`.
+- `2823f8eb6e65c540df240839698cb0c450b6b12e` — `fix(transcription): isolate retranscription sources`; verified `gpgsig` header present.
+
+## Eighth Re-Review Result
+
+- Reviewer reported no Critical/Important findings for the isolated re-transcription source fix.
