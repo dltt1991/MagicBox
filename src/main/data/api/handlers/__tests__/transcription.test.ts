@@ -6,11 +6,7 @@ import { transcriptionHandlers } from '../transcription'
 vi.mock('@data/services/TranscriptionHistoryService', () => ({
   transcriptionHistoryService: {
     listRecords: vi.fn(),
-    createRecord: vi.fn(),
     getRecord: vi.fn(),
-    updateRecord: vi.fn(),
-    deleteRecord: vi.fn(),
-    saveResult: vi.fn(),
     updateResultText: vi.fn(),
     listPromptTemplates: vi.fn(),
     createPromptTemplate: vi.fn(),
@@ -22,20 +18,24 @@ vi.mock('@data/services/TranscriptionHistoryService', () => ({
 describe('transcription handlers', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('delegates list and result writes to the persistence service', async () => {
+  it('does not expose full-result writes over DataApi', () => {
+    expect('PUT' in transcriptionHandlers['/transcription/records/:id/result']).toBe(false)
+  })
+
+  it('delegates list and transcript text edits to the persistence service', async () => {
     const query = { limit: 10, status: 'ready' as const }
     const result = { id: '019606a0-0000-7000-8000-000000000002' }
     vi.mocked(transcriptionHistoryService.listRecords).mockReturnValue({ items: [], total: 0 } as never)
-    vi.mocked(transcriptionHistoryService.saveResult).mockReturnValue(result as never)
+    vi.mocked(transcriptionHistoryService.updateResultText).mockReturnValue(result as never)
 
     await transcriptionHandlers['/transcription/records'].GET({ query } as never)
-    await transcriptionHandlers['/transcription/records/:id/result'].PUT({
+    await transcriptionHandlers['/transcription/records/:id/result'].PATCH({
       params: { id: '019606a0-0000-7000-8000-000000000001' },
       body: { transcriptText: 'Text', segments: [] }
     } as never)
 
     expect(transcriptionHistoryService.listRecords).toHaveBeenCalledWith(query)
-    expect(transcriptionHistoryService.saveResult).toHaveBeenCalledWith('019606a0-0000-7000-8000-000000000001', {
+    expect(transcriptionHistoryService.updateResultText).toHaveBeenCalledWith('019606a0-0000-7000-8000-000000000001', {
       transcriptText: 'Text',
       segments: []
     })

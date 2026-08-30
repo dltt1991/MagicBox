@@ -1,7 +1,6 @@
 import { transcriptionHistoryService } from '@data/services/TranscriptionHistoryService'
 import {
   CreateTranscriptionPromptTemplateSchema,
-  SaveTranscriptionResultSchema,
   TranscriptionRecordQuerySchema,
   type TranscriptionSchemas,
   UpdateTranscriptionPromptTemplateSchema,
@@ -27,12 +26,6 @@ export const transcriptionHandlers: HandlersFor<TranscriptionSchemas> = {
     }
   },
   '/transcription/records/:id/result': {
-    PUT: async ({ params, body }) => {
-      return transcriptionHistoryService.saveResult(
-        IdParamsSchema.parse(params).id,
-        SaveTranscriptionResultSchema.parse(body)
-      )
-    },
     PATCH: async ({ params, body }) => {
       return transcriptionHistoryService.updateResultText(
         IdParamsSchema.parse(params).id,

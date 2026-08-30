@@ -13,10 +13,10 @@ import { isSpeechToTextModel } from '@shared/utils/model'
 import { type RefObject, useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { useSaveTranscriptionResult } from '../hooks/useSaveTranscriptionResult'
 import { useTranscriptionPromptTemplates } from '../hooks/useTranscriptionPromptTemplates'
 import { useTranscriptionRecord } from '../hooks/useTranscriptionRecord'
 import { useTranscriptionRecords } from '../hooks/useTranscriptionRecords'
+import { useUpdateTranscriptionText } from '../hooks/useUpdateTranscriptionText'
 import { AudioSourcePanel } from './components/AudioSourcePanel'
 import { OrganizationPanel } from './components/OrganizationPanel'
 import { TranscriptEditor } from './components/TranscriptEditor'
@@ -311,7 +311,7 @@ function PersistedTranscriptEditor({
   segments: TranscriptionSegment[]
   text: string
 }) {
-  const saveResult = useSaveTranscriptionResult(recordId)
+  const transcriptTextMutation = useUpdateTranscriptionText(recordId)
   const handleAction = useCallback(
     async (promise: Promise<unknown>) => {
       await promise.catch(onActionError)
@@ -321,13 +321,13 @@ function PersistedTranscriptEditor({
   return (
     <TranscriptEditor
       audioRef={audioRef}
-      isSaving={saveResult.isSaving}
+      isSaving={transcriptTextMutation.isSaving}
       resetKey={recordId}
       segments={segments}
       text={text}
       onExport={(value) => void handleAction(window.api.file.save('transcript.txt', value))}
       onSave={({ transcriptText, segments: nextSegments }) =>
-        void handleAction(saveResult.updateText({ transcriptText, segments: nextSegments }))
+        void handleAction(transcriptTextMutation.updateText({ transcriptText, segments: nextSegments }))
       }
     />
   )

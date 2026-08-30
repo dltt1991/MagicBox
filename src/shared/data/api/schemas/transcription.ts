@@ -99,11 +99,6 @@ export type TranscriptionSchemas = {
     }
   }
   '/transcription/records/:id/result': {
-    PUT: {
-      params: { id: string }
-      body: SaveTranscriptionResultDto
-      response: TranscriptionResult
-    }
     PATCH: {
       params: { id: string }
       body: UpdateTranscriptionTextDto
