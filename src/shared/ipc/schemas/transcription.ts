@@ -15,13 +15,6 @@ export const TranscriptionBackendConfigSchema = z.discriminatedUnion('backend', 
     backend: z.literal('provider_model'),
     providerId: z.string().min(1),
     modelId: z.string().min(1)
-  }),
-  z.strictObject({
-    backend: z.literal('custom_endpoint'),
-    endpointId: z.string().min(1).optional(),
-    baseUrl: z.url(),
-    model: z.string().min(1).optional(),
-    requestFormat: z.enum(['openai_multipart', 'json_base64'])
   })
 ])
 export type TranscriptionBackendConfig = z.infer<typeof TranscriptionBackendConfigSchema>

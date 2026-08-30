@@ -13,6 +13,7 @@ type TranscriptEditorProps = {
   isSaving?: boolean
   onExport?: (text: string) => void
   onSave?: (value: { segments: TranscriptionSegment[]; transcriptText: string }) => void
+  resetKey?: string
   segments: TranscriptionSegment[]
   text: string
 }
@@ -23,6 +24,7 @@ export function TranscriptEditor({
   isSaving = false,
   onExport,
   onSave,
+  resetKey,
   segments,
   text
 }: TranscriptEditorProps) {
@@ -30,7 +32,7 @@ export function TranscriptEditor({
   const [draft, setDraft] = useState(text)
   const seek = useSegmentSeek(audioRef)
 
-  useEffect(() => setDraft(text), [text])
+  useEffect(() => setDraft(text), [resetKey, text])
 
   return (
     <section className="grid min-h-0 grid-rows-[auto_minmax(7rem,1fr)_minmax(8rem,1fr)] gap-3 py-3">

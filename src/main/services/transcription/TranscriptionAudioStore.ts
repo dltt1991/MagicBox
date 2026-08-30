@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
 import { application } from '@application'
@@ -112,6 +112,21 @@ export class TranscriptionAudioStore {
   deleteAudio(record: TranscriptionRecord, options: { deleteAudio?: boolean } = {}): void {
     if (options.deleteAudio && record.audioManaged && this.isManagedRecordingPath(record.audioPath)) {
       rmSync(record.audioPath, { force: true })
+    }
+  }
+
+  stageAudioDeletion(record: TranscriptionRecord, options: { deleteAudio?: boolean } = {}) {
+    if (!options.deleteAudio || !record.audioManaged || !this.isManagedRecordingPath(record.audioPath)) {
+      return { commit: () => undefined, rollback: () => undefined }
+    }
+    if (!existsSync(record.audioPath)) return { commit: () => undefined, rollback: () => undefined }
+    const stagedPath = `${record.audioPath}.deleting-${uuidv7()}`
+    renameSync(record.audioPath, stagedPath)
+    return {
+      commit: () => rmSync(stagedPath, { force: true }),
+      rollback: () => {
+        if (existsSync(stagedPath) && !existsSync(record.audioPath)) renameSync(stagedPath, record.audioPath)
+      }
     }
   }
 

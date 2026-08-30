@@ -70,6 +70,34 @@ describe('TranscriptionHistoryService', () => {
     expect(dbh.db.select().from(transcriptionResultTable).all()).toEqual([])
   })
 
+  it('rolls back existing record metadata when retranscription result validation fails', () => {
+    const record = transcriptionHistoryService.createRecord(createInput)
+    transcriptionHistoryService.saveResult(record.id, {
+      transcriptText: 'Original',
+      segments: [{ startMs: 0, endMs: 1000, text: 'Original' }]
+    })
+
+    expect(() =>
+      transcriptionHistoryService.updateRecordWithResult(
+        record.id,
+        { durationMs: 2000, backend: 'local_whisper' },
+        {
+          transcriptText: 'Invalid',
+          segments: [{ startMs: 1000, endMs: 0, text: 'Invalid' }]
+        }
+      )
+    ).toThrow()
+
+    expect(transcriptionHistoryService.getRecord(record.id).record).toMatchObject({
+      durationMs: null,
+      backend: null
+    })
+    expect(transcriptionHistoryService.getRecord(record.id).result).toMatchObject({
+      transcriptText: 'Original',
+      segments: [{ startMs: 0, endMs: 1000, text: 'Original' }]
+    })
+  })
+
   it('preserves edited transcript text and segments when updating organization fields', () => {
     const record = transcriptionHistoryService.createRecord(createInput)
 

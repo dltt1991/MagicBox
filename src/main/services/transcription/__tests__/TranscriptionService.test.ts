@@ -10,6 +10,9 @@ const {
   discardRecordingMock,
   getRecordMock,
   claimRecordingMock,
+  ipcSendMock,
+  localTranscribeMock,
+  localUnloadMock,
   releaseClaimedRecordingMock,
   releaseAudioUrlMock,
   resolveTemporaryRecordingUrlMock,
@@ -17,8 +20,10 @@ const {
   resolveAudioUrlMock,
   resolveTemporaryAudioUrlMock,
   saveResultMock,
+  stageAudioDeletionMock,
   adoptRecordingMock,
   updateRecordMock,
+  updateRecordWithResultMock,
   writeRecordingMock
 } = vi.hoisted(() => ({
   createRecordMock: vi.fn(),
@@ -28,6 +33,9 @@ const {
   discardRecordingMock: vi.fn(),
   getRecordMock: vi.fn(),
   claimRecordingMock: vi.fn(),
+  ipcSendMock: vi.fn(),
+  localTranscribeMock: vi.fn(),
+  localUnloadMock: vi.fn(),
   releaseClaimedRecordingMock: vi.fn(),
   releaseAudioUrlMock: vi.fn(),
   resolveTemporaryRecordingUrlMock: vi.fn(),
@@ -35,8 +43,10 @@ const {
   resolveAudioUrlMock: vi.fn(),
   resolveTemporaryAudioUrlMock: vi.fn(),
   saveResultMock: vi.fn(),
+  stageAudioDeletionMock: vi.fn(),
   adoptRecordingMock: vi.fn(),
   updateRecordMock: vi.fn(),
+  updateRecordWithResultMock: vi.fn(),
   writeRecordingMock: vi.fn()
 }))
 
@@ -47,7 +57,8 @@ vi.mock('@data/services/TranscriptionHistoryService', () => ({
     deleteRecord: deleteRecordMock,
     getRecord: getRecordMock,
     saveResult: saveResultMock,
-    updateRecord: updateRecordMock
+    updateRecord: updateRecordMock,
+    updateRecordWithResult: updateRecordWithResultMock
   }
 }))
 
@@ -62,6 +73,7 @@ vi.mock('../TranscriptionAudioStore', () => ({
     adoptRecording: adoptRecordingMock,
     resolveTemporaryRecordingUrl: resolveTemporaryRecordingUrlMock,
     resolveTemporaryAudioUrl: resolveTemporaryAudioUrlMock,
+    stageAudioDeletion: stageAudioDeletionMock,
     writeRecording: writeRecordingMock,
     deleteAudio: deleteAudioMock
   }
@@ -86,8 +98,18 @@ describe('TranscriptionService', () => {
     createRecordWithResultMock.mockReset()
     deleteAudioMock.mockReset()
     deleteRecordMock.mockReset()
+    ipcSendMock.mockReset()
+    localTranscribeMock.mockReset()
+    localUnloadMock.mockReset()
+    vi.mocked(application.get).mockImplementation((name: string) =>
+      name === 'LocalWhisperRuntime'
+        ? ({ transcribe: localTranscribeMock, unload: localUnloadMock } as never)
+        : ({ send: ipcSendMock } as never)
+    )
     saveResultMock.mockReset()
+    stageAudioDeletionMock.mockReset().mockReturnValue({ commit: vi.fn(), rollback: vi.fn() })
     updateRecordMock.mockReset()
+    updateRecordWithResultMock.mockReset()
   })
 
   it('owns recording target reservation', () => {
@@ -157,13 +179,32 @@ describe('TranscriptionService', () => {
 
   it('deletes only the selected managed recording on request', () => {
     const record = { id: 'record-1', audioManaged: true, audioPath: '/managed/record-1.wav' }
+    const stagedAudio = { commit: vi.fn(), rollback: vi.fn() }
     getRecordMock.mockReturnValue({ record, result: null })
+    stageAudioDeletionMock.mockReturnValue(stagedAudio)
 
     new TranscriptionService().deleteRecording('record-1', true)
 
+    expect(stageAudioDeletionMock).toHaveBeenCalledWith(record, { deleteAudio: true })
     expect(deleteRecordMock).toHaveBeenCalledWith('record-1')
-    expect(deleteAudioMock).toHaveBeenCalledWith(record, { deleteAudio: true })
-    expect(deleteRecordMock.mock.invocationCallOrder[0]).toBeLessThan(deleteAudioMock.mock.invocationCallOrder[0])
+    expect(stagedAudio.commit).toHaveBeenCalledOnce()
+    expect(stagedAudio.rollback).not.toHaveBeenCalled()
+    expect(deleteAudioMock).not.toHaveBeenCalled()
+  })
+
+  it('rolls back staged audio when record deletion fails', () => {
+    const record = { id: 'record-1', audioManaged: true, audioPath: '/managed/record-1.wav' }
+    const stagedAudio = { commit: vi.fn(), rollback: vi.fn() }
+    getRecordMock.mockReturnValue({ record, result: null })
+    stageAudioDeletionMock.mockReturnValue(stagedAudio)
+    deleteRecordMock.mockImplementation(() => {
+      throw new Error('database failed')
+    })
+
+    expect(() => new TranscriptionService().deleteRecording('record-1', true)).toThrow('database failed')
+
+    expect(stagedAudio.rollback).toHaveBeenCalledOnce()
+    expect(stagedAudio.commit).not.toHaveBeenCalled()
   })
 
   it('selects the requested backend, sends progress, and persists its successful result', async () => {
@@ -182,8 +223,7 @@ describe('TranscriptionService', () => {
 
     const service = new TranscriptionService({
       local,
-      provider: { transcribe: vi.fn() },
-      custom: { transcribe: vi.fn() }
+      provider: { transcribe: vi.fn() }
     })
     await expect(
       service.transcribe(
@@ -199,7 +239,7 @@ describe('TranscriptionService', () => {
     ).resolves.toEqual({ record, result })
 
     expect(local.transcribe).toHaveBeenCalledWith('/audio.wav', 'auto', expect.any(AbortSignal))
-    expect(application.get('IpcApiService').send).toHaveBeenCalledWith(
+    expect(ipcSendMock).toHaveBeenCalledWith(
       'window-1',
       'transcription.progress',
       expect.objectContaining({ jobId: 'job-1', stage: 'preparing' })
@@ -226,8 +266,7 @@ describe('TranscriptionService', () => {
 
     const service = new TranscriptionService({
       local,
-      provider: { transcribe: vi.fn() },
-      custom: { transcribe: vi.fn() }
+      provider: { transcribe: vi.fn() }
     })
 
     await service.transcribe(
@@ -257,8 +296,7 @@ describe('TranscriptionService', () => {
     claimRecordingMock.mockReturnValue('/managed/recording.wav')
     const service = new TranscriptionService({
       local,
-      provider: { transcribe: vi.fn() },
-      custom: { transcribe: vi.fn() }
+      provider: { transcribe: vi.fn() }
     })
 
     await expect(
@@ -291,13 +329,11 @@ describe('TranscriptionService', () => {
     const record = { id: '018f0f37-8a1c-7f50-8000-000000000005', audioPath: '/managed/recording.wav', status: 'ready' }
     const result = { id: '018f0f37-8a1c-7f50-8000-000000000006', recordId: record.id }
     getRecordMock.mockReturnValue({ record, result: null })
-    updateRecordMock.mockReturnValue(record)
-    saveResultMock.mockReturnValue(result)
+    updateRecordWithResultMock.mockReturnValue({ record, result })
 
     const service = new TranscriptionService({
       local,
-      provider: { transcribe: vi.fn() },
-      custom: { transcribe: vi.fn() }
+      provider: { transcribe: vi.fn() }
     })
 
     await service.transcribe(
@@ -312,7 +348,11 @@ describe('TranscriptionService', () => {
     )
 
     expect(local.transcribe).toHaveBeenCalledWith('/managed/recording.wav', 'auto', expect.any(AbortSignal))
-    expect(updateRecordMock).toHaveBeenCalledWith(record.id, expect.objectContaining({ status: 'ready' }))
+    expect(updateRecordWithResultMock).toHaveBeenCalledWith(
+      record.id,
+      expect.objectContaining({ status: 'ready' }),
+      expect.objectContaining({ transcriptText: 'hello again' })
+    )
   })
 
   it('unloads local inference and does not save a stale completion after cancellation', async () => {
@@ -338,8 +378,7 @@ describe('TranscriptionService', () => {
     }
     const service = new TranscriptionService({
       local: local as never,
-      provider: { transcribe: vi.fn() },
-      custom: { transcribe: vi.fn() }
+      provider: { transcribe: vi.fn() }
     })
     const pending = service.transcribe(
       {

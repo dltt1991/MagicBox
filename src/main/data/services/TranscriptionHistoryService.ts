@@ -206,6 +206,45 @@ export class TranscriptionHistoryService {
     return record
   }
 
+  updateRecordWithResult(
+    id: string,
+    recordInput: UpdateTranscriptionRecordDto,
+    resultInput: SaveTranscriptionResultDto
+  ): { record: TranscriptionRecord; result: TranscriptionResult } {
+    const { record, result } = application.get('DbService').withWriteTx((tx) => {
+      const recordRow = tx
+        .update(transcriptionRecordTable)
+        .set(recordInput)
+        .where(eq(transcriptionRecordTable.id, id))
+        .returning()
+        .get()
+      if (!recordRow) throw DataApiErrorFactory.notFound('TranscriptionRecord', id)
+      const { segments, ...fields } = resultInput
+      const values = { ...fields, segmentsJson: JSON.stringify(segments) }
+      const current = tx.select().from(transcriptionResultTable).where(eq(transcriptionResultTable.recordId, id)).get()
+      const resultRow = current
+        ? tx
+            .update(transcriptionResultTable)
+            .set(values)
+            .where(eq(transcriptionResultTable.recordId, id))
+            .returning()
+            .get()
+        : tx
+            .insert(transcriptionResultTable)
+            .values({ recordId: id, ...values })
+            .returning()
+            .get()
+      if (!resultRow)
+        throw DataApiErrorFactory.database(new Error('Write did not return a row'), 'save transcription result')
+      return { record: rowToRecord(recordRow), result: rowToResult(resultRow) }
+    })
+    notifyDataApiDataChange([
+      { endpoint: '/transcription/records', kind: 'membership', entityIds: [id] },
+      { endpoint: '/transcription/records/:id', routeParams: { id }, entityIds: [id] }
+    ])
+    return { record, result }
+  }
+
   deleteRecord(id: string): void {
     const db = application.get('DbService').getDb()
     const row = db

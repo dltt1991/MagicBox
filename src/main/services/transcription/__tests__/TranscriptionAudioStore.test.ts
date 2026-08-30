@@ -189,6 +189,19 @@ describe('TranscriptionAudioStore', () => {
     expect(existsSync(managedPath)).toBe(false)
   })
 
+  it('restores staged managed audio when record deletion fails', () => {
+    const managedPath = path.join(recordingsRoot, 'managed.webm')
+    writeFileSync(managedPath, 'managed')
+    const store = new TranscriptionAudioStore()
+
+    const staged = store.stageAudioDeletion({ ...record, audioPath: managedPath }, { deleteAudio: true })
+    expect(existsSync(managedPath)).toBe(false)
+
+    staged.rollback()
+
+    expect(existsSync(managedPath)).toBe(true)
+  })
+
   it('discards an unsaved managed recording', () => {
     const store = new TranscriptionAudioStore()
     const target = store.reserveRecordingTarget()

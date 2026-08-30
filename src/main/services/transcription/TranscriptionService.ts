@@ -4,9 +4,7 @@ import { BaseService, DependsOn, Injectable, Phase, ServicePhase } from '@main/c
 import type { TranscriptionLanguage, TranscriptionSegment } from '@shared/data/types/transcription'
 import type { TranscriptionBackendConfig } from '@shared/ipc/schemas/transcription'
 
-import { resolveCustomEndpointConfig } from './customEndpointConfig'
-import { CustomEndpointTranscriptionBackend } from './CustomEndpointTranscriptionBackend'
-import { type LocalWhisperRuntime, whisperInferenceRuntime } from './LocalWhisperRuntime'
+import type { LocalWhisperRuntime } from './LocalWhisperRuntime'
 import { ProviderTranscriptionBackend } from './ProviderTranscriptionBackend'
 import { transcriptionAudioStore } from './TranscriptionAudioStore'
 import { TranscriptionOrganizer } from './TranscriptionOrganizer'
@@ -16,7 +14,7 @@ type BackendResult = {
   segments: TranscriptionSegment[]
   language?: string
   durationMs: number | null
-  backend: 'local_whisper' | 'provider_model' | 'custom_endpoint'
+  backend: 'local_whisper' | 'provider_model'
   providerId?: string
   modelId?: string
 }
@@ -36,13 +34,12 @@ type ResolvedTranscriptionCommandInput = Omit<TranscriptionCommandInput, 'audioP
 interface TranscriptionServiceDependencies {
   local: Pick<LocalWhisperRuntime, 'transcribe'> & Partial<Pick<LocalWhisperRuntime, 'unload'>>
   provider: Pick<ProviderTranscriptionBackend, 'transcribe'>
-  custom: Pick<CustomEndpointTranscriptionBackend, 'transcribe'>
   organizer: Pick<TranscriptionOrganizer, 'organize'>
 }
 
 @Injectable('TranscriptionService')
 @ServicePhase(Phase.WhenReady)
-@DependsOn(['MediaProtocolService'])
+@DependsOn(['LocalWhisperRuntime', 'MediaProtocolService'])
 export class TranscriptionService extends BaseService {
   private readonly activeJobs = new Map<string, AbortController>()
   private readonly localJobs = new Set<string>()
@@ -51,9 +48,8 @@ export class TranscriptionService extends BaseService {
   constructor(dependencies: Partial<TranscriptionServiceDependencies> = {}) {
     super()
     this.dependencies = {
-      local: dependencies.local ?? whisperInferenceRuntime,
+      local: dependencies.local ?? application.get('LocalWhisperRuntime'),
       provider: dependencies.provider ?? new ProviderTranscriptionBackend(),
-      custom: dependencies.custom ?? new CustomEndpointTranscriptionBackend(),
       organizer: dependencies.organizer ?? new TranscriptionOrganizer()
     }
   }
@@ -72,8 +68,14 @@ export class TranscriptionService extends BaseService {
 
   deleteRecording(recordId: string, deleteAudio: boolean): void {
     const { record } = transcriptionHistoryService.getRecord(recordId)
-    transcriptionHistoryService.deleteRecord(recordId)
-    transcriptionAudioStore.deleteAudio(record, { deleteAudio })
+    const stagedAudio = transcriptionAudioStore.stageAudioDeletion(record, { deleteAudio })
+    try {
+      transcriptionHistoryService.deleteRecord(recordId)
+    } catch (error) {
+      stagedAudio.rollback()
+      throw error
+    }
+    stagedAudio.commit()
   }
 
   resolveAudioUrl(recordId: string) {
@@ -206,13 +208,7 @@ export class TranscriptionService extends BaseService {
         signal
       })
     }
-    const config = resolveCustomEndpointConfig(input.backend)
-    return await this.dependencies.custom.transcribe({
-      audioPath: input.audioPath,
-      language: input.language,
-      config,
-      signal
-    })
+    return input.backend satisfies never
   }
 
   private saveTranscription(
@@ -230,9 +226,7 @@ export class TranscriptionService extends BaseService {
       errorSummary: null
     }
     if (input.recordId) {
-      const record = transcriptionHistoryService.updateRecord(input.recordId, values)
-      const result = transcriptionHistoryService.saveResult(record.id, resultInput)
-      return { record, result }
+      return transcriptionHistoryService.updateRecordWithResult(input.recordId, values, resultInput)
     }
     return transcriptionHistoryService.createRecordWithResult(
       {

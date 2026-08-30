@@ -1,10 +1,6 @@
 import { Button } from '@cherrystudio/ui'
 import { DefaultModelSelector } from '@renderer/components/DefaultModelSelector'
 import { usePreference } from '@renderer/data/hooks/usePreference'
-import { useSaveTranscriptionResult } from '@renderer/hooks/transcription/useSaveTranscriptionResult'
-import { useTranscriptionPromptTemplates } from '@renderer/hooks/transcription/useTranscriptionPromptTemplates'
-import { useTranscriptionRecord } from '@renderer/hooks/transcription/useTranscriptionRecord'
-import { useTranscriptionRecords } from '@renderer/hooks/transcription/useTranscriptionRecords'
 import { useLocalModel } from '@renderer/hooks/useLocalModel'
 import { useModelById } from '@renderer/hooks/useModel'
 import { useProviders } from '@renderer/hooks/useProvider'
@@ -17,6 +13,10 @@ import { isSpeechToTextModel } from '@shared/utils/model'
 import { type RefObject, useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { useSaveTranscriptionResult } from '../hooks/useSaveTranscriptionResult'
+import { useTranscriptionPromptTemplates } from '../hooks/useTranscriptionPromptTemplates'
+import { useTranscriptionRecord } from '../hooks/useTranscriptionRecord'
+import { useTranscriptionRecords } from '../hooks/useTranscriptionRecords'
 import { AudioSourcePanel } from './components/AudioSourcePanel'
 import { OrganizationPanel } from './components/OrganizationPanel'
 import { TranscriptEditor } from './components/TranscriptEditor'
@@ -210,7 +210,6 @@ export default function TranscriptionPage() {
         <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto]">
           {record && result ? (
             <PersistedTranscriptEditor
-              key={record.id}
               audioRef={audioRef}
               onActionError={() => setActionError(new Error('transcription.error.operation_failed'))}
               recordId={record.id}
@@ -283,9 +282,6 @@ export function buildBackendConfig(
     const { providerId, modelId } = parseUniqueModelId(options.transcriptionModel.id)
     return { backend, providerId, modelId }
   }
-  if (backend === 'custom_endpoint') {
-    return null
-  }
   return { backend }
 }
 
@@ -326,6 +322,7 @@ function PersistedTranscriptEditor({
     <TranscriptEditor
       audioRef={audioRef}
       isSaving={saveResult.isSaving}
+      resetKey={recordId}
       segments={segments}
       text={text}
       onExport={(value) => void handleAction(window.api.file.save('transcript.txt', value))}

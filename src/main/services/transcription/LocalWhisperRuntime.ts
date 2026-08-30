@@ -3,6 +3,7 @@ import path from 'node:path'
 
 import { application } from '@application'
 import { InferenceServiceBase } from '@main/ai/inference/InferenceServiceBase'
+import { DependsOn, Injectable, Phase, ServicePhase } from '@main/core/lifecycle'
 import type { TranscriptionLanguage, TranscriptionSegment } from '@shared/data/types/transcription'
 
 import { LOCAL_WHISPER_SAMPLE_RATE, preprocessAudio } from './audioPreprocess'
@@ -17,6 +18,9 @@ export interface LocalWhisperRuntimeDependencies {
   ) => Promise<{ text: string; chunks?: Array<{ timestamp: [number, number]; text: string }> }>
 }
 
+@Injectable('LocalWhisperRuntime')
+@ServicePhase(Phase.WhenReady)
+@DependsOn(['ProxyService'])
 export class LocalWhisperRuntime extends InferenceServiceBase {
   constructor(private readonly dependencies: LocalWhisperRuntimeDependencies = {}) {
     super('whisper')
@@ -82,5 +86,3 @@ export class LocalWhisperRuntime extends InferenceServiceBase {
     return { text: result.text ?? '', chunks: result.chunks ?? [] }
   }
 }
-
-export const whisperInferenceRuntime = new LocalWhisperRuntime()

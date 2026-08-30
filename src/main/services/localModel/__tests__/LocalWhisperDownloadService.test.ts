@@ -19,7 +19,12 @@ const { createWriteStream, existsSync, mkdir, rename, rm, statSync, ensureOnnxRu
 
 vi.mock('@application', async () => {
   const { mockApplicationFactory } = await import('@test-mocks/main/application')
-  return mockApplicationFactory()
+  const result = mockApplicationFactory()
+  const originalGet = result.application.get.getMockImplementation()!
+  result.application.get.mockImplementation((name: string) =>
+    name === 'LocalWhisperRuntime' ? { unload } : originalGet(name)
+  )
+  return result
 })
 
 vi.mock('@main/core/platform', () => ({ isDarwinX64: false }))
@@ -27,7 +32,6 @@ vi.mock('@main/services/RegionService', () => ({ regionService: { isInChina: vi.
 vi.mock('@main/services/localModel/OnnxRuntimeBinaryService', () => ({
   onnxRuntimeBinaryService: { ensure: ensureOnnxRuntime, isReady: onnxRuntimeIsReady }
 }))
-vi.mock('@main/services/transcription', () => ({ whisperInferenceRuntime: { unload } }))
 vi.mock('node:fs', async () => {
   const actual = await vi.importActual<typeof NodeFs>('node:fs')
   const patched = {
@@ -43,6 +47,7 @@ vi.mock('node:fs', async () => {
 const { localWhisperDownloadService } = await import('../LocalWhisperDownloadService')
 const { LOCAL_MODELS } = await import('@main/ai/inference/localModelCatalog')
 const { application } = await import('@application')
+const { regionService } = await import('@main/services/RegionService')
 
 const MODEL_DIR = '/mock/feature.transcription.whisper'
 const ENCODER_PATH = `${MODEL_DIR}/onnx/encoder_model_quantized.onnx`
@@ -106,7 +111,7 @@ describe('LocalWhisperDownloadService', () => {
 
     expect(ensureOnnxRuntime).toHaveBeenCalledTimes(1)
     expect(net.fetch).toHaveBeenCalledTimes(LOCAL_MODELS.whisper.files.length)
-    expect(urls.every((url) => url.includes(`/resolve/${LOCAL_MODELS.whisper.revision}/`))).toBe(true)
+    expect(urls.every((url) => url.includes(`/resolve/${LOCAL_MODELS.whisper.revisions.huggingface}/`))).toBe(true)
     expect(rename).toHaveBeenCalledTimes(LOCAL_MODELS.whisper.files.length)
     expect(mkdir).toHaveBeenCalledWith(`${MODEL_DIR}/onnx`, { recursive: true })
     expect(rename).toHaveBeenCalledWith(`${ENCODER_PATH}.tmp`, ENCODER_PATH)
@@ -115,6 +120,20 @@ describe('LocalWhisperDownloadService', () => {
       'local_model.download_progress',
       expect.objectContaining({ model: 'whisper', status: 'ready', percent: 100 })
     )
+  })
+
+  it('uses the ModelScope revision when China routing picks the China mirror first', async () => {
+    const urls: string[] = []
+    vi.mocked(regionService.isInChina).mockResolvedValue(true)
+    vi.mocked(net.fetch).mockImplementation((async (url: string) => {
+      urls.push(url)
+      return response()
+    }) as never)
+
+    await expect(localWhisperDownloadService.download()).resolves.toBe('ready')
+
+    expect(urls[0]).toContain('https://www.modelscope.cn')
+    expect(urls[0]).toContain(`/resolve/${LOCAL_MODELS.whisper.revisions.modelscope}/`)
   })
 
   it('cancels an in-flight Whisper download without leaving an error state', async () => {

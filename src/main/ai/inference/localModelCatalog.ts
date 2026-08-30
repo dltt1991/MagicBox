@@ -25,6 +25,11 @@ export interface RemoteModelFile {
   weight: number
 }
 
+export type RemoteModelSourceRevisions = {
+  huggingface: string
+  modelscope: string
+}
+
 export const LOCAL_MODELS = {
   /** Text embedding for the knowledge base — transformers.js fetches `repo` itself. */
   embedding: {
@@ -71,7 +76,10 @@ export const LOCAL_MODELS = {
   /** Whisper small in transformers.js' q8 ONNX layout for local transcription. */
   whisper: {
     repo: 'onnx-community/whisper-small',
-    revision: '36050c46d777d46dc4b5f43f6d90574fc38f8732',
+    revisions: {
+      huggingface: '36050c46d777d46dc4b5f43f6d90574fc38f8732',
+      modelscope: 'master'
+    },
     files: [
       {
         repo: 'onnx-community/whisper-small',
@@ -123,7 +131,7 @@ export const LOCAL_MODELS = {
     weights: Record<'detection' | 'recognition', RemoteModelFile>
     dictionary: { repo: string; sourceFile: string; fileName: string; minBytes: number }
   }
-  whisper: { repo: string; revision: string; files: readonly RemoteModelFile[] }
+  whisper: { repo: string; revisions: RemoteModelSourceRevisions; files: readonly RemoteModelFile[] }
 }
 
 /** Must match package.json's pinned `onnxruntime-node` dependency version. */

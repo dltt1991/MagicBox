@@ -1,1 +1,1 @@
-export { LocalWhisperRuntime as WhisperInferenceRuntime, whisperInferenceRuntime } from './LocalWhisperRuntime'
+export { LocalWhisperRuntime as WhisperInferenceRuntime } from './LocalWhisperRuntime'

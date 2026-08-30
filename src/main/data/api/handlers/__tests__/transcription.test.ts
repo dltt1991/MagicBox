@@ -22,22 +22,6 @@ vi.mock('@data/services/TranscriptionHistoryService', () => ({
 describe('transcription handlers', () => {
   beforeEach(() => vi.clearAllMocks())
 
-  it('parses strict record inputs and delegates the parsed DTO', async () => {
-    const body = { title: 'Call', sourceType: 'file' as const, audioPath: '/tmp/call.wav', audioManaged: false }
-    const created = { id: '019606a0-0000-7000-8000-000000000001', ...body }
-    vi.mocked(transcriptionHistoryService.createRecord).mockReturnValue(created as never)
-
-    await expect(transcriptionHandlers['/transcription/records'].POST({ body } as never)).resolves.toMatchObject({
-      audioManaged: false,
-      audioPath: '/tmp/call.wav',
-      title: 'Call'
-    })
-    expect(transcriptionHistoryService.createRecord).toHaveBeenCalledWith(body)
-    await expect(
-      transcriptionHandlers['/transcription/records'].POST({ body: { ...body, ignored: true } } as never)
-    ).rejects.toThrow()
-  })
-
   it('delegates list and result writes to the persistence service', async () => {
     const query = { limit: 10, status: 'ready' as const }
     const result = { id: '019606a0-0000-7000-8000-000000000002' }

@@ -1,2 +1,2 @@
-export { LocalWhisperRuntime, whisperInferenceRuntime } from './LocalWhisperRuntime'
+export { LocalWhisperRuntime } from './LocalWhisperRuntime'
 export { TranscriptionService } from './TranscriptionService'

@@ -1,12 +1,10 @@
 import { transcriptionHistoryService } from '@data/services/TranscriptionHistoryService'
 import {
   CreateTranscriptionPromptTemplateSchema,
-  CreateTranscriptionRecordSchema,
   SaveTranscriptionResultSchema,
   TranscriptionRecordQuerySchema,
   type TranscriptionSchemas,
   UpdateTranscriptionPromptTemplateSchema,
-  UpdateTranscriptionRecordSchema,
   UpdateTranscriptionTextSchema
 } from '@shared/data/api/schemas/transcription'
 import type { HandlersFor } from '@shared/data/api/types'
@@ -20,27 +18,12 @@ export const transcriptionHandlers: HandlersFor<TranscriptionSchemas> = {
     GET: async ({ query }) => {
       const page = transcriptionHistoryService.listRecords(TranscriptionRecordQuerySchema.parse(query ?? {}))
       return { ...page, items: page.items.map(toRecordView) }
-    },
-    POST: async ({ body }) => {
-      return toRecordView(transcriptionHistoryService.createRecord(CreateTranscriptionRecordSchema.parse(body)))
     }
   },
   '/transcription/records/:id': {
     GET: async ({ params }) => {
       const { record, result } = transcriptionHistoryService.getRecord(IdParamsSchema.parse(params).id)
       return { record: toRecordView(record), result }
-    },
-    PATCH: async ({ params, body }) => {
-      return toRecordView(
-        transcriptionHistoryService.updateRecord(
-          IdParamsSchema.parse(params).id,
-          UpdateTranscriptionRecordSchema.parse(body)
-        )
-      )
-    },
-    DELETE: async ({ params }) => {
-      transcriptionHistoryService.deleteRecord(IdParamsSchema.parse(params).id)
-      return undefined
     }
   },
   '/transcription/records/:id/result': {

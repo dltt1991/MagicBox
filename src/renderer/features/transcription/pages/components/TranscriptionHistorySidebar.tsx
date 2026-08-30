@@ -109,7 +109,6 @@ export function TranscriptionHistorySidebar({
 }
 
 const BACKEND_LABEL_KEYS = {
-  custom_endpoint: 'transcription.backend_custom',
   local_whisper: 'transcription.backend_local',
   provider_model: 'transcription.backend_provider'
 } as const

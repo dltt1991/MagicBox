@@ -26,4 +26,31 @@ describe('TranscriptEditor', () => {
 
     expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
   })
+
+  it('resets an edited draft when the owning record changes with the same text', async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(
+      <TranscriptEditor
+        audioRef={{ current: null }}
+        resetKey="record-1"
+        segments={[]}
+        text="Same text"
+        onSave={vi.fn()}
+      />
+    )
+    await user.clear(screen.getByRole('textbox', { name: 'Transcript' }))
+    await user.type(screen.getByRole('textbox', { name: 'Transcript' }), 'Unsaved edit')
+
+    rerender(
+      <TranscriptEditor
+        audioRef={{ current: null }}
+        resetKey="record-2"
+        segments={[]}
+        text="Same text"
+        onSave={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole('textbox', { name: 'Transcript' })).toHaveValue('Same text')
+  })
 })

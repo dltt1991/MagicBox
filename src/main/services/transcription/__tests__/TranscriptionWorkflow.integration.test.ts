@@ -63,8 +63,7 @@ describe('Transcription workflow integration', () => {
     }
     const service = new TranscriptionService({
       local,
-      provider: { transcribe: vi.fn() },
-      custom: { transcribe: vi.fn() }
+      provider: { transcribe: vi.fn() }
     })
 
     const transcribed = await service.transcribe(

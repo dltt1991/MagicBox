@@ -445,14 +445,6 @@ export interface PreferenceSchemas {
     // redux/selectionStore/triggerMode
     'feature.selection.trigger_mode': PreferenceTypes.SelectionTriggerMode
     // target-key-definitions/complex/complex
-    'feature.transcription.custom_endpoint.api_key': string
-    // target-key-definitions/complex/complex
-    'feature.transcription.custom_endpoint.base_url': string
-    // target-key-definitions/complex/complex
-    'feature.transcription.custom_endpoint.model': string
-    // target-key-definitions/complex/complex
-    'feature.transcription.custom_endpoint.request_format': 'openai_multipart' | 'json_base64'
-    // target-key-definitions/complex/complex
     'feature.transcription.model_id': string | null
     // target-key-definitions/complex/complex
     'feature.translate.action.alter_lang': PreferenceTypes.TranslateLangCode
@@ -843,10 +835,6 @@ export const DefaultPreferences: PreferenceSchemas = {
     'feature.selection.follow_toolbar': true,
     'feature.selection.remember_win_size': false,
     'feature.selection.trigger_mode': PreferenceTypes.SelectionTriggerMode.Selected,
-    'feature.transcription.custom_endpoint.api_key': '',
-    'feature.transcription.custom_endpoint.base_url': '',
-    'feature.transcription.custom_endpoint.model': '',
-    'feature.transcription.custom_endpoint.request_format': 'openai_multipart',
     'feature.transcription.model_id': null,
     'feature.translate.action.alter_lang': 'en-us',
     'feature.translate.action.preferred_lang': 'zh-cn',

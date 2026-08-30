@@ -91,24 +91,11 @@ export type TranscriptionSchemas = {
       query?: TranscriptionRecordQueryParams
       response: TranscriptionRecordListResponse
     }
-    POST: {
-      body: CreateTranscriptionRecordDto
-      response: TranscriptionRecordView
-    }
   }
   '/transcription/records/:id': {
     GET: {
       params: { id: string }
       response: { record: TranscriptionRecordView; result: TranscriptionResult | null }
-    }
-    PATCH: {
-      params: { id: string }
-      body: UpdateTranscriptionRecordDto
-      response: TranscriptionRecordView
-    }
-    DELETE: {
-      params: { id: string }
-      response: void
     }
   }
   '/transcription/records/:id/result': {

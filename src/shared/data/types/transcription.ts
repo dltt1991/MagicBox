@@ -3,7 +3,7 @@ import * as z from 'zod'
 export const TranscriptionSourceTypeSchema = z.enum(['recording', 'file'])
 export type TranscriptionSourceType = z.infer<typeof TranscriptionSourceTypeSchema>
 
-export const TranscriptionBackendSchema = z.enum(['local_whisper', 'provider_model', 'custom_endpoint'])
+export const TranscriptionBackendSchema = z.enum(['local_whisper', 'provider_model'])
 export type TranscriptionBackend = z.infer<typeof TranscriptionBackendSchema>
 
 export const TranscriptionStatusSchema = z.enum(['ready', 'transcribing', 'failed', 'canceled'])

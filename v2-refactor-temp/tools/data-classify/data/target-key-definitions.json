@@ -1009,34 +1009,6 @@
       "defaultValue": null,
       "status": "classified",
       "description": "Transcription model UniqueModelId (provider::modelId)"
-    },
-    {
-      "targetKey": "feature.transcription.custom_endpoint.base_url",
-      "type": "string",
-      "defaultValue": "",
-      "status": "classified",
-      "description": "Global custom transcription endpoint base URL"
-    },
-    {
-      "targetKey": "feature.transcription.custom_endpoint.api_key",
-      "type": "string",
-      "defaultValue": "",
-      "status": "classified",
-      "description": "Global custom transcription endpoint API key"
-    },
-    {
-      "targetKey": "feature.transcription.custom_endpoint.model",
-      "type": "string",
-      "defaultValue": "",
-      "status": "classified",
-      "description": "Global custom transcription endpoint model"
-    },
-    {
-      "targetKey": "feature.transcription.custom_endpoint.request_format",
-      "type": "'openai_multipart' | 'json_base64'",
-      "defaultValue": "openai_multipart",
-      "status": "classified",
-      "description": "Global custom transcription endpoint request format"
     }
   ]
 }
