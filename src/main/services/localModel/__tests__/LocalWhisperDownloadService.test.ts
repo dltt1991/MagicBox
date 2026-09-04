@@ -50,6 +50,7 @@ const { application } = await import('@application')
 const { regionService } = await import('@main/services/RegionService')
 
 const MODEL_DIR = '/mock/feature.transcription.whisper'
+const GENERATION_CONFIG_PATH = `${MODEL_DIR}/generation_config.json`
 const ENCODER_PATH = `${MODEL_DIR}/onnx/encoder_model_quantized.onnx`
 const DECODER_PATH = `${MODEL_DIR}/onnx/decoder_model_merged_quantized.onnx`
 
@@ -134,6 +135,20 @@ describe('LocalWhisperDownloadService', () => {
 
     expect(urls[0]).toContain('https://www.modelscope.cn')
     expect(urls[0]).toContain(`/resolve/${LOCAL_MODELS.whisper.revisions.modelscope}/`)
+  })
+
+  it('repairs an incomplete Whisper cache by downloading only missing files', async () => {
+    const sizes = new Map(LOCAL_MODELS.whisper.files.map((file) => [`${MODEL_DIR}/${file.fileName}`, file.minBytes]))
+    sizes.delete(GENERATION_CONFIG_PATH)
+    existsSync.mockImplementation((file: string) => sizes.has(file))
+    statSync.mockImplementation((file: string) => ({ size: sizes.get(file) }))
+    vi.mocked(net.fetch).mockResolvedValue(response() as never)
+
+    await expect(localWhisperDownloadService.download()).resolves.toBe('ready')
+
+    expect(net.fetch).toHaveBeenCalledOnce()
+    expect(String(vi.mocked(net.fetch).mock.calls[0]?.[0])).toContain('/generation_config.json')
+    expect(rename).toHaveBeenCalledWith(`${GENERATION_CONFIG_PATH}.tmp`, GENERATION_CONFIG_PATH)
   })
 
   it('cancels an in-flight Whisper download without leaving an error state', async () => {

@@ -9,7 +9,7 @@ import type { Model, UniqueModelId } from '@shared/data/types/model'
 import { parseUniqueModelId } from '@shared/data/types/model'
 import type { TranscriptionRecordView, TranscriptionSegment } from '@shared/data/types/transcription'
 import type { TranscriptionBackendConfig } from '@shared/ipc/schemas/transcription'
-import { isSpeechToTextModel } from '@shared/utils/model'
+import { isNonChatModel, isSpeechToTextModel } from '@shared/utils/model'
 import { type RefObject, useCallback, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -25,7 +25,7 @@ import { TranscriptionToolbar } from './components/TranscriptionToolbar'
 import { useAudioPlaybackUrl } from './hooks/useAudioPlaybackUrl'
 import { useAudioRecorder } from './hooks/useAudioRecorder'
 import { type TranscriptionDraftSource, useTranscriptionDraft } from './hooks/useTranscriptionDraft'
-import { useTranscriptionJob } from './hooks/useTranscriptionJob'
+import { normalizeTranscriptionError, useTranscriptionJob } from './hooks/useTranscriptionJob'
 
 const PROGRESS_LABEL_KEYS: Record<string, string> = {
   canceled: 'transcription.progress.canceled',
@@ -37,6 +37,10 @@ const PROGRESS_LABEL_KEYS: Record<string, string> = {
   transcribing: 'transcription.progress.transcribing'
 }
 
+const AUDIO_EXTENSIONS = ['wav', 'mp3', 'm4a', 'aac', 'ogg', 'flac', 'webm']
+const TRANSCRIPT_EXPORT_FILENAME = 'transcript.md'
+const ORGANIZATION_EXPORT_FILENAME = 'transcription-summary.md'
+
 export default function TranscriptionPage() {
   const { t } = useTranslation()
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -45,16 +49,23 @@ export default function TranscriptionPage() {
   const { adopt: adoptDraftSource, replace: replaceDraftSource, source: draftSource } = useTranscriptionDraft()
   const [backend, setBackend] = useState<TranscriptionBackendConfig['backend']>('local_whisper')
   const [language, setLanguage] = useState('auto')
+  const [organizationModelId, setOrganizationModelId] = useState<UniqueModelId | null>(null)
   const [actionError, setActionError] = useState<Error | null>(null)
   const { hasMore, isLoadingMore, items: records, loadMore, refresh } = useTranscriptionRecords()
   const { record, result } = useTranscriptionRecord(selectedId)
+  const activeRecord = selectedId ? record : undefined
+  const activeResult = selectedId ? result : null
   const { templates } = useTranscriptionPromptTemplates()
   const [transcriptionModelId, setTranscriptionModelId] = usePreference('feature.transcription.model_id')
+  const [defaultChatModelId] = usePreference('chat.default_model_id')
+  const effectiveOrganizationModelId = organizationModelId ?? (defaultChatModelId as UniqueModelId | null)
   const { model: transcriptionModel } = useModelById(transcriptionModelId as UniqueModelId | null)
+  const { model: organizationModel } = useModelById(effectiveOrganizationModelId)
   const { providers } = useProviders()
   const recorder = useAudioRecorder()
   const job = useTranscriptionJob()
   const localWhisper = useLocalModel('whisper')
+  const localWhisperReady = backend !== 'local_whisper' || localWhisper.status === 'ready'
   const previewSource = useMemo(
     () =>
       draftSource?.sourceType === 'file'
@@ -64,11 +75,11 @@ export default function TranscriptionPage() {
           : null,
     [draftSource]
   )
-  const playback = useAudioPlaybackUrl(record?.id ?? null, previewSource)
-  const missingIds = new Set(playback.missing && record ? [record.id] : [])
+  const playback = useAudioPlaybackUrl(activeRecord?.id ?? null, previewSource)
+  const missingIds = new Set(playback.missing && activeRecord ? [activeRecord.id] : [])
 
   const audioUrl = playback.url
-  const audioPath = draftSource?.sourceType === 'file' ? draftSource.audioPath : (record?.audioPath ?? null)
+  const audioPath = draftSource?.sourceType === 'file' ? draftSource.audioPath : (activeRecord?.audioPath ?? null)
   const recordingId = draftSource?.sourceType === 'recording' ? draftSource.recordingId : null
   const backendConfig = useMemo(
     () =>
@@ -77,20 +88,24 @@ export default function TranscriptionPage() {
       }),
     [backend, transcriptionModel]
   )
-  const canTranscribe = Boolean((audioPath || recordingId || record?.id) && backendConfig)
-  const transcriptText = result?.transcriptText ?? ''
-  const segments = result?.segments ?? []
-  const organizationOutput = result?.organizationOutput ?? null
+  const canTranscribe = Boolean((audioPath || recordingId) && backendConfig && localWhisperReady)
+  const transcriptText = activeResult?.transcriptText ?? ''
+  const segments = activeResult?.segments ?? []
+  const organizationOutput = activeResult?.organizationOutput ?? null
+  const isViewingHistory = Boolean(selectedId)
 
   const handleChooseFile = useCallback(async () => {
     const selected = await window.api.file.open({
       properties: ['openFile'],
       filters: [
-        { name: t('transcription.audio_files'), extensions: ['wav', 'mp3', 'm4a', 'aac', 'ogg', 'flac', 'webm'] }
+        {
+          name: t('transcription.audio_files'),
+          extensions: AUDIO_EXTENSIONS
+        }
       ]
     })
     const first = Array.isArray(selected) ? selected[0] : selected
-    const filePath = typeof first === 'string' ? first : first?.path
+    const filePath = typeof first === 'string' ? first : (first?.path ?? first?.filePath)
     if (!filePath) return
     setSelectedId(null)
     await replaceDraftSource({
@@ -112,30 +127,17 @@ export default function TranscriptionPage() {
   }, [recorder, replaceDraftSource])
 
   const handleTranscribe = useCallback(async () => {
-    if ((!audioPath && !recordingId && !record?.id) || !backendConfig) return
+    if ((!audioPath && !recordingId) || !backendConfig) return
     const { record: nextRecord } = await job.start({
       backend: backendConfig,
       language,
-      ...(selectedId ? { recordId: selectedId } : audioPath ? { audioPath } : { recordingId: recordingId! }),
-      sourceType: getDraftSourceType(draftSource, record?.sourceType ?? sourceMode)
+      ...(audioPath ? { audioPath } : { recordingId: recordingId! }),
+      sourceType: getDraftSourceType(draftSource, sourceMode)
     })
     setSelectedId(nextRecord.id)
     adoptDraftSource()
     await refresh()
-  }, [
-    audioPath,
-    adoptDraftSource,
-    backendConfig,
-    draftSource,
-    job,
-    language,
-    record?.id,
-    record?.sourceType,
-    recordingId,
-    refresh,
-    selectedId,
-    sourceMode
-  ])
+  }, [audioPath, adoptDraftSource, backendConfig, draftSource, job, language, recordingId, refresh, sourceMode])
 
   const handleDelete = useCallback(
     async (target: TranscriptionRecordView, deleteAudio: boolean) => {
@@ -145,9 +147,15 @@ export default function TranscriptionPage() {
     },
     [refresh, selectedId]
   )
+  const handleNewTask = useCallback(async () => {
+    job.reset()
+    setSelectedId(null)
+    await replaceDraftSource(null)
+  }, [job, replaceDraftSource])
   const handleAction = useCallback(async (promise: Promise<unknown>) => {
     setActionError(null)
-    await promise.catch(() => setActionError(new Error('transcription.error.operation_failed')))
+    const error = await runHandled(promise)
+    if (error) setActionError(error)
   }, [])
 
   return (
@@ -156,7 +164,9 @@ export default function TranscriptionPage() {
         <TranscriptionToolbar
           backend={backend}
           language={language}
+          localModelPercent={localWhisper.percent}
           localModelStatus={localWhisper.status}
+          newTaskDisabled={job.isRunning || recorder.status !== 'idle'}
           onlineModelSelector={
             <DefaultModelSelector
               filter={isSpeechToTextModel}
@@ -171,15 +181,20 @@ export default function TranscriptionPage() {
             />
           }
           recordingActive={recorder.status !== 'idle'}
+          sourceModeDisabled={isViewingHistory}
           sourceMode={sourceMode}
           onBackendChange={setBackend}
           onLanguageChange={setLanguage}
+          onLocalModelCancel={() => void handleAction(localWhisper.cancel())}
+          onLocalModelDownload={() => void handleAction(localWhisper.download())}
+          onNewTask={() => void handleAction(handleNewTask())}
           onSourceModeChange={setSourceMode}
         />
         <AudioSourcePanel
           audioRef={audioRef}
           audioUrl={audioUrl}
           error={recorder.error ?? job.error ?? actionError}
+          inputDisabled={isViewingHistory}
           isMissing={playback.missing}
           mode={sourceMode}
           onChooseFile={() => void handleAction(handleChooseFile())}
@@ -188,7 +203,7 @@ export default function TranscriptionPage() {
           onStart={() => void handleAction(recorder.start())}
           onStop={() => void handleAction(handleStopRecording())}
           recordingStatus={recorder.status}
-          sourceName={draftSource?.name ?? record?.title ?? null}
+          sourceName={draftSource?.name ?? activeRecord?.title ?? null}
         />
         <div className="flex shrink-0 items-center gap-2 border-border-subtle border-b py-2">
           <Button
@@ -207,12 +222,12 @@ export default function TranscriptionPage() {
             </span>
           ) : null}
         </div>
-        <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto]">
-          {record && result ? (
+        <div className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)_auto] overflow-hidden">
+          {activeRecord && activeResult ? (
             <PersistedTranscriptEditor
               audioRef={audioRef}
               onActionError={() => setActionError(new Error('transcription.error.operation_failed'))}
-              recordId={record.id}
+              recordId={activeRecord.id}
               segments={segments}
               text={transcriptText}
             />
@@ -222,19 +237,36 @@ export default function TranscriptionPage() {
               disabled
               segments={segments}
               text={transcriptText}
-              onExport={(text) => void handleAction(window.api.file.save('transcript.txt', text))}
+              onExport={(text) => void handleAction(window.api.file.save(getTranscriptExportFilename(), text))}
             />
           )}
           <OrganizationPanel
             templates={templates}
             organizationOutput={organizationOutput}
             isOrganizing={job.isRunning}
-            disabled={!record || !result}
-            onExport={(text) => void handleAction(window.api.file.save('transcription-summary.txt', text))}
+            organizationModelReady={Boolean(organizationModel)}
+            organizationModelSelector={
+              <DefaultModelSelector
+                filter={isChatModel}
+                model={organizationModel}
+                onSelect={(model) => setOrganizationModelId(model?.id ?? null)}
+                placeholder={t('transcription.organization_model')}
+                providers={providers}
+              />
+            }
+            disabled={!activeRecord || !activeResult}
+            onExport={(text) => void handleAction(window.api.file.save(getOrganizationExportFilename(), text))}
             onOrganize={
-              record && result
+              activeRecord && activeResult
                 ? ({ prompt, templateId }) =>
-                    void handleAction(job.organize({ recordId: record.id, prompt, templateId }))
+                    void handleAction(
+                      job.organize({
+                        recordId: activeRecord.id,
+                        prompt,
+                        templateId,
+                        ...(effectiveOrganizationModelId ? { modelId: effectiveOrganizationModelId } : {})
+                      })
+                    )
                 : undefined
             }
           />
@@ -260,8 +292,25 @@ export default function TranscriptionPage() {
   )
 }
 
-export async function runHandled(promise: Promise<unknown>): Promise<void> {
-  await promise.catch(() => undefined)
+function isChatModel(model: Model): boolean {
+  return !isNonChatModel(model)
+}
+
+export async function runHandled(promise: Promise<unknown>): Promise<Error | null> {
+  try {
+    await promise
+    return null
+  } catch (error) {
+    return normalizeTranscriptionError(error)
+  }
+}
+
+export function getTranscriptExportFilename(): string {
+  return TRANSCRIPT_EXPORT_FILENAME
+}
+
+export function getOrganizationExportFilename(): string {
+  return ORGANIZATION_EXPORT_FILENAME
 }
 
 export function getDraftSourceType(
@@ -325,7 +374,7 @@ function PersistedTranscriptEditor({
       resetKey={recordId}
       segments={segments}
       text={text}
-      onExport={(value) => void handleAction(window.api.file.save('transcript.txt', value))}
+      onExport={(value) => void handleAction(window.api.file.save(getTranscriptExportFilename(), value))}
       onSave={({ transcriptText, segments: nextSegments }) =>
         void handleAction(transcriptTextMutation.updateText({ transcriptText, segments: nextSegments }))
       }

@@ -34,8 +34,8 @@ export function useTranscriptionJob() {
       setProgress({ stage: 'preparing' })
       try {
         return (await ipcApi.request(route, { ...input, jobId } as never)) as T
-      } catch {
-        const nextError = new Error('transcription.error.operation_failed')
+      } catch (error) {
+        const nextError = normalizeTranscriptionError(error)
         setError(nextError)
         throw nextError
       } finally {
@@ -64,5 +64,25 @@ export function useTranscriptionJob() {
     if (jobIdRef.current) await ipcApi.request('transcription.cancel', { jobId: jobIdRef.current })
   }, [])
 
-  return { cancel, error, isRunning, organize, progress, start }
+  const reset = useCallback(() => {
+    if (jobIdRef.current) return
+    setError(null)
+    setProgress(null)
+  }, [])
+
+  return { cancel, error, isRunning, organize, progress, reset, start }
+}
+
+export function normalizeTranscriptionError(error: unknown): Error {
+  if (error instanceof Error && error.message.startsWith('transcription.error.')) return error
+
+  const message = error instanceof Error ? error.message : String(error)
+  if (message.includes('Local Whisper model is not downloaded')) {
+    return new Error('transcription.error.local_model_not_downloaded')
+  }
+  if (message.includes('Local Whisper model is incomplete')) {
+    return new Error('transcription.error.local_model_incomplete')
+  }
+  if (message.startsWith('transcription.error.organization_failed|')) return new Error(message)
+  return new Error('transcription.error.operation_failed')
 }

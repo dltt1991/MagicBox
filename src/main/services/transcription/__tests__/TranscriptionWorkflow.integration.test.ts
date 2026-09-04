@@ -19,7 +19,7 @@ describe('Transcription workflow integration', () => {
 
   let tempDir: string
   const aiService = {
-    generateText: vi.fn()
+    streamText: vi.fn()
   }
   const mediaProtocolService = {
     remove: vi.fn(),
@@ -30,7 +30,7 @@ describe('Transcription workflow integration', () => {
     BaseService.resetInstances()
     tempDir = path.join(tmpdir(), `cherry-transcription-workflow-${randomUUID()}`)
     mkdirSync(tempDir, { recursive: true })
-    aiService.generateText.mockReset().mockResolvedValue({ text: 'Next steps: send the proposal.' })
+    aiService.streamText.mockReset().mockResolvedValue(textStream('Next steps: send the proposal.'))
     mediaProtocolService.remove.mockReset()
     mediaProtocolService.storeFile.mockReset()
     ;(application.get as unknown as Mock).mockImplementation((name: string) => {
@@ -91,10 +91,18 @@ describe('Transcription workflow integration', () => {
     const playback = service.resolveAudioUrl(transcribed.record.id)
 
     expect(local.transcribe).toHaveBeenCalledWith(audioPath, 'auto', expect.any(AbortSignal))
-    expect(aiService.generateText).toHaveBeenCalledWith(
+    expect(aiService.streamText).toHaveBeenCalledWith(
       expect.objectContaining({
         uniqueModelId: 'openai::gpt-4o-mini',
-        prompt: expect.stringContaining('Welcome to the call. We agreed on next steps.')
+        messages: [
+          expect.objectContaining({
+            parts: [
+              expect.objectContaining({
+                text: expect.stringContaining('Welcome to the call. We agreed on next steps.')
+              })
+            ]
+          })
+        ]
       })
     )
     expect(reloaded).toMatchObject({
@@ -127,3 +135,12 @@ describe('Transcription workflow integration', () => {
     expect(mediaProtocolService.remove).toHaveBeenCalledWith(MediaKind.Audio, playback.playbackId)
   })
 })
+
+function textStream(text: string): ReadableStream<{ type: 'text-delta'; id: string; delta: string }> {
+  return new ReadableStream({
+    start(controller) {
+      controller.enqueue({ type: 'text-delta', id: 'text', delta: text })
+      controller.close()
+    }
+  })
+}

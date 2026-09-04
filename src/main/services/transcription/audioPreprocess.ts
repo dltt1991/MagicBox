@@ -1,11 +1,17 @@
+import { spawn } from 'node:child_process'
 import { readFile } from 'node:fs/promises'
+import { createRequire } from 'node:module'
 import path from 'node:path'
 
+import { getBinaryPath } from '@main/utils/binaryResolver'
+
+const require = createRequire(import.meta.url)
 const SAMPLE_RATE = 16_000
-const UNSUPPORTED_AUDIO_ERROR =
-  'Local Whisper supports uncompressed WAV audio only. Use a provider or custom endpoint for compressed audio.'
+const SUPPORTED_COMPRESSED_AUDIO_EXTENSIONS = new Set(['.mp3', '.m4a', '.aac', '.ogg', '.flac', '.webm'])
+const UNSUPPORTED_AUDIO_ERROR = 'Unsupported audio format. Use WAV, MP3, M4A, AAC, OGG, FLAC, or WEBM audio.'
 
 export interface AudioPreprocessDependencies {
+  decodeCompressedAudio?: typeof decodeCompressedAudio
   readFile?: typeof readFile
 }
 
@@ -16,10 +22,71 @@ export async function preprocessAudio(
   dependencies: AudioPreprocessDependencies = {}
 ): Promise<Float32Array> {
   signal?.throwIfAborted()
-  if (path.extname(audioPath).toLowerCase() !== '.wav') throw new Error(UNSUPPORTED_AUDIO_ERROR)
+  const extension = path.extname(audioPath).toLowerCase()
+  if (SUPPORTED_COMPRESSED_AUDIO_EXTENSIONS.has(extension)) {
+    return (dependencies.decodeCompressedAudio ?? decodeCompressedAudio)(audioPath, signal)
+  }
+  if (extension !== '.wav') throw new Error(UNSUPPORTED_AUDIO_ERROR)
   const encoded = await (dependencies.readFile ?? readFile)(audioPath)
   signal?.throwIfAborted()
   return decodeWav(encoded)
+}
+
+async function decodeCompressedAudio(audioPath: string, signal?: AbortSignal): Promise<Float32Array> {
+  const encoded = await runFfmpeg(audioPath, signal)
+  if (encoded.byteLength % Float32Array.BYTES_PER_ELEMENT !== 0) throw new Error(UNSUPPORTED_AUDIO_ERROR)
+  return new Float32Array(encoded.buffer.slice(encoded.byteOffset, encoded.byteOffset + encoded.byteLength))
+}
+
+async function runFfmpeg(audioPath: string, signal?: AbortSignal): Promise<Buffer> {
+  signal?.throwIfAborted()
+  const ffmpegPath = resolveBundledFfmpegPath() ?? (await getBinaryPath('ffmpeg'))
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = []
+    let stderr = ''
+    const child = spawn(ffmpegPath, [
+      '-v',
+      'error',
+      '-nostdin',
+      '-i',
+      audioPath,
+      '-ac',
+      '1',
+      '-ar',
+      String(SAMPLE_RATE),
+      '-f',
+      'f32le',
+      'pipe:1'
+    ])
+    const abort = () => {
+      child.kill('SIGKILL')
+      reject(new DOMException('Audio preprocessing aborted', 'AbortError'))
+    }
+
+    signal?.addEventListener('abort', abort, { once: true })
+    child.stdout.on('data', (chunk: Buffer) => chunks.push(chunk))
+    child.stderr.on('data', (chunk: Buffer) => {
+      stderr = `${stderr}${chunk.toString('utf8')}`.slice(-8_192)
+    })
+    child.on('error', reject)
+    child.on('close', (code) => {
+      signal?.removeEventListener('abort', abort)
+      if (code === 0) {
+        resolve(Buffer.concat(chunks))
+      } else {
+        reject(new Error(stderr.trim() || UNSUPPORTED_AUDIO_ERROR))
+      }
+    })
+  })
+}
+
+function resolveBundledFfmpegPath(): string | null {
+  try {
+    const installer = require('@ffmpeg-installer/ffmpeg') as { path?: string }
+    return installer.path ?? null
+  } catch {
+    return null
+  }
 }
 
 function decodeWav(encoded: Uint8Array): Float32Array {

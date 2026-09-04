@@ -54,4 +54,37 @@ describe('OrganizationPanel', () => {
 
     expect(onOrganize).toHaveBeenCalledWith({ prompt: 'Summarize {{transcript}}', templateId: 'summary' })
   })
+
+  it('keeps long organization output scrolling inside the result pane', () => {
+    render(<OrganizationPanel templates={[summaryTemplate]} organizationOutput="Long organization output" />)
+
+    expect(screen.getByRole('textbox', { name: 'Organization' })).toHaveClass(
+      'field-sizing-fixed',
+      'h-full',
+      'min-h-0',
+      'overflow-y-auto'
+    )
+  })
+
+  it('switches between rendered markdown preview and markdown source', async () => {
+    const user = userEvent.setup()
+    render(<OrganizationPanel templates={[summaryTemplate]} organizationOutput="# Summary\n\n- Decision" />)
+
+    expect(screen.getByRole('heading', { name: 'Summary' })).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Organization' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('radio', { name: 'Source' }))
+
+    expect(screen.getByRole('textbox', { name: 'Organization' })).toHaveValue('# Summary\n\n- Decision')
+  })
+
+  it('opens the organization output in a maximized markdown viewer', async () => {
+    const user = userEvent.setup()
+    render(<OrganizationPanel templates={[summaryTemplate]} organizationOutput="# Summary" />)
+
+    await user.click(screen.getByRole('button', { name: 'Maximize' }))
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getAllByRole('heading', { name: 'Summary' })).toHaveLength(2)
+  })
 })

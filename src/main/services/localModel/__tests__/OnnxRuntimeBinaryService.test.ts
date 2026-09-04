@@ -8,9 +8,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 const FAKE_PLATFORM = 'linux'
 const FAKE_ARCH = 'x64'
 const FAKE_TARBALL_CONTENT = Buffer.from('fake-onnxruntime-node-tarball-fixture')
-// sha256 of FAKE_TARBALL_CONTENT — precomputed with:
-// printf 'fake-onnxruntime-node-tarball-fixture' | shasum -a 256
-const FAKE_TARBALL_SHA256 = '5576b1313abe30c692fdc1b79cb6763292e7c69664dacb4a33906e98616da392'
+// sha512 integrity of FAKE_TARBALL_CONTENT — precomputed with:
+// printf 'fake-onnxruntime-node-tarball-fixture' | openssl dgst -sha512 -binary | openssl base64 -A
+const FAKE_TARBALL_INTEGRITY =
+  'sha512-5hY3p4vuTxKVFpqxOZkbliIeanlnkXsEMEdGbj1jxS9YzDNrkQi5s1Cd3+IWyNtYF9TiUqIoOlrf2hBKEG9GdA=='
 
 const { extractMock, isInChina } = vi.hoisted(() => ({
   extractMock: vi.fn(),
@@ -31,8 +32,8 @@ vi.mock('@application', async () => {
 })
 
 vi.mock('@main/ai/inference/localModelCatalog', () => ({
-  ONNXRUNTIME_NODE_VERSION: '1.25.1',
-  ONNXRUNTIME_TARBALL_SHA256: FAKE_TARBALL_SHA256,
+  ONNXRUNTIME_NODE_VERSION: '1.24.3',
+  ONNXRUNTIME_TARBALL_INTEGRITY: FAKE_TARBALL_INTEGRITY,
   ONNXRUNTIME_LEAVES: {
     [FAKE_PLATFORM]: {
       [FAKE_ARCH]: { binding: 'onnxruntime_binding.node', sharedLibs: ['libonnxruntime.so.1'] }
@@ -186,11 +187,11 @@ describe('OnnxRuntimeBinaryService', () => {
     expect(onnxRuntimeBinaryService.isReady()).toBe(true)
   })
 
-  it('rejects and leaves the binary not installed when the tarball sha256 does not match', async () => {
+  it('rejects and leaves the binary not installed when the tarball integrity does not match', async () => {
     vi.mocked(net.fetch).mockImplementation((async () =>
       tarballResponse(Buffer.from('tampered content'))) as unknown as typeof net.fetch)
 
-    await expect(onnxRuntimeBinaryService.ensure(new AbortController().signal)).rejects.toThrow('sha256 mismatch')
+    await expect(onnxRuntimeBinaryService.ensure(new AbortController().signal)).rejects.toThrow('sha512 mismatch')
 
     expect(extractMock).not.toHaveBeenCalled()
     expect(onnxRuntimeBinaryService.isReady()).toBe(false)

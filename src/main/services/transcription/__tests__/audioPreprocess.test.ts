@@ -1,6 +1,15 @@
+import { execFile, spawnSync } from 'node:child_process'
+import { mkdtemp, rm } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
+import { promisify } from 'node:util'
+
 import { describe, expect, it, vi } from 'vitest'
 
 import { preprocessAudio } from '../audioPreprocess'
+
+const execFileAsync = promisify(execFile)
+const hasFfmpeg = spawnSync('ffmpeg', ['-version']).status === 0
 
 function pcmWav(samples: number[]): Buffer {
   const dataSize = samples.length * 2
@@ -32,13 +41,58 @@ describe('preprocessAudio', () => {
     expect(readFile).toHaveBeenCalledWith('/audio.wav')
   })
 
-  it.each(['webm', 'mp3'])('rejects %s audio before attempting a target-specific decoder', async (extension) => {
+  it.each(['mp3', 'm4a', 'aac', 'ogg', 'flac', 'webm'])(
+    'decodes %s audio through the compressed audio decoder',
+    async (extension) => {
+      const readFile = vi.fn()
+      const decodeCompressedAudio = vi.fn().mockResolvedValue(new Float32Array([0.25, -0.25]))
+
+      const audio = await preprocessAudio(`/audio.${extension}`, undefined, {
+        decodeCompressedAudio,
+        readFile
+      })
+
+      expect(Array.from(audio)).toEqual([0.25, -0.25])
+      expect(readFile).not.toHaveBeenCalled()
+      expect(decodeCompressedAudio).toHaveBeenCalledWith(`/audio.${extension}`, undefined)
+    }
+  )
+
+  it('rejects unsupported audio extensions before reading the file', async () => {
     const readFile = vi.fn()
 
-    await expect(preprocessAudio(`/audio.${extension}`, undefined, { readFile })).rejects.toThrow(
-      'Local Whisper supports uncompressed WAV audio only. Use a provider or custom endpoint for compressed audio.'
+    await expect(preprocessAudio('/audio.txt', undefined, { readFile })).rejects.toThrow(
+      'Unsupported audio format. Use WAV, MP3, M4A, AAC, OGG, FLAC, or WEBM audio.'
     )
 
     expect(readFile).not.toHaveBeenCalled()
+  })
+
+  it.skipIf(!hasFfmpeg)('decodes real MP3 audio to Whisper samples with ffmpeg', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'magicbox-audio-'))
+    const audioPath = path.join(dir, 'tone.mp3')
+
+    try {
+      await execFileAsync('ffmpeg', [
+        '-v',
+        'error',
+        '-f',
+        'lavfi',
+        '-i',
+        'sine=frequency=440:duration=0.2',
+        '-ar',
+        '44100',
+        '-ac',
+        '1',
+        audioPath
+      ])
+
+      const audio = await preprocessAudio(audioPath)
+
+      expect(audio).toBeInstanceOf(Float32Array)
+      expect(audio.length).toBeGreaterThan(0)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
   })
 })

@@ -10,6 +10,7 @@ type AudioSourcePanelProps = {
   audioUrl: string | null
   error: Error | null
   isMissing: boolean
+  inputDisabled?: boolean
   mode: 'recording' | 'file'
   onChooseFile: () => void
   onPause: () => void
@@ -25,6 +26,7 @@ export function AudioSourcePanel({
   audioUrl,
   error,
   isMissing,
+  inputDisabled = false,
   mode,
   onChooseFile,
   onPause,
@@ -42,7 +44,7 @@ export function AudioSourcePanel({
         {mode === 'recording' ? (
           recordingStatus === 'idle' || recordingStatus === 'starting' ? (
             <Button
-              disabled={recordingStatus === 'starting'}
+              disabled={inputDisabled || recordingStatus === 'starting'}
               loading={recordingStatus === 'starting'}
               onClick={onStart}>
               <Play />
@@ -52,29 +54,37 @@ export function AudioSourcePanel({
             <>
               <Button
                 variant="outline"
-                disabled={recordingStatus === 'saving'}
+                disabled={inputDisabled || recordingStatus === 'saving'}
                 onClick={recordingStatus === 'paused' ? onResume : onPause}>
                 {recordingStatus === 'paused' ? <Play /> : <Pause />}
                 {recordingStatus === 'paused' ? t('transcription.resume') : t('transcription.pause')}
               </Button>
-              <Button variant="destructive" disabled={recordingStatus === 'saving'} onClick={onStop}>
+              <Button variant="destructive" disabled={inputDisabled || recordingStatus === 'saving'} onClick={onStop}>
                 <Square />
                 {t('transcription.stop')}
               </Button>
             </>
           )
         ) : (
-          <Button onClick={onChooseFile}>{t('transcription.choose_audio_file')}</Button>
+          <Button disabled={inputDisabled} onClick={onChooseFile}>
+            {t('transcription.choose_audio_file')}
+          </Button>
         )}
         {sourceName ? <span className="min-w-0 truncate text-muted-foreground text-sm">{sourceName}</span> : null}
       </div>
       {audioUrl ? <audio ref={audioRef} className="h-9 w-full" controls src={audioUrl} /> : null}
       {isMissing ? <p className="text-sm text-warning">{t('transcription.audio_unavailable')}</p> : null}
-      {error ? <p className="text-error text-sm">{t(errorMessageKey(error))}</p> : null}
+      {error ? <p className="text-error text-sm">{errorMessageText(error, t)}</p> : null}
     </section>
   )
 }
 
-function errorMessageKey(error: Error): string {
-  return error.message.startsWith('transcription.error.') ? error.message : 'transcription.error.operation_failed'
+function errorMessageText(error: Error, t: (key: string, options?: Record<string, string>) => string): string {
+  if (error.message.startsWith('transcription.error.organization_failed|')) {
+    return t('transcription.error.organization_failed', {
+      detail: error.message.slice('transcription.error.organization_failed|'.length)
+    })
+  }
+  if (error.message.startsWith('transcription.error.')) return t(error.message)
+  return t('transcription.error.operation_failed')
 }

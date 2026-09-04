@@ -41,6 +41,10 @@ class LocalWhisperDownloadService extends LocalModelDownloadService {
     completedWeight += runtimeWeight
     await fs.promises.mkdir(this.modelDir(), { recursive: true })
     for (const file of files) {
+      if (fs.existsSync(this.modelPath(file.fileName)) && this.isComplete(file)) {
+        completedWeight += file.weight
+        continue
+      }
       await this.downloadFile(file, signal, (fraction) => {
         this.broadcast({
           status: 'downloading',

@@ -53,4 +53,24 @@ describe('TranscriptEditor', () => {
 
     expect(screen.getByRole('textbox', { name: 'Transcript' })).toHaveValue('Same text')
   })
+
+  it('keeps long transcript text scrolling inside the editor pane', () => {
+    render(
+      <TranscriptEditor
+        audioRef={{ current: null }}
+        segments={[{ startMs: 0, endMs: 1000, text: 'Segment text' }]}
+        text="Long transcript text"
+        onSave={vi.fn()}
+      />
+    )
+
+    // Layout contract: shared Textarea.Input auto-sizes by default; the transcript editor must override it
+    // so the segment list stays in its own grid row instead of visually overlapping long transcript text.
+    expect(screen.getByRole('textbox', { name: 'Transcript' })).toHaveClass(
+      'field-sizing-fixed',
+      'h-full',
+      'min-h-0',
+      'overflow-y-auto'
+    )
+  })
 })

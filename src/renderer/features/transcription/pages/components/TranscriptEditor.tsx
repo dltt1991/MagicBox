@@ -35,7 +35,7 @@ export function TranscriptEditor({
   useEffect(() => setDraft(text), [resetKey, text])
 
   return (
-    <section className="grid min-h-0 grid-rows-[auto_minmax(7rem,1fr)_minmax(8rem,1fr)] gap-3 py-3">
+    <section className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_minmax(0,1fr)] gap-3 overflow-hidden py-3">
       <div className="flex items-center gap-2">
         <h2 className="font-medium text-sm">{t('transcription.transcript')}</h2>
         <div className="ml-auto flex items-center gap-1">
@@ -54,7 +54,7 @@ export function TranscriptEditor({
       </div>
       <Textarea.Input
         aria-label={t('transcription.transcript')}
-        className="min-h-28 resize-none"
+        className="field-sizing-fixed h-full min-h-0 resize-none overflow-y-auto"
         value={draft}
         onValueChange={setDraft}
       />

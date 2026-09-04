@@ -40,6 +40,8 @@ let runtimeProfile = CPU_RUNTIME_PROFILE
 const pipelines = new Map() // key: modelDir|dtype -> Promise<extractor>
 const speechPipelines = new Map() // key: modelDir|dtype -> Promise<transcriber>
 const paddleServices = new Map() // key: det|rec|dict -> Promise<PaddleOcrService>
+const WHISPER_CHUNK_LENGTH_SECONDS = 30
+const WHISPER_STRIDE_LENGTH_SECONDS = 5
 
 // Injected from pooling.ts and services/proxy (single, unit-tested sources). Bound to
 // consts so the call sites work even if the bundler renames the functions' own symbols.
@@ -225,8 +227,11 @@ async function handleCountTokens(msg) {
 async function handleWhisperTranscribe(msg) {
   const transcriber = await getSpeechPipeline(msg.modelDir, 'q8')
   const output = await transcriber(msg.audio, {
+    chunk_length_s: WHISPER_CHUNK_LENGTH_SECONDS,
+    stride_length_s: WHISPER_STRIDE_LENGTH_SECONDS,
     return_timestamps: true,
-    ...(msg.language ? { language: msg.language } : {})
+    task: 'transcribe',
+    language: msg.language || 'zh'
   })
   parentPort.postMessage({ type: 'result', id: msg.id, text: output.text, chunks: output.chunks || [] })
 }
@@ -366,7 +371,7 @@ parentPort.on('message', (msg) => {
     }
     // Must be set before the first lazy require of @huggingface/transformers /
     // ppu-paddle-ocr below (getTransformers/getPpu), both of which transitively
-    // require onnxruntime-node — see patches/onnxruntime-node@1.25.1.patch.
+    // require onnxruntime-node — see patches/onnxruntime-node@1.24.3.patch.
     if (msg.onnxRuntimeBindingPath) process.env.CHERRY_ONNXRUNTIME_BINDING_PATH = msg.onnxRuntimeBindingPath
     return
   }

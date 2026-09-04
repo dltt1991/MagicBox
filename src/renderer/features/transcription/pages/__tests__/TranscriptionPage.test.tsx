@@ -1,13 +1,16 @@
 import { MODEL_CAPABILITY } from '@shared/data/types/model'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 
+import { OrganizationPanel } from '../components/OrganizationPanel'
 import { TranscriptionToolbar } from '../components/TranscriptionToolbar'
 import TranscriptionPage, {
   buildBackendConfig,
   deleteHistoryRecord,
   getDraftSourceType,
+  getOrganizationExportFilename,
+  getTranscriptExportFilename,
   runHandled
 } from '../TranscriptionPage'
 
@@ -21,6 +24,23 @@ describe('TranscriptionPage', () => {
 
     expect(screen.getByRole('button', { name: 'Choose audio file' })).toBeEnabled()
     expect(screen.queryByRole('button', { name: 'Start recording' })).not.toBeInTheDocument()
+  })
+
+  it('uses the selected legacy file path as the transcription source', async () => {
+    const user = userEvent.setup()
+    window.api.file.open = vi.fn().mockResolvedValue({
+      fileName: 'meeting.mp3',
+      filePath: '/tmp/meeting.mp3',
+      size: 1024
+    })
+
+    render(<TranscriptionPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Import audio' }))
+    await user.click(screen.getByRole('button', { name: 'Choose audio file' }))
+
+    expect(await screen.findByText('meeting.mp3')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Transcribe' })).toBeEnabled())
   })
 
   it('creates provider requests only from a dedicated transcription model', () => {
@@ -62,6 +82,112 @@ describe('TranscriptionPage', () => {
     expect(screen.getByRole('option', { name: 'Provider model' })).not.toHaveAttribute('data-disabled')
   })
 
+  it('starts a new transcription task from the toolbar', async () => {
+    const user = userEvent.setup()
+    const onNewTask = vi.fn()
+    render(
+      <TranscriptionToolbar
+        backend="local_whisper"
+        language="auto"
+        localModelStatus="ready"
+        sourceMode="recording"
+        onBackendChange={vi.fn()}
+        onLanguageChange={vi.fn()}
+        onNewTask={onNewTask}
+        onSourceModeChange={vi.fn()}
+      />
+    )
+
+    await user.click(screen.getByRole('button', { name: 'New task' }))
+
+    expect(onNewTask).toHaveBeenCalledOnce()
+  })
+
+  it('blocks new transcription tasks while recording', () => {
+    render(
+      <TranscriptionToolbar
+        backend="local_whisper"
+        language="auto"
+        localModelStatus="ready"
+        newTaskDisabled
+        sourceMode="recording"
+        onBackendChange={vi.fn()}
+        onLanguageChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onSourceModeChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole('button', { name: 'New task' })).toBeDisabled()
+  })
+
+  it('disables audio source switching while viewing history', () => {
+    render(
+      <TranscriptionToolbar
+        backend="local_whisper"
+        language="auto"
+        localModelStatus="ready"
+        sourceMode="recording"
+        sourceModeDisabled
+        onBackendChange={vi.fn()}
+        onLanguageChange={vi.fn()}
+        onNewTask={vi.fn()}
+        onSourceModeChange={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole('button', { name: 'Recording' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Import audio' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'New task' })).toBeEnabled()
+  })
+
+  it('offers local Whisper download when the model is unavailable', async () => {
+    const user = userEvent.setup()
+    const onLocalModelDownload = vi.fn()
+    render(
+      <TranscriptionToolbar
+        backend="local_whisper"
+        language="auto"
+        localModelStatus="error"
+        sourceMode="recording"
+        onBackendChange={vi.fn()}
+        onLanguageChange={vi.fn()}
+        onLocalModelDownload={onLocalModelDownload}
+        onSourceModeChange={vi.fn()}
+      />
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }))
+
+    expect(onLocalModelDownload).toHaveBeenCalledOnce()
+  })
+
+  it('renders an organization model selector and blocks organization without a chat model', () => {
+    render(
+      <OrganizationPanel
+        templates={[
+          {
+            id: 'builtin-general-summary',
+            builtIn: true,
+            createdAt: '2026-09-04T00:00:00.000Z',
+            isDefault: true,
+            name: 'General Summary',
+            orderKey: '0001',
+            prompt: '{{transcript}}',
+            updatedAt: '2026-09-04T00:00:00.000Z'
+          }
+        ]}
+        organizationOutput={null}
+        organizationModelReady={false}
+        organizationModelSelector={<button type="button">Organization model</button>}
+        onOrganize={vi.fn()}
+      />
+    )
+
+    expect(screen.getByRole('button', { name: 'Organization model' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Organize' })).toBeDisabled()
+  })
+
   it('disables source switching while recording', () => {
     render(
       <TranscriptionToolbar
@@ -89,11 +215,26 @@ describe('TranscriptionPage', () => {
   })
 
   it('handles rejected job promises at the page boundary', async () => {
-    await expect(runHandled(Promise.reject(new Error('backend failed')))).resolves.toBeUndefined()
+    await expect(runHandled(Promise.reject(new Error('backend failed')))).resolves.toMatchObject({
+      message: 'transcription.error.operation_failed'
+    })
+  })
+
+  it('keeps actionable transcription errors at the page boundary', async () => {
+    await expect(
+      runHandled(
+        Promise.reject(new Error('Local Whisper model is incomplete. Missing or invalid files: generation_config.json'))
+      )
+    ).resolves.toMatchObject({ message: 'transcription.error.local_model_incomplete' })
   })
 
   it('keeps the original draft source type when the toolbar mode changes', () => {
     expect(getDraftSourceType({ sourceType: 'recording' }, 'file')).toBe('recording')
     expect(getDraftSourceType(null, 'file')).toBe('file')
+  })
+
+  it('uses Markdown as the default export format', () => {
+    expect(getTranscriptExportFilename()).toBe('transcript.md')
+    expect(getOrganizationExportFilename()).toBe('transcription-summary.md')
   })
 })

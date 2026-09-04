@@ -88,6 +88,12 @@ class TestInferenceService extends InferenceServiceBase {
   }
 }
 
+class CpuOnlyTestInferenceService extends TestInferenceService {
+  protected override hardwareAccelerationEnabled(): boolean {
+    return false
+  }
+}
+
 /** Where the main process probed the complete cache — inference loads the model from here. */
 const MODEL_DIR = '/models/qwen3-embedding/org/model'
 
@@ -417,6 +423,18 @@ describe('InferenceService worker init message', () => {
 
     workerB.emit('message', { type: 'result', id: lastRequestId(workerB), embeddings: [[0.2]] })
     await expect(second).resolves.toEqual([[0.2]])
+  })
+
+  it('lets a service opt out of hardware acceleration even when the preference is enabled', async () => {
+    const service = new CpuOnlyTestInferenceService()
+    const pending = service.sendWhisper()
+    const worker = await latestWorker()
+
+    expect(initMessage(worker).runtimeProfile?.id).toBe('cpu')
+
+    worker.emit('message', { type: 'result', id: lastRequestId(worker), text: 'ok' })
+    await expect(pending).resolves.toMatchObject({ text: 'ok' })
+    await service.terminate()
   })
 
   it('restarts the worker before the next request when ProxyService advances the routing version', async () => {

@@ -115,7 +115,8 @@ export abstract class InferenceServiceBase extends BaseService {
     const generation = this.workerGeneration
     const proxyRouting = await application.get('ProxyService').getRoutingSnapshot()
     const runtimeProfile = resolveLocalInferenceProfile(
-      application.get('PreferenceService').get('feature.local_model.hardware_acceleration.enabled')
+      this.hardwareAccelerationEnabled() &&
+        application.get('PreferenceService').get('feature.local_model.hardware_acceleration.enabled')
     )
     if (generation !== this.workerGeneration) {
       throw new Error('inference host terminated')
@@ -185,6 +186,10 @@ export abstract class InferenceServiceBase extends BaseService {
    * embedding service; the base (and the OCR service) supply nothing. */
   protected workerCacheDir(): string | undefined {
     return undefined
+  }
+
+  protected hardwareAccelerationEnabled(): boolean {
+    return true
   }
 
   private handleMessage(msg: InferenceResponse): void {
