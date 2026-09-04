@@ -17,6 +17,26 @@ const env = {}
 
 async function pipeline(_task, model, options = {}) {
   const device = options.device
+  if (_task === 'automatic-speech-recognition') {
+    return async (_audio, callOptions = {}) => {
+      if (model === 'long-audio' && (callOptions.chunk_length_s !== 30 || callOptions.stride_length_s !== 5)) {
+        throw new Error('whisper long audio must use stable chunking')
+      }
+      if (model === 'auto-language' && callOptions.language !== 'zh') {
+        throw new Error('local whisper auto language must avoid the English default')
+      }
+      if (model === 'manual-language' && callOptions.language !== 'en') {
+        throw new Error('manual language must be forwarded')
+      }
+      return {
+        text: '完整转写',
+        chunks: [
+          { timestamp: [0, 30], text: '完整' },
+          { timestamp: [25, 60], text: '转写' }
+        ]
+      }
+    }
+  }
   if (model === 'download-model') {
     if (device !== 'cpu') throw new Error('downloads must stay on cpu')
     options.progress_callback?.({ status: 'ready', progress: 100 })
@@ -186,6 +206,44 @@ describe('inference worker hardware acceleration', () => {
 
     expect(workerLogs()).toContain('hardware provider active provider=directml runtime=embedding')
     expect(workerLogs().some((message) => message.includes('falling back'))).toBe(false)
+  })
+
+  it('chunks local Whisper audio so transcripts can span beyond one model window', async () => {
+    await expect(
+      request({
+        type: 'whisper.transcribe',
+        id: 'whisper-long',
+        modelDir: 'long-audio',
+        audio: new Float32Array(16000)
+      })
+    ).resolves.toMatchObject({
+      type: 'result',
+      text: '完整转写',
+      chunks: [{ timestamp: [0, 30] }, { timestamp: [25, 60] }]
+    })
+  })
+
+  it('uses Chinese for local Whisper auto language instead of the Transformers English default', async () => {
+    await expect(
+      request({
+        type: 'whisper.transcribe',
+        id: 'whisper-auto-language',
+        modelDir: 'auto-language',
+        audio: new Float32Array(16000)
+      })
+    ).resolves.toMatchObject({ type: 'result', text: '完整转写' })
+  })
+
+  it('forwards the selected local Whisper language', async () => {
+    await expect(
+      request({
+        type: 'whisper.transcribe',
+        id: 'whisper-manual-language',
+        modelDir: 'manual-language',
+        audio: new Float32Array(16000),
+        language: 'en'
+      })
+    ).resolves.toMatchObject({ type: 'result', text: '完整转写' })
   })
 
   it('does not treat embedding download failures as hardware failures', async () => {

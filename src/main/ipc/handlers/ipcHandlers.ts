@@ -35,6 +35,7 @@ import { skillHandlers } from './skill'
 import { systemHandlers } from './system'
 import { tabHandlers } from './tab'
 import { terminalHandlers } from './terminal'
+import { transcriptionHandlers } from './transcription'
 import { translateHandlers } from './translate'
 import { webSearchHandlers } from './webSearch'
 import { webviewHandlers } from './webview'
@@ -84,6 +85,7 @@ export const ipcHandlers: IpcHandlersFor<IpcRequestSchemas> = {
   ...systemHandlers,
   ...tabHandlers,
   ...terminalHandlers,
+  ...transcriptionHandlers,
   ...translateHandlers,
   ...webSearchHandlers,
   ...webviewHandlers,

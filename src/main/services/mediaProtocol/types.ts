@@ -7,7 +7,8 @@ export const CHERRY_MEDIA_SCHEME = 'cherry-media'
  * `protocol.registerSchemesAsPrivileged` may only be called once per process.
  */
 export const MediaKind = {
-  Image: 'image'
+  Image: 'image',
+  Audio: 'audio'
 } as const
 
 export type MediaKind = (typeof MediaKind)[keyof typeof MediaKind]
@@ -15,7 +16,15 @@ export type MediaKind = (typeof MediaKind)[keyof typeof MediaKind]
 export const MEDIA_KINDS = new Set<string>(Object.values(MediaKind))
 
 /** In-memory media entry served by the protocol handler. */
-export interface MediaEntry {
+export interface InMemoryMediaEntry {
   data: Buffer
   mimeType: string
 }
+
+/** File-backed audio entry served as a stream so long recordings stay off the heap. */
+export interface FileMediaEntry {
+  filePath: string
+  mimeType: string
+}
+
+export type MediaEntry = InMemoryMediaEntry | FileMediaEntry

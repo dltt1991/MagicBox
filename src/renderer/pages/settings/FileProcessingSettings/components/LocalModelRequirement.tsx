@@ -10,7 +10,8 @@ import { useTranslation } from 'react-i18next'
 
 const SUBTITLE_KEY = {
   embedding: 'settings.dependencies.localModels.embedding.subtitle',
-  ocr: 'settings.dependencies.localModels.ocr.subtitle'
+  ocr: 'settings.dependencies.localModels.ocr.subtitle',
+  whisper: 'settings.dependencies.localModels.whisper.subtitle'
 } as const satisfies Record<LocalModelKind, string>
 
 type LocalModelRequirementProps = {

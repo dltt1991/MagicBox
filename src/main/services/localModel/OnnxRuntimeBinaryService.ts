@@ -10,7 +10,7 @@ import { loggerService } from '@logger'
 import {
   ONNXRUNTIME_LEAVES,
   ONNXRUNTIME_NODE_VERSION,
-  ONNXRUNTIME_TARBALL_SHA256
+  ONNXRUNTIME_TARBALL_INTEGRITY
 } from '@main/ai/inference/localModelCatalog'
 import { regionService } from '@main/services/RegionService'
 import { net } from 'electron'
@@ -18,8 +18,8 @@ import { net } from 'electron'
 const logger = loggerService.withContext('OnnxRuntimeBinaryService')
 
 /** npmmirror.com is a byte-identical registry mirror (same as BinaryManager's China npm
- * mirror behavior) — safe regardless of order since the whole tarball is sha256-verified
- * against ONNXRUNTIME_TARBALL_SHA256 after download, independent of which mirror served it. */
+ * mirror behavior) — safe regardless of order since the whole tarball is integrity-verified
+ * against ONNXRUNTIME_TARBALL_INTEGRITY after download, independent of which mirror served it. */
 const NPM_REGISTRIES = {
   npmjs: 'https://registry.npmjs.org',
   npmmirror: 'https://registry.npmmirror.com'
@@ -43,7 +43,7 @@ async function tarballUrlOrder(): Promise<string[]> {
  * Downloads and verifies the onnxruntime-node native binary (napi addon + shared lib)
  * for the current platform/arch on first use of local embedding or local OCR. The
  * package is no longer bundled at build time (see electron-builder.yml/before-pack.js) —
- * `onnxruntime-node`'s `dist/binding.js` is patched (see patches/onnxruntime-node@1.25.1.patch)
+ * `onnxruntime-node`'s `dist/binding.js` is patched (see patches/onnxruntime-node@1.24.3.patch)
  * to require this downloaded copy via `CHERRY_ONNXRUNTIME_BINDING_PATH` instead of its own
  * bundled-relative path.
  *
@@ -173,14 +173,16 @@ class OnnxRuntimeBinaryService {
     onProgress?.(1)
   }
 
-  /** Whole-tarball sha256 check — the platform leaf is extracted from this same verified
+  /** Whole-tarball integrity check — the platform leaf is extracted from this same verified
    * stream, so there is no separate sub-file checksum to obtain or need. */
   private async verifyTarball(tarballPath: string): Promise<void> {
-    const hash = crypto.createHash('sha256')
+    const [algorithm, expected] = ONNXRUNTIME_TARBALL_INTEGRITY.split('-', 2)
+    if (!algorithm || !expected) throw new Error('invalid onnxruntime-node tarball integrity')
+    const hash = crypto.createHash(algorithm)
     await pipeline(fs.createReadStream(tarballPath), hash)
-    const digest = hash.digest('hex')
-    if (digest !== ONNXRUNTIME_TARBALL_SHA256) {
-      throw new Error(`onnxruntime-node tarball sha256 mismatch: expected ${ONNXRUNTIME_TARBALL_SHA256}, got ${digest}`)
+    const digest = hash.digest('base64')
+    if (digest !== expected) {
+      throw new Error(`onnxruntime-node tarball ${algorithm} mismatch: expected ${expected}, got ${digest}`)
     }
   }
 

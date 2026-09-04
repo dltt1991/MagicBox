@@ -3,6 +3,7 @@ import { isLocalInferenceHardwareAccelerationSupported } from '@main/ai/inferenc
 import {
   localEmbeddingDownloadService,
   localOcrDownloadService,
+  localWhisperDownloadService,
   onnxRuntimeBinaryService
 } from '@main/services/localModel'
 import type { LocalModelKind } from '@shared/data/presets/localModel'
@@ -11,23 +12,31 @@ import type { IpcHandlersFor } from '@shared/ipc/types'
 
 const logger = loggerService.withContext('localModelHandlers')
 
-/** The two download services share one method shape — pick by `model`. */
+/** The local-model download services share one method shape — pick by `model`. */
 function serviceFor(model: LocalModelKind) {
-  return model === 'embedding' ? localEmbeddingDownloadService : localOcrDownloadService
+  return model === 'embedding'
+    ? localEmbeddingDownloadService
+    : model === 'ocr'
+      ? localOcrDownloadService
+      : localWhisperDownloadService
 }
 
-/** The other of the two — checked on removal to decide whether the onnxruntime
- * binary they share is still needed. */
-function siblingFor(model: LocalModelKind) {
-  return model === 'embedding' ? localOcrDownloadService : localEmbeddingDownloadService
+function otherReadyLocalModels(model: LocalModelKind): boolean {
+  const services = {
+    embedding: localEmbeddingDownloadService,
+    ocr: localOcrDownloadService,
+    whisper: localWhisperDownloadService
+  }
+  return (Object.keys(services) as LocalModelKind[]).some(
+    (kind) => kind !== model && ['ready', 'downloading'].includes(services[kind].getStatus())
+  )
 }
 
 async function cleanupSharedRuntimeAfterInterruptedDownload(model: LocalModelKind): Promise<void> {
   // 'downloading' counts as still needed — the sibling may be awaiting the same
   // coalesced binary download.
-  const siblingStatus = siblingFor(model).getStatus()
   try {
-    await onnxRuntimeBinaryService.removeIfUnused(siblingStatus === 'ready' || siblingStatus === 'downloading')
+    await onnxRuntimeBinaryService.removeIfUnused(otherReadyLocalModels(model))
   } catch (cleanupError) {
     // Best-effort: a locked file must not turn a cancellation into a failure or
     // mask the original download error.
@@ -66,9 +75,9 @@ export const localModelHandlers: IpcHandlersFor<typeof localModelRequestSchemas>
   'local_model.remove': async ({ model }) => {
     const result = await serviceFor(model).remove()
     // Only the removed feature's own weights are gone here — the shared onnxruntime
-    // binary is a separate concern, cleaned up only once the sibling feature is gone too.
+    // binary is a separate concern, cleaned up only once every other local model is gone too.
     if (result.removed) {
-      await onnxRuntimeBinaryService.removeIfUnused(siblingFor(model).getStatus() === 'ready')
+      await onnxRuntimeBinaryService.removeIfUnused(otherReadyLocalModels(model))
     }
     return result
   }

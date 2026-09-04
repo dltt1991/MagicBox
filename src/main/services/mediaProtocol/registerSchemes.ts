@@ -15,9 +15,7 @@ import { CHERRY_MEDIA_SCHEME } from './types'
  *   untainted. A corsEnabled scheme served via `protocol.handle` needs no
  *   `Access-Control-Allow-Origin` header, so the handler returns none.
  *
- * No `stream` — it exists for range-requested audio/video, and this scheme
- * currently carries only images. Add it together with the first media kind that
- * needs it, not in anticipation.
+ * - `stream` — allows Chromium to make range requests for file-backed audio.
  */
 export function registerMediaSchemes(): void {
   protocol.registerSchemesAsPrivileged([
@@ -27,7 +25,8 @@ export function registerMediaSchemes(): void {
         standard: true,
         secure: true,
         supportFetchAPI: true,
-        corsEnabled: true
+        corsEnabled: true,
+        stream: true
       }
     }
   ])

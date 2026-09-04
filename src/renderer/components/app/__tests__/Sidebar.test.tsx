@@ -2,6 +2,7 @@
 import '@testing-library/jest-dom/vitest'
 
 import type { SidebarAppId } from '@renderer/utils/sidebar'
+import { DefaultPreferences } from '@shared/data/preference/preferenceSchemas'
 import type { SidebarFavoriteItem } from '@shared/data/preference/preferenceTypes'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -563,6 +564,18 @@ describe('app Sidebar', () => {
 
     await user.click(screen.getByRole('button', { name: 'close-feedback' }))
     expect(screen.getByTestId('feedback-shell')).toHaveAttribute('data-open', 'false')
+  })
+
+  it('renders Transcription immediately after Translate in the default sidebar order', () => {
+    mocks.sidebarFavorites = DefaultPreferences.default['ui.sidebar.favorites']
+
+    render(<Sidebar />)
+
+    const itemIds = Array.from(
+      screen.getByTestId('sidebar-items').querySelectorAll('[data-testid^="sidebar-item-"]')
+    ).map((element) => element.getAttribute('data-testid')?.replace('sidebar-item-', ''))
+    const translateIndex = itemIds.indexOf('translate')
+    expect(itemIds.slice(translateIndex, translateIndex + 2)).toEqual(['translate', 'transcription'])
   })
 
   it('renders sidebar menu items in visible preference order', () => {

@@ -45,6 +45,7 @@ import type { SkillSchemas } from './skills'
 import type { TagSchemas } from './tags'
 import type { TemporaryChatSchemas } from './temporaryChats'
 import type { TopicSchemas } from './topics'
+import type { TranscriptionSchemas } from './transcription'
 import type { TranslateSchemas } from './translate'
 
 /**
@@ -85,5 +86,6 @@ export type ApiSchemas = AssertValidSchemas<
     AgentChannelSchemas &
     JobSchemas &
     SearchSchemas &
-    AiUsageRecordSchemas
+    AiUsageRecordSchemas &
+    TranscriptionSchemas
 >

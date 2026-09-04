@@ -1,6 +1,6 @@
 # mediaProtocol
 
-Serves in-memory binary media to renderer processes over the custom `cherry-media://` scheme, so a renderer can read large bytes the main process already holds without an IPC copy or a temp file on disk.
+Serves renderer media over the custom `cherry-media://` scheme. Images stay in memory so a renderer can read large bytes the main process already holds without an IPC copy or a temp file; audio entries stream owned files from disk so long recordings stay off the heap.
 
 The first consumer is the screenshot overlay: each display's full-screen capture is tens of MB, and the overlay both paints it and re-reads regions of it. Structured-cloning that through IPC, or round-tripping it via disk, costs more than the whole capture.
 
@@ -19,7 +19,7 @@ An unknown kind is a 400, not a fallthrough to another kind's store — ids are 
 
 | File | Role |
 |---|---|
-| `types.ts` | `CHERRY_MEDIA_SCHEME`, `MediaKind` + `MEDIA_KINDS`, the internal `MediaEntry` shape |
+| `types.ts` | `CHERRY_MEDIA_SCHEME`, `MediaKind` + `MEDIA_KINDS`, the internal in-memory/file-backed entry shapes |
 | `registerSchemes.ts` | `registerMediaSchemes()` — the pre-ready privilege declaration |
 | `MediaProtocolService.ts` | the store and the `protocol.handle` responder |
 | `index.ts` | barrel — the only import surface for code outside this directory |
@@ -44,8 +44,7 @@ Per `core/preboot/README.md` membership criterion 2, this module is *not* in `co
 | `standard` | URLs parse with host + path, which is what gives the handler a kind segment to dispatch on |
 | `secure` | treated as a secure origin, so the overlay is not blocked from loading it |
 | `supportFetchAPI` + `corsEnabled` | consumers `fetch` the bytes into a Blob and render through an object URL; a cross-origin `<img>` drawn into a canvas taints it and export throws `SecurityError`. A `corsEnabled` scheme served through `protocol.handle` needs no `Access-Control-Allow-Origin` header, so the handler sends none |
-
-No `stream` — that is for range-requested audio/video. Add it with the first kind that needs it, not in anticipation.
+| `stream` | enables Chromium range requests for file-backed audio playback and seeking |
 
 ## Lifetime contract: every `store()` is paired with a `remove()`
 
@@ -81,6 +80,7 @@ They share only the word. Merging them would put a preboot-timed Chromium scheme
 | Method | Contract |
 |---|---|
 | `store(kind, data, mimeType)` | stores the buffer, returns its id. Caller owns the lifetime |
+| `storeFile(MediaKind.Audio, id, filePath, mimeType)` | stores an owned audio path, served as a disk stream with range support |
 | `remove(kind, id)` | drops the entry; returns whether it existed |
 | `has(kind, id)` | whether the entry is still stored |
 | `getUrl(kind, id)` | the URL a renderer loads |
