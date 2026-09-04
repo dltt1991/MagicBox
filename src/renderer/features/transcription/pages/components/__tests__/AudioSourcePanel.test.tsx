@@ -22,7 +22,7 @@ describe('AudioSourcePanel', () => {
       />
     )
 
-    expect(screen.getByText('Something went wrong.')).toBeInTheDocument()
+    expect(screen.getByText('操作失败，请重试。')).toBeInTheDocument()
     expect(screen.queryByText('provider secret exploded')).not.toBeInTheDocument()
   })
 
@@ -45,7 +45,7 @@ describe('AudioSourcePanel', () => {
       />
     )
 
-    expect(screen.getByRole('button', { name: 'Choose audio file' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '选择音频文件' })).toBeDisabled()
   })
 
   it('blocks recording while viewing a history record', () => {
@@ -67,6 +67,6 @@ describe('AudioSourcePanel', () => {
       />
     )
 
-    expect(screen.getByRole('button', { name: 'Start recording' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '开始录音' })).toBeDisabled()
   })
 })

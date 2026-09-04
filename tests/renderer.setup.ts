@@ -187,6 +187,7 @@ vi.mock('@cherrystudio/ui', () => {
     withFullMarkdown: (plugins) => plugins ?? [],
     defaultMarkdownPlugins: [],
     useMarkdownBlockContext: () => ({ content: '' }),
+    usePortalContainer: () => undefined,
     createSlugger: () => ({ slug: (value) => String(value ?? '') }),
     extractTextFromNode: () => '',
     BlurCancelPointerSensor: class BlurCancelPointerSensor {},

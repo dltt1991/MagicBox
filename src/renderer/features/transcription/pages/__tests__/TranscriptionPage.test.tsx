@@ -1,7 +1,20 @@
 import { MODEL_CAPABILITY } from '@shared/data/types/model'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+const mocks = vi.hoisted(() => ({
+  localModel: {
+    cancel: vi.fn(),
+    download: vi.fn(),
+    percent: 0,
+    status: 'ready'
+  }
+}))
+
+vi.mock('@renderer/hooks/useLocalModel', () => ({
+  useLocalModel: () => mocks.localModel
+}))
 
 import { OrganizationPanel } from '../components/OrganizationPanel'
 import { TranscriptionToolbar } from '../components/TranscriptionToolbar'
@@ -15,15 +28,22 @@ import TranscriptionPage, {
 } from '../TranscriptionPage'
 
 describe('TranscriptionPage', () => {
+  beforeEach(() => {
+    mocks.localModel.cancel.mockReset()
+    mocks.localModel.download.mockReset()
+    mocks.localModel.percent = 0
+    mocks.localModel.status = 'ready'
+  })
+
   it('switches between recording and file input modes', async () => {
     const user = userEvent.setup()
     render(<TranscriptionPage />)
 
-    expect(screen.getByRole('button', { name: 'Start recording' })).toBeEnabled()
-    await user.click(screen.getByRole('button', { name: 'Import audio' }))
+    expect(screen.getByRole('button', { name: '开始录音' })).toBeEnabled()
+    await user.click(screen.getByRole('button', { name: '导入音频' }))
 
-    expect(screen.getByRole('button', { name: 'Choose audio file' })).toBeEnabled()
-    expect(screen.queryByRole('button', { name: 'Start recording' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '选择音频文件' })).toBeEnabled()
+    expect(screen.queryByRole('button', { name: '开始录音' })).not.toBeInTheDocument()
   })
 
   it('uses the selected legacy file path as the transcription source', async () => {
@@ -36,11 +56,11 @@ describe('TranscriptionPage', () => {
 
     render(<TranscriptionPage />)
 
-    await user.click(screen.getByRole('button', { name: 'Import audio' }))
-    await user.click(screen.getByRole('button', { name: 'Choose audio file' }))
+    await user.click(screen.getByRole('button', { name: '导入音频' }))
+    await user.click(screen.getByRole('button', { name: '选择音频文件' }))
 
     expect(await screen.findByText('meeting.mp3')).toBeInTheDocument()
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Transcribe' })).toBeEnabled())
+    await waitFor(() => expect(screen.getByRole('button', { name: '转写' })).toBeEnabled())
   })
 
   it('creates provider requests only from a dedicated transcription model', () => {
@@ -77,9 +97,9 @@ describe('TranscriptionPage', () => {
       />
     )
 
-    await user.click(screen.getByRole('combobox', { name: 'Backend' }))
+    await user.click(screen.getByRole('button', { name: '转写后端' }))
 
-    expect(screen.getByRole('option', { name: 'Provider model' })).not.toHaveAttribute('data-disabled')
+    expect(screen.getByRole('button', { name: '在线模型' })).not.toHaveAttribute('data-disabled')
   })
 
   it('starts a new transcription task from the toolbar', async () => {
@@ -98,7 +118,7 @@ describe('TranscriptionPage', () => {
       />
     )
 
-    await user.click(screen.getByRole('button', { name: 'New task' }))
+    await user.click(screen.getByRole('button', { name: '新建任务' }))
 
     expect(onNewTask).toHaveBeenCalledOnce()
   })
@@ -118,7 +138,7 @@ describe('TranscriptionPage', () => {
       />
     )
 
-    expect(screen.getByRole('button', { name: 'New task' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '新建任务' })).toBeDisabled()
   })
 
   it('disables audio source switching while viewing history', () => {
@@ -136,14 +156,15 @@ describe('TranscriptionPage', () => {
       />
     )
 
-    expect(screen.getByRole('button', { name: 'Recording' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Import audio' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'New task' })).toBeEnabled()
+    expect(screen.getByRole('button', { name: '录音' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '导入音频' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '新建任务' })).toBeEnabled()
   })
 
   it('offers local Whisper download when the model is unavailable', async () => {
     const user = userEvent.setup()
     const onLocalModelDownload = vi.fn()
+    mocks.localModel.status = 'error'
     render(
       <TranscriptionToolbar
         backend="local_whisper"
@@ -157,7 +178,7 @@ describe('TranscriptionPage', () => {
       />
     )
 
-    await user.click(screen.getByRole('button', { name: 'Retry' }))
+    await user.click(screen.getByRole('button', { name: '重试' }))
 
     expect(onLocalModelDownload).toHaveBeenCalledOnce()
   })
@@ -185,7 +206,7 @@ describe('TranscriptionPage', () => {
     )
 
     expect(screen.getByRole('button', { name: 'Organization model' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Organize' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '整理' })).toBeDisabled()
   })
 
   it('disables source switching while recording', () => {
@@ -202,8 +223,8 @@ describe('TranscriptionPage', () => {
       />
     )
 
-    expect(screen.getByRole('button', { name: 'Recording' })).toBeDisabled()
-    expect(screen.getByRole('button', { name: 'Import audio' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '录音' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '导入音频' })).toBeDisabled()
   })
 
   it('delegates history deletion to the transcription owner', async () => {

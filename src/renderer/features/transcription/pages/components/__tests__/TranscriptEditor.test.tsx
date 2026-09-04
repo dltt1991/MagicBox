@@ -24,7 +24,7 @@ describe('TranscriptEditor', () => {
   it('does not save an unpersisted transcript draft', () => {
     render(<TranscriptEditor audioRef={{ current: null }} disabled segments={[]} text="Draft" onSave={vi.fn()} />)
 
-    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: '保存' })).toBeDisabled()
   })
 
   it('resets an edited draft when the owning record changes with the same text', async () => {
@@ -38,8 +38,8 @@ describe('TranscriptEditor', () => {
         onSave={vi.fn()}
       />
     )
-    await user.clear(screen.getByRole('textbox', { name: 'Transcript' }))
-    await user.type(screen.getByRole('textbox', { name: 'Transcript' }), 'Unsaved edit')
+    await user.clear(screen.getByRole('textbox', { name: '转写文本' }))
+    await user.type(screen.getByRole('textbox', { name: '转写文本' }), 'Unsaved edit')
 
     rerender(
       <TranscriptEditor
@@ -51,7 +51,7 @@ describe('TranscriptEditor', () => {
       />
     )
 
-    expect(screen.getByRole('textbox', { name: 'Transcript' })).toHaveValue('Same text')
+    expect(screen.getByRole('textbox', { name: '转写文本' })).toHaveValue('Same text')
   })
 
   it('keeps long transcript text scrolling inside the editor pane', () => {
@@ -66,7 +66,7 @@ describe('TranscriptEditor', () => {
 
     // Layout contract: shared Textarea.Input auto-sizes by default; the transcript editor must override it
     // so the segment list stays in its own grid row instead of visually overlapping long transcript text.
-    expect(screen.getByRole('textbox', { name: 'Transcript' })).toHaveClass(
+    expect(screen.getByRole('textbox', { name: '转写文本' })).toHaveClass(
       'field-sizing-fixed',
       'h-full',
       'min-h-0',
