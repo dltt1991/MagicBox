@@ -1,4 +1,4 @@
-import { Button } from '@cherrystudio/ui'
+import { Button, Input } from '@cherrystudio/ui'
 import { Pause, Play, Square } from 'lucide-react'
 import type { RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -17,6 +17,7 @@ type AudioSourcePanelProps = {
   onResume: () => void
   onStart: () => void
   onStop: () => void
+  onSourceNameChange?: (name: string) => void
   recordingStatus: AudioRecorderStatus
   sourceName: string | null
 }
@@ -33,6 +34,7 @@ export function AudioSourcePanel({
   onResume,
   onStart,
   onStop,
+  onSourceNameChange,
   recordingStatus,
   sourceName
 }: AudioSourcePanelProps) {
@@ -70,7 +72,16 @@ export function AudioSourcePanel({
             {t('transcription.choose_audio_file')}
           </Button>
         )}
-        {sourceName ? <span className="min-w-0 truncate text-muted-foreground text-sm">{sourceName}</span> : null}
+        {onSourceNameChange && !inputDisabled ? (
+          <Input
+            aria-label={t('transcription.task_name')}
+            className="h-8 min-w-0 max-w-80 flex-1"
+            value={sourceName ?? ''}
+            onChange={(event) => onSourceNameChange(event.target.value)}
+          />
+        ) : sourceName ? (
+          <span className="min-w-0 truncate text-muted-foreground text-sm">{sourceName}</span>
+        ) : null}
       </div>
       {audioUrl ? <audio ref={audioRef} className="h-9 w-full" controls src={audioUrl} /> : null}
       {isMissing ? <p className="text-sm text-warning">{t('transcription.audio_unavailable')}</p> : null}

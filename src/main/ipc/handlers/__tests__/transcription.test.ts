@@ -173,6 +173,7 @@ describe('transcription handlers', () => {
         {
           jobId: 'job-1',
           audioPath: '/audio.wav',
+          title: 'Weekly meeting',
           sourceType: 'file',
           language: 'auto',
           backend: { backend: 'local_whisper' }
@@ -191,7 +192,10 @@ describe('transcription handlers', () => {
       { senderId: 'window-1' }
     )
 
-    expect(transcribeMock).toHaveBeenCalledWith(expect.objectContaining({ jobId: 'job-1' }), 'window-1')
+    expect(transcribeMock).toHaveBeenCalledWith(
+      expect.objectContaining({ jobId: 'job-1', title: 'Weekly meeting' }),
+      'window-1'
+    )
     expect(cancelMock).toHaveBeenCalledWith('job-1')
     expect(organizeMock).toHaveBeenCalledWith(expect.objectContaining({ jobId: 'job-2' }), 'window-1')
   })

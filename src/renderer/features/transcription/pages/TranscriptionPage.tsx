@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next'
 import { useTranscriptionPromptTemplates } from '../hooks/useTranscriptionPromptTemplates'
 import { useTranscriptionRecord } from '../hooks/useTranscriptionRecord'
 import { useTranscriptionRecords } from '../hooks/useTranscriptionRecords'
+import { useUpdateTranscriptionRecordTitle } from '../hooks/useUpdateTranscriptionRecordTitle'
 import { useUpdateTranscriptionText } from '../hooks/useUpdateTranscriptionText'
 import { AudioSourcePanel } from './components/AudioSourcePanel'
 import { OrganizationPanel } from './components/OrganizationPanel'
@@ -46,10 +47,14 @@ export default function TranscriptionPage() {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [sourceMode, setSourceMode] = useState<'recording' | 'file'>('recording')
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const { adopt: adoptDraftSource, replace: replaceDraftSource, source: draftSource } = useTranscriptionDraft()
+  const {
+    adopt: adoptDraftSource,
+    rename: renameDraftSource,
+    replace: replaceDraftSource,
+    source: draftSource
+  } = useTranscriptionDraft()
   const [backend, setBackend] = useState<TranscriptionBackendConfig['backend']>('local_whisper')
   const [language, setLanguage] = useState('auto')
-  const [organizationModelId, setOrganizationModelId] = useState<UniqueModelId | null>(null)
   const [actionError, setActionError] = useState<Error | null>(null)
   const { hasMore, isLoadingMore, items: records, loadMore, refresh } = useTranscriptionRecords()
   const { record, result } = useTranscriptionRecord(selectedId)
@@ -57,13 +62,16 @@ export default function TranscriptionPage() {
   const activeResult = selectedId ? result : null
   const { templates } = useTranscriptionPromptTemplates()
   const [transcriptionModelId, setTranscriptionModelId] = usePreference('feature.transcription.model_id')
+  const [organizationModelId, setOrganizationModelId] = usePreference('feature.transcription.organization_model_id')
   const [defaultChatModelId] = usePreference('chat.default_model_id')
-  const effectiveOrganizationModelId = organizationModelId ?? (defaultChatModelId as UniqueModelId | null)
+  const effectiveOrganizationModelId =
+    (organizationModelId as UniqueModelId | null) ?? (defaultChatModelId as UniqueModelId | null)
   const { model: transcriptionModel } = useModelById(transcriptionModelId as UniqueModelId | null)
   const { model: organizationModel } = useModelById(effectiveOrganizationModelId)
   const { providers } = useProviders()
   const recorder = useAudioRecorder()
   const job = useTranscriptionJob()
+  const titleMutation = useUpdateTranscriptionRecordTitle()
   const localWhisper = useLocalModel('whisper')
   const localWhisperReady = backend !== 'local_whisper' || localWhisper.status === 'ready'
   const previewSource = useMemo(
@@ -131,6 +139,7 @@ export default function TranscriptionPage() {
     const { record: nextRecord } = await job.start({
       backend: backendConfig,
       language,
+      ...(draftSource?.name.trim() ? { title: draftSource.name.trim() } : {}),
       ...(audioPath ? { audioPath } : { recordingId: recordingId! }),
       sourceType: getDraftSourceType(draftSource, sourceMode)
     })
@@ -146,6 +155,13 @@ export default function TranscriptionPage() {
       await refresh()
     },
     [refresh, selectedId]
+  )
+  const handleRename = useCallback(
+    async (recordId: string, title: string) => {
+      await titleMutation.updateTitle(recordId, title)
+      await refresh()
+    },
+    [refresh, titleMutation]
   )
   const handleNewTask = useCallback(async () => {
     job.reset()
@@ -204,6 +220,7 @@ export default function TranscriptionPage() {
           onStop={() => void handleAction(handleStopRecording())}
           recordingStatus={recorder.status}
           sourceName={draftSource?.name ?? activeRecord?.title ?? null}
+          onSourceNameChange={draftSource ? renameDraftSource : undefined}
         />
         <div className="flex shrink-0 items-center gap-2 border-border-subtle border-b py-2">
           <Button
@@ -249,7 +266,11 @@ export default function TranscriptionPage() {
               <DefaultModelSelector
                 filter={isChatModel}
                 model={organizationModel}
-                onSelect={(model) => setOrganizationModelId(model?.id ?? null)}
+                onSelect={(model) => {
+                  void setOrganizationModelId(model?.id ?? null).catch(() => {
+                    setActionError(new Error('transcription.error.operation_failed'))
+                  })
+                }}
                 placeholder={t('transcription.organization_model')}
                 providers={providers}
               />
@@ -280,6 +301,7 @@ export default function TranscriptionPage() {
         selectedId={selectedId}
         onDelete={(record, deleteAudio) => void handleAction(handleDelete(record, deleteAudio))}
         onLoadMore={loadMore}
+        onRename={(recordId, title) => void handleAction(handleRename(recordId, title))}
         onSelect={(recordId) => {
           void handleAction(
             replaceDraftSource(null).then(() => {

@@ -72,6 +72,7 @@ export const transcriptionRequestSchemas = {
         recordId: z.string().min(1).optional(),
         audioPath: z.string().min(1).optional(),
         recordingId: z.string().min(1).optional(),
+        title: z.string().min(1).optional(),
         sourceType: TranscriptionSourceTypeSchema,
         language: TranscriptionLanguageSchema,
         backend: TranscriptionBackendConfigSchema

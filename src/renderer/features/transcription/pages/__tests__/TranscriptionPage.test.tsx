@@ -1,4 +1,5 @@
 import { MODEL_CAPABILITY } from '@shared/data/types/model'
+import { MockUsePreferenceUtils } from '@test-mocks/renderer/usePreference'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -16,6 +17,22 @@ vi.mock('@renderer/hooks/useLocalModel', () => ({
   useLocalModel: () => mocks.localModel
 }))
 
+vi.mock('@renderer/components/DefaultModelSelector', () => ({
+  DefaultModelSelector: ({ onSelect }: { onSelect: (model: unknown) => void }) => (
+    <button
+      type="button"
+      onClick={() =>
+        onSelect({
+          id: 'openai::gpt-4.1',
+          providerId: 'openai',
+          capabilities: []
+        })
+      }>
+      Mock Model
+    </button>
+  )
+}))
+
 import { OrganizationPanel } from '../components/OrganizationPanel'
 import { TranscriptionToolbar } from '../components/TranscriptionToolbar'
 import TranscriptionPage, {
@@ -29,6 +46,7 @@ import TranscriptionPage, {
 
 describe('TranscriptionPage', () => {
   beforeEach(() => {
+    MockUsePreferenceUtils.resetMocks()
     mocks.localModel.cancel.mockReset()
     mocks.localModel.download.mockReset()
     mocks.localModel.percent = 0
@@ -59,7 +77,7 @@ describe('TranscriptionPage', () => {
     await user.click(screen.getByRole('button', { name: '导入音频' }))
     await user.click(screen.getByRole('button', { name: '选择音频文件' }))
 
-    expect(await screen.findByText('meeting.mp3')).toBeInTheDocument()
+    expect(await screen.findByDisplayValue('meeting.mp3')).toBeInTheDocument()
     await waitFor(() => expect(screen.getByRole('button', { name: '转写' })).toBeEnabled())
   })
 
@@ -207,6 +225,17 @@ describe('TranscriptionPage', () => {
 
     expect(screen.getByRole('button', { name: 'Organization model' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '整理' })).toBeDisabled()
+  })
+
+  it('remembers the selected organization model', async () => {
+    const user = userEvent.setup()
+    render(<TranscriptionPage />)
+
+    await user.click(screen.getByRole('button', { name: 'Mock Model' }))
+
+    expect(MockUsePreferenceUtils.getPreferenceValue('feature.transcription.organization_model_id')).toBe(
+      'openai::gpt-4.1'
+    )
   })
 
   it('disables source switching while recording', () => {

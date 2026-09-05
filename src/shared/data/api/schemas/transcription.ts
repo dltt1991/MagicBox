@@ -97,6 +97,11 @@ export type TranscriptionSchemas = {
       params: { id: string }
       response: { record: TranscriptionRecordView; result: TranscriptionResult | null }
     }
+    PATCH: {
+      params: { id: string }
+      body: Pick<UpdateTranscriptionRecordDto, 'title'>
+      response: TranscriptionRecordView
+    }
   }
   '/transcription/records/:id/result': {
     PATCH: {

@@ -24,6 +24,7 @@ type TranscriptionCommandInput = {
   recordId?: string
   audioPath?: string
   recordingId?: string
+  title?: string
   sourceType: 'recording' | 'file'
   language: TranscriptionLanguage
   backend: TranscriptionBackendConfig
@@ -231,10 +232,12 @@ export class TranscriptionService extends BaseService {
     return transcriptionHistoryService.createRecordWithResult(
       {
         title:
+          input.title?.trim() ||
           input.audioPath
             .split(/[\\/]/)
             .pop()
-            ?.replace(/\.[^.]+$/, '') || 'Transcription',
+            ?.replace(/\.[^.]+$/, '') ||
+          'Transcription',
         sourceType: input.sourceType,
         audioPath: input.audioPath,
         audioManaged: input.sourceType === 'recording',

@@ -11,6 +11,7 @@ type TranscriptionInput = {
   recordId?: string
   recordingId?: string
   sourceType: TranscriptionSourceType
+  title?: string
 }
 
 type Progress = { stage: string; percent?: number } | null

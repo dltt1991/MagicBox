@@ -202,7 +202,10 @@ export class TranscriptionHistoryService {
       .get()
     if (!row) throw DataApiErrorFactory.notFound('TranscriptionRecord', id)
     const record = rowToRecord(row)
-    notifyDataApiDataChange([{ endpoint: '/transcription/records', kind: 'membership', entityIds: [id] }])
+    notifyDataApiDataChange([
+      { endpoint: '/transcription/records', kind: 'membership', entityIds: [id] },
+      { endpoint: '/transcription/records/:id', routeParams: { id }, entityIds: [id] }
+    ])
     return record
   }
 

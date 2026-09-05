@@ -34,4 +34,16 @@ describe('useTranscriptionDraft', () => {
     unmount()
     expect(ipcApi.request).not.toHaveBeenCalledWith('transcription.recording.discard', expect.anything())
   })
+
+  it('renames the draft without discarding managed recording audio', async () => {
+    const { result } = renderHook(() => useTranscriptionDraft())
+
+    await act(async () => {
+      await result.current.replace({ name: 'first.wav', recordingId: 'recording-1', sourceType: 'recording' })
+      result.current.rename('Weekly meeting')
+    })
+
+    expect(result.current.source?.name).toBe('Weekly meeting')
+    expect(ipcApi.request).not.toHaveBeenCalledWith('transcription.recording.discard', expect.anything())
+  })
 })

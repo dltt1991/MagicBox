@@ -30,6 +30,14 @@ export function useTranscriptionDraft() {
     setSource(null)
   }, [])
 
+  const rename = useCallback((name: string) => {
+    const current = sourceRef.current
+    if (!current) return
+    const next = { ...current, name }
+    sourceRef.current = next
+    setSource(next)
+  }, [])
+
   useEffect(
     () => () => {
       void discard(sourceRef.current).catch(() => undefined)
@@ -37,5 +45,5 @@ export function useTranscriptionDraft() {
     [discard]
   )
 
-  return { adopt, replace, source }
+  return { adopt, rename, replace, source }
 }

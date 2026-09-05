@@ -1,6 +1,7 @@
-import { Button, Checkbox, ConfirmDialog } from '@cherrystudio/ui'
+import { Button, Checkbox, ConfirmDialog, Input } from '@cherrystudio/ui'
 import type { TranscriptionRecordView } from '@shared/data/types/transcription'
-import { Trash2 } from 'lucide-react'
+import { Pencil, Trash2 } from 'lucide-react'
+import type { KeyboardEvent } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -10,6 +11,7 @@ type TranscriptionHistorySidebarProps = {
   missingRecordIds: ReadonlySet<string>
   onDelete: (record: TranscriptionRecordView, deleteAudio: boolean) => void
   onLoadMore: () => void
+  onRename: (recordId: string, title: string) => void
   onSelect: (recordId: string) => void
   records: TranscriptionRecordView[]
   selectedId: string | null
@@ -21,6 +23,7 @@ export function TranscriptionHistorySidebar({
   missingRecordIds,
   onDelete,
   onLoadMore,
+  onRename,
   onSelect,
   records,
   selectedId
@@ -28,6 +31,19 @@ export function TranscriptionHistorySidebar({
   const { t } = useTranslation()
   const [deleteTarget, setDeleteTarget] = useState<TranscriptionRecordView | null>(null)
   const [deleteAudio, setDeleteAudio] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = useState('')
+
+  const commitRename = (record: TranscriptionRecordView) => {
+    const title = editingTitle.trim()
+    setEditingId(null)
+    if (title && title !== record.title) onRename(record.id, title)
+  }
+
+  const cancelRename = () => {
+    setEditingId(null)
+    setEditingTitle('')
+  }
 
   return (
     <aside className="flex min-h-0 w-full flex-col border-border-subtle border-l bg-sidebar lg:w-64">
@@ -40,13 +56,41 @@ export function TranscriptionHistorySidebar({
           return (
             <div key={record.id} className={selectedId === record.id ? 'bg-accent' : ''}>
               <div className="flex items-center gap-1 px-2 py-2">
-                <button
-                  type="button"
-                  className="min-w-0 flex-1 truncate text-left text-sm focus-visible:bg-accent"
-                  aria-label={record.title}
-                  onClick={() => onSelect(record.id)}>
-                  {record.title}
-                </button>
+                {editingId === record.id ? (
+                  <Input
+                    autoFocus
+                    aria-label={t('transcription.task_name')}
+                    className="h-7 min-w-0 flex-1"
+                    value={editingTitle}
+                    onBlur={() => commitRename(record)}
+                    onChange={(event) => setEditingTitle(event.target.value)}
+                    onKeyDown={(event: KeyboardEvent<HTMLInputElement>) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault()
+                        event.currentTarget.blur()
+                      }
+                      if (event.key === 'Escape') cancelRename()
+                    }}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    className="min-w-0 flex-1 truncate text-left text-sm focus-visible:bg-accent"
+                    aria-label={record.title}
+                    onClick={() => onSelect(record.id)}>
+                    {record.title}
+                  </button>
+                )}
+                <Button
+                  size="icon-sm"
+                  variant="ghost"
+                  aria-label={t('transcription.rename_record', { title: record.title })}
+                  onClick={() => {
+                    setEditingId(record.id)
+                    setEditingTitle(record.title)
+                  }}>
+                  <Pencil />
+                </Button>
                 <Button
                   size="icon-sm"
                   variant="ghost"

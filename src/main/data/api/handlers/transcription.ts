@@ -4,6 +4,7 @@ import {
   TranscriptionRecordQuerySchema,
   type TranscriptionSchemas,
   UpdateTranscriptionPromptTemplateSchema,
+  UpdateTranscriptionRecordSchema,
   UpdateTranscriptionTextSchema
 } from '@shared/data/api/schemas/transcription'
 import type { HandlersFor } from '@shared/data/api/types'
@@ -23,6 +24,10 @@ export const transcriptionHandlers: HandlersFor<TranscriptionSchemas> = {
     GET: async ({ params }) => {
       const { record, result } = transcriptionHistoryService.getRecord(IdParamsSchema.parse(params).id)
       return { record: toRecordView(record), result }
+    },
+    PATCH: async ({ params, body }) => {
+      const input = UpdateTranscriptionRecordSchema.pick({ title: true }).parse(body)
+      return toRecordView(transcriptionHistoryService.updateRecord(IdParamsSchema.parse(params).id, input))
     }
   },
   '/transcription/records/:id/result': {

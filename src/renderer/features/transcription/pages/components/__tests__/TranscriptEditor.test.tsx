@@ -73,4 +73,34 @@ describe('TranscriptEditor', () => {
       'overflow-y-auto'
     )
   })
+
+  it('places the transcript text and segment list side by side', () => {
+    render(
+      <TranscriptEditor
+        audioRef={{ current: null }}
+        segments={[{ startMs: 0, endMs: 1000, text: 'Segment text' }]}
+        text="Long transcript text"
+        onSave={vi.fn()}
+      />
+    )
+
+    expect(screen.getByTestId('transcript-workspace')).toHaveClass('md:grid-cols-[minmax(0,1fr)_minmax(16rem,22rem)]')
+  })
+
+  it('opens a larger transcript view', async () => {
+    const user = userEvent.setup()
+    render(
+      <TranscriptEditor
+        audioRef={{ current: null }}
+        segments={[{ startMs: 0, endMs: 1000, text: 'Segment text' }]}
+        text="Long transcript text"
+        onSave={vi.fn()}
+      />
+    )
+
+    await user.click(screen.getByRole('button', { name: '最大化' }))
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getAllByRole('textbox', { name: '转写文本' })).toHaveLength(2)
+  })
 })
