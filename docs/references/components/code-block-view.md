@@ -9,12 +9,7 @@ sources:
 
 ## Overview
 
-Code block rendering has two separate responsibilities:
-
-- `CodeBlock` classifies Markdown content and routes inline code, file paths, HTML artifacts, and ordinary fenced code.
-- `CodeBlockView` owns the workbench for ordinary fenced code and special-language previews.
-
-HTML artifacts keep their own preview, security, and consent pipeline. They are not modes of `CodeBlockView`.
+CodeBlockView is the core component in Magic Box for displaying and manipulating code blocks. It supports multiple view modes and visual previews for special languages, providing rich interactive tools.
 
 ## Component Structure
 

@@ -257,6 +257,10 @@ export default function PdfFilePreview({ filePath, fileName, metadata, refreshKe
         destroyLoadingTask(loadingTask, filePath)
         loadingTask = null
       }
+      if (loadedDocument) {
+        destroyDocumentProxy(loadedDocument, filePath)
+        loadedDocument = null
+      }
       const normalized = error instanceof Error ? error : new Error(String(error))
       if (normalized instanceof PdfRangeTooLargeError) {
         logger.warn('PDF preview exceeded the safe assembled range limit', {

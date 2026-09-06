@@ -25,6 +25,19 @@ describe('modelSource', () => {
     )
   })
 
+  it('uses an explicit immutable revision when a model catalog pins one', () => {
+    expect(
+      resolveModelFileUrl(
+        'huggingface',
+        'onnx-community/whisper-small',
+        'config.json',
+        '36050c46d777d46dc4b5f43f6d90574fc38f8732'
+      )
+    ).toBe(
+      'https://huggingface.co/onnx-community/whisper-small/resolve/36050c46d777d46dc4b5f43f6d90574fc38f8732/config.json'
+    )
+  })
+
   it('getModelSource still returns the transformers.js env triple for embedding', () => {
     expect(getModelSource('modelscope')).toEqual({
       remoteHost: 'https://www.modelscope.cn',

@@ -2,6 +2,7 @@ import type { LocalModelKind } from '@shared/data/presets/localModel'
 
 import { localEmbeddingDownloadService } from './LocalEmbeddingDownloadService'
 import { localOcrDownloadService } from './LocalOcrDownloadService'
+import { localWhisperDownloadService } from './LocalWhisperDownloadService'
 
 /**
  * Whether a local model can actually run right now.
@@ -15,6 +16,11 @@ import { localOcrDownloadService } from './LocalOcrDownloadService'
  * read, so UI and execution never disagree.
  */
 export function isLocalModelReady(kind: LocalModelKind): boolean {
-  const service = kind === 'embedding' ? localEmbeddingDownloadService : localOcrDownloadService
+  const service =
+    kind === 'embedding'
+      ? localEmbeddingDownloadService
+      : kind === 'ocr'
+        ? localOcrDownloadService
+        : localWhisperDownloadService
   return service.getStatus() === 'ready'
 }

@@ -1,3 +1,4 @@
+import type { Tab } from '@shared/data/cache/cacheValueTypes'
 import type { SidebarFavorite, SidebarFavoriteItem } from '@shared/data/preference/preferenceTypes'
 import { CONVERSATION_ROUTES, conversationRouteUrl } from '@shared/utils/conversationRoute'
 
@@ -89,6 +90,10 @@ const SIDEBAR_APP_DEFINITIONS = [
     routePrefix: '/app/translate'
   },
   {
+    id: 'transcription',
+    routePrefix: '/app/transcription'
+  },
+  {
     id: 'mini_app',
     routePrefix: '/app/mini-app',
     exactRouteFocus: true
@@ -139,6 +144,38 @@ export function getSidebarApp(id: SidebarAppId): SidebarApp | undefined {
  */
 export function tabBelongsToApp(app: SidebarApp, url: string): boolean {
   return url === app.routePrefix || url.startsWith(`${app.routePrefix}/`) || url.startsWith(`${app.routePrefix}?`)
+}
+
+function getTabInstanceAppId(tab: Pick<Tab, 'metadata'>): SidebarAppId | undefined {
+  const appId = tab.metadata?.instanceAppId
+  return typeof appId === 'string' && isSidebarAppId(appId) ? appId : undefined
+}
+
+function hasTabInstanceMetadataForApp(tab: Pick<Tab, 'metadata'>, appId: SidebarAppId): boolean {
+  return getTabInstanceAppId(tab) === appId
+}
+
+function getTabInstanceKey(tab: Pick<Tab, 'metadata'>, appId: SidebarAppId): string | undefined {
+  if (getTabInstanceAppId(tab) !== appId) return undefined
+  const key = tab.metadata?.instanceKey
+  return typeof key === 'string' && key.length > 0 ? key : undefined
+}
+
+export function resolveSidebarAppTabEntryUrl(tab: Pick<Tab, 'metadata' | 'url'>): string {
+  if (isMessageOnlyConversationUrl(tab.url)) return tab.url
+
+  const appId = getTabInstanceAppId(tab)
+  const app = appId ? getSidebarApp(appId) : undefined
+  if (!app?.conversationRoute || !tabBelongsToApp(app, tab.url)) return tab.url
+
+  const key = getTabInstanceKey(tab, app.id)
+  if (key) {
+    return app.conversationRoute.urlForKey(key)
+  }
+
+  if (hasTabInstanceMetadataForApp(tab, app.id)) return app.routePrefix
+
+  return tab.url
 }
 
 /**

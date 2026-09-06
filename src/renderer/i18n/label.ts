@@ -173,6 +173,7 @@ const titleKeyMap = {
   paintings: 'title.paintings',
   settings: 'title.settings',
   terminal: 'title.terminal',
+  transcription: 'title.transcription',
   translate: 'title.translate',
   agents: 'agent.sidebar_title'
 } as const
@@ -201,7 +202,8 @@ const sidebarIconKeyMap = {
   files: 'files.title',
   code_tools: 'code.title',
   notes: 'notes.title',
-  terminal: 'terminal.title'
+  terminal: 'terminal.title',
+  transcription: 'title.transcription'
 } as const
 
 export const getSidebarIconLabelKey = (key: string): string => {
@@ -221,7 +223,8 @@ const sidebarFavoriteKeyMap = {
   knowledge: 'knowledge.title',
   files: 'files.title',
   code_tools: 'code.title',
-  notes: 'notes.title'
+  notes: 'notes.title',
+  transcription: 'title.transcription'
 } as const
 export const getSidebarFavoriteLabelKey = (key: string): string => {
   return getLabelKey(sidebarFavoriteKeyMap, key)

@@ -49,6 +49,21 @@ type RefreshOption<TPath extends ApiPath, TMethod extends 'POST' | 'PUT' | 'DELE
  * Create mock data based on API path
  */
 function createMockDataForPath(path: string): any {
+  if (path === '/transcription/prompt-templates') {
+    return [
+      {
+        id: 'builtin-general-summary',
+        builtIn: true,
+        createdAt: '2026-09-04T00:00:00.000Z',
+        isDefault: true,
+        name: 'General Summary',
+        orderKey: '0001',
+        prompt: '{{transcript}}',
+        updatedAt: '2026-09-04T00:00:00.000Z'
+      }
+    ]
+  }
+
   if (path === '/providers/:providerId/api-keys') {
     return { keys: [] }
   }

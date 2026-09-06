@@ -166,6 +166,7 @@
         { "id": "assistants", "type": "app" },
         { "id": "agents", "type": "app" },
         { "id": "translate", "type": "app" },
+        { "id": "transcription", "type": "app" },
         { "id": "paintings", "type": "app" },
         { "id": "knowledge", "type": "app" },
         { "id": "terminal", "type": "app" }
@@ -1001,6 +1002,20 @@
       },
       "status": "classified",
       "description": "Command shortcut: screenshot.capture (unified command system)"
+    },
+    {
+      "targetKey": "feature.transcription.model_id",
+      "type": "string",
+      "defaultValue": null,
+      "status": "classified",
+      "description": "Transcription model UniqueModelId (provider::modelId)"
+    },
+    {
+      "targetKey": "feature.transcription.organization_model_id",
+      "type": "string",
+      "defaultValue": null,
+      "status": "classified",
+      "description": "Transcription organization model UniqueModelId (provider::modelId)"
     }
   ]
 }

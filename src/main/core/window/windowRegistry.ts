@@ -414,15 +414,9 @@ export const WINDOW_TYPE_REGISTRY: Partial<Record<WindowType, WindowTypeMetadata
       // included) triggers the cleanup.
       hideOnBlur: true,
       alwaysOnTop: { level: 'screen-saver' },
-      // Baseline declaration, re-applied on every (re-)create. `skipTransformProcessType`
-      // MUST be true: without it, Electron runs TransformProcessType(UIElement) inside
-      // this call on macOS, which deactivates the whole app (every window drops behind
-      // the frontmost app) and removes the Dock icon — user-visible each time the
-      // selection assistant is toggled on (the toolbar is destroyed on disable and
-      // re-created on enable). SelectionService.showToolbarAtPosition still has its
-      // per-show `!isSelf` branch re-applying the same flags; it MUST stay there,
-      // because self-app shows must skip that call entirely or the active text
-      // selection gets canceled.
+      // Registry declarations are applied when the window is created; skipping
+      // the process transform keeps macOS from deactivating the app/Dock icon
+      // when the toolbar is allowed over fullscreen spaces.
       visibleOnAllWorkspaces: { enabled: true, visibleOnFullScreen: true, skipTransformProcessType: true },
       macShowInDock: false
     },

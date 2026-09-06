@@ -1,5 +1,5 @@
 import type * as CherryStudioUi from '@cherrystudio/ui'
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { useState } from 'react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 
@@ -608,6 +608,41 @@ describe('ResourceSelectorShell', () => {
   })
 
   describe('edit button', () => {
+    it('places edit and pin together in the row action area', () => {
+      const groupedItems: Item[] = [{ ...ITEMS[0], groupId: 'group-cherry', groupName: 'Magic Box' }, ...ITEMS.slice(1)]
+
+      render(
+        <ResourceSelectorShell
+          trigger={<button type="button">Open</button>}
+          items={groupedItems}
+          pinnedIds={[]}
+          onTogglePin={vi.fn()}
+          onEditItem={vi.fn()}
+          onCreateNew={vi.fn()}
+          labels={LABELS}
+          value={null}
+          onChange={vi.fn()}
+        />
+      )
+      openPopover()
+
+      const alphaOption = getRow('Alpha')
+      const row = alphaOption.closest('[data-model-selector-row]') as HTMLElement
+      const nameArea = row.querySelector('[data-resource-selector-name="1"]') as HTMLElement
+      const groupArea = row.querySelector('[data-resource-selector-group="1"]')
+      const editButton = within(row).getByRole('button', { name: 'Edit' })
+
+      expect(row).toHaveClass('pr-0.5')
+      expect(nameArea).toHaveTextContent('Alpha')
+      expect(within(nameArea).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
+      expect(editButton).toHaveClass('size-4', 'hover:bg-transparent')
+      expect(within(alphaOption).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
+      expect(within(alphaOption).queryByRole('button', { name: 'Pin' })).not.toBeInTheDocument()
+      expect(within(row).getByRole('button', { name: 'Pin' })).toHaveClass('size-4', 'hover:bg-transparent')
+      expect(groupArea).toHaveClass('max-w-[48%]')
+      expect(screen.getAllByRole('button', { name: 'Edit' })).toHaveLength(ITEMS.length)
+    })
+
     it('closes and recreates the popover before running the edit action on requestAnimationFrame', async () => {
       const animationFrameCallbacks: FrameRequestCallback[] = []
       let popoverAtCallback: HTMLElement | null = null

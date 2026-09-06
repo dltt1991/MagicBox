@@ -38,6 +38,7 @@ import { Route as SettingsAppearanceRouteImport } from './routes/settings/appear
 import { Route as SettingsApiGatewayRouteImport } from './routes/settings/api-gateway'
 import { Route as SettingsAboutRouteImport } from './routes/settings/about'
 import { Route as AppTranslateRouteImport } from './routes/app/translate'
+import { Route as AppTranscriptionRouteImport } from './routes/app/transcription'
 import { Route as AppTerminalRouteImport } from './routes/app/terminal'
 import { Route as AppReleaseNotesRouteImport } from './routes/app/release-notes'
 import { Route as AppNotesRouteImport } from './routes/app/notes'
@@ -209,6 +210,11 @@ const AppTranslateRoute = AppTranslateRouteImport.update({
   path: '/translate',
   getParentRoute: () => AppRoute,
 } as any)
+const AppTranscriptionRoute = AppTranscriptionRouteImport.update({
+  id: '/transcription',
+  path: '/transcription',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppTerminalRoute = AppTerminalRouteImport.update({
   id: '/terminal',
   path: '/terminal',
@@ -346,6 +352,7 @@ export interface FileRoutesByFullPath {
   '/app/notes': typeof AppNotesRoute
   '/app/release-notes': typeof AppReleaseNotesRoute
   '/app/terminal': typeof AppTerminalRoute
+  '/app/transcription': typeof AppTranscriptionRoute
   '/app/translate': typeof AppTranslateRoute
   '/settings/about': typeof SettingsAboutRoute
   '/settings/api-gateway': typeof SettingsApiGatewayRoute
@@ -400,6 +407,7 @@ export interface FileRoutesByTo {
   '/app/notes': typeof AppNotesRoute
   '/app/release-notes': typeof AppReleaseNotesRoute
   '/app/terminal': typeof AppTerminalRoute
+  '/app/transcription': typeof AppTranscriptionRoute
   '/app/translate': typeof AppTranslateRoute
   '/settings/about': typeof SettingsAboutRoute
   '/settings/api-gateway': typeof SettingsApiGatewayRoute
@@ -454,6 +462,7 @@ export interface FileRoutesById {
   '/app/notes': typeof AppNotesRoute
   '/app/release-notes': typeof AppReleaseNotesRoute
   '/app/terminal': typeof AppTerminalRoute
+  '/app/transcription': typeof AppTranscriptionRoute
   '/app/translate': typeof AppTranslateRoute
   '/settings/about': typeof SettingsAboutRoute
   '/settings/api-gateway': typeof SettingsApiGatewayRoute
@@ -511,6 +520,7 @@ export interface FileRouteTypes {
     | '/app/notes'
     | '/app/release-notes'
     | '/app/terminal'
+    | '/app/transcription'
     | '/app/translate'
     | '/settings/about'
     | '/settings/api-gateway'
@@ -565,6 +575,7 @@ export interface FileRouteTypes {
     | '/app/notes'
     | '/app/release-notes'
     | '/app/terminal'
+    | '/app/transcription'
     | '/app/translate'
     | '/settings/about'
     | '/settings/api-gateway'
@@ -618,6 +629,7 @@ export interface FileRouteTypes {
     | '/app/notes'
     | '/app/release-notes'
     | '/app/terminal'
+    | '/app/transcription'
     | '/app/translate'
     | '/settings/about'
     | '/settings/api-gateway'
@@ -871,6 +883,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTranslateRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/transcription': {
+      id: '/app/transcription'
+      path: '/transcription'
+      fullPath: '/app/transcription'
+      preLoaderRoute: typeof AppTranscriptionRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/terminal': {
       id: '/app/terminal'
       path: '/terminal'
@@ -1053,6 +1072,7 @@ interface AppRouteChildren {
   AppNotesRoute: typeof AppNotesRoute
   AppReleaseNotesRoute: typeof AppReleaseNotesRoute
   AppTerminalRoute: typeof AppTerminalRoute
+  AppTranscriptionRoute: typeof AppTranscriptionRoute
   AppTranslateRoute: typeof AppTranslateRoute
   AppMiniAppAppIdRoute: typeof AppMiniAppAppIdRoute
   AppPaintingsSplatRoute: typeof AppPaintingsSplatRoute
@@ -1071,6 +1091,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppNotesRoute: AppNotesRoute,
   AppReleaseNotesRoute: AppReleaseNotesRoute,
   AppTerminalRoute: AppTerminalRoute,
+  AppTranscriptionRoute: AppTranscriptionRoute,
   AppTranslateRoute: AppTranslateRoute,
   AppMiniAppAppIdRoute: AppMiniAppAppIdRoute,
   AppPaintingsSplatRoute: AppPaintingsSplatRoute,

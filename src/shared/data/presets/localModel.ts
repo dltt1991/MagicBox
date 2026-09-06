@@ -24,5 +24,5 @@ export const LOCAL_MODEL_DOWNLOAD_RESULTS = ['ready', 'cancelled'] as const
 export type LocalModelDownloadResult = (typeof LOCAL_MODEL_DOWNLOAD_RESULTS)[number]
 
 /** Which downloadable local model a settings card / IPC route targets. */
-export const LOCAL_MODEL_KINDS = ['embedding', 'ocr'] as const
+export const LOCAL_MODEL_KINDS = ['embedding', 'ocr', 'whisper'] as const
 export type LocalModelKind = (typeof LOCAL_MODEL_KINDS)[number]

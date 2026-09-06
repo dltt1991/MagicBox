@@ -31,7 +31,7 @@ index 0055af0c73ad638a59df92fa5d46edc7995da151..e2923dfdd124505790ecc628c5579a2b
 +    /** Never fetch from these domains (→ blocked_domains). */
 +    blockedDomains?: string[];
  };
- 
+
  interface OpenRouterProvider extends ProviderV3 {
 @@ -774,6 +791,12 @@ interface OpenRouterProvider extends ProviderV3 {
           * @see https://openrouter.ai/docs/guides/features/server-tools/web-search
@@ -79,7 +79,7 @@ index 0055af0c73ad638a59df92fa5d46edc7995da151..e2923dfdd124505790ecc628c5579a2b
 +    /** Never fetch from these domains (→ blocked_domains). */
 +    blockedDomains?: string[];
  };
- 
+
  interface OpenRouterProvider extends ProviderV3 {
 @@ -774,6 +791,12 @@ interface OpenRouterProvider extends ProviderV3 {
           * @see https://openrouter.ai/docs/guides/features/server-tools/web-search
@@ -107,7 +107,7 @@ index 3c6c1b100611983d32172288e9e40a1e6736320d..4f53a6074e3f54b7bf862712d8064b87
 +    strictJsonSchema: import_v43.z.boolean().optional()
    }).optional()
  }).optional();
- 
+
 @@ -3548,7 +3549,8 @@ var OpenRouterChatLanguageModel = class {
      responseFormat,
      topK,
@@ -201,7 +201,7 @@ index 3c6c1b100611983d32172288e9e40a1e6736320d..4f53a6074e3f54b7bf862712d8064b87
 +  id: "openrouter.web_fetch",
 +  inputSchema: webFetchInputSchema
 +});
- 
+
  // src/utils/remove-undefined.ts
  function removeUndefinedEntries(record) {
 @@ -5324,7 +5342,8 @@ function createOpenRouter(options = {}) {
@@ -227,7 +227,7 @@ index 6320306870c5f3ce5439f068b32b2848f6cb0c7e..6dd871944a3ccaaa36a7bd68c652cbd3
 +    strictJsonSchema: z3.boolean().optional()
    }).optional()
  }).optional();
- 
+
 @@ -3515,7 +3516,8 @@ var OpenRouterChatLanguageModel = class {
      responseFormat,
      topK,
@@ -321,7 +321,7 @@ index 6320306870c5f3ce5439f068b32b2848f6cb0c7e..6dd871944a3ccaaa36a7bd68c652cbd3
 +  id: "openrouter.web_fetch",
 +  inputSchema: webFetchInputSchema
 +});
- 
+
  // src/utils/remove-undefined.ts
  function removeUndefinedEntries(record) {
 @@ -5291,7 +5309,8 @@ function createOpenRouter(options = {}) {

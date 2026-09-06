@@ -80,6 +80,19 @@ describe('buildPathRegistry', () => {
     )
   })
 
+  it('registers transcription recording, temporary, and Whisper directories', () => {
+    const registry = buildPathRegistry()
+
+    expect(registry['feature.transcription.recordings']).toBe(
+      path.join('/mock/userData', 'Data', 'Transcription', 'Recordings')
+    )
+    expect(registry['feature.transcription.temp']).toBe(path.join('/mock/temp', 'CherryStudio', 'transcription'))
+    expect(registry['feature.transcription.whisper']).toBe(path.join('/mock/userData', 'Runtime', 'models', 'whisper'))
+    expect(shouldAutoEnsure('feature.transcription.recordings')).toBe(true)
+    expect(shouldAutoEnsure('feature.transcription.temp')).toBe(true)
+    expect(shouldAutoEnsure('feature.transcription.whisper')).toBe(true)
+  })
+
   it('stores active traces under userData Runtime and keeps the old path cleanup-only', () => {
     const registry = buildPathRegistry()
 

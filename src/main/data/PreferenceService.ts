@@ -7,6 +7,7 @@ import { validateSender } from '@main/core/security/validateSender'
 import { bootConfigService } from '@main/data/bootConfig'
 import type { BootConfigKey } from '@shared/data/bootConfig/bootConfigTypes'
 import { DefaultPreferences } from '@shared/data/preference/preferenceSchemas'
+import type { SidebarFavoriteItem } from '@shared/data/preference/preferenceTypes'
 import type {
   PreferenceDefaultScopeType,
   PreferenceKeyType,
@@ -25,9 +26,16 @@ import { and, eq } from 'drizzle-orm'
 import { BrowserWindow, type IpcMainInvokeEvent } from 'electron'
 import { isEqual } from 'es-toolkit/compat'
 
+import { appStateTable } from './db/schemas/appState'
 import { preferenceTable } from './db/schemas/preference'
 
 const logger = loggerService.withContext('PreferenceService')
+const TRANSCRIPTION_SIDEBAR_FAVORITE_MIGRATION_KEY = 'preference:transcriptionSidebarFavoriteMigration'
+const TRANSCRIPTION_SIDEBAR_FAVORITE_MIGRATION_VERSION = 1
+const LEGACY_TRANSCRIPTION_SIDEBAR_APP_ORDERS = [
+  ['assistants', 'agents', 'translate', 'paintings', 'knowledge'],
+  ['assistants', 'agents', 'translate', 'paintings', 'knowledge', 'terminal']
+] as const
 
 /**
  * Preference statistics summary
@@ -224,6 +232,7 @@ export class PreferenceService extends BaseService {
         }
       }
 
+      await this.reconcileTranscriptionSidebarFavorite()
       this.setupWindowCleanup()
       logger.info(`Preference cache initialized with ${results.length} values`)
     } catch (error) {
@@ -406,6 +415,58 @@ export class PreferenceService extends BaseService {
       logger.error(`Failed to set preference ${key}:`, error as Error)
       throw error
     }
+  }
+
+  private async reconcileTranscriptionSidebarFavorite(): Promise<void> {
+    const key = 'ui.sidebar.favorites'
+    const oldValue = this.cache[key]
+    let nextValue: SidebarFavoriteItem[] | undefined
+    application.get('DbService').withWriteTx((tx) => {
+      const marker = tx
+        .select({ value: appStateTable.value })
+        .from(appStateTable)
+        .where(eq(appStateTable.key, TRANSCRIPTION_SIDEBAR_FAVORITE_MIGRATION_KEY))
+        .get()
+      if (
+        (marker?.value as { version?: number } | undefined)?.version ===
+        TRANSCRIPTION_SIDEBAR_FAVORITE_MIGRATION_VERSION
+      )
+        return
+
+      nextValue = migrateTranscriptionSidebarFavoriteDefault(oldValue)
+      if (nextValue) {
+        tx.insert(preferenceTable)
+          .values({ scope: DefaultScope, key, value: nextValue })
+          .onConflictDoUpdate({
+            target: [preferenceTable.scope, preferenceTable.key],
+            set: { value: nextValue }
+          })
+          .run()
+      }
+
+      const now = Date.now()
+      tx.insert(appStateTable)
+        .values({
+          key: TRANSCRIPTION_SIDEBAR_FAVORITE_MIGRATION_KEY,
+          value: { version: TRANSCRIPTION_SIDEBAR_FAVORITE_MIGRATION_VERSION },
+          description: 'One-time sidebar favorite reconciliation for Transcription',
+          createdAt: now,
+          updatedAt: now
+        })
+        .onConflictDoUpdate({
+          target: appStateTable.key,
+          set: {
+            value: { version: TRANSCRIPTION_SIDEBAR_FAVORITE_MIGRATION_VERSION },
+            description: 'One-time sidebar favorite reconciliation for Transcription',
+            updatedAt: now
+          }
+        })
+        .run()
+    })
+
+    if (!nextValue || isEqual(oldValue, nextValue)) return
+    this.cache[key] = nextValue
+    await this.notifyChange(key, nextValue, oldValue)
   }
 
   /**
@@ -857,4 +918,23 @@ export class PreferenceService extends BaseService {
   public getSubscriptions(): Map<number, Set<string>> {
     return new Map(this.windowSubscriptions)
   }
+}
+
+function migrateTranscriptionSidebarFavoriteDefault(
+  favorites: readonly SidebarFavoriteItem[] | undefined
+): SidebarFavoriteItem[] | undefined {
+  if (!Array.isArray(favorites)) return undefined
+  const appIds = favorites.flatMap((item) => (item.type === 'app' ? [item.id] : []))
+  const matchesLegacyDefault = LEGACY_TRANSCRIPTION_SIDEBAR_APP_ORDERS.some(
+    (legacy) => appIds.length === legacy.length && appIds.every((id, index) => id === legacy[index])
+  )
+  if (!matchesLegacyDefault) return undefined
+
+  const translateIndex = favorites.findIndex((item) => item.type === 'app' && item.id === 'translate')
+  if (translateIndex < 0) return undefined
+  return [
+    ...favorites.slice(0, translateIndex + 1),
+    { type: 'app', id: 'transcription' },
+    ...favorites.slice(translateIndex + 1)
+  ]
 }

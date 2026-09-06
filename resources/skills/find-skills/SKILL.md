@@ -33,6 +33,30 @@ Magic Box gives you two built-in tools for skills — use them, and do NOT shell
 
 **Browse skills at:** https://skills.sh/
 
+## Runtime Detection
+
+Before running any `npx skills` command, check if `npx` is available:
+
+```bash
+which npx
+```
+
+If `npx` is **not found**, fall back to the bundled bun shipped with Magic Box.
+Magic Box sets the `CHERRY_STUDIO_BUN_PATH` environment variable pointing to its
+bundled bun binary. Use it as follows:
+
+```bash
+if [ -n "$CHERRY_STUDIO_BUN_PATH" ] && [ -x "$CHERRY_STUDIO_BUN_PATH" ]; then
+  "$CHERRY_STUDIO_BUN_PATH" x skills <subcommand> [args]
+else
+  echo "Error: Neither npx nor bundled bun found. Install Node.js or run Magic Box's bun installer."
+fi
+```
+
+For example, `npx skills find react` becomes `"$CHERRY_STUDIO_BUN_PATH" x skills find react`.
+
+Always try `npx` first. Only use the bun fallback when npx is unavailable.
+
 ## How to Help Users Find Skills
 
 ### Step 1: Understand What They Need

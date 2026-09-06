@@ -363,7 +363,8 @@ const AgentPage = () => {
   })
 
   const [sessionPaneUserOpenIntentSeq, setSessionPaneUserOpenIntentSeq] = useState(0)
-  useCommandHandler('app.sidebar.toggle', toggleShellPane, { enabled: isActiveTab })
+
+  useCommandHandler('app.sidebar.toggle', toggleShellPane, { enabled: !isMessageOnlyView })
 
   useEffect(() => {
     if (isMessageOnlyView) return

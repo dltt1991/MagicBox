@@ -19,8 +19,15 @@ export interface RemoteModelFile {
   fileName: string
   /** Reject smaller downloads (LFS pointers are ~132 bytes; error pages are tiny). */
   minBytes: number
+  /** Optional sha256 checked before the temp file becomes the ready artifact. */
+  sha256?: string
   /** Relative download weight for the aggregate progress bar (≈ file MB). */
   weight: number
+}
+
+export type RemoteModelSourceRevisions = {
+  huggingface: string
+  modelscope: string
 }
 
 export const LOCAL_MODELS = {
@@ -65,6 +72,65 @@ export const LOCAL_MODELS = {
        * reject anything this small (LFS pointer / truncated response / error page). */
       minBytes: 10_000
     }
+  },
+  /** Whisper small in transformers.js' q8 ONNX layout for local transcription. */
+  whisper: {
+    repo: 'onnx-community/whisper-small',
+    revisions: {
+      huggingface: '36050c46d777d46dc4b5f43f6d90574fc38f8732',
+      modelscope: 'master'
+    },
+    files: [
+      {
+        repo: 'onnx-community/whisper-small',
+        remoteFile: 'config.json',
+        fileName: 'config.json',
+        minBytes: 100,
+        weight: 1
+      },
+      {
+        repo: 'onnx-community/whisper-small',
+        remoteFile: 'preprocessor_config.json',
+        fileName: 'preprocessor_config.json',
+        minBytes: 100,
+        weight: 1
+      },
+      {
+        repo: 'onnx-community/whisper-small',
+        remoteFile: 'generation_config.json',
+        fileName: 'generation_config.json',
+        minBytes: 100,
+        weight: 1
+      },
+      {
+        repo: 'onnx-community/whisper-small',
+        remoteFile: 'tokenizer_config.json',
+        fileName: 'tokenizer_config.json',
+        minBytes: 100,
+        weight: 1
+      },
+      {
+        repo: 'onnx-community/whisper-small',
+        remoteFile: 'tokenizer.json',
+        fileName: 'tokenizer.json',
+        minBytes: 10_000,
+        weight: 2
+      },
+      {
+        repo: 'onnx-community/whisper-small',
+        remoteFile: 'onnx/encoder_model_quantized.onnx',
+        fileName: 'onnx/encoder_model_quantized.onnx',
+        minBytes: 1_000_000,
+        weight: 160
+      },
+      {
+        repo: 'onnx-community/whisper-small',
+        remoteFile: 'onnx/decoder_model_merged_quantized.onnx',
+        fileName: 'onnx/decoder_model_merged_quantized.onnx',
+        minBytes: 1_000_000,
+        weight: 300
+      }
+    ] satisfies readonly RemoteModelFile[]
   }
 } satisfies {
   embedding: { repo: string; dtype: string; readyFile: string }
@@ -72,16 +138,18 @@ export const LOCAL_MODELS = {
     weights: Record<'detection' | 'recognition', RemoteModelFile>
     dictionary: { repo: string; sourceFile: string; fileName: string; minBytes: number }
   }
+  whisper: { repo: string; revisions: RemoteModelSourceRevisions; files: readonly RemoteModelFile[] }
 }
 
 /** Must match package.json's pinned `onnxruntime-node` dependency version. */
-export const ONNXRUNTIME_NODE_VERSION = '1.25.1'
+export const ONNXRUNTIME_NODE_VERSION = '1.24.3'
 
-/** sha256 of the whole `onnxruntime-node@{ONNXRUNTIME_NODE_VERSION}` npm tarball — the
+/** npm integrity of the whole `onnxruntime-node@{ONNXRUNTIME_NODE_VERSION}` tarball — the
  * per-platform native binary + shared lib(s) are extracted from this same verified stream,
  * so there is no separate sub-file checksum to track. Regenerate with:
- * `curl -sL https://registry.npmjs.org/onnxruntime-node/-/onnxruntime-node-{version}.tgz | shasum -a 256` */
-export const ONNXRUNTIME_TARBALL_SHA256 = '582c44aac00414a5580fe9dcbebcb12c8bf1cc703ab3507203455db842e168f9'
+ * `npm view onnxruntime-node@{version} dist.integrity` */
+export const ONNXRUNTIME_TARBALL_INTEGRITY =
+  'sha512-JH7+czbc8ALA819vlTgcV+Q214/+VjGeBHDjX81+ZCD0PCVCIFGFNtT0V4sXG/1JXypKPgScQcB3ij/hk3YnTg=='
 
 /** Platform+arch leaf inside the onnxruntime-node npm tarball; mirrors dist/binding.js's own
  * `bin/napi-v6/${process.platform}/${process.arch}` addressing. */
@@ -93,7 +161,7 @@ export interface OnnxRuntimeLeaf {
 /** No `darwin.x64` entry — onnxruntime-node ships no darwin-x64 binding (see `isDarwinX64`). */
 export const ONNXRUNTIME_LEAVES: Record<string, Record<string, OnnxRuntimeLeaf>> = {
   darwin: {
-    arm64: { binding: 'onnxruntime_binding.node', sharedLibs: ['libonnxruntime.1.25.1.dylib'] }
+    arm64: { binding: 'onnxruntime_binding.node', sharedLibs: ['libonnxruntime.1.24.3.dylib'] }
   },
   linux: {
     x64: { binding: 'onnxruntime_binding.node', sharedLibs: ['libonnxruntime.so.1'] },

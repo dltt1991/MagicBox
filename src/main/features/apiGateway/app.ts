@@ -1,10 +1,12 @@
 import { bearer } from '@elysia/bearer'
 import { cors } from '@elysia/cors'
 import { node } from '@elysia/node'
+import { openapi } from '@elysia/openapi'
 import { loggerService } from '@logger'
 import { DataApiError } from '@shared/data/api/errors'
 import { Elysia } from 'elysia'
 import { v4 as uuidv4 } from 'uuid'
+import * as z from 'zod'
 
 import { gatewayErrorHandler } from './errors'
 import { McpSessionStore } from './McpSessionStore'
@@ -100,6 +102,21 @@ export function buildApp({
         // would send every later request without it, and would orphan the session.
         exposeHeaders: ['mcp-session-id', 'x-request-id'],
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+      })
+    )
+    .use(
+      openapi({
+        path: OPENAPI_PATH,
+        provider: 'scalar',
+        mapJsonSchema: { zod: z.toJSONSchema },
+        documentation: {
+          info: {
+            title: 'Magic Box API',
+            version: '1.0.0',
+            description:
+              'OpenAI- and Anthropic-compatible HTTP API for Magic Box, plus Magic Box-specific endpoints (models, knowledge bases)'
+          }
+        }
       })
     )
     // Stamp a request id and record the start time for latency logging.
