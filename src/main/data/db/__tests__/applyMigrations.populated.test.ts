@@ -70,6 +70,32 @@ describe('applyMigrations over a populated database', () => {
     rmSync(tempDir, { recursive: true, force: true })
   })
 
+  it('accepts transcription tables created by the pre-merge migration chain without losing rows', () => {
+    applyMigrations(db, baselineMigrationsFolder(join(tempDir, 'baseline'), '0026_yielding_chat'))
+    sqlite.exec(readFileSync(join(resolveMigrationsPath(), '0026_yielding_chat.sql'), 'utf8'))
+    sqlite
+      .prepare(
+        `INSERT INTO transcription_record
+          (id, title, source_type, audio_path, audio_managed, status, created_at, updated_at)
+         VALUES ('legacy-record', 'Legacy recording', 'file', '/tmp/legacy.wav', 0, 'ready', 100, 100)`
+      )
+      .run()
+    sqlite
+      .prepare(
+        `INSERT INTO transcription_result
+          (id, record_id, transcript_text, segments_json, created_at, updated_at)
+         VALUES ('legacy-result', 'legacy-record', 'kept transcript', '[]', 100, 100)`
+      )
+      .run()
+
+    applyMigrations(db, resolveMigrationsPath())
+
+    expect(sqlite.prepare('SELECT transcript_text FROM transcription_result').get()).toEqual({
+      transcript_text: 'kept transcript'
+    })
+    expect(sqlite.pragma('foreign_key_check')).toEqual([])
+  })
+
   it('preserves legacy paired devices and creates durable receipts with device cascade', () => {
     sqlite.pragma('foreign_keys = ON')
     applyMigrations(db, baselineMigrationsFolder(join(tempDir, 'baseline'), '0025_remote-access'))

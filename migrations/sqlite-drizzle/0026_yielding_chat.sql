@@ -1,4 +1,6 @@
-CREATE TABLE `transcription_prompt_template` (
+-- HAND EDIT, REDO IT AFTER EVERY `db:migrations:generate`: this branch previously
+-- shipped these tables in 0017, so existing databases must accept their new chain position.
+CREATE TABLE IF NOT EXISTS `transcription_prompt_template` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
 	`prompt` text NOT NULL,
@@ -9,8 +11,8 @@ CREATE TABLE `transcription_prompt_template` (
 	`updated_at` integer NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX `transcription_prompt_template_order_key_idx` ON `transcription_prompt_template` (`order_key`);--> statement-breakpoint
-CREATE TABLE `transcription_record` (
+CREATE INDEX IF NOT EXISTS `transcription_prompt_template_order_key_idx` ON `transcription_prompt_template` (`order_key`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `transcription_record` (
 	`id` text PRIMARY KEY NOT NULL,
 	`title` text NOT NULL,
 	`source_type` text NOT NULL,
@@ -27,9 +29,9 @@ CREATE TABLE `transcription_record` (
 	`updated_at` integer NOT NULL
 );
 --> statement-breakpoint
-CREATE INDEX `transcription_record_created_at_idx` ON `transcription_record` (`created_at`);--> statement-breakpoint
-CREATE INDEX `transcription_record_status_created_at_idx` ON `transcription_record` (`status`,`created_at`);--> statement-breakpoint
-CREATE TABLE `transcription_result` (
+CREATE INDEX IF NOT EXISTS `transcription_record_created_at_idx` ON `transcription_record` (`created_at`);--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS `transcription_record_status_created_at_idx` ON `transcription_record` (`status`,`created_at`);--> statement-breakpoint
+CREATE TABLE IF NOT EXISTS `transcription_result` (
 	`id` text PRIMARY KEY NOT NULL,
 	`record_id` text NOT NULL,
 	`transcript_text` text NOT NULL,
@@ -42,4 +44,4 @@ CREATE TABLE `transcription_result` (
 	FOREIGN KEY (`record_id`) REFERENCES `transcription_record`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `transcription_result_record_id_idx` ON `transcription_result` (`record_id`);
+CREATE UNIQUE INDEX IF NOT EXISTS `transcription_result_record_id_idx` ON `transcription_result` (`record_id`);
