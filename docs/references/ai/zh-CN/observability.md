@@ -1,3 +1,9 @@
+---
+description: "可观测性"
+sources:
+  - src/main/ai
+---
+
 # 可观测性
 
 ## 目标

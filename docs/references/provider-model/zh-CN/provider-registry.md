@@ -1,3 +1,9 @@
+---
+description: "提供商与模型注册表系统"
+sources:
+  - packages/provider-registry
+---
+
 # 提供商与模型注册表系统
 
 本文档描述 Magic Box 如何加载、解析并将提供商/模型预设数据与用户数据进行合并。

@@ -1,3 +1,7 @@
+import { Check, Palette, Pencil, Plus, Terminal, Trash2, X } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+
 import {
   Button,
   ContextMenu,
@@ -11,9 +15,6 @@ import {
   DropdownMenuTrigger
 } from '@cherrystudio/ui'
 import type { TerminalSessionMetadata } from '@shared/ipc/schemas/terminal'
-import { Check, Palette, Pencil, Plus, Terminal, Trash2, X } from 'lucide-react'
-import type { ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
 
 import type { TerminalQuickCommand } from '../lib/terminalQuickCommands'
 import type { TerminalThemeDefinition, TerminalThemeKey } from '../lib/terminalThemes'

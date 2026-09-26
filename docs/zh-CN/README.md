@@ -20,7 +20,7 @@
 
 | 文档 | 说明 |
 |----------|-------------|
-| [架构总览](../references/architecture-overview.md) | 全局架构、进程模型、数据流 |
+| [架构总览](../references/architecture/README.md) | 全局架构、进程模型、数据流 |
 
 ### AI 内核
 
@@ -68,11 +68,11 @@
 
 | 文档 | 说明 |
 |----------|-------------|
-| [消息系统](../references/messaging/message-system.md) | 消息生命周期、状态管理、操作 |
-| [Composer 富剪贴板](../references/messaging/composer-rich-clipboard.md) | 私有 composer token 剪贴板格式与复制/粘贴流程 |
+| [消息系统](../references/chat/message-system.md) | 消息生命周期、状态管理、操作 |
+| [Composer 富剪贴板](../references/chat/zh-CN/composer-rich-clipboard.md) | 私有 composer token 剪贴板格式与复制/粘贴流程 |
 | [消息树](../references/chat/message-tree.md) | 聊天消息树模型：邻接表、每个 topic 的虚拟根、兄弟分组、不变式、删除语义、getTree / flow-canvas 契约 |
-| [聊天 UI 设计与约定](../references/chat/conventions.md) | 聊天 UI 如何按职责划分（展示 / 视图状态 / 契约 / 编排）以及各模块遵循的约定（context、refs、渲染稳定性） |
-| [聊天适配器](../references/chat/adapters.md) | 聊天契约层：将 topics / sessions / messages 投影为稳定的 UI 结构、pane / action 注册表以及渲染稳定性规则 |
+| [聊天 UI 设计与约定](../references/chat/zh-CN/conventions.md) | 聊天 UI 如何按职责划分（展示 / 视图状态 / 契约 / 编排）以及各模块遵循的约定（context、refs、渲染稳定性） |
+| [聊天适配器](../references/chat/zh-CN/adapters.md) | 聊天契约层：将 topics / sessions / messages 投影为稳定的 UI 结构、pane / action 注册表以及渲染稳定性规则 |
 
 ### 知识库
 
@@ -90,15 +90,15 @@
 | [CodeBlockView](../references/components/code-block-view.md) | 代码块视图组件 |
 | [图片预览](../references/components/image-preview.md) | 图片预览组件 |
 | [代码执行](../references/components/code-execution.md) | 通过 Pyodide 执行 Python 代码 |
-| [UI 语义契约](../references/ui-semantic-contract.md) | `data-ui` token 协议、稳定性分级，以及面向主题、测试和 AI 工具维护的选择器 |
+| [UI 语义契约](../references/components/ui-semantic-contract.md) | `data-ui` token 协议、稳定性分级，以及面向主题、测试和 AI 工具维护的选择器 |
 
 ### 其他
 
 | 文档 | 说明 |
 |----------|-------------|
 | [前端测试规范](../references/testing/frontend-testing.md) | 前端测试设计与评审 |
-| [应用升级配置](../references/app-upgrade.md) | 应用升级配置 |
-| [飞书通知](../references/feishu-notify.md) | 飞书通知集成 |
-| [模糊搜索](../references/fuzzy-search.md) | 模糊搜索实现 |
-| [局域网传输协议](../references/lan-transfer-protocol.md) | 局域网文件传输协议规范 |
+| [应用升级配置](../contrib/app-upgrade.md) | 应用升级配置 |
+| [飞书通知](../contrib/feishu-notify.md) | 飞书通知集成 |
+| [模糊搜索](../references/file/fuzzy-search.md) | 模糊搜索实现 |
+| [局域网传输协议](../references/lan-transfer/README.md) | 局域网文件传输协议规范 |
 | [远程请求安全](../references/security/remote-fetch.md) | 主进程直连 URL 请求的 SSRF 防护 |

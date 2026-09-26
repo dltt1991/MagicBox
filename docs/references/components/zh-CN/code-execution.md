@@ -1,3 +1,9 @@
+---
+description: "代码执行组件"
+sources:
+  - src/renderer/components
+---
+
 # 代码执行组件
 
 > 中文副本，对应英文原文：[docs/references/components/code-execution.md](../code-execution.md)。

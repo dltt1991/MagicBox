@@ -1,3 +1,9 @@
+---
+description: "DataApi 概览"
+sources:
+  - src/main/data
+---
+
 # DataApi 概览
 
 > 中文副本，对应英文原文：[docs/references/data/data-api-overview.md](../data-api-overview.md)。

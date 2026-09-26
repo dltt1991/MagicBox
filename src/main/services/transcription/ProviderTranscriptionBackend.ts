@@ -1,12 +1,13 @@
 import { readFile } from 'node:fs/promises'
 
+import { experimental_transcribe } from 'ai'
+
 import { extensionRegistry } from '@cherrystudio/ai-core/provider'
 import { resolveProviderAiSdkConfig } from '@main/ai/provider/config'
 import { resolveEffectiveEndpoint, resolveProviderOptionsKey } from '@main/ai/provider/endpoint'
 import { modelService } from '@main/data/services/ModelService'
 import { providerService } from '@main/data/services/ProviderService'
 import type { TranscriptionLanguage, TranscriptionSegment } from '@shared/data/types/transcription'
-import { experimental_transcribe } from 'ai'
 
 import { mapSegments } from './segmentMapper'
 

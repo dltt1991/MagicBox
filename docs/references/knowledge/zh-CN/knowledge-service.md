@@ -1,3 +1,9 @@
+---
+description: "Knowledge Service"
+sources:
+  - src/main/features/knowledge
+---
+
 # Knowledge Service
 
 > 中文副本，对应英文原文：[docs/references/knowledge/knowledge-service.md](../knowledge-service.md)。

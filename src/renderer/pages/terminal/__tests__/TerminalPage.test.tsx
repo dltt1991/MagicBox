@@ -1,5 +1,4 @@
 import '@testing-library/jest-dom/vitest'
-
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type React from 'react'
@@ -27,27 +26,19 @@ const mocks = vi.hoisted(() => ({
   persistValues: {
     'terminal.workspace.root': null as string | null,
     'terminal.workspace.include_hidden': false,
-    'terminal.workspace.view_mode': 'list' as 'list' | 'icons' | 'tree',
-    'terminal.workspace.sort_key': 'name' as 'name' | 'mtime' | 'size',
-    'terminal.workspace.sort_direction': 'asc' as 'asc' | 'desc',
+    'terminal.workspace.view_mode': 'list',
+    'terminal.workspace.sort_key': 'name',
+    'terminal.workspace.sort_direction': 'asc',
     'terminal.workspace.preview_open': true,
     'terminal.workspace.preview_sizes': [55, 45] as [number, number],
     'terminal.workspace.terminal_visible': true,
     'terminal.workspace.keep_directory': false,
     'terminal.workspace.favorite_directories': [] as string[],
-    'terminal.workspace.icon_size': 'medium' as 'small' | 'medium' | 'large',
+    'terminal.workspace.icon_size': 'medium',
     'terminal.quick_commands': [] as Array<{ id: string; command: string; iconDataUrl?: string; label?: string }>,
-    'terminal.layout.mode': 'right' as 'right' | 'bottom' | 'terminal-maximized' | 'files-maximized',
+    'terminal.layout.mode': 'right',
     'terminal.font_size': 18,
-    'terminal.theme': 'default-dark' as
-      | 'default-dark'
-      | 'light'
-      | 'solarized-dark'
-      | 'dracula'
-      | 'monokai'
-      | 'one-dark-pro'
-      | 'gruvbox-dark'
-      | 'nord'
+    'terminal.theme': 'default-dark'
   },
   sessions: [] as Array<{
     id: string

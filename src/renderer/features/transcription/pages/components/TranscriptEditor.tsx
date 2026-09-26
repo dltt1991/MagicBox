@@ -1,10 +1,11 @@
-import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Textarea } from '@cherrystudio/ui'
-import CopyButton from '@renderer/components/CopyButton'
-import type { TranscriptionSegment } from '@shared/data/types/transcription'
 import Maximize2 from 'lucide-react/dist/esm/icons/maximize-2'
 import type { RefObject } from 'react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import { Button, Dialog, DialogContent, DialogHeader, DialogTitle, Textarea } from '@cherrystudio/ui'
+import CopyButton from '@renderer/components/CopyButton'
+import type { TranscriptionSegment } from '@shared/data/types/transcription'
 
 import { useSegmentSeek } from '../hooks/useSegmentSeek'
 

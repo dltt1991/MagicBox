@@ -1,3 +1,9 @@
+---
+description: "文件条目清理"
+sources:
+  - src/main/services/file
+---
+
 # 文件条目清理
 
 > 中文副本，对应英文原文：[docs/references/file/file-entry-cleanup.md](../file-entry-cleanup.md)。

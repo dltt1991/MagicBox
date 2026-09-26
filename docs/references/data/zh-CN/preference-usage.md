@@ -1,3 +1,9 @@
+---
+description: "Preference 使用指南"
+sources:
+  - src/main/data
+---
+
 # Preference 使用指南
 
 > 中文副本，对应英文原文：[docs/references/data/preference-usage.md](../preference-usage.md)。

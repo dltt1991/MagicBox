@@ -1,5 +1,6 @@
-import { agentTable } from '@data/db/schemas/agent'
 import { and, eq, inArray, sql } from 'drizzle-orm'
+
+import { agentTable } from '@data/db/schemas/agent'
 
 import type { DbType, ISeeder } from '../../types'
 import { hashObject } from '../hashObject'

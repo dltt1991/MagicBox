@@ -1,5 +1,6 @@
-import { IpcErrorCode } from '@shared/ipc/errors/IpcError'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { IpcErrorCode } from '@shared/ipc/errors/IpcError'
 
 const {
   cancelMock,

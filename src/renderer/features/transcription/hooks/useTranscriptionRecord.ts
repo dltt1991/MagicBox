@@ -1,5 +1,6 @@
-import { useDataChange, useQuery } from '@data/hooks/useDataApi'
 import { useCallback } from 'react'
+
+import { useDataChange, useQuery } from '@data/hooks/useDataApi'
 
 export function useTranscriptionRecord(id: string | null) {
   const { data, isLoading, error, refetch } = useQuery('/transcription/records/:id', {

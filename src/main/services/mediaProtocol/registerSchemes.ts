@@ -1,33 +1,19 @@
-import { protocol } from 'electron'
-
 import { CHERRY_MEDIA_SCHEME } from './types'
 
 /**
- * Declare the media scheme as privileged. MUST run before `app.whenReady()`
- * resolves — `protocol.registerSchemesAsPrivileged` may only be called once
- * per process and throws once the app is ready.
- *
- * Privileges:
- * - `standard`  — URLs parse with host + path, giving the handler a kind segment.
- * - `secure`    — treated as a secure origin, so it is not blocked in the overlay.
- * - `supportFetchAPI` + `corsEnabled` — every consumer fetches the capture as a
- *   Blob and renders it through an object URL, which is what keeps the canvas
- *   untainted. A corsEnabled scheme served via `protocol.handle` needs no
- *   `Access-Control-Allow-Origin` header, so the handler returns none.
- *
- * - `stream` — allows Chromium to make range requests for file-backed audio.
+ * Privileged-scheme declaration for the media protocol. Composed with every other
+ * scheme's declaration in `main.ts` and registered there in one call:
+ * `registerSchemesAsPrivileged` may only run once per process and throws once the
+ * app is ready. Privileges unchanged from the `registerMediaSchemes` this replaces —
+ * see git history for why each one is here.
  */
-export function registerMediaSchemes(): void {
-  protocol.registerSchemesAsPrivileged([
-    {
-      scheme: CHERRY_MEDIA_SCHEME,
-      privileges: {
-        standard: true,
-        secure: true,
-        supportFetchAPI: true,
-        corsEnabled: true,
-        stream: true
-      }
-    }
-  ])
-}
+export const CHERRY_MEDIA_SCHEME_DECLARATION = {
+  scheme: CHERRY_MEDIA_SCHEME,
+  privileges: {
+    standard: true,
+    secure: true,
+    supportFetchAPI: true,
+    corsEnabled: true,
+    stream: true
+  }
+} as const

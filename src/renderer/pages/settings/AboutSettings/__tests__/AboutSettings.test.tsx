@@ -1,14 +1,26 @@
 import '@testing-library/jest-dom/vitest'
-
 import { render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => ({
-  request: vi.fn()
+  navigate: vi.fn(),
+  request: vi.fn(),
+  search: {} as Record<string, unknown>,
+  showDoctor: vi.fn()
+}))
+
+vi.mock('@renderer/components/doctor', () => ({
+  DoctorPopup: { show: (...args: unknown[]) => mocks.showDoctor(...args) }
 }))
 
 vi.mock('@renderer/ipc', () => ({
   ipcApi: { request: mocks.request }
+}))
+
+vi.mock('@tanstack/react-router', () => ({
+  useLocation: () => ({ pathname: '/settings/about' }),
+  useNavigate: () => mocks.navigate,
+  useSearch: () => mocks.search
 }))
 
 vi.mock('@renderer/hooks/useAppUpdateState', () => ({
@@ -42,19 +54,18 @@ vi.mock('@renderer/components/UpdateDialogPopup', () => ({
 }))
 
 vi.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (key: string) => key })
+  useTranslation: () => ({
+    t: (key: string) => (key === 'settings.doctor.entry.title' ? 'System diagnostics' : key)
+  })
 }))
 
 vi.mock('streamdown', () => ({
   Streamdown: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
 }))
 
-vi.mock('../DiagnosticBundleDialog', () => ({
-  default: ({ open }: { open: boolean }) => (open ? <div>diagnostic-dialog-open</div> : null)
-}))
-
-vi.mock('../../FeedbackDialog', () => ({
-  FeedbackDialog: () => null
+// Forwards alt so empty-alt decorative logos stay hidden even without the wrapper.
+vi.mock('@renderer/components/icons/LogoAvatar', () => ({
+  default: ({ logo, alt }: { logo: string; alt?: string }) => <img src={logo} alt={alt} />
 }))
 
 import { AboutSettings } from '..'
@@ -62,6 +73,7 @@ import { AboutSettings } from '..'
 describe('AboutSettings diagnostics entry', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    mocks.search = {}
     mocks.request.mockImplementation(async (route: string) => {
       if (route === 'app.get_info') return { isPortable: false, version: '2.0.0' }
       return undefined
@@ -73,7 +85,7 @@ describe('AboutSettings diagnostics entry', () => {
     await waitFor(() => expect(mocks.request).toHaveBeenCalledWith('app.get_info'))
 
     const unavailableButtons = screen.getAllByRole('button', { name: 'settings.about.temporarilyUnavailable' })
-    expect(unavailableButtons).toHaveLength(10)
+    expect(unavailableButtons).toHaveLength(9)
     expect(unavailableButtons.every((button) => button.hasAttribute('disabled'))).toBe(true)
 
     unavailableButtons.forEach((button) => button.click())

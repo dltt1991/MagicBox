@@ -1,5 +1,4 @@
-import type { SidebarAppId } from '@renderer/utils/sidebar'
-import type { LucideIcon } from 'lucide-react'
+import type { LucideProps } from 'lucide-react'
 import {
   Code,
   FileSearch,
@@ -13,6 +12,13 @@ import {
   Palette,
   SquareTerminal
 } from 'lucide-react'
+import type { ReactNode } from 'react'
+
+import type { SidebarAppId } from '@renderer/utils/sidebar'
+
+type SidebarIconComponent = (props: LucideProps) => ReactNode
+
+const CodeMateIcon: SidebarIconComponent = (props) => <Code {...props} viewBox="-2 -2 28 28" />
 
 /**
  * Icon component for each built-in sidebar app. Keyed by the `SidebarAppId` union so the
@@ -20,7 +26,7 @@ import {
  * here is a type error. Kept in the component layer because the values are React
  * components; the navigation data and logic live in `@renderer/utils/sidebar`.
  */
-export const SIDEBAR_ICON_COMPONENTS: Record<SidebarAppId, LucideIcon> = {
+export const SIDEBAR_ICON_COMPONENTS = {
   assistants: MessageSquare,
   agents: MousePointerClick,
   paintings: Palette,
@@ -29,7 +35,7 @@ export const SIDEBAR_ICON_COMPONENTS: Record<SidebarAppId, LucideIcon> = {
   mini_app: LayoutGrid,
   knowledge: FileSearch,
   files: Folder,
-  code_tools: Code,
+  code_tools: CodeMateIcon,
   notes: NotepadText,
   terminal: SquareTerminal
-}
+} satisfies Record<SidebarAppId, SidebarIconComponent>

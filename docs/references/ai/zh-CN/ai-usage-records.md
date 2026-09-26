@@ -1,3 +1,9 @@
+---
+description: "AI 用量记录"
+sources:
+  - src/main/ai
+---
+
 # AI 用量记录
 
 ## 目标

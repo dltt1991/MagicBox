@@ -1,3 +1,9 @@
+---
+description: "目录树"
+sources:
+  - src/main/services/file
+---
+
 # 目录树
 
 > 中文副本，对应英文原文：[docs/references/file/directory-tree.md](../directory-tree.md)。

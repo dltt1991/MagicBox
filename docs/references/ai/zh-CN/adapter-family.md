@@ -1,3 +1,9 @@
+---
+description: "Adapter Family"
+sources:
+  - src/main/ai
+---
+
 # Adapter Family
 
 ## 是什么

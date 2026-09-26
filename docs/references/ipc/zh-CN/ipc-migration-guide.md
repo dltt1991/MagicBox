@@ -1,3 +1,9 @@
+---
+description: "IpcApi 迁移指南"
+sources:
+  - src/main/ipc
+---
+
 # IpcApi 迁移指南
 
 Stage 0（框架）与传统 IPC 一起发布。迁移是后期工作——多个独立的 PR，一次一个域，直到所有内容都收集完毕并且旧机器退役。

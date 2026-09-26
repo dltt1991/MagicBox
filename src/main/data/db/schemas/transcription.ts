@@ -1,9 +1,10 @@
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
+
 import type {
   TranscriptionBackend,
   TranscriptionSourceType,
   TranscriptionStatus
 } from '@shared/data/types/transcription'
-import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
 
 import { createUpdateTimestamps, uuidPrimaryKeyOrdered } from './_columnHelpers'
 

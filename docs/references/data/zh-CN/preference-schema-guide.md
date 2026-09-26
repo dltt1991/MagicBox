@@ -1,3 +1,9 @@
+---
+description: "Preference Schema 指南"
+sources:
+  - src/main/data
+---
+
 # Preference Schema 指南
 
 > 中文副本，对应英文原文：[docs/references/data/preference-schema-guide.md](../preference-schema-guide.md)。

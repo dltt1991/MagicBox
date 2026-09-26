@@ -3,12 +3,13 @@ import { mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
+import { setupTestDatabase } from '@test-helpers/db'
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
+
 import { application } from '@application'
 import { transcriptionHistoryService } from '@data/services/TranscriptionHistoryService'
 import { BaseService } from '@main/core/lifecycle'
 import { MediaKind } from '@main/services/mediaProtocol'
-import { setupTestDatabase } from '@test-helpers/db'
-import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
 
 import { TranscriptionService } from '../TranscriptionService'
 

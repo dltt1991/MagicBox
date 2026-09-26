@@ -1,3 +1,9 @@
+---
+description: "数据库模式"
+sources:
+  - src/main/data
+---
+
 # 数据库模式
 
 > 中文副本，对应英文原文：[docs/references/data/database-patterns.md](../database-patterns.md)。

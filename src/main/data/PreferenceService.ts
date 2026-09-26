@@ -1,3 +1,7 @@
+import { and, eq } from 'drizzle-orm'
+import { BrowserWindow, type IpcMainInvokeEvent } from 'electron'
+import { isEqual } from 'es-toolkit/compat'
+
 import { application } from '@application'
 import { loggerService } from '@logger'
 import { BaseService, DependsOn, Injectable, ServicePhase } from '@main/core/lifecycle'
@@ -22,9 +26,6 @@ import {
   toBootConfigKey
 } from '@shared/data/preference/preferenceUtils'
 import { IpcChannel } from '@shared/IpcChannel'
-import { and, eq } from 'drizzle-orm'
-import { BrowserWindow, type IpcMainInvokeEvent } from 'electron'
-import { isEqual } from 'es-toolkit/compat'
 
 import { appStateTable } from './db/schemas/appState'
 import { preferenceTable } from './db/schemas/preference'
@@ -401,7 +402,7 @@ export class PreferenceService extends BaseService {
         .getDb()
         .update(preferenceTable)
         .set({
-          value: value as any
+          value: value
         })
         .where(and(eq(preferenceTable.scope, DefaultScope), eq(preferenceTable.key, cacheKey)))
         .run()
@@ -554,8 +555,8 @@ export class PreferenceService extends BaseService {
       for (const { value, route } of items) {
         if (route.store !== 'preference') continue
         const cacheKey = route.key
-        if (!(cacheKey in this.cache) || value === undefined || value === null) {
-          throw new Error(`Preference ${cacheKey} not found in cache or value is undefined or null`)
+        if (!(cacheKey in this.cache) || value === undefined) {
+          throw new Error(`Preference ${cacheKey} not found in cache or value is undefined`)
         }
 
         const oldValue = this.cache[cacheKey]

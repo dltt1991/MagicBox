@@ -1,3 +1,9 @@
+---
+description: "Observability"
+sources:
+  - src/main/ai
+---
+
 # Observability
 
 The `src/main/ai/observability/` subsystem: OTel tracing, the local span

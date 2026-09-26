@@ -1,5 +1,6 @@
-import { ipcApi } from '@renderer/ipc'
 import { useCallback, useEffect, useRef, useState } from 'react'
+
+import { ipcApi } from '@renderer/ipc'
 
 export type TranscriptionDraftSource =
   | { audioPath: string; name: string; sourceType: 'file' }

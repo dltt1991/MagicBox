@@ -1,3 +1,9 @@
+---
+description: "聊天附件"
+sources:
+  - src/main/ai
+---
+
 # 聊天附件
 
 ## 目的

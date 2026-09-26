@@ -1,21 +1,26 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 import type { McpServer } from '@shared/data/types/mcpServer'
 import type { McpServerLogEntry } from '@shared/types/mcp'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const inMemoryServerMock = vi.hoisted(() => ({ connect: vi.fn().mockResolvedValue(undefined) }))
 const createInMemoryMcpServer = vi.hoisted(() => vi.fn().mockResolvedValue(inMemoryServerMock))
 const getBuiltinHttpHeaders = vi.hoisted(() => vi.fn<() => Record<string, string>>(() => ({})))
 const hasInMemoryImplementation = vi.hoisted(() => vi.fn<(name: string) => boolean>(() => true))
+const getResolvedMcpConfig = vi.hoisted(() => vi.fn())
 vi.mock('@main/ai/mcp/servers/factory', () => ({
   createInMemoryMcpServer,
-  getBuiltinRegistryEnv: () => ({}),
+  getBuiltinAutoInstallEnv: () => ({}),
   getBuiltinHttpHeaders,
   hasInMemoryImplementation
 }))
 
 vi.mock('@application', async () => {
   const { mockApplicationFactory } = await import('@test-mocks/main/application')
-  return mockApplicationFactory({} as Record<string, unknown>)
+  return mockApplicationFactory({ McpPackageService: { isReady: true, getResolvedMcpConfig } } as Record<
+    string,
+    unknown
+  >)
 })
 vi.mock('electron', () => ({ net: { fetch: vi.fn() } }))
 vi.mock('@main/utils/shellEnv', () => ({ getShellEnv: async () => ({ PATH: '/shell/bin' }) }))
@@ -38,6 +43,7 @@ class FakeTransport {
 }
 class FakeStdioTransport {
   stderr = { on: vi.fn() }
+  onerror?: (error: Error) => void
   constructor(public params: any) {}
 }
 const sdk = {
@@ -53,7 +59,7 @@ const authProvider = { config: {} } as any
 const create = (config: Partial<McpServer>, extra: Partial<Parameters<typeof createTransport>[0]> = {}) =>
   createTransport({
     sdk,
-    server: { id: 'id', name: 'srv', isActive: true, ...config } as McpServer,
+    server: { id: 'id', name: 'srv', isActive: true, ...config },
     args: [],
     authProvider,
     logger,
@@ -62,7 +68,20 @@ const create = (config: Partial<McpServer>, extra: Partial<Parameters<typeof cre
   })
 
 describe('createTransport', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    getResolvedMcpConfig.mockReturnValue(null)
+  })
+
+  it('honors in-memory and URL precedence even when a command is also configured', async () => {
+    hasInMemoryImplementation.mockReturnValue(true)
+    expect(await create({ type: 'inMemory', command: 'npx', baseUrl: 'https://mcp.example' })).toBe('client-transport')
+    hasInMemoryImplementation.mockReturnValue(false)
+    const remote = await create({ type: 'sse', command: 'npx', baseUrl: 'https://mcp.example' })
+    expect(remote).toBeInstanceOf(FakeTransport)
+    expect(remote).not.toBeInstanceOf(FakeStdioTransport)
+    hasInMemoryImplementation.mockReturnValue(true)
+  })
 
   it('starts an in-process server and hands back its side of the pipe', async () => {
     const transport = await create({ type: 'inMemory', name: '@cherry/memory', env: { MEMORY_FILE_PATH: '/tmp/m' } })
@@ -150,6 +169,25 @@ describe('createTransport', () => {
     expect(transport.params.stderr).toBe('pipe')
   })
 
+  it('uses the resolved DXT command, args, and environment', async () => {
+    getResolvedMcpConfig.mockReturnValue({
+      command: 'npx',
+      args: ['-y', 'resolved-package'],
+      env: { PACKAGE_HOME: '/resolved' }
+    })
+
+    const transport = (await create({
+      type: 'stdio',
+      command: 'manifest-command',
+      dxtPath: '/packages/server'
+    })) as unknown as FakeStdioTransport
+
+    expect(getResolvedMcpConfig).toHaveBeenCalledWith('/packages/server')
+    expect(transport.params.command).toBe('/usr/local/bin/npx')
+    expect(transport.params.args).toEqual(['-y', 'resolved-package'])
+    expect(transport.params.env.PACKAGE_HOME).toBe('/resolved')
+  })
+
   it('forwards stdio stderr to the server log, skipping empty chunks', async () => {
     const entries: McpServerLogEntry[] = []
     const transport = (await create(
@@ -163,6 +201,36 @@ describe('createTransport', () => {
 
     expect(entries).toHaveLength(1)
     expect(entries[0]).toMatchObject({ level: 'stderr', message: 'server crashed', source: 'stdio' })
+  })
+
+  it('forwards the underlying spawn error details to app and server logs', async () => {
+    const entries: McpServerLogEntry[] = []
+    const transport = (await create(
+      { type: 'stdio', command: 'C:\\missing\\uvx.exe' },
+      { onServerLog: (entry) => entries.push(entry) }
+    )) as unknown as FakeStdioTransport
+    const error = Object.assign(new Error('spawn C:\\missing\\uvx.exe ENOENT'), {
+      code: 'ENOENT',
+      errno: -4058,
+      syscall: 'spawn C:\\missing\\uvx.exe',
+      path: 'C:\\missing\\uvx.exe'
+    })
+
+    transport.onerror?.(error)
+
+    expect(logger.error).toHaveBeenCalledWith('Stdio transport error', error, {
+      code: 'ENOENT',
+      errno: -4058,
+      syscall: 'spawn C:\\missing\\uvx.exe',
+      path: 'C:\\missing\\uvx.exe'
+    })
+    expect(entries).toHaveLength(1)
+    expect(entries[0]).toMatchObject({
+      level: 'error',
+      message: expect.stringContaining('code=ENOENT'),
+      data: expect.objectContaining({ code: 'ENOENT', path: 'C:\\missing\\uvx.exe' }),
+      source: 'stdio'
+    })
   })
 
   it('runs an in-memory row we cannot start in-process through the connection it declares', async () => {

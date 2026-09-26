@@ -1,3 +1,9 @@
+---
+description: "AI 参考文档"
+sources:
+  - src/main/ai
+---
+
 # AI 参考文档
 
 这里是 Magic Box v2 AI 管线的中文入口。AI 能力主要运行在主进程中，包括聊天流、智能体循环、翻译、摘要、工具调用、MCP、持久化和渲染端传输。
@@ -80,5 +86,5 @@ src/main/ai/
 
 - [服务生命周期](../../lifecycle/README.md)
 - [数据层](../../data/README.md)
-- [消息系统](../../messaging/message-system.md)
+- [消息系统](../../chat/message-system.md)
 - [窗口管理](../../window-manager/README.md)

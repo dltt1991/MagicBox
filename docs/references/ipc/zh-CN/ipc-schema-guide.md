@@ -1,3 +1,9 @@
+---
+description: "IpcApi 架构指南"
+sources:
+  - src/main/ipc
+---
+
 # IpcApi 架构指南
 
 ## 文件组织

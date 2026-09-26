@@ -3,12 +3,13 @@ import { randomUUID } from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 
+import { type IPty, spawn } from 'node-pty'
+
 import { application } from '@application'
 import { loggerService } from '@logger'
 import { BaseService, Injectable, Phase, ServicePhase } from '@main/core/lifecycle'
 import type { TerminalSessionMetadata } from '@shared/ipc/schemas/terminal'
 import type { WindowId } from '@shared/ipc/types'
-import { type IPty, spawn } from 'node-pty'
 
 const logger = loggerService.withContext('TerminalService')
 const TERMINAL_METADATA_PREFIX = `${String.fromCharCode(0x1b)}]777;cherry;cwd=`

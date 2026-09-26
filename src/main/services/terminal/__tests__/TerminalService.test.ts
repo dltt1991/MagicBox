@@ -1,6 +1,7 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 import { application } from '@application'
 import { BaseService } from '@main/core/lifecycle'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
   spawn,

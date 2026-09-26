@@ -2,8 +2,9 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'no
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 
-import type { TranscriptionRecord } from '@shared/data/types/transcription'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { TranscriptionRecord } from '@shared/data/types/transcription'
 
 const { getMock, getPathMock, removeMock, storeFileMock } = vi.hoisted(() => ({
   getMock: vi.fn(),

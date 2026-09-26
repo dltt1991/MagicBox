@@ -1,3 +1,5 @@
+import * as z from 'zod'
+
 import { transcriptionHistoryService } from '@data/services/TranscriptionHistoryService'
 import {
   CreateTranscriptionPromptTemplateSchema,
@@ -9,7 +11,6 @@ import {
 } from '@shared/data/api/schemas/transcription'
 import type { HandlersFor } from '@shared/data/api/types'
 import type { TranscriptionRecord, TranscriptionRecordView } from '@shared/data/types/transcription'
-import * as z from 'zod'
 
 const IdParamsSchema = z.strictObject({ id: z.string().min(1) })
 

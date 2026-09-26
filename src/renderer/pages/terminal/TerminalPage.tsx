@@ -1,4 +1,25 @@
 import {
+  ArrowDownAZ,
+  ArrowLeft,
+  ArrowUp,
+  ArrowUpAZ,
+  Eye,
+  EyeOff,
+  FolderOpen,
+  FolderTree,
+  Grid2X2,
+  List,
+  Pin,
+  PinOff,
+  Search,
+  Star,
+  X
+} from 'lucide-react'
+import type { ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+
+import {
   Button,
   Dialog,
   DialogContent,
@@ -31,26 +52,6 @@ import { normalizeFilePreviewPath } from '@renderer/utils/filePreview'
 import { isWin } from '@renderer/utils/platform'
 import { AbsoluteFilePathSchema } from '@shared/types/file'
 import { createFilePathHandle } from '@shared/utils/file'
-import {
-  ArrowDownAZ,
-  ArrowLeft,
-  ArrowUp,
-  ArrowUpAZ,
-  Eye,
-  EyeOff,
-  FolderOpen,
-  FolderTree,
-  Grid2X2,
-  List,
-  Pin,
-  PinOff,
-  Search,
-  Star,
-  X
-} from 'lucide-react'
-import type { ReactNode } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
 import { TerminalPane } from './components/TerminalPane'
 import { TerminalTabs } from './components/TerminalTabs'
@@ -66,13 +67,7 @@ import {
   type TerminalQuickCommand
 } from './lib/terminalQuickCommands'
 import { getTerminalTheme, TERMINAL_THEMES } from './lib/terminalThemes'
-import type {
-  WorkspaceIconSize,
-  WorkspaceSortDirection,
-  WorkspaceSortKey,
-  WorkspaceTreeItem,
-  WorkspaceViewMode
-} from './lib/workspaceTree'
+import type { WorkspaceIconSize, WorkspaceSortKey, WorkspaceTreeItem } from './lib/workspaceTree'
 
 type WorkspaceClipboard = {
   operation: 'copy' | 'move'
@@ -1151,7 +1146,7 @@ export default function TerminalPage() {
         <NormalTooltip content={sortDirectionLabel}>
           <Button
             aria-label={sortDirectionLabel}
-            onClick={() => setSortDirection((sortDirection === 'asc' ? 'desc' : 'asc') as WorkspaceSortDirection)}
+            onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
             size="icon-sm"
             title={sortDirectionLabel}
             variant="ghost">
@@ -1191,7 +1186,7 @@ export default function TerminalPage() {
                 contextMenuActions={workspaceContextMenuActions}
                 expandedTreePaths={expandedWorkspaceTreePaths}
                 favoriteDirectoryPaths={favoriteDirectories}
-                iconSize={iconSize as WorkspaceIconSize}
+                iconSize={iconSize}
                 includeHidden={includeHidden}
                 onExpandedTreePathsChange={setExpandedWorkspaceTreePaths}
                 onHighlightPath={setSelectedWorkspacePath}
@@ -1213,9 +1208,9 @@ export default function TerminalPage() {
                 restoreFocusKey={workspaceFocusRestoreKey}
                 refreshKey={workspaceRefreshKey}
                 selectedPath={selectedWorkspacePath}
-                sortDirection={sortDirection as WorkspaceSortDirection}
-                sortKey={sortKey as WorkspaceSortKey}
-                viewMode={viewMode as WorkspaceViewMode}
+                sortDirection={sortDirection}
+                sortKey={sortKey}
+                viewMode={viewMode}
               />
             </div>
           </ResizablePanel>
@@ -1230,7 +1225,7 @@ export default function TerminalPage() {
             contextMenuActions={workspaceContextMenuActions}
             expandedTreePaths={expandedWorkspaceTreePaths}
             favoriteDirectoryPaths={favoriteDirectories}
-            iconSize={iconSize as WorkspaceIconSize}
+            iconSize={iconSize}
             includeHidden={includeHidden}
             onExpandedTreePathsChange={setExpandedWorkspaceTreePaths}
             onHighlightPath={setSelectedWorkspacePath}
@@ -1252,9 +1247,9 @@ export default function TerminalPage() {
             restoreFocusKey={workspaceFocusRestoreKey}
             refreshKey={workspaceRefreshKey}
             selectedPath={selectedWorkspacePath}
-            sortDirection={sortDirection as WorkspaceSortDirection}
-            sortKey={sortKey as WorkspaceSortKey}
-            viewMode={viewMode as WorkspaceViewMode}
+            sortDirection={sortDirection}
+            sortKey={sortKey}
+            viewMode={viewMode}
           />
         </div>
       )}

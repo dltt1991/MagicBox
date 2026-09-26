@@ -1,3 +1,9 @@
+---
+description: "数据库测试"
+sources:
+  - tests
+---
+
 # 数据库测试
 
 > 中文副本，对应英文原文：[docs/references/testing/database-testing.md](../database-testing.md)。

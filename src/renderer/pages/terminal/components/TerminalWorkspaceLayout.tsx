@@ -1,12 +1,12 @@
-import { Button, NormalTooltip, ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@cherrystudio/ui'
-import { cn } from '@cherrystudio/ui/lib/utils'
-import { usePersistCache } from '@data/hooks/useCache'
 import { Maximize2, Minimize2, PanelBottom, PanelRight, PanelRightClose, PanelRightOpen } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { Button, NormalTooltip, ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@cherrystudio/ui'
+import { cn } from '@cherrystudio/ui/lib/utils'
+import { usePersistCache } from '@data/hooks/useCache'
+
 export type TerminalWorkspaceLayoutMode = 'right' | 'bottom' | 'terminal-maximized' | 'files-maximized'
-type StoredTerminalWorkspaceLayoutMode = TerminalWorkspaceLayoutMode | 'preview-maximized'
 type TerminalWorkspaceSplitMode = 'right' | 'bottom'
 
 interface TerminalWorkspaceLayoutProps {
@@ -59,8 +59,7 @@ export function TerminalWorkspaceLayout({ fileManager, terminal, onShowTerminal 
   const isTerminalVisible = terminalVisible !== false
   const splitMode = mode === 'terminal-maximized' ? lastSplitMode : normalizeSplitMode(mode)
   const isTerminalMaximized = mode === 'terminal-maximized'
-  const setMode = (nextMode: TerminalWorkspaceLayoutMode) =>
-    setStoredMode(nextMode as StoredTerminalWorkspaceLayoutMode)
+  const setMode = (nextMode: TerminalWorkspaceLayoutMode) => setStoredMode(nextMode)
   const rememberSplitMode = () => {
     if (mode === 'right' || mode === 'bottom') setStoredLastSplitMode(mode)
   }

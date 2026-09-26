@@ -1,6 +1,12 @@
+---
+description: "聊天约定"
+sources:
+  - src/renderer/components/chat
+---
+
 # 聊天约定
 
-> 中文副本，对应英文原文：[docs/references/chat/conventions.md](../conventions.md)。
+> 中文文档。
 
 记录聊天域的命名、状态、消息组织和交互约定。
 

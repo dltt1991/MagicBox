@@ -1,3 +1,9 @@
+---
+description: "指挥系统"
+sources:
+  - src/renderer/components/command
+---
+
 # 指挥系统
 
 命令系统是**应用程序可以做什么**的唯一事实来源

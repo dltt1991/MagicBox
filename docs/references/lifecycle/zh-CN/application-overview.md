@@ -1,3 +1,9 @@
+---
+description: "应用概述"
+sources:
+  - src/main/core/lifecycle
+---
+
 # 应用概述
 
 应用程序是将生命周期系统和 Electron 应用程序联系在一起的顶级编排器。它是运行时引导、关闭和控制服务的单一入口点。

@@ -1,3 +1,9 @@
+---
+description: "前端测试"
+sources:
+  - tests
+---
+
 # 前端测试
 
 > 中文副本，对应英文原文：[docs/references/testing/frontend-testing.md](../frontend-testing.md)。

@@ -1,5 +1,6 @@
-import { TreeDir, TreeDirRoot, TreeFile } from '@shared/utils/file'
 import { describe, expect, it } from 'vitest'
+
+import { TreeDir, TreeDirRoot, TreeFile } from '@shared/utils/file'
 
 import { projectWorkspaceTree } from '../workspaceTree'
 

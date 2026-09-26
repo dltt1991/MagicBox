@@ -1,3 +1,9 @@
+---
+description: "BinaryManager 参考"
+sources:
+  - src/main/services/binaryManager
+---
+
 # BinaryManager 参考
 
 `BinaryManager` 是生命周期服务，通过 [mise](https://mise.jdx.dev) 获取和管理第三方 CLI 二进制文件。它拥有自定义工具注册表和围绕 mise 的 filesystem/process 编排；域服务拥有执行、配置和健康逻辑。

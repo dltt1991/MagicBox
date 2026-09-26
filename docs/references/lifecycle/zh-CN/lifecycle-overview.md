@@ -1,3 +1,9 @@
+---
+description: "生命周期概述"
+sources:
+  - src/main/core/lifecycle
+---
+
 # 生命周期概述
 
 IoC 容器 + 具有分阶段引导和并行初始化的服务生命周期管理。

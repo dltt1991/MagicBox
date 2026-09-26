@@ -1,3 +1,10 @@
+import { useLocation, useNavigate, useSearch } from '@tanstack/react-router'
+import { debounce } from 'es-toolkit/compat'
+import { BadgeQuestionMark, Briefcase, Bug, Building2, Github, Globe, Mail, MessageSquareText, Rss } from 'lucide-react'
+import type { FC, ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+
 import {
   Badge,
   Button,
@@ -10,7 +17,8 @@ import {
 } from '@cherrystudio/ui'
 import { usePreference } from '@data/hooks/usePreference'
 import AppLogo from '@renderer/assets/images/logo.png'
-import { FeedbackDialog } from '@renderer/components/feedback/FeedbackDialog'
+import { DoctorPopup } from '@renderer/components/doctor'
+import FeedbackDialog from '@renderer/components/feedback/FeedbackDialog'
 import LogoAvatar from '@renderer/components/icons/LogoAvatar'
 import IndicatorLight from '@renderer/components/IndicatorLight'
 import { ReleaseNotes } from '@renderer/components/ReleaseNotes'
@@ -28,26 +36,10 @@ import { useTheme } from '@renderer/hooks/useTheme'
 import i18n from '@renderer/i18n/resolver'
 import { ipcApi } from '@renderer/ipc'
 import { toast } from '@renderer/services/toast'
+import { openExternalWebsite } from '@renderer/services/website'
 import { cn } from '@renderer/utils/style'
 import { UpgradeChannel } from '@shared/data/preference/preferenceTypes'
-import { debounce } from 'es-toolkit/compat'
-import {
-  BadgeQuestionMark,
-  Briefcase,
-  Bug,
-  Building2,
-  FileArchive,
-  Github,
-  Globe,
-  Mail,
-  MessageSquareText,
-  Rss
-} from 'lucide-react'
-import type { FC, ReactNode } from 'react'
-import { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
-
-import DiagnosticBundleDialog from './DiagnosticBundleDialog'
+import { DOCTOR_OPEN_QUERY_PARAM, type DoctorPanel } from '@shared/utils/doctor'
 
 const ABOUT_FEATURES_AVAILABLE = false
 
@@ -58,13 +50,37 @@ const AboutSettings: FC = () => {
 
   const [version, setVersion] = useState('')
   const [isPortable, setIsPortable] = useState(false)
-  const [isDiagnosticDialogOpen, setIsDiagnosticDialogOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
   const { t } = useTranslation()
   const { theme } = useTheme()
   const showReleases = useOpenReleaseNotes()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const search = useSearch({ strict: false }) as Partial<Record<typeof DOCTOR_OPEN_QUERY_PARAM, DoctorPanel>>
+  const consumedDoctorPanelRef = useRef<DoctorPanel | undefined>(undefined)
 
   const { appUpdateState, updateAppUpdateState } = useAppUpdateState()
+
+  useEffect(() => {
+    const initialPanel = search[DOCTOR_OPEN_QUERY_PARAM]
+    if (!initialPanel) {
+      consumedDoctorPanelRef.current = undefined
+      return
+    }
+    if (consumedDoctorPanelRef.current === initialPanel) return
+    consumedDoctorPanelRef.current = initialPanel
+
+    void navigate({
+      to: location.pathname,
+      search: (previous: Record<string, unknown>) => {
+        const remaining = { ...previous }
+        delete remaining[DOCTOR_OPEN_QUERY_PARAM]
+        return remaining
+      },
+      replace: true
+    })
+    void DoctorPopup.show({ initialPanel })
+  }, [location.pathname, navigate, search])
 
   const onCheckUpdate = debounce(
     async () => {
@@ -93,7 +109,7 @@ const AboutSettings: FC = () => {
   )
 
   const onOpenWebsite = (url: string) => {
-    void ipcApi.request('system.shell.open_website', url)
+    void openExternalWebsite(url)
   }
 
   const mailto = async () => {
@@ -182,10 +198,7 @@ const AboutSettings: FC = () => {
 
   const onOpenDocs = () => {
     const isChinese = i18n.language.startsWith('zh')
-    void ipcApi.request(
-      'system.shell.open_website',
-      isChinese ? 'https://docs.cherry-ai.com/' : 'https://docs.cherry-ai.com/docs/en-us'
-    )
+    void openExternalWebsite(isChinese ? 'https://docs.cherry-ai.com/' : 'https://docs.cherry-ai.com/docs/en-us')
   }
 
   const testChannels = getAvailableTestChannels()
@@ -201,7 +214,7 @@ const AboutSettings: FC = () => {
     <SettingsContentColumn theme={theme}>
       <SettingGroup theme={theme}>
         <SettingTitle className="gap-2">
-          <span className="font-semibold text-[15px]">{t('settings.about.title')}</span>
+          <span className="text-[15px] font-semibold">{t('settings.about.title')}</span>
           <button
             type="button"
             aria-label={t('settings.about.repository')}
@@ -281,7 +294,7 @@ const AboutSettings: FC = () => {
         {!isPortable && (
           <>
             <Divider className="my-3" />
-            <SettingRow className="gap-3">
+            <SettingRow id="setting-about-auto-check-update" className="scroll-mt-6 gap-3">
               <SettingRowTitle>{t('settings.general.auto_check_update.title')}</SettingRowTitle>
               <Switch
                 checked={autoCheckUpdate}
@@ -406,15 +419,6 @@ const AboutSettings: FC = () => {
         />
         <Divider className="my-3" />
         <AboutActionRow
-          icon={<FileArchive className="size-4.5" />}
-          title={t('settings.about.diagnostics.entry.title')}
-          actionLabel={t('settings.about.diagnostics.entry.button')}
-          onAction={() => setIsDiagnosticDialogOpen(true)}
-          disabled={aboutActionsDisabled}
-          disabledActionLabel={unavailableLabel}
-        />
-        <Divider className="my-3" />
-        <AboutActionRow
           icon={<Bug className="size-4.5" />}
           title={t('settings.about.debug.title')}
           actionLabel={t('settings.about.debug.open')}
@@ -423,11 +427,6 @@ const AboutSettings: FC = () => {
           disabledActionLabel={unavailableLabel}
         />
       </SettingGroup>
-      <DiagnosticBundleDialog
-        appVersion={version}
-        open={isDiagnosticDialogOpen}
-        onOpenChange={setIsDiagnosticDialogOpen}
-      />
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </SettingsContentColumn>
   )
@@ -438,6 +437,7 @@ function AboutActionRow({
   disabled = false,
   disabledActionLabel,
   icon,
+  id,
   onAction,
   title
 }: {
@@ -445,11 +445,12 @@ function AboutActionRow({
   disabled?: boolean
   disabledActionLabel?: string
   icon: ReactNode
+  id?: string
   onAction: () => void | Promise<void>
   title: string
 }) {
   return (
-    <SettingRow className="gap-3">
+    <SettingRow id={id} className={id ? 'scroll-mt-6 gap-3' : 'gap-3'}>
       <SettingRowTitle className="gap-2.5">
         {icon}
         {title}

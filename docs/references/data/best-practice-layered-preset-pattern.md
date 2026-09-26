@@ -1,3 +1,9 @@
+---
+description: "Layered Preset Configuration Pattern"
+sources:
+  - src/main/data
+---
+
 # Layered Preset Configuration Pattern
 
 The Layered Preset Configuration pattern is the recommended approach for handling scenarios where you have predefined configurations that users can partially customize.
@@ -100,7 +106,7 @@ Use `.ts` files (not JSON):
 
 ### Naming Convention
 
-File names follow the repo-wide [`naming-conventions.md` §3.2](../naming-conventions.md) `camelCase` rule for `.ts` source — `presets/` is not one of the `kebab-case` exceptions (those are limited to `packages/ui/` and `src/renderer/routes/`).
+File names follow the repo-wide [`naming-conventions.md` §3.2](../architecture/naming-conventions.md) `camelCase` rule for `.ts` source — `presets/` is not one of the `kebab-case` exceptions (those are limited to `packages/ui/` and `src/renderer/routes/`).
 
 | Element       | Convention                          | Example                      |
 | ------------- | ----------------------------------- | ---------------------------- |

@@ -1,3 +1,9 @@
+---
+description: "DataApi 类型"
+sources:
+  - src/main/data
+---
+
 # DataApi 类型
 
 > 中文副本，对应英文原文：[docs/references/data/api-types.md](../api-types.md)。

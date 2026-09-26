@@ -1,3 +1,9 @@
+---
+description: "数据排序指南"
+sources:
+  - src/main/data
+---
+
 # 数据排序指南
 
 > 中文副本，对应英文原文：[docs/references/data/data-ordering-guide.md](../data-ordering-guide.md)。

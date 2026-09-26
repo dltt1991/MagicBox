@@ -1,3 +1,9 @@
+---
+description: "消息树"
+sources:
+  - src/renderer/components/chat
+---
+
 # 消息树
 
 > 中文副本，对应英文原文：[docs/references/chat/message-tree.md](../message-tree.md)。

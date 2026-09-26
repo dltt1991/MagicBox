@@ -31,7 +31,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-更完整的环境说明见 [开发环境配置](docs/guides/development.md)。
+更完整的环境说明见 [开发环境配置](docs/contrib/development.md)。
 
 ## 常用命令
 
@@ -66,11 +66,11 @@ pnpm build:linux      # 构建 Linux 安装包
 
 - [文档索引](docs/README.md)
 - [贡献指南](docs/guides/contributing.md)
-- [分支策略](docs/guides/branching-strategy.md)
-- [架构总览](docs/references/architecture-overview.md)
-- [渲染进程架构](docs/references/renderer-architecture.md)
-- [主进程架构](docs/references/main-process-architecture.md)
-- [共享层架构](docs/references/shared-layer-architecture.md)
+- [分支策略](docs/contrib/branching-strategy.md)
+- [架构总览](docs/references/architecture/README.md)
+- [渲染进程架构](docs/references/architecture/renderer.md)
+- [主进程架构](docs/references/architecture/main-process.md)
+- [共享层架构](docs/references/architecture/shared-layer.md)
 - [数据系统](docs/references/data/README.md)
 - [IPC 指南](docs/references/ipc/README.md)
 - [生命周期系统](docs/references/lifecycle/README.md)

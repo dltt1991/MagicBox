@@ -1,50 +1,36 @@
-import type * as FileDispatchModule from '@main/services/file/internal/dispatch'
-import { fileRequestSchemas } from '@shared/ipc/schemas/file'
-import type { AbsoluteFilePath } from '@shared/types/file'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type * as FileDispatchModule from '@main/services/file/internal/dispatch'
+import type * as FileUtilsModule from '@main/utils/file'
+import { fileRequestSchemas } from '@shared/ipc/schemas/file'
+import type { InputFor } from '@shared/ipc/types'
+import type { AbsoluteFilePath } from '@shared/types/file'
 
 const {
   appGetMock,
   assertOutsideManagedStorageMutationMock,
-  copyMock,
+  copyNewMock,
   getMetadataByPathMock,
-  mkdirMock,
-  openMock,
   readByPathMock,
   readChunkByPathMock,
-  renamePathMock,
-  rmMock,
   safeOpenMock,
   showPathInFolderMock,
-  statMock,
-  trashItemMock,
   writeIfUnchangedByPathMock
 } = vi.hoisted(() => ({
   appGetMock: vi.fn(),
   assertOutsideManagedStorageMutationMock: vi.fn(),
-  copyMock: vi.fn(),
+  copyNewMock: vi.fn(),
   getMetadataByPathMock: vi.fn(),
-  mkdirMock: vi.fn(),
-  openMock: vi.fn(),
   readByPathMock: vi.fn(),
   readChunkByPathMock: vi.fn(),
-  renamePathMock: vi.fn(),
-  rmMock: vi.fn(),
   safeOpenMock: vi.fn(),
   showPathInFolderMock: vi.fn(),
-  statMock: vi.fn(),
-  trashItemMock: vi.fn(),
   writeIfUnchangedByPathMock: vi.fn()
 }))
 vi.mock('@application', () => ({ application: { get: appGetMock } }))
-vi.mock('electron', () => ({ shell: { trashItem: trashItemMock } }))
-vi.mock('node:fs/promises', () => ({
-  cp: copyMock,
-  mkdir: mkdirMock,
-  open: openMock,
-  rename: renamePathMock,
-  rm: rmMock,
-  stat: statMock
+vi.mock('@main/utils/file', async (importOriginal) => ({
+  ...(await importOriginal<typeof FileUtilsModule>()),
+  copyNew: copyNewMock
 }))
 vi.mock('@main/services/file', async () => {
   // dispatchHandle is exercised for real so these tests cover handle routing.
@@ -110,8 +96,8 @@ const fileManager = {
   batchGetDanglingStates: vi.fn(),
   batchTrash: vi.fn(),
   batchRestore: vi.fn(),
-  batchPermanentDelete: vi.fn(),
-  emptyTrash: vi.fn(),
+  batchPermanentDeleteFromTrash: vi.fn(),
+  batchRemoveFromLibrary: vi.fn(),
   rename: vi.fn(),
   readChunk: vi.fn(),
   open: vi.fn(),
@@ -132,7 +118,6 @@ const windowManager = { getWindow: vi.fn() }
 
 beforeEach(() => {
   vi.clearAllMocks()
-  openMock.mockResolvedValue({ close: vi.fn() })
   windowManager.getWindow.mockImplementation((id: string) =>
     id === 'win-1' ? { webContents: senderWebContents } : undefined
   )
@@ -146,7 +131,6 @@ beforeEach(() => {
 
 const ctx = { senderId: null }
 const windowCtx = { senderId: 'win-1' }
-const missingPathError = () => Object.assign(new Error('missing'), { code: 'ENOENT' })
 
 describe('fileHandlers', () => {
   it('does not expose the pure-SQL content-hash lookup through IpcApi', () => {
@@ -169,6 +153,50 @@ describe('fileHandlers', () => {
     ).resolves.toBe(result)
 
     expect(readByPathMock).toHaveBeenCalledWith('/tmp/report.md', { encoding: 'binary' })
+  })
+
+  it('forwards withContentHash to the path read so the hash binds to the returned bytes', async () => {
+    const result = {
+      content: new Uint8Array([3, 4]),
+      mime: 'text/markdown',
+      version,
+      contentHash: 'xxh3-64:00000000deadbeef'
+    }
+    readByPathMock.mockResolvedValueOnce(result)
+
+    await expect(
+      fileHandlers['file.read'](
+        {
+          handle: { kind: 'path', path: '/tmp/report.md' as AbsoluteFilePath },
+          options: { mode: 'full', encoding: 'binary', withContentHash: true }
+        },
+        ctx
+      )
+    ).resolves.toBe(result)
+
+    expect(readByPathMock).toHaveBeenCalledWith('/tmp/report.md', { encoding: 'binary', withContentHash: true })
+  })
+
+  it('pairs withContentHash exclusively with path-handle full reads in the derived input type', () => {
+    const valid: InputFor<'file.read'> = {
+      handle: { kind: 'path', path: '/tmp/report.md' as AbsoluteFilePath },
+      options: { mode: 'full', encoding: 'binary', withContentHash: true }
+    }
+    const entryHash = {
+      handle: { kind: 'entry', entryId: ids[0] },
+      options: { mode: 'full', encoding: 'binary', withContentHash: true }
+    } as const
+    const rangeHash = {
+      handle: { kind: 'path', path: '/tmp/report.md' as AbsoluteFilePath },
+      options: { mode: 'range', offset: 0, length: 1, withContentHash: true }
+    } as const
+    // @ts-expect-error — an entry handle cannot request a bound content hash
+    const invalidEntry: InputFor<'file.read'> = entryHash
+    // @ts-expect-error — range reads cannot request a bound content hash
+    const invalidRange: InputFor<'file.read'> = rangeHash
+    void valid
+    void invalidEntry
+    void invalidRange
   })
 
   it('reads binary content from a managed entry through the generic FileHandle route', async () => {
@@ -272,6 +300,50 @@ describe('fileHandlers', () => {
     })
   })
 
+  it('copy guards only the destination and delegates to the create-only primitive', async () => {
+    await fileHandlers['file.copy'](
+      {
+        sourcePath: '/data/Files/a.png' as AbsoluteFilePath,
+        destPath: '/tmp/exports/assets/img-a.png' as AbsoluteFilePath
+      },
+      windowCtx
+    )
+
+    // source lives in managed storage legitimately — guarding it would refuse attachments
+    expect(assertOutsideManagedStorageMutationMock).toHaveBeenCalledTimes(1)
+    expect(assertOutsideManagedStorageMutationMock).toHaveBeenCalledWith('/tmp/exports/assets/img-a.png')
+    expect(copyNewMock).toHaveBeenCalledWith('/data/Files/a.png', '/tmp/exports/assets/img-a.png')
+  })
+
+  it('copy refuses a trusted-but-unmanaged sender before touching anything', async () => {
+    await expect(
+      fileHandlers['file.copy'](
+        {
+          sourcePath: '/data/Files/a.png' as AbsoluteFilePath,
+          destPath: '/tmp/exports/assets/img-a.png' as AbsoluteFilePath
+        },
+        ctx
+      )
+    ).rejects.toThrow('requires a managed window sender')
+    expect(assertOutsideManagedStorageMutationMock).not.toHaveBeenCalled()
+    expect(copyNewMock).not.toHaveBeenCalled()
+  })
+
+  it('copy does not touch the filesystem when the destination guard rejects', async () => {
+    assertOutsideManagedStorageMutationMock.mockRejectedValueOnce(new Error('managed storage'))
+
+    await expect(
+      fileHandlers['file.copy'](
+        {
+          sourcePath: '/data/Files/a.png' as AbsoluteFilePath,
+          destPath: '/data/Files/inside-managed.png' as AbsoluteFilePath
+        },
+        windowCtx
+      )
+    ).rejects.toThrow('managed storage')
+    expect(copyNewMock).not.toHaveBeenCalled()
+  })
+
   it('batch_get_metadata dispatches FileHandle items inside the IPC adapter', async () => {
     const items = [
       { key: ids[0], handle: { kind: 'entry' as const, entryId: ids[0] } },
@@ -338,22 +410,22 @@ describe('fileHandlers', () => {
     fileManager.batchGetDanglingStates.mockResolvedValue({ [ids[0]]: 'present' })
     fileManager.batchTrash.mockResolvedValue(batchResult)
     fileManager.batchRestore.mockResolvedValue(batchResult)
-    fileManager.batchPermanentDelete.mockResolvedValue(batchResult)
-    fileManager.emptyTrash.mockResolvedValue(batchResult)
+    fileManager.batchPermanentDeleteFromTrash.mockResolvedValue(batchResult)
+    fileManager.batchRemoveFromLibrary.mockResolvedValue(batchResult)
 
     await expect(fileHandlers['file.batch_get_dangling_states']({ ids }, ctx)).resolves.toEqual({
       [ids[0]]: 'present'
     })
     await expect(fileHandlers['file.batch_trash']({ ids }, ctx)).resolves.toBe(batchResult)
     await expect(fileHandlers['file.batch_restore']({ ids }, ctx)).resolves.toBe(batchResult)
-    await expect(fileHandlers['file.batch_permanent_delete']({ ids }, ctx)).resolves.toBe(batchResult)
-    await expect(fileHandlers['file.empty_trash'](undefined, ctx)).resolves.toBe(batchResult)
+    await expect(fileHandlers['file.batch_permanent_delete_from_trash']({ ids }, ctx)).resolves.toBe(batchResult)
+    await expect(fileHandlers['file.batch_remove_from_library']({ ids }, ctx)).resolves.toBe(batchResult)
 
     expect(fileManager.batchGetDanglingStates).toHaveBeenCalledWith({ ids })
     expect(fileManager.batchTrash).toHaveBeenCalledWith(ids)
     expect(fileManager.batchRestore).toHaveBeenCalledWith(ids)
-    expect(fileManager.batchPermanentDelete).toHaveBeenCalledWith(ids)
-    expect(fileManager.emptyTrash).toHaveBeenCalled()
+    expect(fileManager.batchPermanentDeleteFromTrash).toHaveBeenCalledWith(ids)
+    expect(fileManager.batchRemoveFromLibrary).toHaveBeenCalledWith(ids)
   })
 
   it('delegates single-entry commands to FileManager', async () => {
@@ -417,293 +489,7 @@ describe('fileHandlers', () => {
     expect(fileManager.batchCreateInternalEntries).toHaveBeenCalledWith(items)
   })
 
-  it('stats physical paths for workspace properties', async () => {
-    statMock.mockResolvedValueOnce({
-      birthtimeMs: 11,
-      isDirectory: () => true,
-      isFile: () => false,
-      mtimeMs: 22,
-      size: 4096
-    })
-
-    await expect(fileHandlers['file.path_stat']({ path: '/workspace/src' as AbsoluteFilePath }, ctx)).resolves.toEqual({
-      path: '/workspace/src',
-      name: 'src',
-      kind: 'directory',
-      size: 4096,
-      createdAt: 11,
-      modifiedAt: 22
-    })
-  })
-
-  it('creates workspace folders and files under the requested parent', async () => {
-    statMock
-      .mockRejectedValueOnce(missingPathError())
-      .mockResolvedValueOnce({
-        birthtimeMs: 1,
-        isDirectory: () => true,
-        isFile: () => false,
-        mtimeMs: 2,
-        size: 64
-      })
-      .mockRejectedValueOnce(missingPathError())
-      .mockResolvedValueOnce({
-        birthtimeMs: 3,
-        isDirectory: () => false,
-        isFile: () => true,
-        mtimeMs: 4,
-        size: 0
-      })
-
-    await expect(
-      fileHandlers['file.path_create_directory'](
-        { parentPath: '/workspace' as AbsoluteFilePath, name: 'New Folder' },
-        ctx
-      )
-    ).resolves.toMatchObject({ path: '/workspace/New Folder', kind: 'directory' })
-    await expect(
-      fileHandlers['file.path_create_file']({ parentPath: '/workspace' as AbsoluteFilePath, name: 'notes.md' }, ctx)
-    ).resolves.toMatchObject({ path: '/workspace/notes.md', kind: 'file' })
-
-    expect(mkdirMock).toHaveBeenCalledWith('/workspace/New Folder')
-    expect(openMock).toHaveBeenCalledWith('/workspace/notes.md', 'wx')
-  })
-
-  it('creates workspace folders and files with an available name when the requested name exists', async () => {
-    statMock
-      .mockResolvedValueOnce({
-        birthtimeMs: 1,
-        isDirectory: () => false,
-        isFile: () => true,
-        mtimeMs: 2,
-        size: 10
-      })
-      .mockRejectedValueOnce(missingPathError())
-      .mockResolvedValueOnce({
-        birthtimeMs: 3,
-        isDirectory: () => false,
-        isFile: () => true,
-        mtimeMs: 4,
-        size: 11
-      })
-      .mockResolvedValueOnce({
-        birthtimeMs: 5,
-        isDirectory: () => true,
-        isFile: () => false,
-        mtimeMs: 6,
-        size: 64
-      })
-      .mockRejectedValueOnce(missingPathError())
-      .mockResolvedValueOnce({
-        birthtimeMs: 7,
-        isDirectory: () => true,
-        isFile: () => false,
-        mtimeMs: 8,
-        size: 64
-      })
-
-    await expect(
-      fileHandlers['file.path_create_file']({ parentPath: '/workspace' as AbsoluteFilePath, name: 'notes.md' }, ctx)
-    ).resolves.toMatchObject({ path: '/workspace/notes 2.md', kind: 'file' })
-    await expect(
-      fileHandlers['file.path_create_directory']({ parentPath: '/workspace' as AbsoluteFilePath, name: 'Drafts' }, ctx)
-    ).resolves.toMatchObject({ path: '/workspace/Drafts 2', kind: 'directory' })
-
-    expect(openMock).toHaveBeenCalledWith('/workspace/notes 2.md', 'wx')
-    expect(mkdirMock).toHaveBeenCalledWith('/workspace/Drafts 2')
-  })
-
-  it('renames and trashes physical workspace items', async () => {
-    statMock.mockResolvedValueOnce({
-      birthtimeMs: 5,
-      isDirectory: () => false,
-      isFile: () => true,
-      mtimeMs: 6,
-      size: 10
-    })
-
-    await expect(
-      fileHandlers['file.path_rename']({ path: '/workspace/old.md' as AbsoluteFilePath, newName: 'new.md' }, ctx)
-    ).resolves.toMatchObject({ path: '/workspace/new.md', name: 'new.md' })
-    await fileHandlers['file.path_trash']({ path: '/workspace/new.md' as AbsoluteFilePath }, ctx)
-
-    expect(renamePathMock).toHaveBeenCalledWith('/workspace/old.md', '/workspace/new.md')
-    expect(trashItemMock).toHaveBeenCalledWith('/workspace/new.md')
-  })
-
-  it('returns a paste conflict before copying or moving over an existing target', async () => {
-    statMock
-      .mockResolvedValueOnce({
-        birthtimeMs: 1,
-        isDirectory: () => false,
-        isFile: () => true,
-        mtimeMs: 2,
-        size: 10
-      })
-      .mockRejectedValueOnce(missingPathError())
-
-    await expect(
-      fileHandlers['file.path_paste'](
-        {
-          sourcePath: '/workspace/a.md' as AbsoluteFilePath,
-          targetDirectory: '/workspace/dest' as AbsoluteFilePath,
-          operation: 'copy',
-          conflict: 'prompt'
-        },
-        ctx
-      )
-    ).resolves.toEqual({
-      status: 'conflict',
-      existingPath: '/workspace/dest/a.md',
-      suggestedName: 'a copy.md'
-    })
-    expect(copyMock).not.toHaveBeenCalled()
-    expect(renamePathMock).not.toHaveBeenCalled()
-  })
-
-  it('suggests the next available paste name when the first copy name already exists', async () => {
-    statMock
-      .mockResolvedValueOnce({
-        birthtimeMs: 1,
-        isDirectory: () => false,
-        isFile: () => true,
-        mtimeMs: 2,
-        size: 10
-      })
-      .mockResolvedValueOnce({
-        birthtimeMs: 3,
-        isDirectory: () => false,
-        isFile: () => true,
-        mtimeMs: 4,
-        size: 10
-      })
-      .mockRejectedValueOnce(missingPathError())
-
-    await expect(
-      fileHandlers['file.path_paste'](
-        {
-          sourcePath: '/workspace/a.md' as AbsoluteFilePath,
-          targetDirectory: '/workspace/dest' as AbsoluteFilePath,
-          operation: 'copy',
-          conflict: 'prompt'
-        },
-        ctx
-      )
-    ).resolves.toEqual({
-      status: 'conflict',
-      existingPath: '/workspace/dest/a.md',
-      suggestedName: 'a copy 2.md'
-    })
-  })
-
-  it('returns a new paste conflict when the requested renamed target also exists', async () => {
-    statMock
-      .mockResolvedValueOnce({
-        birthtimeMs: 1,
-        isDirectory: () => false,
-        isFile: () => true,
-        mtimeMs: 2,
-        size: 10
-      })
-      .mockRejectedValueOnce(missingPathError())
-
-    await expect(
-      fileHandlers['file.path_paste'](
-        {
-          sourcePath: '/workspace/a.md' as AbsoluteFilePath,
-          targetDirectory: '/workspace/dest' as AbsoluteFilePath,
-          operation: 'copy',
-          conflict: 'rename',
-          newName: 'a copy.md'
-        },
-        ctx
-      )
-    ).resolves.toEqual({
-      status: 'conflict',
-      existingPath: '/workspace/dest/a copy.md',
-      suggestedName: 'a copy 2.md'
-    })
-    expect(copyMock).not.toHaveBeenCalled()
-  })
-
-  it('pastes workspace items with rename and replace conflict policies', async () => {
-    statMock
-      .mockRejectedValueOnce(missingPathError())
-      .mockResolvedValueOnce({
-        birthtimeMs: 3,
-        isDirectory: () => true,
-        isFile: () => false,
-        mtimeMs: 4,
-        size: 64
-      })
-      .mockResolvedValueOnce({
-        birthtimeMs: 5,
-        isDirectory: () => true,
-        isFile: () => false,
-        mtimeMs: 6,
-        size: 64
-      })
-
-    await expect(
-      fileHandlers['file.path_paste'](
-        {
-          sourcePath: '/workspace/a.md' as AbsoluteFilePath,
-          targetDirectory: '/workspace/dest' as AbsoluteFilePath,
-          operation: 'copy',
-          conflict: 'rename',
-          newName: 'a copy.md'
-        },
-        ctx
-      )
-    ).resolves.toEqual({ status: 'completed', path: '/workspace/dest/a copy.md' })
-    await expect(
-      fileHandlers['file.path_paste'](
-        {
-          sourcePath: '/workspace/src' as AbsoluteFilePath,
-          targetDirectory: '/workspace/dest' as AbsoluteFilePath,
-          operation: 'move',
-          conflict: 'replace'
-        },
-        ctx
-      )
-    ).resolves.toEqual({ status: 'completed', path: '/workspace/dest/src' })
-
-    expect(copyMock).toHaveBeenCalledWith('/workspace/a.md', '/workspace/dest/a copy.md', {
-      force: false,
-      recursive: true,
-      errorOnExist: true
-    })
-    expect(rmMock).toHaveBeenCalledWith('/workspace/dest/src', { recursive: true, force: true })
-    expect(renamePathMock).toHaveBeenCalledWith('/workspace/src', '/workspace/dest/src')
-  })
-
-  it('does not delete the source when replacing the same physical path', async () => {
-    statMock.mockResolvedValueOnce({
-      birthtimeMs: 1,
-      isDirectory: () => false,
-      isFile: () => true,
-      mtimeMs: 2,
-      size: 10
-    })
-
-    await expect(
-      fileHandlers['file.path_paste'](
-        {
-          sourcePath: '/workspace/a.md' as AbsoluteFilePath,
-          targetDirectory: '/workspace' as AbsoluteFilePath,
-          operation: 'move',
-          conflict: 'replace'
-        },
-        ctx
-      )
-    ).resolves.toEqual({ status: 'completed', path: '/workspace/a.md' })
-
-    expect(rmMock).not.toHaveBeenCalled()
-    expect(copyMock).not.toHaveBeenCalled()
-    expect(renamePathMock).not.toHaveBeenCalled()
-  })
-
-  it('creates a directory tree addressed to the caller window WebContents', async () => {
+  it('creates a directory tree owned by the caller window', async () => {
     const created = { treeId: 't-1', revision: 0, snapshot: { kind: 'directory', path: '/tmp/ws', basename: 'ws' } }
     directoryTreeManager.create.mockResolvedValueOnce(created)
 
@@ -711,7 +497,11 @@ describe('fileHandlers', () => {
       fileHandlers['file.tree.create']({ rootPath: '/tmp/ws' as AbsoluteFilePath, options: { maxDepth: 1 } }, windowCtx)
     ).resolves.toBe(created)
 
-    expect(directoryTreeManager.create).toHaveBeenCalledWith(senderWebContents, '/tmp/ws', { maxDepth: 1 })
+    expect(directoryTreeManager.create).toHaveBeenCalledWith(
+      { windowId: 'win-1', webContents: senderWebContents },
+      '/tmp/ws',
+      { maxDepth: 1 }
+    )
   })
 
   it('refuses to create a directory tree for a sender that is not a managed window', async () => {

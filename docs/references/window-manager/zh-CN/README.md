@@ -1,3 +1,9 @@
+---
+description: "窗口管理器参考"
+sources:
+  - src/main/core/window
+---
+
 # 窗口管理器参考
 
 这是 Magic Box 的 WindowManager 文档的主要入口点。 WindowManager 是一个生命周期管理的服务，它创建、跟踪和重用 Electron `BrowserWindow` 实例，具有三种生命周期模式（默认/单例/池化）、IPC 广播、域服务事件挂钩和弹性池重用。

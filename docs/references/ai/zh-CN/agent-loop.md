@@ -1,3 +1,9 @@
+---
+description: "Agent Loop"
+sources:
+  - src/main/ai
+---
+
 # Agent Loop
 
 ## 是什么

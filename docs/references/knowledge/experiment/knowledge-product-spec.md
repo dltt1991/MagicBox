@@ -1,3 +1,9 @@
+---
+description: "Magic Box Knowledge Base — Product Spec"
+sources:
+  - src/main/features/knowledge
+---
+
 # Magic Box Knowledge Base — Product Spec
 
 ## 1. Positioning

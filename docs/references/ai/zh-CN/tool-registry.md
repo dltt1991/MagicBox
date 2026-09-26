@@ -1,3 +1,9 @@
+---
+description: "工具注册表"
+sources:
+  - src/main/ai
+---
+
 # 工具注册表
 
 ## 模型

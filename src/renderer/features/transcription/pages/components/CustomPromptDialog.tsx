@@ -1,3 +1,6 @@
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+
 import {
   Button,
   Dialog,
@@ -8,8 +11,6 @@ import {
   Label,
   Textarea
 } from '@cherrystudio/ui'
-import { useEffect, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
 type CustomPromptDialogProps = {
   initialPrompt: string

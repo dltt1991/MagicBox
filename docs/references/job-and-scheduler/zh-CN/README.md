@@ -1,3 +1,9 @@
+---
+description: "作业和调度程序"
+sources:
+  - src/main/core/job
+---
+
 # 作业和调度程序
 
 Magic Box统一后台作业+时间调度系统。

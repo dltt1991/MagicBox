@@ -36,7 +36,7 @@ cp .env.example .env
 pnpm dev
 ```
 
-For detailed setup notes, see [Development Setup](docs/guides/development.md).
+For detailed setup notes, see [Development Setup](docs/contrib/development.md).
 
 ## Common Commands
 
@@ -72,11 +72,11 @@ commands are intentionally scoped for CI or package publishing.
 
 - [Documentation Index](docs/README.md)
 - [Contributing Guide](docs/guides/contributing.md)
-- [Branching Strategy](docs/guides/branching-strategy.md)
-- [Architecture Overview](docs/references/architecture-overview.md)
-- [Renderer Architecture](docs/references/renderer-architecture.md)
-- [Main Process Architecture](docs/references/main-process-architecture.md)
-- [Shared Layer Architecture](docs/references/shared-layer-architecture.md)
+- [Branching Strategy](docs/contrib/branching-strategy.md)
+- [Architecture Overview](docs/references/architecture/README.md)
+- [Renderer Architecture](docs/references/architecture/renderer.md)
+- [Main Process Architecture](docs/references/architecture/main-process.md)
+- [Shared Layer Architecture](docs/references/architecture/shared-layer.md)
 - [Data System](docs/references/data/README.md)
 - [IPC Guide](docs/references/ipc/README.md)
 - [Lifecycle System](docs/references/lifecycle/README.md)

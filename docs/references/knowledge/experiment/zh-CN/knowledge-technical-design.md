@@ -1,3 +1,9 @@
+---
+description: "知识库技术设计"
+sources:
+  - src/main/features/knowledge
+---
+
 # 知识库技术设计
 
 > 中文副本，对应英文原文：[docs/references/knowledge/experiment/knowledge-technical-design.md](../knowledge-technical-design.md)。

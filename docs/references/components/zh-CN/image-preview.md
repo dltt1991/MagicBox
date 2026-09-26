@@ -1,3 +1,9 @@
+---
+description: "图片预览"
+sources:
+  - src/renderer/components
+---
+
 # 图片预览
 
 > 中文副本，对应英文原文：[docs/references/components/image-preview.md](../image-preview.md)。

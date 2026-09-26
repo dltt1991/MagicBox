@@ -1,3 +1,9 @@
+---
+description: "核心架构"
+sources:
+  - src/main/ai
+---
+
 # 核心架构
 
 ## 总览

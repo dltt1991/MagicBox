@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto'
 
+import type { UIMessageChunk } from 'ai'
+
 import { application } from '@application'
 import { transcriptionHistoryService } from '@data/services/TranscriptionHistoryService'
 import type { UniqueModelId } from '@shared/data/types/model'
 import type { TranscriptionSegment } from '@shared/data/types/transcription'
-import type { UIMessageChunk } from 'ai'
 
 export class TranscriptionOrganizer {
   async organize(input: {
@@ -37,8 +38,9 @@ async function generateOrganizationText(
   signal: AbortSignal
 ): Promise<{ text: string }> {
   try {
+    const conversationId = `transcription-organization-${randomUUID()}`
     const stream = await application.get('AiService').streamText({
-      chatId: `transcription-organization-${randomUUID()}`,
+      conversation: { id: conversationId, topicId: conversationId },
       trigger: 'submit-message',
       uniqueModelId: modelId as UniqueModelId,
       messages: [{ id: 'organization-user', role: 'user', parts: [{ type: 'text', text: prompt }] }],

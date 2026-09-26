@@ -1,3 +1,9 @@
+---
+description: "WindowManager API 参考"
+sources:
+  - src/main/core/window
+---
+
 # WindowManager API 参考
 
 `WindowManager` 的完整方法参考。有关每个组的概念指导和何时使用，请参阅[使用指南](./window-manager-usage.md)。

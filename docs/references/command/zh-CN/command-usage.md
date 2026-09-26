@@ -1,3 +1,9 @@
+---
+description: "命令系统——使用"
+sources:
+  - src/renderer/components/command
+---
+
 # 命令系统——使用
 
 渲染器和主代码如何使用命令系统。对于模型和

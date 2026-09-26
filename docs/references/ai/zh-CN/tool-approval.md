@@ -1,3 +1,9 @@
+---
+description: "工具审批"
+sources:
+  - src/main/ai
+---
+
 # 工具审批
 
 ## 模型

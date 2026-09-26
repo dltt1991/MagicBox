@@ -1,3 +1,9 @@
+---
+description: "Agent Prompt 分层"
+sources:
+  - src/main/ai
+---
+
 # Agent Prompt 分层
 
 ## 目的

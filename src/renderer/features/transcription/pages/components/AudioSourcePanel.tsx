@@ -1,7 +1,8 @@
-import { Button, Input } from '@cherrystudio/ui'
 import { Pause, Play, Square } from 'lucide-react'
 import type { RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import { Button, Input } from '@cherrystudio/ui'
 
 import type { AudioRecorderStatus } from '../hooks/useAudioRecorder'
 

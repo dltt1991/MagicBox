@@ -1,6 +1,7 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
+
 import { ipcApi, useIpcOn } from '@renderer/ipc'
 import type { TerminalSessionMetadata } from '@shared/ipc/schemas/terminal'
-import { useCallback, useEffect, useRef, useState } from 'react'
 
 const DEFAULT_TERMINAL_SIZE = { cols: 80, rows: 24 }
 const MAX_BUFFER_CHUNKS = 200

@@ -1,3 +1,9 @@
+---
+description: "Cache 概览"
+sources:
+  - src/main/data
+---
+
 # Cache 概览
 
 > 中文副本，对应英文原文：[docs/references/data/cache-overview.md](../cache-overview.md)。

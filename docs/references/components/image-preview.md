@@ -1,3 +1,9 @@
+---
+description: "Image Preview Components"
+sources:
+  - src/renderer/components
+---
+
 # Image Preview Components
 
 ## Overview

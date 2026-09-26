@@ -61,16 +61,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function hasOpaqueReplaySignature(value: unknown): boolean {
-  if (!isRecord(value)) return false
-  return Object.keys(value).some((key) => key.toLowerCase().includes('signature'))
+  return isRecord(value) && Object.keys(value).some((key) => key.toLowerCase().includes('signature'))
 }
 
-/**
- * Composer rebuilds text parts instead of patching them in place. A valid Magic Box composer
- * snapshot on a single text part can be rebuilt from the edited draft, and empty references carry
- * no content. Every other metadata field is opaque state that cannot be safely attached to changed
- * text (for example, Gemini thought signatures), so editing must be rejected instead of dropping it.
- */
 function hasUnroundtrippableTextMetadata(part: TextMessagePart, textPartCount: number): boolean {
   const providerMetadata: unknown = part.providerMetadata
   if (providerMetadata === undefined) return false
@@ -92,12 +85,10 @@ function hasUnroundtrippableTextMetadata(part: TextMessagePart, textPartCount: n
       if (!Array.isArray(value) || value.length > 0) return true
       continue
     }
-
     if (key === 'composer') {
       if (value !== undefined && (textPartCount !== 1 || !readCherryMeta(part)?.composer)) return true
       continue
     }
-
     return true
   }
 
@@ -105,10 +96,16 @@ function hasUnroundtrippableTextMetadata(part: TextMessagePart, textPartCount: n
 }
 
 /**
- * Assistant edits rebuild text/file parts as one Composer draft. They are safe only when those
- * editable parts form one contiguous run and already follow the order Composer writes back:
- * text first, then files. Text parts with metadata Composer cannot reproduce are rejected instead
- * of silently losing provider state. Translation parts are derived and removed when the edit is saved.
+ * Assistant edits rebuild text parts as one Composer draft, with an anchor chip holding the place
+ * of every `reasoning`/tool part between them, so saving moves text only. The edited text becomes
+ * the message's new content and its next-turn context; provider-derived metadata (item ids,
+ * citations, composer snapshots, thought signatures) is dropped with the old text, and translation
+ * parts are derived and removed.
+ *
+ * Files are the one part kind with no anchor: Composer rebuilds attachments from its own state and
+ * re-emits them as a single run directly after the edited text. So every `file` part must already
+ * sit exactly there — a file anywhere else (`file → text`, `text → tool → file`) would be moved by
+ * a save, and stays non-editable.
  */
 export function canEditAssistantMessageParts(parts: CherryMessagePart[]): boolean {
   let hasText = false
@@ -119,21 +116,18 @@ export function canEditAssistantMessageParts(parts: CherryMessagePart[]): boolea
 
   for (const part of parts) {
     if (part.type === 'data-translation') continue
-
     if (part.type === 'text') {
       if (editableRunEnded || hasFile || hasUnroundtrippableTextMetadata(part, textPartCount)) return false
       hasText ||= part.text.trim().length > 0
       hasEditablePart = true
       continue
     }
-
     if (part.type === 'file') {
       if (editableRunEnded) return false
       hasEditablePart = true
       hasFile = true
       continue
     }
-
     if (hasEditablePart) editableRunEnded = true
   }
 

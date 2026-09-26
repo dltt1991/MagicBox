@@ -1,5 +1,6 @@
-import { transcriptionHistoryService } from '@data/services/TranscriptionHistoryService'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { transcriptionHistoryService } from '@data/services/TranscriptionHistoryService'
 
 import { transcriptionHandlers } from '../transcription'
 
@@ -27,7 +28,7 @@ describe('transcription handlers', () => {
     const query = { limit: 10, status: 'ready' as const }
     const record = { id: '019606a0-0000-7000-8000-000000000001', title: 'Renamed task' }
     const result = { id: '019606a0-0000-7000-8000-000000000002' }
-    vi.mocked(transcriptionHistoryService.listRecords).mockReturnValue({ items: [], total: 0 } as never)
+    vi.mocked(transcriptionHistoryService.listRecords).mockReturnValue({ items: [], total: 0 })
     vi.mocked(transcriptionHistoryService.updateRecord).mockReturnValue(record as never)
     vi.mocked(transcriptionHistoryService.updateResultText).mockReturnValue(result as never)
 
@@ -35,11 +36,11 @@ describe('transcription handlers', () => {
     await transcriptionHandlers['/transcription/records/:id'].PATCH({
       params: { id: '019606a0-0000-7000-8000-000000000001' },
       body: { title: 'Renamed task' }
-    } as never)
+    })
     await transcriptionHandlers['/transcription/records/:id/result'].PATCH({
       params: { id: '019606a0-0000-7000-8000-000000000001' },
       body: { transcriptText: 'Text', segments: [] }
-    } as never)
+    })
 
     expect(transcriptionHistoryService.listRecords).toHaveBeenCalledWith(query)
     expect(transcriptionHistoryService.updateRecord).toHaveBeenCalledWith('019606a0-0000-7000-8000-000000000001', {
@@ -68,8 +69,8 @@ describe('transcription handlers', () => {
       createdAt: '2026-08-26T00:00:00.000Z',
       updatedAt: '2026-08-26T00:00:00.000Z'
     }
-    vi.mocked(transcriptionHistoryService.listRecords).mockReturnValue({ items: [managed], total: 1 } as never)
-    vi.mocked(transcriptionHistoryService.getRecord).mockReturnValue({ record: managed, result: null } as never)
+    vi.mocked(transcriptionHistoryService.listRecords).mockReturnValue({ items: [managed], total: 1 })
+    vi.mocked(transcriptionHistoryService.getRecord).mockReturnValue({ record: managed, result: null })
 
     await expect(
       transcriptionHandlers['/transcription/records'].GET({ query: { limit: 20 } } as never)
@@ -77,7 +78,7 @@ describe('transcription handlers', () => {
       items: [{ audioPath: null, audioManaged: true }]
     })
     await expect(
-      transcriptionHandlers['/transcription/records/:id'].GET({ params: { id: managed.id } } as never)
+      transcriptionHandlers['/transcription/records/:id'].GET({ params: { id: managed.id } })
     ).resolves.toMatchObject({ record: { audioPath: null, audioManaged: true }, result: null })
   })
 })

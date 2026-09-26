@@ -2,16 +2,17 @@ import { randomUUID } from 'node:crypto'
 import { createReadStream, promises as fs } from 'node:fs'
 import { Readable } from 'node:stream'
 
-import { loggerService } from '@logger'
-import { BaseService, Injectable, Phase, ServicePhase } from '@main/core/lifecycle'
 import { protocol } from 'electron'
 
+import { loggerService } from '@logger'
+import { BaseService, Injectable, Phase, ServicePhase } from '@main/core/lifecycle'
+
+import type { MediaKind } from './types'
 import {
   CHERRY_MEDIA_SCHEME,
   type FileMediaEntry,
   MEDIA_KINDS,
   type MediaEntry,
-  MediaKind,
   type MediaKind as MediaKindValue
 } from './types'
 

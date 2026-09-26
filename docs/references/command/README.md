@@ -1,3 +1,9 @@
+---
+description: "Command System"
+sources:
+  - src/renderer/components/command
+---
+
 # Command System
 
 The command system is the single source of truth for **what the app can do** and

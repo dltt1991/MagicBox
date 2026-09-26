@@ -1,3 +1,9 @@
+---
+description: "DataApi 设计指南"
+sources:
+  - src/main/data
+---
+
 # DataApi 设计指南
 
 > 中文副本，对应英文原文：[docs/references/data/api-design-guidelines.md](../api-design-guidelines.md)。

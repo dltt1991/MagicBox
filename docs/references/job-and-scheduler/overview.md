@@ -1,3 +1,9 @@
+---
+description: "Job & Scheduler — Architecture Overview"
+sources:
+  - src/main/core/job
+---
+
 # Job & Scheduler — Architecture Overview
 
 Two independent main-process lifecycle services:

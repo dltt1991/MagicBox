@@ -1,3 +1,9 @@
+---
+description: "生命周期和应用程序参考"
+sources:
+  - src/main/core/lifecycle
+---
+
 # 生命周期和应用程序参考
 
 这是 Magic Box 服务生命周期和应用程序编排文档的主要入口点。生命周期系统提供IoC容器管理、分阶段引导和服务生命周期控制。

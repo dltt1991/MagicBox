@@ -1,3 +1,9 @@
+---
+description: "流管理器"
+sources:
+  - src/main/ai
+---
+
 # 流管理器
 
 ## 职责

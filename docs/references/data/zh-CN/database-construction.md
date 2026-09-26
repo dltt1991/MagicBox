@@ -1,3 +1,9 @@
+---
+description: "数据库构造"
+sources:
+  - src/main/data
+---
+
 # 数据库构造
 
 > 中文副本，对应英文原文：[docs/references/data/database-construction.md](../database-construction.md)。

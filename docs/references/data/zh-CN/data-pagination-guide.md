@@ -1,3 +1,9 @@
+---
+description: "数据分页指南"
+sources:
+  - src/main/data
+---
+
 # 数据分页指南
 
 > 中文副本，对应英文原文：[docs/references/data/data-pagination-guide.md](../data-pagination-guide.md)。

@@ -1,3 +1,9 @@
+---
+description: "BootConfig 概览"
+sources:
+  - src/main/data
+---
+
 # BootConfig 概览
 
 > 中文副本，对应英文原文：[docs/references/data/boot-config-overview.md](../boot-config-overview.md)。

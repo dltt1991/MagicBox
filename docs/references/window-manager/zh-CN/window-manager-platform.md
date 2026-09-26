@@ -1,3 +1,9 @@
+---
+description: "窗口平台配置"
+sources:
+  - src/main/core/window
+---
+
 # 窗口平台配置
 
 WindowManager 将每个窗口的配置分为三个正交层：

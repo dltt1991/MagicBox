@@ -1,3 +1,9 @@
+---
+description: "迁移清单"
+sources:
+  - src/main/core/job
+---
+
 # 迁移清单
 
 将现有服务（KnowledgeRuntime/FileProcessing/代理任务/心跳）迁移到统一的 JobManager 时，请使用此清单。每个迁移都是一个单独的项目 - 该文档是每个迁移中应用的每个处理程序规则。

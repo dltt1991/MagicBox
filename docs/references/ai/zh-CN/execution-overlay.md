@@ -1,3 +1,9 @@
+---
+description: "执行 Overlay"
+sources:
+  - src/main/ai
+---
+
 # 执行 Overlay
 
 ## 目的

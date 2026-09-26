@@ -1,9 +1,10 @@
-import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@cherrystudio/ui'
-import type { TranscriptionLanguage } from '@shared/data/types/transcription'
-import type { TranscriptionBackendConfig } from '@shared/ipc/schemas/transcription'
 import { Download, Plus } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import { Button, Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@cherrystudio/ui'
+import type { TranscriptionLanguage } from '@shared/data/types/transcription'
+import type { TranscriptionBackendConfig } from '@shared/ipc/schemas/transcription'
 
 type SourceMode = 'recording' | 'file'
 

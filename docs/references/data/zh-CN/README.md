@@ -1,3 +1,9 @@
+---
+description: "数据系统参考"
+sources:
+  - src/main/data
+---
+
 # 数据系统参考
 
 > 中文副本，对应英文原文：[docs/references/data/README.md](../README.md)。

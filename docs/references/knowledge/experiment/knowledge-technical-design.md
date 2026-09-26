@@ -1,3 +1,9 @@
+---
+description: "Magic Box Knowledge Base — Technical Design"
+sources:
+  - src/main/features/knowledge
+---
+
 # Magic Box Knowledge Base — Technical Design
 
 ## 1. Scope

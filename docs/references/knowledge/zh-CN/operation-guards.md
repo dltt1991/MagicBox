@@ -1,3 +1,9 @@
+---
+description: "知识库操作 Guard"
+sources:
+  - src/main/features/knowledge
+---
+
 # 知识库操作 Guard
 
 > 中文副本，对应英文原文：[docs/references/knowledge/operation-guards.md](../operation-guards.md)。

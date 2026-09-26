@@ -1,3 +1,9 @@
+---
+description: "窗口迁移指南"
+sources:
+  - src/main/core/window
+---
+
 # 窗口迁移指南
 
 如何将现有窗口从直接 `BrowserWindow` 创建迁移到 WindowManager。

@@ -1,3 +1,9 @@
+---
+description: "窗口管理器使用指南"
+sources:
+  - src/main/core/window
+---
+
 # 窗口管理器使用指南
 
 从消费者代码中使用 WindowManager 的实用指南。有关架构上下文，请参阅[概述](./window-manager-overview.md)。有关完整方法参考，请参阅 [API 参考](./window-manager-api-reference.md)。

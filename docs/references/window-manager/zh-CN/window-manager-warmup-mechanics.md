@@ -1,3 +1,9 @@
+---
+description: "热身机制"
+sources:
+  - src/main/core/window
+---
+
 # 热身机制
 
 用于单例和池化生命周期的共享预热状态机：空闲队列、GC 周期、预热策略和 `WindowManager_Reused` IPC 合约。

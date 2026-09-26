@@ -1,3 +1,9 @@
+---
+description: "生命周期使用指南"
+sources:
+  - src/main/core/lifecycle
+---
+
 # 生命周期使用指南
 
 使用生命周期系统的实用指南。有关架构详细信息，请参阅[生命周期概述](./lifecycle-overview.md)。要决定是否使用生命周期，请参阅[决策指南](./lifecycle-decision-guide.md)。

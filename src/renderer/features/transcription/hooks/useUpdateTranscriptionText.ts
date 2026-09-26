@@ -1,6 +1,7 @@
+import { useCallback } from 'react'
+
 import { useMutation } from '@data/hooks/useDataApi'
 import type { UpdateTranscriptionTextDto } from '@shared/data/api/schemas/transcription'
-import { useCallback } from 'react'
 
 export function useUpdateTranscriptionText(recordId: string) {
   const {

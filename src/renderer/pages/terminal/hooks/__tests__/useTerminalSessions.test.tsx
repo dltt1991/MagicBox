@@ -1,6 +1,7 @@
-import type { TerminalSessionMetadata } from '@shared/ipc/schemas/terminal'
 import { act, renderHook } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { TerminalSessionMetadata } from '@shared/ipc/schemas/terminal'
 
 const mocks = vi.hoisted(() => ({
   request: vi.fn(),

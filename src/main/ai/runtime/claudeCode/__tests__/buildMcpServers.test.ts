@@ -7,10 +7,11 @@
 import type * as NodeFs from 'node:fs'
 import path from 'node:path'
 
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 import type * as KnowledgeLookup from '@main/ai/tools/knowledgeLookup'
 import type { AgentEntity } from '@shared/data/api/schemas/agents'
 import type { AgentSessionEntity } from '@shared/data/api/schemas/agentSessions'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
   mockGetAgent,
@@ -62,6 +63,10 @@ vi.mock('@application', async () => {
     ...module,
     application: {
       ...module.application,
+      get: (name: string) =>
+        name === 'AgentSessionRuntimeService'
+          ? { getTurnTrustedNotifyChannels: () => undefined }
+          : module.application.get(name),
       getPath: mockGetPath
     }
   }
@@ -94,7 +99,7 @@ vi.mock('@main/ai/mcp/servers/AssistantFileToolsServer', () => ({
 }))
 
 vi.mock('@data/services/AgentChannelService', () => ({
-  agentChannelService: { listChannels: vi.fn().mockResolvedValue([]) }
+  agentChannelService: { findBySessionId: vi.fn(() => null), listChannels: vi.fn().mockResolvedValue([]) }
 }))
 
 vi.mock('@data/services/AgentService', () => ({
@@ -435,12 +440,14 @@ describe('buildMcpServers', () => {
 })
 
 describe('prepareClaudeCodeWorkspaceDirectory', () => {
+  const managedRoot = path.resolve('/tmp/managed-workspaces')
+
   beforeEach(() => {
     mockGetPathStatus.mockReset()
     mockMkdir.mockReset()
     mockRealpath.mockReset()
     mockRealpath.mockImplementation(async (targetPath: string) => targetPath)
-    mockGetPath.mockReturnValue('/tmp/managed-workspaces')
+    mockGetPath.mockReturnValue(managedRoot)
     mockEnsureManagedDirectory.mockImplementation(async (root: string, target: string) => {
       const [resolvedRoot, resolvedTarget] = await Promise.all([mockRealpath(root), mockRealpath(target)])
       const relative = path.relative(resolvedRoot, resolvedTarget)
@@ -462,7 +469,7 @@ describe('prepareClaudeCodeWorkspaceDirectory', () => {
   })
 
   it('creates a missing system workspace before asserting it', async () => {
-    const workspacePath = '/tmp/managed-workspaces/sess-workspace'
+    const workspacePath = path.join(managedRoot, 'sess-workspace')
     mockGetPathStatus.mockResolvedValueOnce({ ok: true, kind: 'directory' })
     mockMkdir.mockResolvedValueOnce(undefined)
 
@@ -481,10 +488,10 @@ describe('prepareClaudeCodeWorkspaceDirectory', () => {
   })
 
   it('rejects system workspace symlinks that resolve outside the managed root', async () => {
-    const workspacePath = '/tmp/managed-workspaces/sess-link'
+    const workspacePath = path.join(managedRoot, 'sess-link')
     mockRealpath.mockImplementation(async (targetPath: string) => {
-      if (targetPath === '/tmp/managed-workspaces') return '/tmp/managed-workspaces'
-      if (targetPath === workspacePath) return '/tmp/outside-workspace'
+      if (targetPath === managedRoot) return managedRoot
+      if (targetPath === workspacePath) return path.resolve('/tmp/outside-workspace')
       return targetPath
     })
 

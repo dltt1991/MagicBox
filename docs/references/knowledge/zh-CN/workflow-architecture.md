@@ -1,3 +1,9 @@
+---
+description: "知识库工作流架构"
+sources:
+  - src/main/features/knowledge
+---
+
 # 知识库工作流架构
 
 > 中文副本，对应英文原文：[docs/references/knowledge/workflow-architecture.md](../workflow-architecture.md)。

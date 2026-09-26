@@ -1,7 +1,8 @@
-import { transcriptionRecordTable, transcriptionResultTable } from '@data/db/schemas/transcription'
-import { transcriptionHistoryService } from '@data/services/TranscriptionHistoryService'
 import { setupTestDatabase } from '@test-helpers/db'
 import { describe, expect, it } from 'vitest'
+
+import { transcriptionRecordTable, transcriptionResultTable } from '@data/db/schemas/transcription'
+import { transcriptionHistoryService } from '@data/services/TranscriptionHistoryService'
 
 describe('TranscriptionHistoryService', () => {
   const dbh = setupTestDatabase()

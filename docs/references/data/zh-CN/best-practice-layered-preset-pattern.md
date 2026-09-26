@@ -1,3 +1,9 @@
+---
+description: "分层预设模式最佳实践"
+sources:
+  - src/main/data
+---
+
 # 分层预设模式最佳实践
 
 > 中文副本，对应英文原文：[docs/references/data/best-practice-layered-preset-pattern.md](../best-practice-layered-preset-pattern.md)。

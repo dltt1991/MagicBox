@@ -1,3 +1,9 @@
+---
+description: "Cache 使用指南"
+sources:
+  - src/main/data
+---
+
 # Cache 使用指南
 
 > 中文副本，对应英文原文：[docs/references/data/cache-usage.md](../cache-usage.md)。

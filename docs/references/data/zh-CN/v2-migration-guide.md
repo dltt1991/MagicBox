@@ -1,3 +1,9 @@
+---
+description: "v2 数据迁移指南"
+sources:
+  - src/main/data
+---
+
 # v2 数据迁移指南
 
 > 中文副本，对应英文原文：[docs/references/data/v2-migration-guide.md](../v2-migration-guide.md)。

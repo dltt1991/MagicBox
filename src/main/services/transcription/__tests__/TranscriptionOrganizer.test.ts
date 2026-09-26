@@ -1,5 +1,6 @@
-import { application } from '@application'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { application } from '@application'
 
 const { updateOrganizationResultMock } = vi.hoisted(() => ({ updateOrganizationResultMock: vi.fn() }))
 vi.mock('@data/services/TranscriptionHistoryService', () => ({

@@ -1,14 +1,15 @@
-import type { AbsoluteFilePath } from '@shared/types/file'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { AbsoluteFilePath } from '@shared/types/file'
 
 const mocks = vi.hoisted(() => {
   type Handler = (...args: unknown[]) => void
 
   const watchers: Array<{
-    close: ReturnType<typeof vi.fn>
+    close: ReturnType<typeof vi.fn<(...args: any[]) => any>>
     emit: (event: string, ...args: unknown[]) => void
     handlers: Map<string, Handler>
-    removeAllListeners: ReturnType<typeof vi.fn>
+    removeAllListeners: ReturnType<typeof vi.fn<(...args: any[]) => any>>
   }> = []
 
   const watch = vi.fn((_path: string, _options: { usePolling?: boolean }) => {
@@ -71,11 +72,18 @@ describe('DirectoryWatcher error recovery', () => {
     await watcher.close()
   })
 
-  it('asks chokidar to suppress unreadable child path permission errors', async () => {
-    const createDirectoryWatcher = await loadCreateDirectoryWatcher(false)
-    const watcher = createDirectoryWatcher('/notes' as AbsoluteFilePath)
+  it('falls back to polling instead of reporting a fatal error after a native Windows EBUSY', async () => {
+    const createDirectoryWatcher = await loadCreateDirectoryWatcher(true)
+    const watcher = createDirectoryWatcher('C:/Notes' as AbsoluteFilePath)
+    const events: string[] = []
+    watcher.onEvent((event) => events.push(event.kind))
 
-    expect(mocks.watch.mock.calls[0][1]).toMatchObject({ ignorePermissionErrors: true })
+    const error = Object.assign(new Error('EBUSY: resource busy or locked, watch'), { code: 'EBUSY' })
+    mocks.watchers[0].emit('error', error)
+
+    expect(mocks.watch).toHaveBeenCalledTimes(2)
+    expect(mocks.watch.mock.calls[1][1]).toMatchObject({ usePolling: true })
+    expect(events).not.toContain('error')
 
     await watcher.close()
   })

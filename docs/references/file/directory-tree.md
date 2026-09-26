@@ -1,3 +1,9 @@
+---
+description: "Directory Tree Architecture"
+sources:
+  - src/main/services/file
+---
+
 # Directory Tree Architecture
 
 > **SoT scope** — **this document** owns: the `DirectoryTreeBuilder` primitive, the `DirectoryTreeManager` lifecycle service that owns its IPC surface, the renderer-side `useDirectoryTree` hook, the `TreeNode` shape shipped to both processes, and the `.gitignore`-driven scan/watch coordination. The boundary between this primitive and FileManager is stated in [`architecture.md §1.2`](./architecture.md#12-filemanagers-position-within-the-module) — in case of conflict, that document decides positioning, this document decides implementation.

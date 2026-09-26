@@ -1,12 +1,18 @@
 import { existsSync, statSync } from 'node:fs'
 import path from 'node:path'
 
-import { application } from '@application'
-import { InferenceServiceBase } from '@main/ai/inference/InferenceServiceBase'
-import { LOCAL_MODELS } from '@main/ai/inference/localModelCatalog'
-import { DependsOn, Injectable, Phase, ServicePhase } from '@main/core/lifecycle'
-import type { TranscriptionLanguage, TranscriptionSegment } from '@shared/data/types/transcription'
 import { Converter } from 'opencc-js'
+
+import { application } from '@application'
+import {
+  bundleDtype,
+  bundleForCapability,
+  InferenceServiceBase,
+  type WhisperInferenceContract,
+  whisperInferenceProcess
+} from '@main/ai/localModel'
+import { Injectable, Phase, ServicePhase } from '@main/core/lifecycle'
+import type { TranscriptionLanguage, TranscriptionSegment } from '@shared/data/types/transcription'
 
 import { LOCAL_WHISPER_SAMPLE_RATE, preprocessAudio } from './audioPreprocess'
 import { mapSegments } from './segmentMapper'
@@ -24,10 +30,9 @@ export interface LocalWhisperRuntimeDependencies {
 
 @Injectable('LocalWhisperRuntime')
 @ServicePhase(Phase.WhenReady)
-@DependsOn(['ProxyService'])
-export class LocalWhisperRuntime extends InferenceServiceBase {
+export class LocalWhisperRuntime extends InferenceServiceBase<WhisperInferenceContract> {
   constructor(private readonly dependencies: LocalWhisperRuntimeDependencies = {}) {
-    super('whisper')
+    super(whisperInferenceProcess, 'whisper')
   }
 
   async transcribe(
@@ -43,8 +48,9 @@ export class LocalWhisperRuntime extends InferenceServiceBase {
     runtime: 'accelerated' | 'cpu'
   }> {
     const modelPath = application.getPath('feature.transcription.whisper')
+    const bundle = bundleForCapability('whisper')
     const invalidFiles = findInvalidWhisperModelFiles(modelPath)
-    if (invalidFiles.length === LOCAL_MODELS.whisper.files.length) {
+    if (invalidFiles.length === bundle.files.length) {
       throw new Error('Local Whisper model is not downloaded')
     }
     if (invalidFiles.length > 0) {
@@ -69,7 +75,7 @@ export class LocalWhisperRuntime extends InferenceServiceBase {
       language: resolvedLanguage,
       durationMs: Math.round((samples.length / LOCAL_WHISPER_SAMPLE_RATE) * 1000),
       backend: 'local_whisper',
-      runtime: 'cpu'
+      runtime: output.runtime ?? 'cpu'
     }
   }
 
@@ -77,29 +83,30 @@ export class LocalWhisperRuntime extends InferenceServiceBase {
     await this.terminate()
   }
 
-  protected override hardwareAccelerationEnabled(): boolean {
-    return false
-  }
-
   private async transcribeSamples(
     modelPath: string,
     samples: Float32Array,
     language: TranscriptionLanguage,
     signal?: AbortSignal
-  ): Promise<{ text: string; chunks?: Array<{ timestamp: [number, number]; text: string }> }> {
+  ): Promise<{
+    text: string
+    chunks?: Array<{ timestamp: [number, number]; text: string }>
+    runtime?: 'accelerated' | 'cpu'
+  }> {
     if (this.dependencies.transcribeSamples) {
       return await this.dependencies.transcribeSamples(modelPath, samples, language, signal)
     }
-    const result = await this.send(
+    const bundle = bundleForCapability('whisper')
+    return this.run(
+      'transcribe',
       {
-        type: 'whisper.transcribe',
         modelDir: modelPath,
+        dtype: bundleDtype(bundle),
         audio: samples,
         ...(language === 'auto' ? {} : { language })
       },
-      { signal, terminateOnAbort: true }
+      { signal }
     )
-    return { text: result.text ?? '', chunks: result.chunks ?? [] }
   }
 }
 
@@ -112,9 +119,9 @@ function resolveLocalWhisperLanguage(language: TranscriptionLanguage): Transcrip
 }
 
 function findInvalidWhisperModelFiles(modelPath: string): string[] {
-  return LOCAL_MODELS.whisper.files
-    .filter((file) => {
-      const filePath = path.join(modelPath, file.fileName)
+  return bundleForCapability('whisper')
+    .files.filter((file) => {
+      const filePath = path.join(modelPath, file.relPath)
       if (!existsSync(filePath)) return true
       try {
         return statSync(filePath).size < file.minBytes
@@ -122,5 +129,5 @@ function findInvalidWhisperModelFiles(modelPath: string): string[] {
         return true
       }
     })
-    .map((file) => file.fileName)
+    .map((file) => file.relPath)
 }

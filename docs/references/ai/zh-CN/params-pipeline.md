@@ -1,3 +1,9 @@
+---
+description: "参数管线"
+sources:
+  - src/main/ai
+---
+
 # 参数管线
 
 ## 目的

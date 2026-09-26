@@ -1,6 +1,11 @@
+import { Icon } from '@iconify/react'
+import { ChevronDown, ChevronRight, Star } from 'lucide-react'
+import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+
 import { EmptyState } from '@cherrystudio/ui'
 import { cn } from '@cherrystudio/ui/lib/utils'
-import { Icon } from '@iconify/react'
 import { loggerService } from '@logger'
 import { useCommandShortcutPreferences } from '@renderer/hooks/command'
 import { useDirectoryTree } from '@renderer/hooks/useDirectoryTree'
@@ -9,10 +14,6 @@ import { platform } from '@renderer/utils/platform'
 import type { SupportedPlatform } from '@shared/types/command'
 import { resolveCommandByKeybinding } from '@shared/utils/command'
 import { getShortcutBindingFromKeyboardEvent } from '@shared/utils/shortcut'
-import { ChevronDown, ChevronRight, Star } from 'lucide-react'
-import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from 'react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
 import {
   projectWorkspaceTree,

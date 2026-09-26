@@ -1,9 +1,10 @@
+import { useCallback } from 'react'
+
 import { useMutation, useQuery } from '@data/hooks/useDataApi'
 import type {
   CreateTranscriptionPromptTemplateDto,
   UpdateTranscriptionPromptTemplateDto
 } from '@shared/data/api/schemas/transcription'
-import { useCallback } from 'react'
 
 export function useTranscriptionPromptTemplates() {
   const { data, isLoading, error, refetch } = useQuery('/transcription/prompt-templates')

@@ -1,3 +1,9 @@
+---
+description: "IpcApi 概述"
+sources:
+  - src/main/ipc
+---
+
 # IpcApi 概述
 
 ## 范式分裂——为什么 IpcApi 独立于 DataApi

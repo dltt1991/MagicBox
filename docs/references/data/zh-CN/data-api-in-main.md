@@ -1,3 +1,9 @@
+---
+description: "主进程中的 DataApi"
+sources:
+  - src/main/data
+---
+
 # 主进程中的 DataApi
 
 > 中文副本，对应英文原文：[docs/references/data/data-api-in-main.md](../data-api-in-main.md)。

@@ -34,10 +34,10 @@ describe('OrganizationPanel', () => {
   })
 
   it('uses locale keys for built-in templates and preserves custom names', () => {
-    expect(
-      getTemplateDisplayName({ builtIn: true, id: 'builtin-meeting-minutes', name: 'Meeting Minutes' } as never)
-    ).toBe('transcription.template.meeting_minutes')
-    expect(getTemplateDisplayName({ builtIn: false, id: 'custom', name: 'My outline' } as never)).toBe('My outline')
+    expect(getTemplateDisplayName({ builtIn: true, id: 'builtin-meeting-minutes', name: 'Meeting Minutes' })).toBe(
+      'transcription.template.meeting_minutes'
+    )
+    expect(getTemplateDisplayName({ builtIn: false, id: 'custom', name: 'My outline' })).toBe('My outline')
   })
 
   it('disables organization until a transcription result is persisted', () => {

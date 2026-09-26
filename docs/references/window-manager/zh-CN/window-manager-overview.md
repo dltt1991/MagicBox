@@ -1,3 +1,9 @@
+---
+description: "窗口管理器概述"
+sources:
+  - src/main/core/window
+---
+
 # 窗口管理器概述
 
 WindowManager 的体系结构、生命周期模式和事件计时契约。

@@ -1,3 +1,9 @@
+---
+description: "BinaryManager Reference"
+sources:
+  - src/main/services/binaryManager
+---
+
 # BinaryManager Reference
 
 `BinaryManager` is the lifecycle service that acquires and manages third-party CLI binaries through [mise](https://mise.jdx.dev). It owns the custom tool registry and the filesystem/process orchestration around mise; domain services own execution, configuration, and health logic.

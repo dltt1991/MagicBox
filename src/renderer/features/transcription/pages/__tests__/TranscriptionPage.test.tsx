@@ -1,8 +1,9 @@
-import { MODEL_CAPABILITY } from '@shared/data/types/model'
 import { MockUsePreferenceUtils } from '@test-mocks/renderer/usePreference'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { MODEL_CAPABILITY } from '@shared/data/types/model'
 
 const mocks = vi.hoisted(() => ({
   localModel: {
@@ -259,7 +260,7 @@ describe('TranscriptionPage', () => {
   it('delegates history deletion to the transcription owner', async () => {
     const request = vi.fn().mockResolvedValue(undefined)
 
-    await deleteHistoryRecord({ id: 'record-1' } as never, false, request)
+    await deleteHistoryRecord({ id: 'record-1' }, false, request)
 
     expect(request).toHaveBeenCalledWith('transcription.recording.delete', { recordId: 'record-1', deleteAudio: false })
   })

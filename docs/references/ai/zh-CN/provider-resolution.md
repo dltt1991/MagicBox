@@ -1,3 +1,9 @@
+---
+description: "Provider 解析"
+sources:
+  - src/main/ai
+---
+
 # Provider 解析
 
 ## 目的

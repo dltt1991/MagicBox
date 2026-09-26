@@ -1,6 +1,8 @@
 import * as fs from 'node:fs/promises'
 import path from 'node:path'
 
+import { shell } from 'electron'
+
 import { application } from '@application'
 import {
   assertOutsideManagedStorageMutation,
@@ -13,15 +15,14 @@ import {
   showInFolder as showPathInFolder,
   writeIfUnchangedByPath
 } from '@main/services/file'
-import { DirectoryTreeStoppedError, StaleVersionError } from '@main/services/file'
-import { PathStaleVersionError } from '@main/utils/file'
+import { DirectoryTreeStoppedError, StaleVersionError, type TreeOwner } from '@main/services/file'
+import { copyNew, PathStaleVersionError } from '@main/utils/file'
 import type { FileHandle } from '@shared/data/types/file'
 import { fileErrorCodes } from '@shared/ipc/errors/file'
 import { IpcError } from '@shared/ipc/errors/IpcError'
 import type { fileRequestSchemas } from '@shared/ipc/schemas/file'
 import type { IpcHandlersFor, WindowId } from '@shared/ipc/types'
 import { type AbsoluteFilePath, AbsoluteFilePathSchema } from '@shared/types/file'
-import { shell } from 'electron'
 
 const MAX_AVAILABLE_NAME_ATTEMPTS = 10_000
 
@@ -170,10 +171,10 @@ function senderWebContents(senderId: WindowId | null): Electron.WebContents | un
   return senderId == null ? undefined : application.get('WindowManager').getWindow(senderId)?.webContents
 }
 
-function requireSenderWebContents(senderId: WindowId | null): Electron.WebContents {
-  const wc = senderWebContents(senderId)
-  if (!wc) throw new Error('file.tree.create requires a managed window sender')
-  return wc
+function requireManagedSender(senderId: WindowId | null): TreeOwner {
+  const webContents = senderWebContents(senderId)
+  if (senderId == null || !webContents) throw new Error('file.tree.create requires a managed window sender')
+  return { windowId: senderId, webContents }
 }
 
 /**
@@ -193,7 +194,11 @@ export const fileHandlers: IpcHandlersFor<typeof fileRequestSchemas> = {
     return dispatchHandle(
       handle as FileHandle,
       (entryId) => fileManager.read(entryId, { encoding: options.encoding }),
-      (path) => readByPath(path, { encoding: options.encoding })
+      (path) =>
+        readByPath(path, {
+          encoding: options.encoding,
+          ...(options.withContentHash && { withContentHash: true })
+        })
     )
   },
   'file.write_if_unchanged': async ({ handle, data, expectedVersion, expectedContentHash }) => {
@@ -272,9 +277,18 @@ export const fileHandlers: IpcHandlersFor<typeof fileRequestSchemas> = {
     application.get('FileManager').batchCreateInternalEntries(items),
   'file.batch_trash': async ({ ids }) => application.get('FileManager').batchTrash(ids),
   'file.batch_restore': async ({ ids }) => application.get('FileManager').batchRestore(ids),
-  'file.batch_permanent_delete': async ({ ids }) => application.get('FileManager').batchPermanentDelete(ids),
-  'file.empty_trash': async () => application.get('FileManager').emptyTrash(),
+  'file.batch_permanent_delete_from_trash': async ({ ids }) =>
+    application.get('FileManager').batchPermanentDeleteFromTrash(ids),
+  'file.batch_remove_from_library': async ({ ids }) => application.get('FileManager').batchRemoveFromLibrary(ids),
   'file.rename': async ({ id, newName }) => application.get('FileManager').rename(id, newName),
+  // Guard the destination only: sources legitimately live inside managed storage
+  // (attachments, generated images) and copying reads them without mutating.
+  'file.copy': async ({ sourcePath, destPath }, { senderId }) => {
+    // Side-effecting route: refuse trusted-but-unmanaged senders (ipc-overview.md §Caller Identity).
+    if (senderId == null) throw new Error('file.copy requires a managed window sender')
+    await assertOutsideManagedStorageMutation(destPath)
+    await copyNew(sourcePath, destPath)
+  },
   'file.open': async (handle) => {
     const fileManager = application.get('FileManager')
     return dispatchHandle(handle as FileHandle, (entryId) => fileManager.open(entryId), safeOpen)
@@ -306,7 +320,7 @@ export const fileHandlers: IpcHandlersFor<typeof fileRequestSchemas> = {
   'file.path_paste': async (input) => pastePath(input),
   'file.tree.create': async ({ rootPath, options }, { senderId }) => {
     try {
-      return await application.get('DirectoryTreeManager').create(requireSenderWebContents(senderId), rootPath, options)
+      return await application.get('DirectoryTreeManager').create(requireManagedSender(senderId), rootPath, options)
     } catch (error) {
       // Shutdown-in-flight, not a failure the user should be toasted about — carry a
       // domain code so the renderer can stay quiet (`error.name` does not survive IpcApi).

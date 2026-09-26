@@ -1,3 +1,9 @@
+---
+description: "IpcApi 参考"
+sources:
+  - src/main/ipc
+---
+
 # IpcApi 参考
 
 **IpcApi** 的入口点 — Magic Box 用于 RPC-over-IPC 的统一、类型安全通道：从渲染器到主进程的 command/capability 调用，以及类型化的 main→渲染进程 事件。

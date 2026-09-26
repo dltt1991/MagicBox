@@ -1,3 +1,9 @@
+---
+description: "智能体会话运行时"
+sources:
+  - src/main/ai
+---
+
 # 智能体会话运行时
 
 ## 目的

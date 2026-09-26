@@ -1,9 +1,10 @@
-import { Button, Checkbox, ConfirmDialog, Input } from '@cherrystudio/ui'
-import type { TranscriptionRecordView } from '@shared/data/types/transcription'
 import { Pencil, Trash2 } from 'lucide-react'
 import type { KeyboardEvent } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import { Button, Checkbox, ConfirmDialog, Input } from '@cherrystudio/ui'
+import type { TranscriptionRecordView } from '@shared/data/types/transcription'
 
 type TranscriptionHistorySidebarProps = {
   hasMore: boolean

@@ -1,3 +1,9 @@
+---
+description: "Preference Schema Guide"
+sources:
+  - src/main/data
+---
+
 # Preference Schema Guide
 
 This guide explains how to add new preference keys to Magic Box.

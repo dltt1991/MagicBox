@@ -1,3 +1,9 @@
+---
+description: "应用状态概览"
+sources:
+  - src/main/data
+---
+
 # 应用状态概览
 
 > 中文副本，对应英文原文：[docs/references/data/app-state-overview.md](../app-state-overview.md)。

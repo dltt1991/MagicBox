@@ -1,3 +1,9 @@
+---
+description: "API Gateway 参考"
+sources:
+  - src/main/features/apiGateway
+---
+
 # API Gateway 参考
 
 > 中文副本，对应英文原文：[docs/references/api-gateway/README.md](../README.md)。

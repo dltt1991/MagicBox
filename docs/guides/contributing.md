@@ -22,7 +22,7 @@ Please make sure you've read the [Code of Conduct](../../CODE_OF_CONDUCT.md) and
 
 ## Setting Up the Development Environment
 
-Please refer to the [Developer Guide](./development.md) for instructions on setting up your local development environment, including prerequisites, installation steps, and available commands.
+Please refer to the [Developer Guide](../contrib/development.md) for instructions on setting up your local development environment, including prerequisites, installation steps, and available commands.
 
 For a comprehensive overview of the project architecture, tech stack, code conventions, and available commands, please refer to [`CLAUDE.md`](../../CLAUDE.md).
 
@@ -32,7 +32,7 @@ To familiarize yourself with the code, we recommend working on issues tagged wit
 
 ### Testing
 
-Features without tests are considered non-existent. To ensure code is truly effective, relevant processes should be covered by unit tests and functional tests. Therefore, when considering contributions, please also consider testability. All tests can be run locally without CI dependency. Please refer to the "Test" section in the [Developer Guide](./development.md#test).
+Features without tests are considered non-existent. To ensure code is truly effective, relevant processes should be covered by unit tests and functional tests. Therefore, when considering contributions, please also consider testability. All tests can be run locally without CI dependency. Please refer to the "Test" section in the [Developer Guide](../contrib/development.md#test).
 
 ### Automated Testing on Pull Requests
 
@@ -63,7 +63,7 @@ Maintainers are here to help you achieve your use case in a reasonable timeframe
 
 ### Participating in the Test Plan
 
-The Test Plan aims to provide users with a more stable application experience and faster iteration speed. For details, please refer to the [Test Plan](./test-plan.md).
+The Test Plan aims to provide users with a more stable application experience and faster iteration speed. For details, please refer to the [Test Plan](../contrib/test-plan.md).
 
 ### Other Suggestions
 

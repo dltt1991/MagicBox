@@ -1,6 +1,5 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest'
-
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -9,6 +8,7 @@ const { cacheState, mocks, updateState } = vi.hoisted(() => ({
   cacheState: { sidebarWidth: 50 },
   mocks: {
     openSettingsTab: vi.fn(),
+    showDoctorPopup: vi.fn(),
     showSearchPopup: vi.fn(),
     showUpdatePopup: vi.fn()
   },
@@ -65,6 +65,12 @@ vi.mock('@renderer/components/GlobalSearch/GlobalSearchPopup', () => ({
   }
 }))
 
+vi.mock('@renderer/components/doctor', () => ({
+  DoctorPopup: {
+    show: mocks.showDoctorPopup
+  }
+}))
+
 vi.mock('@renderer/components/UpdateDialogPopup', () => ({
   default: {
     show: mocks.showUpdatePopup
@@ -83,6 +89,7 @@ vi.mock('react-i18next', () => ({
         'navbar.hide_sidebar': 'Hide Sidebar',
         'navbar.pin_sidebar': 'Pin Sidebar',
         'settings.about.updateAvailable': 'Found new version',
+        'settings.doctor.entry.title': 'System diagnostics',
         'settings.title': 'Settings'
       })[key] ?? key
   })
@@ -182,6 +189,7 @@ describe('ShellTabBarActions', () => {
 
     expect(screen.getAllByRole('button').map((button) => button.getAttribute('aria-label'))).toEqual([
       'Found new version',
+      'System diagnostics',
       'Settings',
       'Open global search'
     ])
@@ -212,6 +220,19 @@ describe('ShellTabBarActions', () => {
     await user.click(screen.getByRole('button', { name: /settings/i }))
 
     expect(mocks.openSettingsTab).toHaveBeenCalledWith()
+  })
+
+  it('opens system diagnostics from the keyboard when the sidebar is hidden', async () => {
+    const user = userEvent.setup()
+    cacheState.sidebarWidth = 0
+
+    render(<ShellTabBarActions />)
+
+    await user.tab()
+    expect(screen.getByRole('button', { name: 'System diagnostics' })).toHaveFocus()
+    await user.keyboard('{Enter}')
+
+    expect(mocks.showDoctorPopup).toHaveBeenCalledWith({ initialPanel: 'checks' })
   })
 
   it('does not render the theme toggle in the sidebar footer action', () => {
@@ -276,45 +297,5 @@ describe('ShellTabBarActions', () => {
     expect(screen.getByRole('button', { name: /settings/i })).not.toHaveClass('text-muted-foreground')
     expect(screen.getByRole('button', { name: /settings/i })).toHaveTextContent('Settings')
     expect(screen.getByRole('button', { name: 'Help & Feedback' })).toHaveTextContent('help-full')
-  })
-
-  it('labels the hidden sidebar toggle as a pin action', async () => {
-    const user = userEvent.setup()
-    const onSidebarToggle = vi.fn()
-
-    render(
-      <SidebarShellActions
-        layout="full"
-        sidebarHidden
-        onSidebarToggle={onSidebarToggle}
-        onFeedbackClick={vi.fn()}
-        onSettingsClick={mocks.openSettingsTab}
-      />
-    )
-
-    await user.click(screen.getByRole('button', { name: 'Pin Sidebar' }))
-
-    expect(onSidebarToggle).toHaveBeenCalledTimes(1)
-    expect(screen.queryByRole('button', { name: 'Show Sidebar' })).not.toBeInTheDocument()
-  })
-
-  it('labels the hidden sidebar toggle as a pin action', async () => {
-    const user = userEvent.setup()
-    const onSidebarToggle = vi.fn()
-
-    render(
-      <SidebarShellActions
-        layout="full"
-        sidebarHidden
-        onSidebarToggle={onSidebarToggle}
-        onFeedbackClick={vi.fn()}
-        onSettingsClick={mocks.openSettingsTab}
-      />
-    )
-
-    await user.click(screen.getByRole('button', { name: 'Pin Sidebar' }))
-
-    expect(onSidebarToggle).toHaveBeenCalledTimes(1)
-    expect(screen.queryByRole('button', { name: 'Show Sidebar' })).not.toBeInTheDocument()
   })
 })

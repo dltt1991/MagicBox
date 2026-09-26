@@ -1,3 +1,9 @@
+---
+description: "代码块视图"
+sources:
+  - src/renderer/components
+---
+
 # 代码块视图
 
 > 中文副本，对应英文原文：[docs/references/components/code-block-view.md](../code-block-view.md)。

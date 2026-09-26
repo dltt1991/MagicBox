@@ -1,3 +1,6 @@
+import { type RefObject, useCallback, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+
 import { Button } from '@cherrystudio/ui'
 import { DefaultModelSelector } from '@renderer/components/DefaultModelSelector'
 import { usePreference } from '@renderer/data/hooks/usePreference'
@@ -10,8 +13,6 @@ import { parseUniqueModelId } from '@shared/data/types/model'
 import type { TranscriptionRecordView, TranscriptionSegment } from '@shared/data/types/transcription'
 import type { TranscriptionBackendConfig } from '@shared/ipc/schemas/transcription'
 import { isNonChatModel, isSpeechToTextModel } from '@shared/utils/model'
-import { type RefObject, useCallback, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
 import { useTranscriptionPromptTemplates } from '../hooks/useTranscriptionPromptTemplates'
 import { useTranscriptionRecord } from '../hooks/useTranscriptionRecord'

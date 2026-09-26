@@ -1,3 +1,9 @@
+---
+description: "数据库 Seed 指南"
+sources:
+  - src/main/data
+---
+
 # 数据库 Seed 指南
 
 > 中文副本，对应英文原文：[docs/references/data/database-seeding-guide.md](../database-seeding-guide.md)。

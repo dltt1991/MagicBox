@@ -1,3 +1,7 @@
+import { ClipboardPaste, Copy, FilePlus, FolderOpen, FolderPlus, Info, Pencil, Scissors, Trash2 } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
+
 import {
   ContextMenu,
   ContextMenuContent,
@@ -6,9 +10,6 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger
 } from '@cherrystudio/ui'
-import { ClipboardPaste, Copy, FilePlus, FolderOpen, FolderPlus, Info, Pencil, Scissors, Trash2 } from 'lucide-react'
-import type { ReactNode } from 'react'
-import { useTranslation } from 'react-i18next'
 
 import type { WorkspaceTreeItem } from '../lib/workspaceTree'
 

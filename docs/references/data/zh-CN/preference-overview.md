@@ -1,3 +1,9 @@
+---
+description: "Preference 概览"
+sources:
+  - src/main/data
+---
+
 # Preference 概览
 
 > 中文副本，对应英文原文：[docs/references/data/preference-overview.md](../preference-overview.md)。

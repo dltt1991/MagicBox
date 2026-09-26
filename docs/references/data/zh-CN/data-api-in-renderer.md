@@ -1,3 +1,9 @@
+---
+description: "渲染端中的 DataApi"
+sources:
+  - src/main/data
+---
+
 # 渲染端中的 DataApi
 
 > 中文副本，对应英文原文：[docs/references/data/data-api-in-renderer.md](../data-api-in-renderer.md)。

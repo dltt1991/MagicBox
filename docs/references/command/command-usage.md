@@ -1,3 +1,9 @@
+---
+description: "Command System — Usage"
+sources:
+  - src/renderer/components/command
+---
+
 # Command System — Usage
 
 How renderer and main code uses the command system. For the model and

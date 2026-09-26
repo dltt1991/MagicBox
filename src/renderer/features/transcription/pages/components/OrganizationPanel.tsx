@@ -1,4 +1,7 @@
 import '@cherrystudio/ui/components/composites/markdown/styles'
+import Maximize2 from 'lucide-react/dist/esm/icons/maximize-2'
+import { type ReactNode, useEffect, useId, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import {
   Button,
@@ -18,9 +21,6 @@ import {
 } from '@cherrystudio/ui'
 import CopyButton from '@renderer/components/CopyButton'
 import type { TranscriptionPromptTemplate } from '@shared/data/types/transcription'
-import Maximize2 from 'lucide-react/dist/esm/icons/maximize-2'
-import { type ReactNode, useEffect, useId, useMemo, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
 import { CustomPromptDialog } from './CustomPromptDialog'
 

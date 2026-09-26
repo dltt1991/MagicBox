@@ -1,3 +1,9 @@
+---
+description: "AI Reference"
+sources:
+  - src/main/ai
+---
+
 # AI Reference
 
 This is the entry point for the AI pipeline in Magic Box v2 — the
@@ -28,7 +34,10 @@ plus the renderer-side transport that connects to them.
 | [Provider Resolution](./provider-resolution.md) | `Provider.endpointConfigs` schema, endpoint resolution chain, variant suffixes, custom provider extensions (aihubmix, newapi) |
 | [Model Retry & Fallback](./model-retry.md) | `ai-retry` integration: same-model transient retry + user-configured fallback models, `wrapModel` hook, `chat.retry.*` preferences, embedding/rerank policies |
 | [Observability (trace / telemetry)](./observability.md) | `AiSdkSpanAdapter`, root span propagation, OTel attribute shape, local span projection, sinks |
+| [Local Models](./local-models.md) | The local embedding / OCR bundle catalog, on-disk registry, and verified acquisition of models and shared native runtimes |
 | [AI Usage Records](./ai-usage-records.md) | Best-effort per-provider-invocation usage/cost analytics: capture ownership, immutable attribution snapshots, message projection, bounded query API, migration, freshness |
+| [Browser Use Design](./browser-use-design.md) | Browser automation ownership, capability gaps, and delivery roadmap |
+| [Browser Use Implementation](./browser-use-implementation.md) | Session engine, MCP contracts, and implementation plan |
 
 ### Renderer-side glue
 
@@ -36,6 +45,7 @@ plus the renderer-side transport that connects to them.
 |---|---|
 | [IPC Transport](./ipc-transport.md) | `useChat` + `IpcChatTransport`: `sendMessages` / `reconnectToStream`, dispatch coordinator, topic-status mirror |
 | [Execution Overlay](./execution-overlay.md) | `TopicStreamSubscription` + `useExecutionOverlay`: ref-counted attach, execution + anchor demux, one-shot `readUIMessageStream` per turn (the renderer half of the same merge function Main uses) |
+| [Text Translation](./translation.md) | `translate.open` prompt streams, renderer-owned result handling, and Home `data-translation` persistence |
 | [Tool Approval](./tool-approval.md) | Approval registry, Main-as-writer model, persistent decisions, `useToolApproval` hook |
 
 ## Where the code lives
@@ -54,14 +64,14 @@ src/main/ai/
 │   └── claudeCode/               ← Claude Code driver, warm query, SDK adapter
 ├── agentSession/                 ← agent-session topic host
 │   └── AgentSessionRuntimeService.ts
-├── agents/                       ← AgentJobsService, AgentTaskJobHandler, runAgentTask, prompt, heartbeat, builtin/
+├── agents/                       ← AgentLifecycleService, AgentJobsService, runAgentTask, prompt, heartbeat, builtin/
 ├── channels/                     ← ChannelManager + IM adapters (discord/feishu/qq/slack/telegram/wechat) + security/
 ├── streamManager/                ← AiStreamManager + listeners + persistence backends
 │   ├── AiStreamManager.ts        ← registers the stream IPC (Open/Attach/Detach/Abort)
 │   ├── context/                  ← ChatContextProvider implementations + dispatch
 │   ├── lifecycle/                ← chat / prompt-only stream lifecycles
 │   ├── listeners/                ← WebContents / Persistence / SSE / channel-adapter
-│   ├── persistence/              ← MessageService / TemporaryChat / Translation backends
+│   ├── persistence/              ← MessageService / TemporaryChat backends
 │   └── pipeStreamLoop.ts         ← shared chunk-pipe primitive
 ├── provider/                     ← provider config, endpoint resolution, custom providers
 │   ├── custom/                   ← aihubmix, newapi
@@ -140,7 +150,7 @@ src/main/ai/
 - [Service Lifecycle](../lifecycle/README.md) — `AiService` extends `BaseService`
 - [Data Layer](../data/README.md) — `MessageService`, `ModelService`,
   `ProviderService` (called from main-side AI code)
-- [Messaging](../messaging/message-system.md) — `CherryMessagePart`,
+- [Messaging](../chat/message-system.md) — `CherryMessagePart`,
   `CherryUIMessage`, parts model
 - [Window Manager](../window-manager/README.md) — `WebContentsListener`
   attaches to whatever windows are open

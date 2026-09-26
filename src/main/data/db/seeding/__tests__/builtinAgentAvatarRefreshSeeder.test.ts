@@ -1,3 +1,7 @@
+import { setupTestDatabase } from '@test-helpers/db'
+import { eq, sql } from 'drizzle-orm'
+import { describe, expect, it } from 'vitest'
+
 import { agentTable } from '@data/db/schemas/agent'
 import { appStateTable } from '@data/db/schemas/appState'
 import { seeders } from '@data/db/seeding/seederRegistry'
@@ -5,9 +9,6 @@ import { BuiltinAgentAvatarRefreshSeeder } from '@data/db/seeding/seeders/builti
 import { CherryAssistantSeeder } from '@data/db/seeding/seeders/cherryAssistantSeeder'
 import { SeedRunner } from '@data/db/seeding/SeedRunner'
 import { generateOrderKeyBetween } from '@data/services/utils/orderKey'
-import { setupTestDatabase } from '@test-helpers/db'
-import { eq, sql } from 'drizzle-orm'
-import { describe, expect, it } from 'vitest'
 
 function builtinAgents(db: ReturnType<typeof setupTestDatabase>['db']) {
   return db

@@ -1,9 +1,10 @@
-import { Button, EmptyState, NormalTooltip } from '@cherrystudio/ui'
-import { FilePreview } from '@renderer/components/FilePreview'
-import { getFilePreviewFileName, normalizeFilePreviewPath } from '@renderer/utils/filePreview'
 import { Copy, FolderOpen, MonitorUp, SquareArrowOutUpRight, X } from 'lucide-react'
 import { type ReactNode, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+
+import { Button, EmptyState, NormalTooltip } from '@cherrystudio/ui'
+import { FilePreview } from '@renderer/components/FilePreview'
+import { getFilePreviewFileName, normalizeFilePreviewPath } from '@renderer/utils/filePreview'
 
 export interface WorkspacePreviewPaneProps {
   filePath: string | null

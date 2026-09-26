@@ -1,7 +1,8 @@
-import type * as CherryStudioUi from '@cherrystudio/ui'
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useState } from 'react'
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
+
+import type * as CherryStudioUi from '@cherrystudio/ui'
 
 // Global renderer setup stubs @cherrystudio/ui with only a handful of components; the selector
 // needs the real Checkbox/Popover primitives, so we restore the actual module here.
@@ -44,7 +45,7 @@ beforeAll(() => {
     observe() {}
     unobserve() {}
     disconnect() {}
-  } as any
+  }
   if (!HTMLElement.prototype.hasPointerCapture) {
     HTMLElement.prototype.hasPointerCapture = () => false
   }
@@ -345,6 +346,37 @@ describe('ResourceSelectorShell', () => {
       await waitFor(() => expect(getRow('Beta')).toHaveAttribute('data-active', 'true'))
       expect(scrollIntoView).not.toHaveBeenCalled()
     })
+
+    it('does not rebuild an unrelated option when focus moves between rows', () => {
+      let unrelatedNameReads = 0
+      const unrelatedItem: Item = {
+        id: '3',
+        get name() {
+          unrelatedNameReads += 1
+          return 'Gamma'
+        }
+      }
+
+      render(
+        <ResourceSelectorShell
+          trigger={<button type="button">Open</button>}
+          items={[ITEMS[0], ITEMS[1], unrelatedItem]}
+          pinnedIds={[]}
+          onTogglePin={vi.fn()}
+          labels={LABELS}
+          value={null}
+          onChange={vi.fn()}
+        />
+      )
+      openPopover()
+      expect(getRow('Alpha')).toHaveAttribute('data-active', 'true')
+      unrelatedNameReads = 0
+
+      fireEvent.mouseEnter(getRow('Beta').closest('[data-option-row]') as HTMLElement)
+
+      expect(getRow('Beta')).toHaveAttribute('data-active', 'true')
+      expect(unrelatedNameReads).toBe(0)
+    })
   })
 
   describe('value adapter', () => {
@@ -608,41 +640,6 @@ describe('ResourceSelectorShell', () => {
   })
 
   describe('edit button', () => {
-    it('places edit and pin together in the row action area', () => {
-      const groupedItems: Item[] = [{ ...ITEMS[0], groupId: 'group-cherry', groupName: 'Magic Box' }, ...ITEMS.slice(1)]
-
-      render(
-        <ResourceSelectorShell
-          trigger={<button type="button">Open</button>}
-          items={groupedItems}
-          pinnedIds={[]}
-          onTogglePin={vi.fn()}
-          onEditItem={vi.fn()}
-          onCreateNew={vi.fn()}
-          labels={LABELS}
-          value={null}
-          onChange={vi.fn()}
-        />
-      )
-      openPopover()
-
-      const alphaOption = getRow('Alpha')
-      const row = alphaOption.closest('[data-model-selector-row]') as HTMLElement
-      const nameArea = row.querySelector('[data-resource-selector-name="1"]') as HTMLElement
-      const groupArea = row.querySelector('[data-resource-selector-group="1"]')
-      const editButton = within(row).getByRole('button', { name: 'Edit' })
-
-      expect(row).toHaveClass('pr-0.5')
-      expect(nameArea).toHaveTextContent('Alpha')
-      expect(within(nameArea).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
-      expect(editButton).toHaveClass('size-4', 'hover:bg-transparent')
-      expect(within(alphaOption).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
-      expect(within(alphaOption).queryByRole('button', { name: 'Pin' })).not.toBeInTheDocument()
-      expect(within(row).getByRole('button', { name: 'Pin' })).toHaveClass('size-4', 'hover:bg-transparent')
-      expect(groupArea).toHaveClass('max-w-[48%]')
-      expect(screen.getAllByRole('button', { name: 'Edit' })).toHaveLength(ITEMS.length)
-    })
-
     it('closes and recreates the popover before running the edit action on requestAnimationFrame', async () => {
       const animationFrameCallbacks: FrameRequestCallback[] = []
       let popoverAtCallback: HTMLElement | null = null
@@ -832,12 +829,12 @@ describe('ResourceSelectorShell', () => {
         <ResourceSelectorShell
           trigger={<button type="button">Open</button>}
           items={[
-            { ...ITEMS[0], groupId: 'group-cherry', groupName: 'Magic Box' },
+            { ...ITEMS[0], groupId: 'group-cherry', groupName: 'Cherry' },
             { ...ITEMS[1], groupId: 'group-dev', groupName: 'DEV' },
-            { ...ITEMS[2], groupId: 'group-cherry', groupName: 'Magic Box' }
+            { ...ITEMS[2], groupId: 'group-cherry', groupName: 'Cherry' }
           ]}
           groups={[
-            { id: 'group-cherry', name: 'Magic Box' },
+            { id: 'group-cherry', name: 'Cherry' },
             { id: 'group-dev', name: 'DEV' }
           ]}
           pinnedIds={[]}
@@ -849,7 +846,7 @@ describe('ResourceSelectorShell', () => {
       )
       openPopover()
 
-      fireEvent.click(screen.getByRole('button', { name: 'Magic Box' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Cherry' }))
       expect(screen.queryByRole('option', { name: /Alpha/ })).toBeInTheDocument()
       expect(screen.queryByRole('option', { name: /Gamma/ })).toBeInTheDocument()
       expect(screen.queryByRole('option', { name: /Beta/ })).not.toBeInTheDocument()
@@ -862,9 +859,9 @@ describe('ResourceSelectorShell', () => {
 
     it('stops filtering when the selected group is removed', () => {
       const groupedItems = [
-        { ...ITEMS[0], groupId: 'group-cherry', groupName: 'Magic Box' },
+        { ...ITEMS[0], groupId: 'group-cherry', groupName: 'Cherry' },
         { ...ITEMS[1], groupId: 'group-dev', groupName: 'DEV' },
-        { ...ITEMS[2], groupId: 'group-cherry', groupName: 'Magic Box' }
+        { ...ITEMS[2], groupId: 'group-cherry', groupName: 'Cherry' }
       ]
       const commonProps = {
         trigger: <button type="button">Open</button>,
@@ -879,14 +876,14 @@ describe('ResourceSelectorShell', () => {
           {...commonProps}
           items={groupedItems}
           groups={[
-            { id: 'group-cherry', name: 'Magic Box' },
+            { id: 'group-cherry', name: 'Cherry' },
             { id: 'group-dev', name: 'DEV' }
           ]}
         />
       )
       openPopover()
 
-      fireEvent.click(screen.getByRole('button', { name: 'Magic Box' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Cherry' }))
       expect(screen.queryByRole('option', { name: /Beta/ })).not.toBeInTheDocument()
 
       rerender(<ResourceSelectorShell {...commonProps} items={groupedItems} groups={[]} />)

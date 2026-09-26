@@ -1,10 +1,11 @@
 import { existsSync, mkdirSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 
+import { v7 as uuidv7 } from 'uuid'
+
 import { application } from '@application'
 import { MediaKind } from '@main/services/mediaProtocol'
 import type { TranscriptionRecord } from '@shared/data/types/transcription'
-import { v7 as uuidv7 } from 'uuid'
 
 const AUDIO_MIME_TYPES: Record<string, string> = {
   '.aac': 'audio/aac',

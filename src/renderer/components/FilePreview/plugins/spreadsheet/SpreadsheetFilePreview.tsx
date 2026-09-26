@@ -1,233 +1,34 @@
-import { EmptyState, Tabs, TabsList, TabsTrigger } from '@cherrystudio/ui'
-import { loggerService } from '@logger'
-import { formatFileSize } from '@renderer/utils/file'
-import { getFilePreviewExtension } from '@renderer/utils/filePreview'
 import AlertCircle from 'lucide-react/dist/esm/icons/alert-circle'
 import FileSpreadsheet from 'lucide-react/dist/esm/icons/file-spreadsheet'
-import FileWarning from 'lucide-react/dist/esm/icons/file-warning'
 import LoaderCircle from 'lucide-react/dist/esm/icons/loader-circle'
-import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { EmptyState, Tabs, TabsList, TabsTrigger } from '@cherrystudio/ui'
+import { loggerService } from '@logger'
+import { SELECTION_EXCERPT_MAX_LENGTH } from '@renderer/types/selectionReference'
+import { formatFileSize } from '@renderer/utils/file'
+import { getFilePreviewExtension } from '@renderer/utils/filePreview'
+
 import { FilePreviewLayout } from '../../FilePreviewLayout'
+import { createSelectionReference, normalizeSelectionText } from '../../selectionReference'
 import type { FilePreviewPluginProps } from '../../types'
 import type { ChartRenderer } from './charts/ChartRenderer'
-import type { ChartModel, SheetRenderModel, WorkbookRenderModel } from './renderModel'
+import DelimitedSpreadsheetFilePreview from './DelimitedSpreadsheetFilePreview'
+import type { CellRangeRect } from './gridLayout'
+import type { ChartModel, MergeRange, SheetRenderModel, WorkbookRenderModel } from './renderModel'
 import { SpreadsheetFilePreviewToolbar } from './SpreadsheetFilePreviewToolbar'
 import { useXlsxWorkbook, XLSX_PREVIEW_MAX_SIZE_BYTES } from './useXlsxWorkbook'
 import type { SelectedCellInfo } from './XlsxGrid'
 import XlsxGrid from './XlsxGrid'
 
 const logger = loggerService.withContext('SpreadsheetFilePreview')
-const MAX_RENDERED_ROWS = 500
-const MAX_RENDERED_COLUMNS = 50
 
 /** Zoom levels. The default index is 2 (=1). */
 const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5, 2]
 const DEFAULT_ZOOM = 1
 
-type CellValue = string | number | boolean | Date | null
-
-interface DelimitedSpreadsheetData {
-  columnCount: number
-  rows: CellValue[][]
-  sheetName: string
-  truncated: boolean
-}
-
 const formatZoomLabel = (zoom: number) => `${Math.round(zoom * 100)}%`
-
-function normalizeCellValue(value: unknown): CellValue {
-  if (value instanceof Date) return value
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return value
-  if (value === null || value === undefined) return ''
-  return String(value)
-}
-
-function formatCellValue(value: CellValue): string {
-  if (value instanceof Date) return value.toLocaleString()
-  if (value === null) return ''
-  return String(value)
-}
-
-function projectRows(rawRows: unknown[][], sheetName: string): DelimitedSpreadsheetData | null {
-  const rows = rawRows
-    .map((row) => (Array.isArray(row) ? row.map(normalizeCellValue) : []))
-    .filter((row) => row.some((cell) => formatCellValue(cell).length > 0))
-  if (rows.length === 0) return null
-
-  const columnCount = Math.min(MAX_RENDERED_COLUMNS, Math.max(...rows.map((row) => row.length), 1))
-
-  return {
-    columnCount,
-    rows: rows.slice(0, MAX_RENDERED_ROWS).map((row) => row.slice(0, columnCount)),
-    sheetName,
-    truncated: rows.length > MAX_RENDERED_ROWS || rows.some((row) => row.length > MAX_RENDERED_COLUMNS)
-  }
-}
-
-function parseDelimitedRows(text: string, delimiter: ',' | '\t'): string[][] {
-  const rows: string[][] = []
-  let row: string[] = []
-  let cell = ''
-  let inQuotes = false
-
-  for (let index = 0; index < text.length; index += 1) {
-    const char = text[index]
-    const nextChar = text[index + 1]
-
-    if (inQuotes) {
-      if (char === '"' && nextChar === '"') {
-        cell += '"'
-        index += 1
-      } else if (char === '"') {
-        inQuotes = false
-      } else {
-        cell += char
-      }
-      continue
-    }
-
-    if (char === '"') {
-      inQuotes = true
-    } else if (char === delimiter) {
-      row.push(cell)
-      cell = ''
-    } else if (char === '\n') {
-      row.push(cell)
-      rows.push(row)
-      row = []
-      cell = ''
-    } else if (char !== '\r') {
-      cell += char
-    }
-  }
-
-  if (cell.length > 0 || row.length > 0) {
-    row.push(cell)
-    rows.push(row)
-  }
-
-  return rows
-}
-
-function DelimitedSpreadsheetEmptyState() {
-  const { t } = useTranslation()
-
-  return (
-    <EmptyState
-      icon={FileWarning}
-      title={t('file_preview.spreadsheet.empty.title')}
-      description={t('file_preview.spreadsheet.empty.description')}
-      className="h-full"
-    />
-  )
-}
-
-function DelimitedSpreadsheetErrorState() {
-  const { t } = useTranslation()
-
-  return (
-    <div role="alert" className="h-full">
-      <EmptyState
-        icon={AlertCircle}
-        title={t('file_preview.load_error.title')}
-        description={t('file_preview.load_error.description')}
-        className="h-full"
-      />
-    </div>
-  )
-}
-
-function DelimitedSpreadsheetFilePreview({ filePath, fileName, refreshKey }: FilePreviewPluginProps) {
-  const { t } = useTranslation()
-  const [data, setData] = useState<DelimitedSpreadsheetData | null>(null)
-  const [error, setError] = useState<Error | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    let cancelled = false
-
-    setData(null)
-    setError(null)
-    setLoading(true)
-
-    void (async () => {
-      try {
-        const extension = getFilePreviewExtension(filePath)
-        const delimiter = extension === 'tsv' ? '\t' : ','
-        const nextData = projectRows(parseDelimitedRows(await window.api.fs.readText(filePath), delimiter), fileName)
-        if (!cancelled) setData(nextData)
-      } catch (loadError) {
-        if (cancelled) return
-        const normalized = loadError instanceof Error ? loadError : new Error(String(loadError))
-        logger.error(`Failed to load spreadsheet preview: ${filePath}`, normalized)
-        setError(normalized)
-      } finally {
-        if (!cancelled) setLoading(false)
-      }
-    })()
-
-    return () => {
-      cancelled = true
-    }
-  }, [fileName, filePath, refreshKey])
-
-  return (
-    <FilePreviewLayout.Frame>
-      <FilePreviewLayout.Content>
-        <div
-          className="relative h-full min-h-0 w-full overflow-hidden bg-background"
-          data-testid="spreadsheet-file-preview">
-          {loading ? (
-            <div
-              role="status"
-              className="absolute inset-0 flex items-center justify-center gap-2 text-muted-foreground text-sm">
-              <LoaderCircle className="size-4 animate-spin" aria-hidden />
-              <span>{t('file_preview.loading')}</span>
-            </div>
-          ) : error ? (
-            <DelimitedSpreadsheetErrorState />
-          ) : data ? (
-            <div className="h-full overflow-auto p-3">
-              <table aria-label={data.sheetName} className="w-max min-w-full border-collapse text-sm">
-                <thead className="sticky top-0 z-10 bg-background">
-                  <tr>
-                    {Array.from({ length: data.columnCount }, (_, index) => (
-                      <th
-                        className="border border-border bg-muted/60 px-2 py-1 text-left font-medium text-muted-foreground"
-                        key={index}
-                        scope="col">
-                        {formatCellValue(data.rows[0]?.[index] ?? '') ||
-                          t('file_preview.spreadsheet.column', { index: index + 1 })}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.rows.slice(1).map((row, rowIndex) => (
-                    <tr key={rowIndex}>
-                      {Array.from({ length: data.columnCount }, (_, columnIndex) => (
-                        <td className="border border-border px-2 py-1 align-top" key={columnIndex}>
-                          {formatCellValue(row[columnIndex] ?? '')}
-                        </td>
-                      ))}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {data.truncated ? (
-                <div className="mt-2 text-muted-foreground text-xs">{t('file_preview.spreadsheet.truncated')}</div>
-              ) : null}
-            </div>
-          ) : (
-            <DelimitedSpreadsheetEmptyState />
-          )}
-        </div>
-      </FilePreviewLayout.Content>
-    </FilePreviewLayout.Frame>
-  )
-}
 
 /** Visible sheets from model.sheets. If all are hidden, fall back to the first sheet so one tab remains selectable. */
 const visibleSheets = (model: WorkbookRenderModel): SheetRenderModel[] => {
@@ -250,13 +51,72 @@ const loadChartRenderer = () => {
 
 const sheetHasChart = (sheet: SheetRenderModel | undefined): boolean => Boolean(sheet && sheet.charts.length > 0)
 
+/**
+ * Hard cap on cells visited while building a selection excerpt. sheet.cells is sparse but the rect is not, so a
+ * whole-column selection would otherwise walk millions of empty coordinates on the main thread.
+ */
+const EXCERPT_MAX_SCAN_CELLS = 50_000
+
+/**
+ * Plain-text snapshot of a selected range: tab-separated cells, newline-separated rows.
+ * Both budgets are checked while scanning — building the full text first and truncating afterwards is what makes a
+ * full-column selection hang. createSelectionReference does the exact normalization and truncation.
+ *
+ * Only text that survives normalization counts against the character budget, which is why each cell is charged its
+ * normalized length rather than its raw one. A cell that leaves nothing behind — empty, or holding only whitespace,
+ * the way an export that blanks a cell with a space leaves it — collapses away along with its separators, so
+ * charging for it would let a run of them exhaust the budget and normalize down to an empty excerpt. The scan cap
+ * stays separate — it is what bounds the walk over a sparse selection.
+ *
+ * ExcelJS reports a merged range's value through every cell it covers, so each range is emitted once, at its master.
+ * Merges are swept row by row rather than searched per cell, keeping the walk linear in the scan cap.
+ */
+const buildRangeExcerpt = (sheet: SheetRenderModel, rect: CellRangeRect): string => {
+  const intersecting = sheet.merges
+    .filter((m) => m.top <= rect.bottom && m.bottom >= rect.top && m.left <= rect.right && m.right >= rect.left)
+    .sort((a, b) => a.top - b.top)
+
+  const lines: string[] = []
+  let length = 0
+  let scanned = 0
+  let nextMerge = 0
+  let active: MergeRange[] = []
+
+  for (let row = rect.top; row <= rect.bottom; row++) {
+    while (nextMerge < intersecting.length && intersecting[nextMerge].top <= row) active.push(intersecting[nextMerge++])
+    if (active.length > 0) active = active.filter((merge) => merge.bottom >= row)
+
+    const values: string[] = []
+    for (let col = rect.left; col <= rect.right; col++) {
+      if (scanned >= EXCERPT_MAX_SCAN_CELLS || length >= SELECTION_EXCERPT_MAX_LENGTH) break
+      scanned++
+      const covering = active.find((merge) => merge.left <= col && merge.right >= col)
+      const isMergeFollower = covering !== undefined && (covering.top !== row || covering.left !== col)
+      const text = isMergeFollower ? '' : (sheet.cells[`${row}:${col}`]?.text ?? '')
+      values.push(text)
+      const charged = normalizeSelectionText(text).length
+      if (charged > 0) length += charged + 1
+    }
+    lines.push(values.join('\t'))
+    if (scanned >= EXCERPT_MAX_SCAN_CELLS || length >= SELECTION_EXCERPT_MAX_LENGTH) break
+  }
+  return lines.join('\n')
+}
+
 /** Read-only XLSX preview with virtualized sheets, formula status, images, and lazily loaded charts. */
-function XlsxSpreadsheetFilePreview({ filePath, fileName, metadata, refreshKey }: FilePreviewPluginProps) {
+function XlsxSpreadsheetFilePreview({
+  filePath,
+  fileName,
+  metadata,
+  refreshKey,
+  onSelectionReference
+}: FilePreviewPluginProps) {
   const { t } = useTranslation()
   const state = useXlsxWorkbook(filePath, refreshKey, metadata.size)
   const [zoom, setZoom] = useState(DEFAULT_ZOOM)
   const [activeSheetName, setActiveSheetName] = useState<string | null>(null)
-  const [selectedCell, setSelectedCell] = useState<SelectedCellInfo | null>(null)
+  // The sheet is stored with the selection: an A1 range means nothing without the sheet it was taken from.
+  const [selectedCell, setSelectedCell] = useState<(SelectedCellInfo & { sheet: SheetRenderModel }) | null>(null)
   const [chartRenderer, setChartRenderer] = useState<ChartRenderer | null>(null)
   const [imageUrls, setImageUrls] = useState<Record<number, string>>({})
 
@@ -275,6 +135,38 @@ function XlsxSpreadsheetFilePreview({ filePath, fileName, metadata, refreshKey }
       setActiveSheetName(sheets[0].name)
     }
   }, [sheets, activeSheetName])
+
+  const handleSelectCell = useCallback(
+    (info: SelectedCellInfo | null) => setSelectedCell(info && activeSheet ? { ...info, sheet: activeSheet } : null),
+    [activeSheet]
+  )
+
+  // Derived from the selection rather than emitted by its callback, so any clear reports null on its own. The
+  // sheet is compared rather than assumed: a sheet switch resets the selection in an effect, one commit later.
+  const selectionReference = useMemo(() => {
+    if (!selectedCell || !activeSheet || selectedCell.sheet !== activeSheet) return null
+    return createSelectionReference({
+      filePath,
+      anchor: { format: 'xlsx', sheet: activeSheet.name, range: selectedCell.range },
+      excerpt: buildRangeExcerpt(activeSheet, selectedCell.rect),
+      metadata: { size: metadata.size, modifiedAt: metadata.modifiedAt }
+    })
+  }, [selectedCell, activeSheet, filePath, metadata.size, metadata.modifiedAt])
+
+  // Capture arms empty so switching it on never turns a browsing selection into a pick the user never made.
+  // The host's side of this (a steady callback identity) is in the FilePreview README, Selection References.
+  const captureArmedRef = useRef(false)
+  useEffect(() => {
+    if (!onSelectionReference) {
+      captureArmedRef.current = false
+      return
+    }
+    if (!captureArmedRef.current) {
+      captureArmedRef.current = true
+      return
+    }
+    onSelectionReference(selectionReference)
+  }, [selectionReference, onSelectionReference])
 
   // Build image object URLs from model.images when ready, then revoke the previous table on replacement/unmount.
   useEffect(() => {
@@ -366,14 +258,16 @@ function XlsxSpreadsheetFilePreview({ filePath, fileName, metadata, refreshKey }
   } else if (!model || !activeSheet) {
     content = null
   } else {
-    // Selected cell status: formula cells show the raw formula; values stay in the grid.
-    const selectedCellContent = selectedCell?.cell?.formula
-      ? `= ${selectedCell.cell.formula}`
-      : selectedCell?.cell?.text
-    const statusBarText = selectedCell
+    // The sheet is compared for the same reason selectionReference compares it: the clearing effect runs one
+    // commit later, so the new sheet's tabs would otherwise render beside the previous sheet's range for a frame.
+    const cellOnActiveSheet = selectedCell && selectedCell.sheet === activeSheet ? selectedCell : null
+    const selectedCellContent = cellOnActiveSheet?.cell?.formula
+      ? `= ${cellOnActiveSheet.cell.formula}`
+      : cellOnActiveSheet?.cell?.text
+    const statusBarText = cellOnActiveSheet
       ? selectedCellContent
-        ? `${selectedCell.address}  ${selectedCellContent}`
-        : selectedCell.address
+        ? `${cellOnActiveSheet.range}  ${selectedCellContent}`
+        : cellOnActiveSheet.range
       : null
 
     content = (
@@ -390,7 +284,8 @@ function XlsxSpreadsheetFilePreview({ filePath, fileName, metadata, refreshKey }
             styles={model.styles}
             imageUrls={imageUrls}
             zoom={zoom}
-            onSelectCell={setSelectedCell}
+            onSelectCell={handleSelectCell}
+            pickerActive={onSelectionReference !== undefined}
             renderChart={renderChart}
           />
         </div>
@@ -412,7 +307,7 @@ function XlsxSpreadsheetFilePreview({ filePath, fileName, metadata, refreshKey }
                 {statusBarText}
               </span>
             ) : null}
-            {selectedCell?.cell?.formulaState === 'unevaluated' ? (
+            {cellOnActiveSheet?.cell?.formulaState === 'unevaluated' ? (
               <span className="shrink-0 italic">{t('xlsx_preview.formula_not_evaluated')}</span>
             ) : null}
           </div>

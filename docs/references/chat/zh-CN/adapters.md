@@ -1,6 +1,12 @@
+---
+description: "聊天适配器"
+sources:
+  - src/renderer/components/chat
+---
+
 # 聊天适配器
 
-> 中文副本，对应英文原文：[docs/references/chat/adapters.md](../adapters.md)。
+> 中文文档。
 
 说明聊天消息、模型消息和 UI 消息之间的适配方式。
 

@@ -1,13 +1,13 @@
 import '@testing-library/jest-dom/vitest'
-
 import materialIconThemeIcons from '@iconify-json/material-icon-theme/icons.json'
-import type { PreferenceShortcutType } from '@shared/data/preference/preferenceTypes'
-import type { CommandId } from '@shared/utils/command'
-import { TreeDir, TreeDirRoot, TreeFile } from '@shared/utils/file'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import type React from 'react'
 import { useEffect, useState } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { PreferenceShortcutType } from '@shared/data/preference/preferenceTypes'
+import type { CommandId } from '@shared/utils/command'
+import { TreeDir, TreeDirRoot, TreeFile } from '@shared/utils/file'
 
 const mocks = vi.hoisted(() => ({
   useDirectoryTree: vi.fn(),

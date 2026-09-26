@@ -1,5 +1,6 @@
-import { ipcApi } from '@renderer/ipc'
 import { useCallback, useEffect, useRef, useState } from 'react'
+
+import { ipcApi } from '@renderer/ipc'
 
 export type AudioRecorderStatus = 'idle' | 'starting' | 'recording' | 'paused' | 'saving'
 

@@ -1,3 +1,9 @@
+---
+description: "图片生成参数"
+sources:
+  - src/main/ai
+---
+
 # 图片生成参数
 
 ## 目的

@@ -1,3 +1,9 @@
+---
+description: "文件管理器架构"
+sources:
+  - src/main/services/file
+---
+
 # 文件管理器架构
 
 > 中文副本，对应英文原文：[docs/references/file/file-manager-architecture.md](../file-manager-architecture.md)。

@@ -1,3 +1,9 @@
+---
+description: "作业和调度程序 — 架构概述"
+sources:
+  - src/main/core/job
+---
+
 # 作业和调度程序 — 架构概述
 
 两个独立的主进程生命周期服务：

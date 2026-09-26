@@ -1,9 +1,9 @@
 import '@testing-library/jest-dom/vitest'
-
-import type { TerminalSessionMetadata } from '@shared/ipc/schemas/terminal'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+
+import type { TerminalSessionMetadata } from '@shared/ipc/schemas/terminal'
 
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({

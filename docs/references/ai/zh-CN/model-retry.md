@@ -1,3 +1,9 @@
+---
+description: "模型重试与回退"
+sources:
+  - src/main/ai
+---
+
 # 模型重试与回退
 
 ## 目的

@@ -1,3 +1,9 @@
+---
+description: "BootConfig Schema 指南"
+sources:
+  - src/main/data
+---
+
 # BootConfig Schema 指南
 
 > 中文副本，对应英文原文：[docs/references/data/boot-config-schema-guide.md](../boot-config-schema-guide.md)。

@@ -6,16 +6,20 @@ import { apiGatewayHandlers } from './apiGateway'
 import { appHandlers } from './app'
 import { backupHandlers } from './backup'
 import { binaryHandlers } from './binary'
+import { browserHandlers } from './browser'
 import { channelHandlers } from './channel'
+import { cherryCloudHandlers } from './cherryCloud'
 import { cherryinHandlers } from './cherryin'
 import { citationHandlers } from './citation'
 import { codeCliHandlers } from './codeCli'
 import { deepSeekHarnessHandlers } from './deepSeekHarness'
 import { diagnosticsHandlers } from './diagnostics'
+import { doctorHandlers } from './doctor'
 import { exportHandlers } from './export'
 import { externalAppHandlers } from './externalApp'
 import { fileHandlers } from './file'
 import { fileProcessingHandlers } from './fileProcessing'
+import { hermesDashboardHandlers } from './hermesDashboard'
 import { knowledgeHandlers } from './knowledge'
 import { localModelHandlers } from './localModel'
 import { mcpHandlers } from './mcp'
@@ -37,6 +41,7 @@ import { tabHandlers } from './tab'
 import { terminalHandlers } from './terminal'
 import { transcriptionHandlers } from './transcription'
 import { translateHandlers } from './translate'
+import { trashHandlers } from './trash'
 import { webSearchHandlers } from './webSearch'
 import { webviewHandlers } from './webview'
 import { windowHandlers } from './window'
@@ -56,16 +61,20 @@ export const ipcHandlers: IpcHandlersFor<IpcRequestSchemas> = {
   ...appHandlers,
   ...backupHandlers,
   ...binaryHandlers,
+  ...browserHandlers,
   ...channelHandlers,
   ...cherryinHandlers,
+  ...cherryCloudHandlers,
   ...citationHandlers,
   ...codeCliHandlers,
   ...deepSeekHarnessHandlers,
   ...diagnosticsHandlers,
+  ...doctorHandlers,
   ...exportHandlers,
   ...externalAppHandlers,
   ...fileHandlers,
   ...fileProcessingHandlers,
+  ...hermesDashboardHandlers,
   ...knowledgeHandlers,
   ...localModelHandlers,
   ...mcpHandlers,
@@ -87,6 +96,7 @@ export const ipcHandlers: IpcHandlersFor<IpcRequestSchemas> = {
   ...terminalHandlers,
   ...transcriptionHandlers,
   ...translateHandlers,
+  ...trashHandlers,
   ...webSearchHandlers,
   ...webviewHandlers,
   ...windowHandlers

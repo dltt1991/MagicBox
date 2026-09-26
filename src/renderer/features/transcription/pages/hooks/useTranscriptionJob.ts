@@ -1,8 +1,9 @@
+import { useCallback, useRef, useState } from 'react'
+import { v4 as uuidv4 } from 'uuid'
+
 import { ipcApi, useIpcOn } from '@renderer/ipc'
 import type { TranscriptionLanguage, TranscriptionSourceType } from '@shared/data/types/transcription'
 import type { TranscriptionBackendConfig } from '@shared/ipc/schemas/transcription'
-import { useCallback, useRef, useState } from 'react'
-import { v4 as uuidv4 } from 'uuid'
 
 type TranscriptionInput = {
   audioPath?: string

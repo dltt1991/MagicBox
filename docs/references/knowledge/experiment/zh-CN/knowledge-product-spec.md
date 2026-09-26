@@ -1,3 +1,9 @@
+---
+description: "知识库产品规格"
+sources:
+  - src/main/features/knowledge
+---
+
 # 知识库产品规格
 
 > 中文副本，对应英文原文：[docs/references/knowledge/experiment/knowledge-product-spec.md](../knowledge-product-spec.md)。

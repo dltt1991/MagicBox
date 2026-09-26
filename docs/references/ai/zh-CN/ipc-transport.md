@@ -1,3 +1,9 @@
+---
+description: "IPC 传输"
+sources:
+  - src/main/ai
+---
+
 # IPC 传输
 
 ## 作用

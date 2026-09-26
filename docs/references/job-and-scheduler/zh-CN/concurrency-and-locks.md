@@ -1,3 +1,9 @@
+---
+description: "并发与锁（四层模型）"
+sources:
+  - src/main/core/job
+---
+
 # 并发与锁（四层模型）
 
 JobManager在并发调度下使用四个正交锁层。

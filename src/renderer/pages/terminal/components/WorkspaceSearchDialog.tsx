@@ -1,3 +1,8 @@
+import { Icon } from '@iconify/react'
+import { Search } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+
 import {
   Button,
   Dialog,
@@ -9,11 +14,7 @@ import {
   NormalTooltip
 } from '@cherrystudio/ui'
 import { cn } from '@cherrystudio/ui/lib/utils'
-import { Icon } from '@iconify/react'
 import { getFileIconName } from '@renderer/utils/fileIconName'
-import { Search } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 
 import type { WorkspaceTreeItem } from '../lib/workspaceTree'
 
